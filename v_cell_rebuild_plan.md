@@ -294,7 +294,7 @@ Store one record per finished/abandoned game:
 - `moveCount`
 - `undosUsed`
 - `settings`:
-  - `faceDownCount` (`7 | 14 | 21`)
+  - `faceDownCount` (`0 | 7 | 14 | 21`)
   - `undoLimit` (`0 | 1 | 3 | 5 | "unlimited"`)
   - `allowFoundationPullback` (boolean)
 
@@ -612,7 +612,8 @@ export async function sanitizeV1Export(
       sourceApp: "vcell",
       sourceSchemaVersion: 1,
       exportedAt: exp.exportedAt,
-      importId
+      importId,
+      legacyImported: true
     },
     preferences,
     rules,
@@ -782,8 +783,8 @@ export function isWin(state: GameState): boolean; // true when all cards exposed
 
 ## 17. Next Steps
 
-1. Confirm face-down behavior (auto-flip vs manual flip)
-2. Specify the exact deal algorithm for the V-shaped face-down pattern (7/14/21)
-3. Confirm foundation pullback rules (only top foundation card; may move to tableau or free cell when enabled)
-4. Implement the engine types + pure functions in `packages/engine/`
+1. Define hint strategy (Phase 1 heuristics → optional lookahead/solver later)
+2. Define magnetic drag/drop feel (snap radius, target priority, stack pickup UX)
+3. Specify auto-send rules (double-click preference order; foundation slot selection)
+4. Implement engine types + pure functions in `packages/engine/` with unit tests
 5. Wire the V1 import flow to write into the chosen V2 targets
