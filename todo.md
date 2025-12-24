@@ -54,13 +54,14 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] deterministic shuffle
   - [x] deal 49 to tableau, 3 to free cells
   - [x] apply V-shape face-down layering
-- [ ] `getLegalMoves(state)`
-  - [ ] tableau stack moves
+- [x] `getLegalMoves(state)`
+  - [x] tableau stack moves
   - [x] moves to free cells / foundations
-  - [ ] dynamic foundation suit logic
+  - [x] kings-only into empty tableau columns
+  - [x] dynamic foundation suit logic
   - [x] foundation pullback rules
 - [ ] `applyMove(state, move)`
-  - [ ] enforce legality (or assume legal + assert in dev)
+  - [x] enforce legality (or assume legal + assert in dev)
   - [x] update state
   - [x] auto-flip when face-down becomes exposed
   - [x] foundation suit set/unset rules
@@ -78,15 +79,15 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] all 52 unique cards present exactly once
   - [x] correct counts in tableau/freecells/foundations
   - [x] faceDownCount matches rules (0/7/14/21)
-- [ ] Legality tests
+- [x] Legality tests
   - [x] getLegalMoves: single-card moves + pullback behavior
-  - [ ] kings-only empty columns
-  - [ ] tableau stack validity
-  - [ ] foundation slot suit locking/unlocking
-  - [ ] pullback only top card and allowed destinations
+  - [x] kings-only empty columns
+  - [x] tableau stack validity
+  - [x] foundation slot suit locking/unlocking
+  - [x] pullback only top card and allowed destinations
 - [ ] Apply-move correctness tests
   - [x] auto-flip behavior
-  - [ ] move results stable and predictable
+  - [x] move results stable and predictable
 
 ---
 

@@ -2,6 +2,7 @@ import type { Card } from "../types/card";
 import type { GameState, TableauCard } from "../types/state";
 import type { Move } from "../types/move";
 import type { PileRef, TableauIndex } from "../types/piles";
+import { getLegalMoves } from "./getLegalMoves";
 
 function isAce(c: Card) {
   return c.rank === 1;
@@ -49,6 +50,49 @@ function cloneState(state: GameState): GameState {
       }
     ]
   };
+}
+
+function samePileRef(a: PileRef, b: PileRef): boolean {
+  if (a.type !== b.type) return false;
+  // index exists on all pile refs
+  return (a as any).index === (b as any).index;
+}
+
+function sameMove(a: Move, b: Move): boolean {
+  if (a.kind !== b.kind) return false;
+
+  if (a.kind === "single" && b.kind === "single") {
+    return samePileRef(a.from, b.from) && samePileRef(a.to, b.to);
+  }
+
+  if (a.kind === "tableauStack" && b.kind === "tableauStack") {
+    return (
+      a.from.index === b.from.index &&
+      a.to.index === b.to.index &&
+      a.startIndex === b.startIndex
+    );
+  }
+
+  return false;
+}
+
+function shouldAssertLegality(): boolean {
+  // Safe for browser + node. Defaults to asserting unless explicitly production.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const env = (globalThis as any)?.process?.env?.NODE_ENV;
+    return env !== "production";
+  } catch {
+    return true;
+  }
+}
+
+function assertLegalMove(state: GameState, move: Move): void {
+  if (!shouldAssertLegality()) return;
+  const legal = getLegalMoves(state);
+  if (!legal.some((m) => sameMove(m, move))) {
+    throw new Error("Invalid move: not legal per getLegalMoves");
+  }
 }
 
 // function topTableauCard(state: GameState, i: TableauIndex): Card | null {
@@ -128,22 +172,27 @@ function placeSingleTo(to: PileRef, card: Card, s: GameState): void {
 }
 
 function isValidStack(stack: TableauCard[]): boolean {
-  // All must be face-up and internally valid: descending + alternating color
-  for (let i = 0; i < stack.length; i++) {
+  // All must be face-up and internally valid: ascending + alternating color
+  for (let i = stack.length - 1; i > 0; i--) {
     if (stack[i].faceDown) return false;
-    if (i === stack.length - 1) continue;
-    const upper = stack[i].card; // closer to top
-    const below = stack[i + 1].card; // closer to bottom
-    if (upper.rank !== below.rank - 1) return false;
+    if (i === 0) continue;
+    const upper = stack[i - 1].card; // closer to top
+    const below = stack[i].card; // closer to bottom
+    if (upper.rank !== below.rank + 1) return false;
     if (upper.color === below.color) return false;
   }
   return true;
 }
 
 export function applyMove(state: GameState, move: Move): GameState {
+  assertLegalMove(state, move);
   const s = cloneState(state);
 
   if (move.kind === "single") {
+    // Prevent foundation-to-foundation transfers via pullback (not a supported rule).
+    if (move.from.type === "foundation" && move.to.type === "foundation") {
+      throw new Error("Invalid move: foundation-to-foundation is not allowed");
+    }
     const card = removeSingleFrom(move.from, s);
     placeSingleTo(move.to, card, s);
 
@@ -178,8 +227,9 @@ export function applyMove(state: GameState, move: Move): GameState {
       "Invalid move: stack not internally valid or contains face-down cards"
     );
 
-  // Validate placement using the BOTTOM card of the moving stack
-  const bottomCard = stack[stack.length - 1].card;
+  // Validate placement using the TOP card of the moving stack
+  // const bottomCard = stack[stack.length - 1].card;
+  const topCard = stack[0].card;
 
   const targetIsEmpty = toCol.length === 0;
   const targetTopCard = targetIsEmpty
@@ -192,7 +242,7 @@ export function applyMove(state: GameState, move: Move): GameState {
     throw new Error("Invalid move: target tableau blocked by face-down top");
   }
 
-  if (!canPlaceOnTableau(bottomCard, targetTopCard)) {
+  if (!canPlaceOnTableau(topCard, targetTopCard)) {
     throw new Error("Invalid move: cannot place stack on tableau");
   }
 

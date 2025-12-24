@@ -10,7 +10,8 @@
     "declarationMap": true,
     "sourceMap": true,
     "noEmit": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+     "types": ["node"]
   },
   "include": ["src", "test"]
 }

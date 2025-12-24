@@ -15,7 +15,7 @@ export function getMovableRunLength(col: TableauCard[]): number {
   let count = 1;
 
   // Walk upward (toward index 0) while the run stays valid:
-  // alternating colors, descending by 1 toward the bottom.
+  // alternating colors, descending by 1 as you go toward the bottom (exposed card).
   for (let i = exposedIdx - 1; i >= 0; i--) {
     const upper = col[i];
     const below = col[i + 1];

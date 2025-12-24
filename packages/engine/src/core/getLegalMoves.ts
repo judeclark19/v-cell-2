@@ -7,6 +7,7 @@ import type {
   FoundationIndex,
   FreeCellIndex
 } from "../types/piles";
+import { getMovableRunLength } from "./getMovableRunLengths";
 
 function isAce(c: Card) {
   return c.rank === 1;
@@ -39,6 +40,12 @@ function topTableauCard(state: GameState, i: TableauIndex) {
   const tc = col[col.length - 1]; // exposed is LAST
   if (tc.faceDown) return null;
   return tc.card;
+}
+
+function isBlockedTableauColumn(state: GameState, i: TableauIndex): boolean {
+  const col = state.tableau[i];
+  if (!col || col.length === 0) return false;
+  return col[col.length - 1].faceDown; // exposed is LAST
 }
 
 function topFoundationCard(state: GameState, i: FoundationIndex) {
@@ -96,16 +103,57 @@ export function getLegalMoves(state: GameState): Move[] {
     // to tableau (single-card moves)
     for (let t = 0 as TableauIndex; t < 7; t = (t + 1) as TableauIndex) {
       if (t === i) continue;
-      const targetTop = topTableauCard(state, t); // null if empty or facedown top
-      // If column is non-empty but top is facedown, it is effectively blocked.
-      // Our topTableauCard returns null in that case; but an actually blocked column is not empty.
-      // So we need to distinguish empty vs blocked:
-      const isActuallyEmpty = state.tableau[t].length === 0;
-
-      if (!isActuallyEmpty && targetTop === null) continue;
+      const isEmpty = state.tableau[t].length === 0;
+      if (!isEmpty && isBlockedTableauColumn(state, t)) continue;
+      const targetTop = topTableauCard(state, t); // null if empty
 
       const ok = canPlaceOnTableau(card, targetTop);
       if (ok) pushSingle(from, { type: "tableau", index: t });
+    }
+  }
+
+  // ---- Sources: tableau stack moves (tableau -> tableau)
+  // Only stacks within the current movable run (suffix ending at exposed card) are grabbable.
+  for (
+    let fromIdx = 0 as TableauIndex;
+    fromIdx < 7;
+    fromIdx = (fromIdx + 1) as TableauIndex
+  ) {
+    const fromCol = state.tableau[fromIdx];
+    if (fromCol.length === 0) continue;
+
+    if (isBlockedTableauColumn(state, fromIdx)) continue;
+
+    const runLen = getMovableRunLength(fromCol);
+    if (runLen <= 1) continue; // stacks length >= 2 only
+
+    const startMin = fromCol.length - runLen; // earliest index in movable suffix
+    const startMax = fromCol.length - 2; // latest start that yields length >= 2
+
+    for (let startIndex = startMin; startIndex <= startMax; startIndex++) {
+      const stack = fromCol.slice(startIndex);
+      const topMovingCard = stack[0].card;
+
+      for (
+        let toIdx = 0 as TableauIndex;
+        toIdx < 7;
+        toIdx = (toIdx + 1) as TableauIndex
+      ) {
+        if (toIdx === fromIdx) continue;
+
+        const isEmpty = state.tableau[toIdx].length === 0;
+        if (!isEmpty && isBlockedTableauColumn(state, toIdx)) continue;
+        const targetTop = topTableauCard(state, toIdx); // null if empty
+
+        if (canPlaceOnTableau(topMovingCard, targetTop)) {
+          moves.push({
+            kind: "tableauStack",
+            from: { type: "tableau", index: fromIdx },
+            startIndex,
+            to: { type: "tableau", index: toIdx }
+          });
+        }
+      }
     }
   }
 
@@ -122,9 +170,10 @@ export function getLegalMoves(state: GameState): Move[] {
 
     // to tableau
     for (let t = 0 as TableauIndex; t < 7; t = (t + 1) as TableauIndex) {
-      const targetTop = topTableauCard(state, t);
-      const isActuallyEmpty = state.tableau[t].length === 0;
-      if (!isActuallyEmpty && targetTop === null) continue;
+      const isEmpty = state.tableau[t].length === 0;
+      if (!isEmpty && isBlockedTableauColumn(state, t)) continue;
+      const targetTop = topTableauCard(state, t); // null if empty
+
       if (canPlaceOnTableau(card, targetTop)) {
         pushSingle(from, { type: "tableau", index: t });
       }
@@ -146,9 +195,10 @@ export function getLegalMoves(state: GameState): Move[] {
 
       // to tableau
       for (let t = 0 as TableauIndex; t < 7; t = (t + 1) as TableauIndex) {
-        const targetTop = topTableauCard(state, t);
-        const isActuallyEmpty = state.tableau[t].length === 0;
-        if (!isActuallyEmpty && targetTop === null) continue;
+        const isEmpty = state.tableau[t].length === 0;
+        if (!isEmpty && isBlockedTableauColumn(state, t)) continue;
+        const targetTop = topTableauCard(state, t); // null if empty
+
         if (canPlaceOnTableau(card, targetTop)) {
           pushSingle(from, { type: "tableau", index: t });
         }

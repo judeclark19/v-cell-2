@@ -11,7 +11,10 @@ const rules: Rules = {
 };
 
 const AS: Card = { id: "AS", suit: "spades", rank: 1, color: "black" };
+const TWO_H: Card = { id: "2H", suit: "hearts", rank: 2, color: "red" };
 const TWO_S: Card = { id: "2S", suit: "spades", rank: 2, color: "black" };
+const THREE_C: Card = { id: "3C", suit: "clubs", rank: 3, color: "black" };
+const FOUR_H: Card = { id: "4H", suit: "hearts", rank: 4, color: "red" };
 const KH: Card = { id: "KH", suit: "hearts", rank: 13, color: "red" };
 
 function emptyState(overrides?: Partial<GameState>): GameState {
@@ -94,5 +97,120 @@ describe("applyMove", () => {
     const exposed = next.tableau[0][next.tableau[0].length - 1];
     expect(exposed.card.id).toBe("2S");
     expect(exposed.faceDown).toBe(false);
+  });
+  it("disallows foundation-to-foundation moves (even with pullback enabled)", () => {
+    const s = emptyState({
+      foundations: [
+        { suit: "spades", cards: [AS] },
+        { suit: null, cards: [] },
+        { suit: null, cards: [] },
+        { suit: null, cards: [] }
+      ]
+    });
+
+    expect(() =>
+      applyMove(s, {
+        kind: "single",
+        from: { type: "foundation", index: 0 },
+        to: { type: "foundation", index: 1 }
+      })
+    ).toThrow();
+  });
+
+  it("throws if a move is not legal per getLegalMoves (dev assert)", () => {
+    const s = emptyState({
+      freeCells: [AS, null, null, null, null]
+    });
+
+    // This is illegal because tableau is empty; Ace cannot be placed on empty tableau (only King).
+    expect(() =>
+      applyMove(s, {
+        kind: "single",
+        from: { type: "freecell", index: 0 },
+        to: { type: "tableau", index: 0 }
+      })
+    ).toThrow();
+  });
+
+  it("tableauStack moves the correct slice, preserves order, and leaves the source shortened", () => {
+    // Valid internal stack per engine rules (TOP→BOTTOM): 3♣ then 2♥
+    // Place onto 4♥ (top-moving card 3♣ goes onto 4♥).
+    const s = emptyState({
+      tableau: [
+        [
+          { card: THREE_C, faceDown: false }, // index 0 (top)
+          { card: TWO_H, faceDown: false } // index 1 (bottom, exposed)
+        ],
+        [{ card: FOUR_H, faceDown: false }],
+        [],
+        [],
+        [],
+        [],
+        []
+      ]
+    });
+
+    const move = {
+      kind: "tableauStack",
+      from: { type: "tableau", index: 0 },
+      startIndex: 0, // (or 1 in the 2nd test)
+      to: { type: "tableau", index: 1 }
+    } as const;
+
+    const next = applyMove(s, {
+      kind: "tableauStack",
+      from: { type: "tableau", index: 0 },
+      startIndex: 0,
+      to: { type: "tableau", index: 1 }
+    });
+
+    // Source emptied
+    expect(next.tableau[0]).toHaveLength(0);
+
+    // Destination is existing then stack, preserving order
+    expect(next.tableau[1].map((tc) => tc.card.id)).toEqual(["4H", "3C", "2H"]);
+  });
+
+  it("tableauStack triggers auto-flip when a face-down card becomes newly exposed", () => {
+    // Column 0 TOP→BOTTOM: [2♠(faceDown), 3♣, 2♥]
+    // Move stack starting at index 1 => move [3♣, 2♥] to column 1 onto 4♥ (legal for bottom 2♥).
+    // Remaining [2♠] becomes exposed and should auto-flip.
+    const s = emptyState({
+      tableau: [
+        [
+          { card: TWO_S, faceDown: true },
+          { card: THREE_C, faceDown: false },
+          { card: TWO_H, faceDown: false }
+        ],
+        [{ card: FOUR_H, faceDown: false }],
+        [],
+        [],
+        [],
+        [],
+        []
+      ]
+    });
+
+    const move = {
+      kind: "tableauStack",
+      from: { type: "tableau", index: 0 },
+      startIndex: 0, // (or 1 in the 2nd test)
+      to: { type: "tableau", index: 1 }
+    } as const;
+
+    const next = applyMove(s, {
+      kind: "tableauStack",
+      from: { type: "tableau", index: 0 },
+      startIndex: 1,
+      to: { type: "tableau", index: 1 }
+    });
+
+    // Source should now have only [2♠] and it should be auto-flipped
+    expect(next.tableau[0]).toHaveLength(1);
+    expect(next.tableau[0][0].card.id).toBe("2S");
+    expect(next.tableau[0][0].faceDown).toBe(false);
+
+    // Destination stack order should be preserved
+    expect(next.tableau[1].map((tc) => tc.card.id)).toEqual(["4H", "3C", "2H"]);
   });
 });
