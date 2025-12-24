@@ -85,7 +85,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] foundation slot suit locking/unlocking
   - [ ] pullback only top card and allowed destinations
 - [ ] Apply-move correctness tests
-  - [ ] auto-flip behavior
+  - [x] auto-flip behavior
   - [ ] move results stable and predictable
 
 ---

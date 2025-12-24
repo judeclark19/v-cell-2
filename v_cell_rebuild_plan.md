@@ -164,6 +164,7 @@ Additional UX behavior (confirmed):
 
 - **Double-click / double-tap** on a movable single card attempts to **auto-send to a foundation** if a legal foundation move exists.
   - If multiple foundation slots are valid targets (e.g., placing an Ace into any empty slot), choose deterministically (e.g., lowest slot index).
+- A face-up card can still be inactive if there is an invalid break above the exposed card. The grabbable stack is the contiguous valid run from the exposed card upward.
 
 ---
 
@@ -728,7 +729,7 @@ export type TableauCard = {
 Proposed rule:
 
 - Face-down tableau cards are **not movable**.
-- When a move results in a face-down card becoming the **top** card of a tableau column, it **auto-flips immediately** to face-up (engine-side), without consuming a player move.
+- When a move results in a face-down card becoming the **exposed** card of a tableau column, it **auto-flips immediately** to face-up (engine-side), without consuming a player move.
 
 ### 16.5 GameState
 
@@ -778,6 +779,7 @@ Notes:
 export function areAllCardsExposed(state: GameState): boolean;
 export function getAutoCompleteMoves(state: GameState): Move[];
 export function isWin(state: GameState): boolean; // true when all cards exposed
+export function getMovableRunLengths(state: GameState): number[]; // UI highlight for grabbable run
 ```
 
 ---
