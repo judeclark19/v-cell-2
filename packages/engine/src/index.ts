@@ -9,3 +9,4 @@ export type {
 } from "./types/piles";
 export type { TableauCard, FoundationSlot, GameState } from "./types/state";
 export type { Move } from "./types/move";
+export { createGame } from "./core/createGame";

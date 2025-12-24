@@ -49,9 +49,11 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 ### 2.3 Core Engine Functions (Pure)
 
 - [ ] `createGame(seed, rules)`
-  - [ ] deterministic shuffle
-  - [ ] deal 49 to tableau, 3 to free cells
-  - [ ] apply V-shape face-down layering
+  - [x] createGame function scaffold exists
+  - [x] shuffleInPlace utility exists (Fisher–Yates)
+  - [x] deterministic shuffle
+  - [x] deal 49 to tableau, 3 to free cells
+  - [x] apply V-shape face-down layering
 - [ ] `getLegalMoves(state)`
   - [ ] tableau stack moves
   - [ ] single-card moves to free cells / foundations
@@ -69,12 +71,12 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ### 2.4 Engine Test Strategy
 
-- [ ] Determinism tests
-  - [ ] same (seed,rules) => identical board
-- [ ] Invariant tests
-  - [ ] all 52 unique cards present exactly once
-  - [ ] correct counts in tableau/freecells/foundations
-  - [ ] faceDownCount matches rules (0/7/14/21)
+- [x] Determinism tests
+  - [x] same (seed,rules) => identical board
+- [x] Invariant tests
+  - [x] all 52 unique cards present exactly once
+  - [x] correct counts in tableau/freecells/foundations
+  - [x] faceDownCount matches rules (0/7/14/21)
 - [ ] Legality tests
   - [ ] kings-only empty columns
   - [ ] tableau stack validity
