@@ -48,7 +48,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ### 2.3 Core Engine Functions (Pure)
 
-- [ ] `createGame(seed, rules)`
+- [x] `createGame(seed, rules)`
   - [x] createGame function scaffold exists
   - [x] shuffleInPlace utility exists (Fisher–Yates)
   - [x] deterministic shuffle
@@ -56,18 +56,19 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] apply V-shape face-down layering
 - [ ] `getLegalMoves(state)`
   - [ ] tableau stack moves
-  - [ ] single-card moves to free cells / foundations
+  - [x] moves to free cells / foundations
   - [ ] dynamic foundation suit logic
-  - [ ] foundation pullback rules
+  - [x] foundation pullback rules
 - [ ] `applyMove(state, move)`
   - [ ] enforce legality (or assume legal + assert in dev)
-  - [ ] update state
-  - [ ] auto-flip when face-down becomes exposed
-  - [ ] foundation suit set/unset rules
-- [ ] Derived helpers
-  - [ ] `areAllCardsExposed(state)`
-  - [ ] `isWin(state)` (win when all exposed)
-  - [ ] `getAutoCompleteMoves(state)` (safe deterministic sequence)
+  - [x] update state
+  - [x] auto-flip when face-down becomes exposed
+  - [x] foundation suit set/unset rules
+- [x] Derived helpers
+  - [x] `getMovableRunLengths(state)` (UI highlight for grabbable run)
+  - [x] `areAllCardsExposed(state)`
+  - [x] `isWin(state)` (win when all exposed)
+  - [x] `getAutoCompleteMoves(state)` (safe deterministic sequence)
 
 ### 2.4 Engine Test Strategy
 
@@ -78,6 +79,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] correct counts in tableau/freecells/foundations
   - [x] faceDownCount matches rules (0/7/14/21)
 - [ ] Legality tests
+  - [x] getLegalMoves: single-card moves + pullback behavior
   - [ ] kings-only empty columns
   - [ ] tableau stack validity
   - [ ] foundation slot suit locking/unlocking

@@ -10,3 +10,12 @@ export type {
 export type { TableauCard, FoundationSlot, GameState } from "./types/state";
 export type { Move } from "./types/move";
 export { createGame } from "./core/createGame";
+export { getLegalMoves } from "./core/getLegalMoves";
+export { applyMove } from "./core/applyMove";
+export {
+  getMovableRunLength,
+  getMovableRunLengths
+} from "./core/getMovableRunLengths";
+export { areAllCardsExposed } from "./core/areAllCardsExposed";
+export { isWin } from "./core/isWin";
+export { getAutoCompleteMoves } from "./core/getAutoCompleteMoves";

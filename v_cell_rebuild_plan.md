@@ -116,6 +116,7 @@ Notes:
 - `allowFoundationPullback: boolean`
   - `false` (harder): foundations are final
   - `true` (easier): cards may be moved **out of foundations**
+- Default for V2: `true` (users must opt into “harder” by turning it off).
 
 Pullback legality (confirmed):
 
@@ -268,7 +269,7 @@ The user profile stores preferences + default difficulty knobs:
 - `soundOn`
 - `undoLimitDefault` (`0 | 1 | 3 | 5 | "unlimited"`)
 - `faceDownCountDefault` (`0 | 7 | 14 | 21`)
-- `allowFoundationPullbackDefault` (boolean)
+- `allowFoundationPullbackDefault` (boolean; default true)
 
 Import behavior:
 
@@ -713,7 +714,7 @@ export type PileRef =
 
 ### 16.4 Tableau card visibility (face-down)
 
-Because V-Cell supports `faceDownCount` (7/14/21), the engine needs to represent which tableau cards are face-down.
+Tableau columns are arrays ordered TOP→BOTTOM; the exposed/active card is the LAST element. Because V-Cell supports `faceDownCount` (7/14/21), the engine needs to represent which tableau cards are face-down.
 
 Proposed representation:
 
@@ -756,7 +757,7 @@ export type Move =
   | {
       kind: "tableauStack";
       from: { type: "tableau"; index: TableauIndex };
-      startIndex: number; // 0 = top card; moving a contiguous sub-stack
+      startIndex: number; // index in the TOP→BOTTOM tableau array; moving the contiguous sub-stack from startIndex down to the bottom (end)
       to: { type: "tableau"; index: TableauIndex };
     }
   | {
