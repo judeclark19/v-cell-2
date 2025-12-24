@@ -166,6 +166,12 @@ Additional UX behavior (confirmed):
   - If multiple foundation slots are valid targets (e.g., placing an Ace into any empty slot), choose deterministically (e.g., lowest slot index).
 - A face-up card can still be inactive if there is an invalid break above the exposed card. The grabbable stack is the contiguous valid run from the exposed card upward.
 
+Implementation note (engine):
+
+- Tableau arrays are **TOP→BOTTOM**; the exposed card is the **last** element.
+- `getMovableRunLength(column)` counts the contiguous _alternating-color, descending-rank_ run ending at the exposed card, moving upward.
+- Stack moves (`tableauStack`) are only allowed when the moved slice is internally valid and contains **no face-down** cards.
+
 ---
 
 ## 9. Win, Auto-Complete, and Celebration
@@ -353,6 +359,7 @@ From the sample export you provided, V1 currently stores 13 top-level keys under
 - `vCellTheme` (string)
 - `vCellIsTimerVisible` (string boolean)
 - `vCellKnowsHowToPlay` (string boolean)
+- `vCellSoundOn` (string boolean) — may or may not exist; treat as optional
 
 **Rule/difficulty knobs**
 
@@ -429,6 +436,7 @@ export type V2ImportedPreferences = {
   theme?: string;
   showTimer?: boolean; // cosmetic
   knowsHowToPlay?: boolean;
+  soundOn?: boolean;
 };
 
 export type V2ImportedRules = {
@@ -558,7 +566,8 @@ export async function sanitizeV1Export(
   const preferences: V2ImportedPreferences = {
     theme: typeof d.vCellTheme === "string" ? d.vCellTheme : undefined,
     showTimer: toBool(d.vCellIsTimerVisible),
-    knowsHowToPlay: toBool(d.vCellKnowsHowToPlay)
+    knowsHowToPlay: toBool(d.vCellKnowsHowToPlay),
+    soundOn: toBool(d.vCellSoundOn)
   };
 
   // 4) Pull rule-ish knobs

@@ -8,6 +8,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 - [x] Root `.gitignore` (node_modules, dist, env files, etc.)
 - [x] Decide package manager (npm vs pnpm vs yarn) and stick to it - decided npm
+- [x] TypeScript node environment sanity (ensure `console` is typed via `@types/node` and tsconfig `types: ["node"]`)
 - [ ] Monorepo setup (workspaces)
   - [ ] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [ ] Root tooling scripts (lint/test/build hooks later)
@@ -34,17 +35,18 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Add `tsconfig.build.json` (build output)
 - [x] Add `src/index.ts` (public exports only)
 - [x] Add Vitest smoke test (pipeline sanity)
-- [ ] Add test runner config if needed (vitest defaults often fine)
+- [x] Add test runner config if needed (vitest defaults often fine)
 
 ### 2.2 Engine Types (Contract)
 
-- [ ] Add core types
+- [x] Add core types
   - [x] `Rules` (faceDownCount 0/7/14/21, allowFoundationPullback, undoLimit)
   - [x] `Card`, `TableauCard(faceDown)`
   - [x] `PileRef` (foundation by slot index)
   - [x] `FoundationSlot` (suit null until Ace, cards[])
   - [x] `Move` union
   - [x] `GameState`
+  - [x] Clarify tableau ordering (TOP→BOTTOM array; exposed card is last element)
 
 ### 2.3 Core Engine Functions (Pure)
 
@@ -60,7 +62,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] kings-only into empty tableau columns
   - [x] dynamic foundation suit logic
   - [x] foundation pullback rules
-- [ ] `applyMove(state, move)`
+- [x] `applyMove(state, move)`
   - [x] enforce legality (or assume legal + assert in dev)
   - [x] update state
   - [x] auto-flip when face-down becomes exposed
@@ -85,7 +87,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] tableau stack validity
   - [x] foundation slot suit locking/unlocking
   - [x] pullback only top card and allowed destinations
-- [ ] Apply-move correctness tests
+- [x] Apply-move correctness tests
+  - [x] tableauStack slice + order correctness
+  - [x] tableauStack auto-flip when newly exposed
   - [x] auto-flip behavior
   - [x] move results stable and predictable
 
