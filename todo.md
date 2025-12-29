@@ -11,12 +11,12 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Root `.gitignore` (node_modules, dist, env files, etc.)
 - [x] Decide package manager (npm vs pnpm vs yarn) and stick to it - decided npm
 - [x] TypeScript node environment sanity (ensure `console` is typed via `@types/node` and tsconfig `types: ["node"]`)
-- [ ] Monorepo setup (workspaces)
-  - [ ] Root `package.json` with workspaces: `packages/*`, `apps/*`
+- [x] Monorepo setup (workspaces)
+  - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [ ] Root tooling scripts (lint/test/build hooks later)
 - [ ] Repo structure created
   - [x] `packages/engine`
-  - [ ] `apps/web`
+  - [x] `apps/web`
   - [ ] `packages/ui` (optional; can come later)
 
 ---
@@ -107,10 +107,12 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ## 3) Web App Scaffolding (`apps/web`)
 
-- [ ] Create Next.js app (App Router)
-- [ ] Install and link `@vcell/engine`
+- [x] Create Next.js app (App Router)
+- [x] Install and link `@vcell/engine`
 - [ ] App layout + routing
-- [ ] Basic game screen skeleton with placeholder rendering
+- [x] Basic game screen skeleton with engine wiring + debug JSON
+- [ ] Add route structure: /game, /settings, /stats (and optionally /leaderboard)
+- [ ] Add landing flow: choose guest vs login (gate /stats and /leaderboard)
 
 ---
 
@@ -118,6 +120,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ### 4.1 Rendering
 
+- [ ] Move game state/provider out of `app/page.tsx` into a dedicated module (prep for multiple pages)
 - [ ] Render tableau/free cells/foundations from engine state
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
@@ -155,13 +158,14 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] Google sign-in
   - [ ] Email/password fallback
   - [ ] Account linking strategy (avoid split stats)
+- [ ] Guest mode support (no account required; gate stats/leaderboards behind login)
 - [ ] User profile fields
   - [ ] theme, showTimer, knowsHowToPlay, soundOn
   - [ ] undoLimitDefault, faceDownCountDefault, allowFoundationPullbackDefault
 
 ---
 
-## 7) Stats Model + Sync
+## 7) Stats Model + Sync (Logged-in only)
 
 - [ ] Per-game record format (includes settings used)
 - [ ] Aggregates (wins, total, abandons, best time, streaks)

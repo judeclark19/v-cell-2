@@ -5,7 +5,7 @@ V-Cell V2 is a modern rebuild of the V-Cell solitaire game, with a focus on corr
 ## Monorepo Layout
 
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
-- `apps/web` — Web application (React-based UI)
+- `apps/web` — Next.js web app (UI)
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -19,8 +19,24 @@ npm test
 
 The engine’s **public API** is exported from `packages/engine/src/index.ts`. Helpers used only for UI conveniences should stay internal unless we intentionally promote them to contract.
 
+## Running the Web App
+
+```sh
+cd apps/web
+npm run dev
+```
+
 ## Engine Philosophy
 
 - Pure, deterministic, and UI-agnostic core logic
 - All game rules and state transitions are handled in the engine package
 - The engine can be tested and used independently of any frontend
+
+## Guest vs Logged-in
+
+The app supports **guest play** (no account) and **logged-in play**.
+
+- Guests can play the game and change local settings.
+- Stats, play history, and leaderboards require login.
+
+This keeps the core game friction-free while reserving cross-device sync and global comparisons for authenticated users.

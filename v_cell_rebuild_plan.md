@@ -18,7 +18,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - No React, no DOM, no browser APIs
 - Deterministic, replayable, and fully testable
 
-**`apps/web/`**\*\* — Web Application (React)\*\*
+**`apps/web/`**\*\* — Web Application (Next.js)\*\*
 
 - Renders game state
 - Handles drag/drop, animation, accessibility
@@ -267,11 +267,20 @@ Implementation note (engine):
 - Installable
 - App shell + engine cached
 
+### 12.4 Guest vs Logged-in Access
+
+On first arrival, the user chooses:
+
+- **Play as guest**: full gameplay + local settings only.
+- **Log in**: unlocks stats, play history, and leaderboards (and later, cross-device sync).
+
+Guests should not see global leaderboards or account-based history screens. If a guest tries to navigate to those areas, the UI should prompt login.
+
 ---
 
 ## 12A. V2 User Profile Preferences (Sync Across Devices)
 
-The user profile stores preferences + default difficulty knobs:
+For logged-in users, the user profile stores preferences + default difficulty knobs:
 
 - `theme`
 - `showTimer` (cosmetic)
@@ -292,7 +301,7 @@ Import behavior:
 
 ### 12B.1 Principle
 
-All time-based and performance stats should be interpretable in context. Each recorded game should include the **rules/difficulty settings used**, enabling filtering/sorting later.
+All time-based and performance stats should be interpretable in context. Each recorded game should include the **rules/difficulty settings used**, enabling filtering/sorting later. Guests do not create server records; they may have optional local-only stats later, but those are out of scope for the first pass.
 
 ### 12B.2 Per-game record (recommended canonical source)
 
