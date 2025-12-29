@@ -13,6 +13,8 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: Engine contract stabilized and tested (createGame/getLegalMoves/applyMove + stack moves + auto-flip).
 - 2025-12: Web app scaffolded with App Router routes: `/` and `/game`.
 - 2025-12: `GameProvider` moved out of page components and hoisted to app scope so state can be shared across routes.
+- 2025-12: Added minimal SessionProvider (guest vs user) persisted locally + MVP /login route.
+- 2025-12: Added global navbar; /stats now renders for guests but prompts login instead of redirecting.
 
 ## 2. High-Level Architecture
 
@@ -39,10 +41,11 @@ This document captures **decisions already made**, reorganized into a stable ref
 
 We have the first two routes in place, and the rest are planned:
 
-- `/` — Entry / mode selection (Guest vs Login) (in progress)
-- `/game` — Gameplay (engine wired; UI still a debug panel)
-- `/settings` — Game + user settings (next)
-- `/stats` — Play history + leaderboards (logged-in only) (later)
+- "/" — Entry (redirects to /login if session unset; otherwise to /game)
+- "/login" — MVP login (sets guest vs user; real auth later)
+- "/game" — Gameplay (engine wired; UI still a debug panel)
+- "/settings" — Game + user settings (placeholder)
+- "/stats" — Play history + leaderboards (placeholder; guests see login prompt)
 
 The engine remains UI-agnostic; routing and access control live in the web app.
 
@@ -286,23 +289,20 @@ Implementation note (engine):
 
 ### 12.4 Guest vs Logged-in Access
 
-On first arrival (`/`), the user chooses:
+On first arrival ("/"), the app uses a minimal local session model:
 
-- **Play as guest**: full gameplay + local settings only.
-- **Log in**: unlocks stats, play history, and leaderboards (and later, cross-device sync).
+- session is initially "unset"
+- user can choose **Play as guest** or **Log in** (MVP local-only for now)
 
-Access rules:
+Access behavior (MVP):
 
-- Guests can access `/game` and `/settings`.
-- Guests cannot access `/stats`.
-  - If a guest navigates to `/stats`, redirect to `/` (or show an inline login prompt).
+- Guests can access "/game" and "/settings".
+- Guests can visit "/stats", but the page renders a friendly prompt to log in (no redirect).
 - Logged-in users can access all routes.
-
-Note: we can implement this initially as simple client-side gating + redirect, then harden it with server-aware route protection once auth exists.
 
 Implementation note:
 
-- Model this as an app-level `sessionMode: "guest" | "user"` (plus `uid` when logged in).
+- Model this as an app-level `sessionMode: "unset" | "guest" | "user"` (plus `uid` when logged in).
 - Persist the mode locally so a refresh doesn’t forget the choice.
 
 UI note:

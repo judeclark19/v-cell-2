@@ -16,6 +16,10 @@ export type SessionState = {
   uid: string | null;
 };
 
+export type RequireUserResult =
+  | { ok: true }
+  | { ok: false; reason: "not_logged_in" };
+
 export type SessionContextValue = {
   session: SessionState;
   setGuest: () => void;
@@ -27,14 +31,11 @@ export type SessionContextValue = {
   isGuest: boolean;
   isUser: boolean;
   isUnset: boolean;
+  hydrated: boolean;
 
   // For guarding pages that require login
   requireUser: () => RequireUserResult;
 };
-
-export type RequireUserResult =
-  | { ok: true }
-  | { ok: false; reason: "not_logged_in" };
 
 const STORAGE_KEY = "vcell.session.v1";
 
@@ -63,15 +64,34 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  // Initialize from localStorage synchronously (client-only component)
   const [session, setSession] = useState<SessionState>(() => {
-    const restored = safeParse(localStorage.getItem(STORAGE_KEY));
+    if (typeof window === "undefined") {
+      return DEFAULT_SESSION;
+    }
+    const restored = safeParse(window.localStorage.getItem(STORAGE_KEY));
     return restored ?? DEFAULT_SESSION;
   });
+  const [hydrated, setHydrated] = useState(false);
 
-  // Persist on change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [session]);
+    // We intentionally sync React state from an external system (localStorage) after mount.
+    // This prevents server/client markup mismatches while still restoring the session ASAP.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHydrated(true);
+
+    const restored = safeParse(window.localStorage.getItem(STORAGE_KEY));
+    if (restored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSession(restored);
+    }
+  }, []);
+
+  // Persist on change (after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  }, [hydrated, session]);
 
   const setGuest = () => setSession({ mode: "guest", uid: null });
 
@@ -96,9 +116,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       isGuest,
       isUser,
       isUnset,
+      hydrated,
       requireUser
     };
-  }, [session]);
+  }, [session, hydrated]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

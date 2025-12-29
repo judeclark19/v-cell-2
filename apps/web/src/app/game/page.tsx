@@ -1,6 +1,6 @@
 "use client";
 
-import { useGame } from "@/game/GameProvider";
+import { useGame } from "@/state/game/GameProvider";
 
 function DebugPanel() {
   const { state, restart } = useGame();

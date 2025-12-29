@@ -29,7 +29,7 @@ npm -w @vcell/web dev
 
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
-- Route plan (web): / (entry), /game (play), /settings (preferences), /stats (history/leaderboards; login required)
+- Route plan (web): / (entry), /game (play), /settings (preferences), /stats (history/leaderboards; prompts login for guests)
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -52,10 +52,11 @@ npm run dev
 
 ## Current Web Routes
 
-- `/` — Entry / mode selection (Guest vs Login) (in progress)
-- `/game` — Gameplay (engine wiring + debug panel currently)
-
-Planned next: `/settings`, `/stats` (logged-in only).
+- "/" — Entry (redirects to /login if unset; or to /game once session is chosen)
+- "/login" — MVP login (sets session mode; real auth later)
+- "/game" — Gameplay (engine wiring + debug panel currently)
+- "/settings" — Placeholder (next)
+- "/stats" — Placeholder; shows login prompt for guests
 
 Note: game state is provided at **app scope** via a `GameProvider`, so it can be shared across routes.
 
@@ -72,4 +73,4 @@ The intended product behavior is:
 - Guests can play the game and change local settings.
 - Stats, play history, and leaderboards require login.
 
-We’ve started the entry flow on `/`. Next up is adding a simple “session mode” gate (guest vs user) before real auth, then hardening it once auth exists.
+We’ve implemented a minimal local-only “session mode” (guest vs user) to shape routing and UI gates. Next up is replacing this with real auth while keeping the same SessionProvider contract.

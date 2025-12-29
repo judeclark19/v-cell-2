@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-  - [ ] Root tooling scripts (dev/test/build entrypoints for web + engine)
+  - [ ] Root tooling scripts (dev/test/build entrypoints for web + engine) (in progress; currently using workspace scripts)
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -113,17 +113,19 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] App layout + routing (initial)
 - [x] Basic game screen skeleton with engine wiring + debug JSON
 - [x] Add route structure: / and /game (done)
-- [ ] Add route structure: /settings and /stats (placeholders first)
-- [ ] Landing flow: choose guest vs login (gate /stats behind login) (in progress)
+- [x] Add route structure: /settings and /stats (placeholders first)
+- [x] Landing flow: choose guest vs login (minimal session model)
+- [x] /stats renders for guests but shows a login prompt instead of redirecting
+- [x] MVP /login route + session persistence (local-only; real auth later)
+- [x] Navbar (global) with Login/Logout + route links
 
 ---
 
 ## 4) UI + Interaction (Feel)
 
-### 4.1 Rendering
-
 - [x] Move GameProvider out of page components into a dedicated module
 - [x] Provide GameProvider at app scope (shared across routes)
+- [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
 - [ ] Render tableau/free cells/foundations from engine state
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
@@ -217,4 +219,6 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Wired the web app to the engine and verified the app loads with a deterministic dev seed.
 - Split routing so the landing page (/) and gameplay (/game) are separate pages.
 - Moved the GameProvider out of the page file and hoisted it to app scope.
-- Fixed npm workspaces install and confirmed engine is importable from the Next app.
+- Added a minimal SessionProvider (guest vs user) persisted locally (no real auth yet).
+- Added MVP /login + navbar with Login/Logout links.
+- Added /stats placeholder that prompts guests to log in instead of redirecting.

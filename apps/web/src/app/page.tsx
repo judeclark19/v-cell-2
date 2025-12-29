@@ -1,28 +1,21 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/state/session/SessionProvider";
 
 export default function HomePage() {
-  return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ marginBottom: 16 }}>V-Cell</h1>
+  const router = useRouter();
+  const { isUser, isGuest, isUnset } = useSession();
 
-      <div style={{ display: "flex", gap: 12 }}>
-        <Link href="/game">
-          <button style={{ padding: "10px 16px" }}>Play as Guest</button>
-        </Link>
+  useEffect(() => {
+    if (isUser) {
+      router.replace("/game");
+    } else if (isGuest || isUnset) {
+      router.replace("/login");
+    }
+  }, [isUser, isGuest, isUnset, router]);
 
-        <button
-          style={{ padding: "10px 16px" }}
-          disabled
-          title="Login coming soon"
-        >
-          Log in
-        </button>
-      </div>
-
-      <p style={{ marginTop: 16, opacity: 0.7 }}>
-        Guest players can play and change settings, but won’t have access to
-        stats or leaderboards.
-      </p>
-    </main>
-  );
+  // Optional: tiny fallback while redirecting
+  return <main style={{ padding: 24, opacity: 0.7 }}>Redirecting…</main>;
 }
