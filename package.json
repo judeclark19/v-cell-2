@@ -13,6 +13,9 @@
     "engine:check": "npm -w @vcell/engine run check",
     "engine:test": "npm -w @vcell/engine run test",
     "engine:typecheck": "npm -w @vcell/engine run typecheck",
-    "engine:build": "npm -w @vcell/engine run build"
+    "engine:build": "npm -w @vcell/engine run build",
+    "web:check": "npm -w web run check",
+    "web:dev": "npm -w web run dev",
+    "web:build": "npm -w web run build"
   }
 }

@@ -2,10 +2,34 @@
 
 V-Cell V2 is a modern rebuild of the V-Cell solitaire game, with a focus on correctness, feel, and extensibility. The core engine is implemented as a pure, deterministic, and UI-agnostic TypeScript package, enabling robust testing and separation from the web UI.
 
+## Install (Monorepo)
+
+From the repo root:
+
+```sh
+npm install
+```
+
+This repo uses **npm workspaces** (`packages/*`, `apps/*`).
+
+Handy workspace commands (from repo root):
+
+```sh
+# Run engine tests
+npm -w @vcell/engine test
+
+# Build engine (when we add a real build output)
+npm -w @vcell/engine run build
+
+# Run the web app
+npm -w @vcell/web dev
+```
+
 ## Monorepo Layout
 
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
+- Route plan (web): / (entry), /game (play), /settings (preferences), /stats (history/leaderboards; login required)
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -26,6 +50,15 @@ cd apps/web
 npm run dev
 ```
 
+## Current Web Routes
+
+- `/` — Entry / mode selection (Guest vs Login) (in progress)
+- `/game` — Gameplay (engine wiring + debug panel currently)
+
+Planned next: `/settings`, `/stats` (logged-in only).
+
+Note: game state is provided at **app scope** via a `GameProvider`, so it can be shared across routes.
+
 ## Engine Philosophy
 
 - Pure, deterministic, and UI-agnostic core logic
@@ -34,9 +67,9 @@ npm run dev
 
 ## Guest vs Logged-in
 
-The app supports **guest play** (no account) and **logged-in play**.
+The intended product behavior is:
 
 - Guests can play the game and change local settings.
 - Stats, play history, and leaderboards require login.
 
-This keeps the core game friction-free while reserving cross-device sync and global comparisons for authenticated users.
+We’ve started the entry flow on `/`. Next up is adding a simple “session mode” gate (guest vs user) before real auth, then hardening it once auth exists.

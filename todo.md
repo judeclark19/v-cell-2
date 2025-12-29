@@ -13,7 +13,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] TypeScript node environment sanity (ensure `console` is typed via `@types/node` and tsconfig `types: ["node"]`)
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
-  - [ ] Root tooling scripts (lint/test/build hooks later)
+  - [x] Root `npm install` works (workspaces:\*)
+  - [ ] Root tooling scripts (dev/test/build entrypoints for web + engine)
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -109,10 +110,11 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 - [x] Create Next.js app (App Router)
 - [x] Install and link `@vcell/engine`
-- [ ] App layout + routing
+- [x] App layout + routing (initial)
 - [x] Basic game screen skeleton with engine wiring + debug JSON
-- [ ] Add route structure: /game, /settings, /stats (and optionally /leaderboard)
-- [ ] Add landing flow: choose guest vs login (gate /stats and /leaderboard)
+- [x] Add route structure: / and /game (done)
+- [ ] Add route structure: /settings and /stats (placeholders first)
+- [ ] Landing flow: choose guest vs login (gate /stats behind login) (in progress)
 
 ---
 
@@ -120,8 +122,10 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ### 4.1 Rendering
 
-- [ ] Move game state/provider out of `app/page.tsx` into a dedicated module (prep for multiple pages)
+- [x] Move GameProvider out of page components into a dedicated module
+- [x] Provide GameProvider at app scope (shared across routes)
 - [ ] Render tableau/free cells/foundations from engine state
+- [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
 - [ ] Theme system (CSS variables, `data-theme`)
@@ -159,6 +163,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] Email/password fallback
   - [ ] Account linking strategy (avoid split stats)
 - [ ] Guest mode support (no account required; gate stats/leaderboards behind login)
+- [ ] Add minimal session mode first (guest vs user) + route gating for /stats (before real auth)
 - [ ] User profile fields
   - [ ] theme, showTimer, knowsHowToPlay, soundOn
   - [ ] undoLimitDefault, faceDownCountDefault, allowFoundationPullbackDefault
@@ -204,3 +209,12 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Deploy (Netlify/Vercel/etc.)
 - [ ] Add “Export V1 Stats” button to V1 site
 - [ ] Add “Import V1 Stats” in V2
+
+---
+
+## Recently completed
+
+- Wired the web app to the engine and verified the app loads with a deterministic dev seed.
+- Split routing so the landing page (/) and gameplay (/game) are separate pages.
+- Moved the GameProvider out of the page file and hoisted it to app scope.
+- Fixed npm workspaces install and confirmed engine is importable from the Next app.

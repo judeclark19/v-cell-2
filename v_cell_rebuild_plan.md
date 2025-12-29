@@ -8,6 +8,12 @@ This document captures **decisions already made**, reorganized into a stable ref
 
 ---
 
+## 1A. Decision Log (Short)
+
+- 2025-12: Engine contract stabilized and tested (createGame/getLegalMoves/applyMove + stack moves + auto-flip).
+- 2025-12: Web app scaffolded with App Router routes: `/` and `/game`.
+- 2025-12: `GameProvider` moved out of page components and hoisted to app scope so state can be shared across routes.
+
 ## 2. High-Level Architecture
 
 ### 2.1 Three-Part Repo Layout
@@ -28,6 +34,17 @@ This document captures **decisions already made**, reorganized into a stable ref
 
 - Shared components (Card, Pile, Modal)
 - Design tokens (colors, spacing, typography)
+
+### 2.2 App Routes (Web)
+
+We have the first two routes in place, and the rest are planned:
+
+- `/` — Entry / mode selection (Guest vs Login) (in progress)
+- `/game` — Gameplay (engine wired; UI still a debug panel)
+- `/settings` — Game + user settings (next)
+- `/stats` — Play history + leaderboards (logged-in only) (later)
+
+The engine remains UI-agnostic; routing and access control live in the web app.
 
 ---
 
@@ -269,12 +286,29 @@ Implementation note (engine):
 
 ### 12.4 Guest vs Logged-in Access
 
-On first arrival, the user chooses:
+On first arrival (`/`), the user chooses:
 
 - **Play as guest**: full gameplay + local settings only.
 - **Log in**: unlocks stats, play history, and leaderboards (and later, cross-device sync).
 
-Guests should not see global leaderboards or account-based history screens. If a guest tries to navigate to those areas, the UI should prompt login.
+Access rules:
+
+- Guests can access `/game` and `/settings`.
+- Guests cannot access `/stats`.
+  - If a guest navigates to `/stats`, redirect to `/` (or show an inline login prompt).
+- Logged-in users can access all routes.
+
+Note: we can implement this initially as simple client-side gating + redirect, then harden it with server-aware route protection once auth exists.
+
+Implementation note:
+
+- Model this as an app-level `sessionMode: "guest" | "user"` (plus `uid` when logged in).
+- Persist the mode locally so a refresh doesn’t forget the choice.
+
+UI note:
+
+- Keep **engine state** (GameState) global via `GameProvider`.
+- Keep **session/auth state** separate (e.g. `SessionProvider`) so it can gate routes like `/stats` without entangling the engine.
 
 ---
 
@@ -810,8 +844,10 @@ export function getMovableRunLengths(state: GameState): number[]; // UI highligh
 
 ## 17. Next Steps
 
-1. Define hint strategy (Phase 1 heuristics → optional lookahead/solver later)
-2. Define magnetic drag/drop feel (snap radius, target priority, stack pickup UX)
-3. Specify auto-send rules (double-click preference order; foundation slot selection)
-4. Implement engine types + pure functions in `packages/engine/` with unit tests
-5. Wire the V1 import flow to write into the chosen V2 targets
+1. Web routes: add `/settings` and `/stats` pages (placeholders first).
+2. Add a minimal session model: `sessionMode: "guest" | "user"` persisted locally + route gating for `/stats`.
+3. Start real gameplay rendering: render tableau/freecells/foundations from engine state.
+4. Define UI state boundaries: what stays global vs per-page (drag state, modals, animations).
+5. Drag/drop + highlighting + double-click auto-send to foundation.
+6. Hint strategy (Phase 1 heuristics → optional lookahead/solver later).
+7. V1 import: finalize `sanitizeV1Export()` location + wire import UI flow.
