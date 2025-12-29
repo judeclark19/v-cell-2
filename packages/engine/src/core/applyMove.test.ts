@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyMove } from "./applyMove";
+import { applyMove, EngineError } from "./applyMove";
 import type { Card } from "../types/card";
 import type { GameState } from "../types/state";
 import type { Rules } from "../types/rules";
@@ -213,4 +213,22 @@ describe("applyMove", () => {
     // Destination stack order should be preserved
     expect(next.tableau[1].map((tc) => tc.card.id)).toEqual(["4H", "3C", "2H"]);
   });
+});
+
+it("throws EngineError with code ILLEGAL_MOVE for illegal moves", () => {
+  const s = emptyState({
+    freeCells: [AS, null, null, null, null]
+  });
+
+  try {
+    applyMove(s, {
+      kind: "single",
+      from: { type: "freecell", index: 0 },
+      to: { type: "tableau", index: 0 } // illegal (only King can go to empty tableau)
+    });
+    throw new Error("expected applyMove to throw");
+  } catch (err) {
+    expect(err).toBeInstanceOf(EngineError);
+    expect((err as EngineError).code).toBe("ILLEGAL_MOVE");
+  }
 });

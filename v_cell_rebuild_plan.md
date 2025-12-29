@@ -38,6 +38,8 @@ The engine exposes a small, stable API consumed by the UI:
 - `createGame(seed, rules) → GameState`
 - `getLegalMoves(state) → Move[]`
 - `applyMove(state, move) → GameState`
+- `areAllCardsExposed(state) → boolean`
+- `getAutoCompleteMoves(state) → Move[]`
 - `isWin(state) → boolean`
 
 Everything below defines `GameState`, `Move`, and `Rules`.
@@ -171,6 +173,7 @@ Implementation note (engine):
 - Tableau arrays are **TOP→BOTTOM**; the exposed card is the **last** element.
 - `getMovableRunLength(column)` counts the contiguous _alternating-color, descending-rank_ run ending at the exposed card, moving upward.
 - Stack moves (`tableauStack`) are only allowed when the moved slice is internally valid and contains **no face-down** cards.
+- Note: `getMovableRunLengths` is an internal/UI-helper and is not part of the public engine contract.
 
 ---
 
@@ -785,9 +788,12 @@ Notes:
 ### 16.7 Derived helpers (engine)
 
 ```ts
+// Public helpers
 export function areAllCardsExposed(state: GameState): boolean;
 export function getAutoCompleteMoves(state: GameState): Move[];
 export function isWin(state: GameState): boolean; // true when all cards exposed
+
+// Internal/UI helpers (not exported from the engine public index)
 export function getMovableRunLengths(state: GameState): number[]; // UI highlight for grabbable run
 ```
 

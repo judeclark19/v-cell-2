@@ -2,6 +2,8 @@
 
 This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with a pure TS engine, a web app UI, offline-first support, and account-based stat sync. We’ll break items down further as we reach them.
 
+**Code phrase:** When I say **“update documentation”**, please review and propose edits to `todo.md`, `v_cell_rebuild_plan.md`, and `README.md` based on current repo state.
+
 ---
 
 ## 0) Repo + Tooling Baseline
@@ -21,7 +23,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ## 1) Planning Doc (Source of Truth)
 
-- [ ] Keep `v_cell_rebuild_plan.md` updated as decisions get locked
+- [x] Keep `v_cell_rebuild_plan.md` updated as decisions get locked
 - [ ] Add any remaining rule clarifications as they arise
 - [ ] Keep a “Decision Log” section (date + what changed) (optional but nice)
 
@@ -68,10 +70,17 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] auto-flip when face-down becomes exposed
   - [x] foundation suit set/unset rules
 - [x] Derived helpers
-  - [x] `getMovableRunLengths(state)` (UI highlight for grabbable run)
+  - [x] `getMovableRunLengths(state)` (internal helper; not exported in public engine contract)
   - [x] `areAllCardsExposed(state)`
   - [x] `isWin(state)` (win when all exposed)
   - [x] `getAutoCompleteMoves(state)` (safe deterministic sequence)
+- [x] **Tableau stack legality, stack slicing, and auto-flip behavior are fully implemented and verified by tests.**
+
+### 2.5 Engine Guardrails (Dev Assertions)
+
+- [x] `applyMove` asserts the provided move is legal (via `getLegalMoves`) in dev/test
+- [x] `applyMove` validates moved tableau stacks are internally valid (alternating colors + descending ranks, no face-down cards)
+- [ ] Confirm error messages are stable enough for debugging (not a public API guarantee)
 
 ### 2.4 Engine Test Strategy
 
@@ -92,6 +101,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] tableauStack auto-flip when newly exposed
   - [x] auto-flip behavior
   - [x] move results stable and predictable
+- [x] **Stack-move legality and run semantics are now covered by regression tests.**
 
 ---
 

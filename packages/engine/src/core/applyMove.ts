@@ -2,7 +2,23 @@ import type { Card } from "../types/card";
 import type { GameState, TableauCard } from "../types/state";
 import type { Move } from "../types/move";
 import type { PileRef, TableauIndex } from "../types/piles";
+
 import { getLegalMoves } from "./getLegalMoves";
+
+export type EngineErrorCode =
+  | "ILLEGAL_MOVE"
+  | "INVALID_STATE"
+  | "RULE_VIOLATION";
+
+export class EngineError extends Error {
+  readonly code: EngineErrorCode;
+
+  constructor(code: EngineErrorCode, message: string) {
+    super(message);
+    this.name = "EngineError";
+    this.code = code;
+  }
+}
 
 function isAce(c: Card) {
   return c.rank === 1;
@@ -91,8 +107,99 @@ function assertLegalMove(state: GameState, move: Move): void {
   if (!shouldAssertLegality()) return;
   const legal = getLegalMoves(state);
   if (!legal.some((m) => sameMove(m, move))) {
-    throw new Error("Invalid move: not legal per getLegalMoves");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: not legal per getLegalMoves"
+    );
   }
+}
+
+function assertStateInvariants(s: GameState): void {
+  // Shape checks
+  if (s.tableau.length !== 7) {
+    throw new EngineError(
+      "INVALID_STATE",
+      "Invalid state: tableau must have 7 columns"
+    );
+  }
+  if (s.freeCells.length !== 5) {
+    throw new EngineError(
+      "INVALID_STATE",
+      "Invalid state: freeCells must have length 5"
+    );
+  }
+  if (s.foundations.length !== 4) {
+    throw new EngineError(
+      "INVALID_STATE",
+      "Invalid state: foundations must have length 4"
+    );
+  }
+
+  // After any move, the exposed (bottom) tableau card should never be faceDown.
+  // (We auto-flip after moves, so this should always hold.)
+  for (let i = 0 as TableauIndex; i < 7; i = (i + 1) as TableauIndex) {
+    const col = s.tableau[i];
+    if (col.length === 0) continue;
+    const exposed = col[col.length - 1];
+    if (exposed.faceDown) {
+      throw new EngineError(
+        "INVALID_STATE",
+        `Invalid state: tableau column ${i} has a face-down exposed card`
+      );
+    }
+  }
+
+  // Foundations: suit metadata must match card contents.
+  for (let f = 0; f < 4; f++) {
+    const slot = s.foundations[f];
+    if (slot.cards.length === 0) {
+      if (slot.suit !== null) {
+        throw new EngineError(
+          "INVALID_STATE",
+          `Invalid state: foundation ${f} has suit set but no cards`
+        );
+      }
+      continue;
+    }
+
+    // Non-empty: suit must be set and match all cards.
+    if (slot.suit === null) {
+      throw new EngineError(
+        "INVALID_STATE",
+        `Invalid state: foundation ${f} has cards but suit is null`
+      );
+    }
+    for (let i = 0; i < slot.cards.length; i++) {
+      const c = slot.cards[i];
+      if (c.suit !== slot.suit) {
+        throw new EngineError(
+          "INVALID_STATE",
+          `Invalid state: foundation ${f} contains mismatched suit cards`
+        );
+      }
+      if (i === 0) {
+        if (c.rank !== 1) {
+          throw new EngineError(
+            "INVALID_STATE",
+            `Invalid state: foundation ${f} first card must be an Ace`
+          );
+        }
+      } else {
+        const prev = slot.cards[i - 1];
+        if (c.rank !== prev.rank + 1) {
+          throw new EngineError(
+            "INVALID_STATE",
+            `Invalid state: foundation ${f} ranks are not ascending`
+          );
+        }
+      }
+    }
+  }
+}
+
+function assertInvariantsIfDev(s: GameState): void {
+  if (!shouldAssertLegality()) return;
+  assertStateInvariants(s);
 }
 
 // function topTableauCard(state: GameState, i: TableauIndex): Card | null {
@@ -112,31 +219,45 @@ function removeSingleFrom(from: PileRef, s: GameState): Card {
   if (from.type === "tableau") {
     const col = s.tableau[from.index];
     if (!col || col.length === 0)
-      throw new Error("Invalid move: empty tableau");
+      throw new EngineError("ILLEGAL_MOVE", "Invalid move: empty tableau");
     if (col[col.length - 1].faceDown)
-      throw new Error("Invalid move: top tableau card is face-down");
+      throw new EngineError(
+        "ILLEGAL_MOVE",
+        "Invalid move: top tableau card is face-down"
+      );
     const removed = col.pop();
     if (!removed)
-      throw new Error("Invalid move: could not remove tableau card");
+      throw new EngineError(
+        "ILLEGAL_MOVE",
+        "Invalid move: could not remove tableau card"
+      );
     return removed.card;
   }
 
   if (from.type === "freecell") {
     const c = s.freeCells[from.index];
-    if (!c) throw new Error("Invalid move: empty freecell");
+    if (!c)
+      throw new EngineError("ILLEGAL_MOVE", "Invalid move: empty freecell");
     s.freeCells[from.index] = null;
     return c;
   }
 
   // foundation
   if (!s.rules.allowFoundationPullback) {
-    throw new Error("Invalid move: foundation pullback disabled");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: foundation pullback disabled"
+    );
   }
   const slot = s.foundations[from.index];
   if (!slot || slot.cards.length === 0)
-    throw new Error("Invalid move: empty foundation");
+    throw new EngineError("ILLEGAL_MOVE", "Invalid move: empty foundation");
   const c = slot.cards.pop();
-  if (!c) throw new Error("Invalid move: could not pop foundation card");
+  if (!c)
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: could not pop foundation card"
+    );
   if (slot.cards.length === 0) slot.suit = null; // unset when emptied
   return c;
 }
@@ -144,7 +265,7 @@ function removeSingleFrom(from: PileRef, s: GameState): Card {
 function placeSingleTo(to: PileRef, card: Card, s: GameState): void {
   if (to.type === "freecell") {
     if (s.freeCells[to.index])
-      throw new Error("Invalid move: freecell occupied");
+      throw new EngineError("ILLEGAL_MOVE", "Invalid move: freecell occupied");
     s.freeCells[to.index] = card;
     return;
   }
@@ -152,7 +273,10 @@ function placeSingleTo(to: PileRef, card: Card, s: GameState): void {
   if (to.type === "foundation") {
     const slot = s.foundations[to.index];
     if (!canPlaceOnFoundation(card, slot))
-      throw new Error("Invalid move: cannot place on foundation");
+      throw new EngineError(
+        "ILLEGAL_MOVE",
+        "Invalid move: cannot place on foundation"
+      );
     if (slot.cards.length === 0) slot.suit = card.suit; // lock suit on first Ace
     slot.cards.push(card);
     return;
@@ -164,20 +288,27 @@ function placeSingleTo(to: PileRef, card: Card, s: GameState): void {
   const topTc = isEmpty ? null : col[col.length - 1];
   const targetTop = isEmpty ? null : topTc!.faceDown ? null : topTc!.card;
   if (!isEmpty && targetTop === null)
-    throw new Error("Invalid move: target tableau blocked by face-down top");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: target tableau blocked by face-down top"
+    );
 
   if (!canPlaceOnTableau(card, targetTop))
-    throw new Error("Invalid move: cannot place on tableau");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: cannot place on tableau"
+    );
   col.push({ card, faceDown: false });
 }
 
 function isValidStack(stack: TableauCard[]): boolean {
-  // All must be face-up and internally valid: ascending + alternating color
-  for (let i = stack.length - 1; i > 0; i--) {
-    if (stack[i].faceDown) return false;
-    if (i === 0) continue;
-    const upper = stack[i - 1].card; // closer to top
-    const below = stack[i].card; // closer to bottom
+  // All must be face-up and internally valid: descending ranks + alternating colors (top -> bottom)
+  for (const tc of stack) {
+    if (tc.faceDown) return false;
+  }
+  for (let i = 0; i < stack.length - 1; i++) {
+    const upper = stack[i].card; // closer to top
+    const below = stack[i + 1].card; // closer to bottom
     if (upper.rank !== below.rank + 1) return false;
     if (upper.color === below.color) return false;
   }
@@ -191,7 +322,10 @@ export function applyMove(state: GameState, move: Move): GameState {
   if (move.kind === "single") {
     // Prevent foundation-to-foundation transfers via pullback (not a supported rule).
     if (move.from.type === "foundation" && move.to.type === "foundation") {
-      throw new Error("Invalid move: foundation-to-foundation is not allowed");
+      throw new EngineError(
+        "ILLEGAL_MOVE",
+        "Invalid move: foundation-to-foundation is not allowed"
+      );
     }
     const card = removeSingleFrom(move.from, s);
     placeSingleTo(move.to, card, s);
@@ -200,6 +334,7 @@ export function applyMove(state: GameState, move: Move): GameState {
     for (let i = 0 as TableauIndex; i < 7; i = (i + 1) as TableauIndex) {
       flipTopIfNeeded(s.tableau[i]);
     }
+    assertInvariantsIfDev(s);
     return s;
   }
 
@@ -208,22 +343,29 @@ export function applyMove(state: GameState, move: Move): GameState {
   const toIdx = move.to.index;
 
   if (fromIdx === toIdx)
-    throw new Error("Invalid move: same source/destination tableau");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: same source/destination tableau"
+    );
 
   const fromCol = s.tableau[fromIdx];
   const toCol = s.tableau[toIdx];
 
   if (!fromCol || fromCol.length === 0)
-    throw new Error("Invalid move: empty tableau source");
+    throw new EngineError("ILLEGAL_MOVE", "Invalid move: empty tableau source");
   if (move.startIndex < 0 || move.startIndex >= fromCol.length) {
-    throw new Error("Invalid move: startIndex out of range");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: startIndex out of range"
+    );
   }
 
   const stack = fromCol.slice(move.startIndex);
   const remaining = fromCol.slice(0, move.startIndex);
 
   if (!isValidStack(stack))
-    throw new Error(
+    throw new EngineError(
+      "ILLEGAL_MOVE",
       "Invalid move: stack not internally valid or contains face-down cards"
     );
 
@@ -239,11 +381,17 @@ export function applyMove(state: GameState, move: Move): GameState {
     : toCol[toCol.length - 1].card;
 
   if (!targetIsEmpty && targetTopCard === null) {
-    throw new Error("Invalid move: target tableau blocked by face-down top");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: target tableau blocked by face-down top"
+    );
   }
 
   if (!canPlaceOnTableau(topCard, targetTopCard)) {
-    throw new Error("Invalid move: cannot place stack on tableau");
+    throw new EngineError(
+      "ILLEGAL_MOVE",
+      "Invalid move: cannot place stack on tableau"
+    );
   }
 
   // Perform move: place the stack on top of destination, preserving order
@@ -254,6 +402,6 @@ export function applyMove(state: GameState, move: Move): GameState {
   for (let i = 0 as TableauIndex; i < 7; i = (i + 1) as TableauIndex) {
     flipTopIfNeeded(s.tableau[i]);
   }
-
+  assertInvariantsIfDev(s);
   return s;
 }
