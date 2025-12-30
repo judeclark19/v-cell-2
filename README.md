@@ -23,6 +23,12 @@ npm -w @vcell/engine run build
 
 # Run the web app
 npm -w @vcell/web dev
+
+# Typecheck / lint (if scripts exist)
+npm -w @vcell/web run check
+
+# Run everything from root
+npm run check
 ```
 
 ## Monorepo Layout
@@ -30,6 +36,7 @@ npm -w @vcell/web dev
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history/leaderboards; guests see a login prompt)
+- UI work-in-progress: basic board rendering + scalable card sizing; drag/drop and keyboard controls still pending
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -52,7 +59,7 @@ npm run dev
 
 ## Current Web Routes
 
-- "/" — Entry (redirects to /login if unset; or to /game once session is chosen)
+- "/" — Entry (if session unset: entry flow; otherwise redirects to /game)
 - "/login" — MVP login (sets session mode; real auth later)
 - "/game" — Gameplay (engine wiring + debug panel currently)
 - "/settings" — Placeholder (next)
@@ -76,3 +83,7 @@ The intended product behavior is:
 - Stats, play history, and leaderboards require login.
 
 We’ve implemented a minimal local-only “session mode” (guest vs user) to shape routing and UI gates. Next up is replacing this with real auth while keeping the same SessionProvider contract.
+
+## Themes (Early)
+
+Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection will ultimately be driven by CSS variables + a root data-theme attribute.

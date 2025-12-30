@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) (in progress; currently using workspace scripts)
+  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; right now we run via workspace scripts
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -118,6 +118,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] /stats renders for guests but shows a login prompt instead of redirecting
 - [x] MVP /login route + session persistence (local-only; real auth later)
 - [x] Navbar (global) with Login/Logout + route links
+- [x] Navbar responsive behavior (mobile open/close, active link styling, hamburger morph)
+- [x] Hydration-safe SessionProvider (no SSR localStorage reads; client-only hydrate flag)
 
 ---
 
@@ -126,13 +128,16 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Move GameProvider out of page components into a dedicated module
 - [x] Provide GameProvider at app scope (shared across routes)
 - [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
-- [ ] Render tableau/free cells/foundations from engine state
+- [ ] Render tableau/free cells/foundations from engine state (in progress — basic rendering + scaling underway)
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
-  - [ ] Theme system (CSS variables, `data-theme`)
+  - [x] Aspect-ratio constraints for board container (target 3:4; clamp max width/height)
+  - [x] Theme system (CSS variables, `data-theme`)
+  - [x] Theme system foundation (CSS variables, semantic tokens, `data-theme`; Poker default; Times Light/Dark next)
   - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
   - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
+  - [ ] Keyboard play is a first-class requirement (design focus/move-intent model now so we don’t retrofit later)
 
 ### 4.2 Input
 
@@ -153,7 +158,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ## 5) Offline Support (PWA)
 
-- [ ] Fix dev 404 for /sw.js (confirm whether we want PWA now or later; avoid noisy logs during dev)
+- [ ] Fix dev 404 for /sw.js (either add a stub SW or disable any SW registration until we actually do PWA)
 - [ ] Add PWA support (service worker + caching strategy)
 - [ ] Confirm: app loads offline, play works offline
 - [ ] Store queued stats locally while offline
@@ -210,9 +215,11 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 ## 9A) Web App Polish (Early)
 
 - [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
-- [ ] Theme switching foundation (Poker default; Times Light / Times Dark later)
-- [ ] Hydration safety pass: ensure session/localStorage reads don’t cause SSR mismatches
+- [ ] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
+- [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts
+- [ ] Store background assets locally (move remote background image into repo and reference via Next public/ or import)
+- [ ] Eliminate redundant color vars; introduce semantic tokens (e.g., Poker/default alias; Times Dark aligns with OS dark)
 
 ## 10) Release Checklist
 

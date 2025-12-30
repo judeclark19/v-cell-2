@@ -15,6 +15,8 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: `GameProvider` moved out of page components and hoisted to app scope so state can be shared across routes.
 - 2025-12: Added minimal SessionProvider (guest vs user) persisted locally + MVP /login route.
 - 2025-12: Added global navbar; /stats now renders for guests but prompts login instead of redirecting.
+- 2025-12: Added responsive navbar (hamburger, active route styling) and basic theme foundation (Poker default).
+- 2025-12: Implemented hydration-safe SessionProvider (client-only restore, avoids SSR/localStorage mismatches).
 
 ## 2. High-Level Architecture
 
@@ -41,7 +43,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 
 We have the first two routes in place, and the rest are planned:
 
-- "/" — Entry (redirects to /login if session unset; otherwise to /game)
+- "/" — Entry (if session unset: show entry choices or redirect to /login; if set: redirect to /game)
 - "/login" — MVP login (sets guest vs user; real auth later)
 - "/game" — Gameplay (engine wired; UI still a debug panel)
 - "/settings" — Game + user settings (placeholder)
@@ -206,6 +208,8 @@ Implementation note (engine):
 - Stack moves (`tableauStack`) are only allowed when the moved slice is internally valid and contains **no face-down** cards.
 - Note: `getMovableRunLengths` is an internal/UI-helper and is not part of the public engine contract.
 
+Treat keyboard play as a core acceptance criterion for the web UI, not a later polish item.
+
 ---
 
 ## 9. Win, Auto-Complete, and Celebration
@@ -310,6 +314,7 @@ Access behavior (MVP):
 - Guests can access "/game" and "/settings".
 - Guests can visit "/stats", but the page renders a friendly prompt to log in (no redirect).
 - Logged-in users can access all routes.
+- MVP rule: do not redirect guests away from /stats; render the page shell with a login prompt instead.
 
 Implementation note:
 
