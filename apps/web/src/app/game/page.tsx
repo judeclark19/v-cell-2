@@ -7,9 +7,7 @@ function DebugPanel() {
   console.log("Current game state:", state);
 
   return (
-    <div
-      style={{ padding: 16, fontFamily: "var(--font-geist-mono), monospace" }}
-    >
+    <div style={{ fontFamily: "var(--font-geist-mono), monospace" }}>
       <h1 style={{ marginBottom: 8 }}>V-Cell V2 (web) — Engine wiring ✅</h1>
       <p style={{ marginBottom: 12 }}>
         Seed: <strong>{state?.seed ?? "(unknown)"}</strong>

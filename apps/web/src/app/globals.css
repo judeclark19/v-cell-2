@@ -1,12 +1,73 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base tokens (default theme: Poker) */
+  --background: #08140c;
+  --foreground: #e9f6ee;
+
+  --surface: #0f2216;
+  --surface-hover: #16301f;
+  --border: rgba(233, 246, 238, 0.18);
+
+  --accent: #d4af37;
+  --accent-contrast: #08140c;
+
+  --font-ui: Arial, Helvetica, sans-serif;
+
+  /* Layout-ish tokens */
+  --radius: 10px;
+  --focus-ring: 0 0 0 3px rgba(212, 175, 55, 0.35);
 }
 
+/* Theme: Times Light */
+:root[data-theme="times-light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  --surface: #f6f6f6;
+  --surface-hover: #ececec;
+  --border: rgba(0, 0, 0, 0.12);
+
+  --accent: #1f6feb;
+  --accent-contrast: #ffffff;
+}
+
+/* Theme: Times Dark */
+:root[data-theme="times-dark"] {
+  --background: #0b0b0d;
+  --foreground: #f1f1f1;
+
+  --surface: #16161a;
+  --surface-hover: #1f1f24;
+  --border: rgba(255, 255, 255, 0.14);
+
+  --accent: #79b8ff;
+  --accent-contrast: #0b0b0d;
+}
+
+/* Theme: Poker (named theme; matches defaults) */
+:root[data-theme="poker"] {
+  --background: #08140c;
+  --foreground: #e9f6ee;
+
+  --surface: #0f2216;
+  --surface-hover: #16301f;
+  --border: rgba(233, 246, 238, 0.18);
+
+  --accent: #d4af37;
+  --accent-contrast: #08140c;
+}
+
+/* Fallback: if user hasn't picked a theme, follow OS dark preference */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --surface: #141414;
+    --surface-hover: #1d1d1d;
+    --border: rgba(255, 255, 255, 0.14);
+
+    --accent: #79b8ff;
+    --accent-contrast: #0a0a0a;
   }
 }
 
@@ -17,9 +78,10 @@ body {
 }
 
 body {
+  min-height: 100vh;
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -39,4 +101,11 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+.max-width-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: content-box;
 }

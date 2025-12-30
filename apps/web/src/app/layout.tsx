@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <NavBar />
-          {children}
+          <div className="max-width-container">{children}</div>
         </Providers>
       </body>
     </html>

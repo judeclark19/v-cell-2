@@ -1,15 +1,14 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { useSession } from "@/state/session/SessionProvider";
 
 export default function StatsPage() {
-  const { isUser, setUser } = useSession();
+  const { isUser } = useSession();
 
   if (!isUser) {
     return (
-      <div style={{ padding: 16 }}>
+      <div>
         <h1>Stats</h1>
         <p>
           Stats and leaderboards are tied to an account so they can sync across

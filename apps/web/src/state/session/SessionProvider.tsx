@@ -82,7 +82,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const restored = safeParse(window.localStorage.getItem(STORAGE_KEY));
     if (restored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSession(restored);
     }
   }, []);

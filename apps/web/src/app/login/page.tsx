@@ -26,7 +26,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ padding: 16, maxWidth: 560 }}>
+    <div>
       <h1 style={{ marginBottom: 8 }}>Log in</h1>
       <p style={{ marginBottom: 16 }}>
         Guests can play and change settings. Logging in unlocks stats +
