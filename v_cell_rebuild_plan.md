@@ -188,6 +188,17 @@ Additional UX behavior (confirmed):
   - If multiple foundation slots are valid targets (e.g., placing an Ace into any empty slot), choose deterministically (e.g., lowest slot index).
 - A face-up card can still be inactive if there is an invalid break above the exposed card. The grabbable stack is the contiguous valid run from the exposed card upward.
 
+### 8.1 Accessibility (Keyboard Play)
+
+V-Cell V2 should be fully playable without a mouse:
+
+- Tab/Shift+Tab navigates between piles and actionable controls
+- Arrow keys navigate within a pile (e.g., move focus up/down a tableau)
+- Enter/Space picks up a card/stack; Enter/Space drops on a valid target
+- Clear focus styles and ARIA labels for cards/piles
+
+This is a product requirement (not a nice-to-have) and should be considered during UI architecture (focus management + move intent model).
+
 Implementation note (engine):
 
 - Tableau arrays are **TOP→BOTTOM**; the exposed card is the **last** element.

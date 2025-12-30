@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-  - [ ] Root tooling scripts (dev/test/build entrypoints for web + engine) (in progress; currently using workspace scripts)
+  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) (in progress; currently using workspace scripts)
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -130,7 +130,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
-- [ ] Theme system (CSS variables, `data-theme`)
+  - [ ] Theme system (CSS variables, `data-theme`)
+  - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
+  - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
 
 ### 4.2 Input
 
@@ -145,11 +147,13 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Move animations (drop, slide, lift)
 - [ ] Auto-complete animation sequence
 - [ ] Win celebration (confetti / flourish)
+- [x] Mobile nav polish: hamburger icon morph (≡ → ✕) + smooth open/close transition
 
 ---
 
 ## 5) Offline Support (PWA)
 
+- [ ] Fix dev 404 for /sw.js (confirm whether we want PWA now or later; avoid noisy logs during dev)
 - [ ] Add PWA support (service worker + caching strategy)
 - [ ] Confirm: app loads offline, play works offline
 - [ ] Store queued stats locally while offline
@@ -202,6 +206,13 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Winnable seed pool strategy (beaten seeds first)
 
 ---
+
+## 9A) Web App Polish (Early)
+
+- [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
+- [ ] Theme switching foundation (Poker default; Times Light / Times Dark later)
+- [ ] Hydration safety pass: ensure session/localStorage reads don’t cause SSR mismatches
+- [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts
 
 ## 10) Release Checklist
 

@@ -29,7 +29,7 @@ npm -w @vcell/web dev
 
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
-- Route plan (web): / (entry), /game (play), /settings (preferences), /stats (history/leaderboards; prompts login for guests)
+- Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history/leaderboards; guests see a login prompt)
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -65,6 +65,8 @@ Note: game state is provided at **app scope** via a `GameProvider`, so it can be
 - Pure, deterministic, and UI-agnostic core logic
 - All game rules and state transitions are handled in the engine package
 - The engine can be tested and used independently of any frontend
+
+Accessibility note: the web UI is planned to support full keyboard play (no-mouse gameplay), so UI state and move intent should be modeled in a way that supports both drag/drop and keyboard interactions.
 
 ## Guest vs Logged-in
 
