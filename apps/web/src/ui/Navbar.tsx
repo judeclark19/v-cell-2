@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "@/state/session/SessionProvider";
@@ -20,21 +20,17 @@ export function NavBar() {
     pathname === href || pathname.startsWith(href + "/");
 
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // Close the menu after navigation (mobile UX)
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
+  const closeMenu = () => setMenuOpen(false);
 
   const handleLogout = () => {
     logout();
-    setMenuOpen(false);
+    closeMenu();
     router.push("/login");
   };
 
   // Stable initial render to avoid SSR/CSR mismatch.
   const AuthControl = !hydrated ? (
-    <Link className="navbar__link" href="/login">
+    <Link className="navbar__link" href="/login" onClick={closeMenu}>
       Log in
     </Link>
   ) : isUser ? (
@@ -42,7 +38,7 @@ export function NavBar() {
       Log out
     </button>
   ) : (
-    <Link className="navbar__link" href="/login">
+    <Link className="navbar__link" href="/login" onClick={closeMenu}>
       Log in
     </Link>
   );
@@ -51,7 +47,7 @@ export function NavBar() {
     <nav className="navbar" aria-label="Primary">
       <div className="max-width-container">
         <div className="navbar__bar">
-          <Link className="navbar__brand" href="/game">
+          <Link className="navbar__brand" href="/game" onClick={closeMenu}>
             V-Cell
           </Link>
 
@@ -80,6 +76,7 @@ export function NavBar() {
                     isActive(href) ? "navbar__link--active" : ""
                   }`}
                   href={href}
+                  onClick={closeMenu}
                 >
                   {label}
                 </Link>

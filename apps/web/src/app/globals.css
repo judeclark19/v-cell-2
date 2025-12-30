@@ -1,73 +1,113 @@
 :root {
-  /* Base tokens (default theme: Poker) */
-  --background: #08140c;
-  --foreground: #e9f6ee;
+  /* ------------------------------
+     Theme palettes (do not use directly)
+     ------------------------------ */
+  /* Poker */
+  --theme-poker-background: #35654d;
+  --theme-poker-foreground: #e9f6ee;
+  --theme-poker-surface: #0f2216;
+  --theme-poker-surface-hover: #16301f;
+  --theme-poker-border: rgba(233, 246, 238, 0.18);
+  --theme-poker-accent: #d4af37;
+  --theme-poker-accent-contrast: #08140c;
 
-  --surface: #0f2216;
-  --surface-hover: #16301f;
-  --border: rgba(233, 246, 238, 0.18);
+  /* Times Light */
+  --theme-times-light-background: #ffffff;
 
-  --accent: #d4af37;
-  --accent-contrast: #08140c;
+  --theme-times-light-foreground: #171717;
+  --theme-times-light-surface: #f6f6f6;
+  --theme-times-light-surface-hover: #ececec;
+  --theme-times-light-border: rgba(0, 0, 0, 0.12);
+  --theme-times-light-accent: #1f6feb;
+  --theme-times-light-accent-contrast: #ffffff;
+
+  /* Times Dark */
+  --theme-times-dark-background: #0b0b0d;
+  --theme-times-dark-foreground: #f1f1f1;
+  --theme-times-dark-surface: #16161a;
+  --theme-times-dark-surface-hover: #1f1f24;
+  --theme-times-dark-border: rgba(255, 255, 255, 0.14);
+  --theme-times-dark-accent: #79b8ff;
+  --theme-times-dark-accent-contrast: #0b0b0d;
+
+  /* ------------------------------
+     Active tokens (use these everywhere)
+     Default theme: Poker
+     ------------------------------ */
+  --background: var(--theme-poker-background);
+  --foreground: var(--theme-poker-foreground);
+
+  --surface: var(--theme-poker-surface);
+  --surface-hover: var(--theme-poker-surface-hover);
+  --border: var(--theme-poker-border);
+
+  --accent: var(--theme-poker-accent);
+  --accent-contrast: var(--theme-poker-accent-contrast);
 
   --font-ui: Arial, Helvetica, sans-serif;
 
   /* Layout-ish tokens */
-  --radius: 10px;
+  --radius: 8px;
   --focus-ring: 0 0 0 3px rgba(212, 175, 55, 0.35);
+
+  /* Card sizing (base, scales with board) */
+  --card-width: 96px;
+  --card-height: 134px;
+  --card-radius: 8px;
+  --card-gap: 12px;
 }
 
 /* Theme: Times Light */
 :root[data-theme="times-light"] {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: var(--theme-times-light-background);
+  --foreground: var(--theme-times-light-foreground);
 
-  --surface: #f6f6f6;
-  --surface-hover: #ececec;
-  --border: rgba(0, 0, 0, 0.12);
+  --surface: var(--theme-times-light-surface);
+  --surface-hover: var(--theme-times-light-surface-hover);
+  --border: var(--theme-times-light-border);
 
-  --accent: #1f6feb;
-  --accent-contrast: #ffffff;
+  --accent: var(--theme-times-light-accent);
+  --accent-contrast: var(--theme-times-light-accent-contrast);
 }
 
 /* Theme: Times Dark */
 :root[data-theme="times-dark"] {
-  --background: #0b0b0d;
-  --foreground: #f1f1f1;
+  --background: var(--theme-times-dark-background);
+  --foreground: var(--theme-times-dark-foreground);
 
-  --surface: #16161a;
-  --surface-hover: #1f1f24;
-  --border: rgba(255, 255, 255, 0.14);
+  --surface: var(--theme-times-dark-surface);
+  --surface-hover: var(--theme-times-dark-surface-hover);
+  --border: var(--theme-times-dark-border);
 
-  --accent: #79b8ff;
-  --accent-contrast: #0b0b0d;
+  --accent: var(--theme-times-dark-accent);
+  --accent-contrast: var(--theme-times-dark-accent-contrast);
 }
 
 /* Theme: Poker (named theme; matches defaults) */
 :root[data-theme="poker"] {
-  --background: #08140c;
-  --foreground: #e9f6ee;
+  --background: var(--theme-poker-background);
+  --foreground: var(--theme-poker-foreground);
 
-  --surface: #0f2216;
-  --surface-hover: #16301f;
-  --border: rgba(233, 246, 238, 0.18);
+  --surface: var(--theme-poker-surface);
+  --surface-hover: var(--theme-poker-surface-hover);
+  --border: var(--theme-poker-border);
 
-  --accent: #d4af37;
-  --accent-contrast: #08140c;
+  --accent: var(--theme-poker-accent);
+  --accent-contrast: var(--theme-poker-accent-contrast);
 }
 
-/* Fallback: if user hasn't picked a theme, follow OS dark preference */
+/* OS dark mode fallback → Times Dark theme */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--theme-times-dark-background);
+    --foreground: var(--theme-times-dark-foreground);
 
-    --surface: #141414;
-    --surface-hover: #1d1d1d;
-    --border: rgba(255, 255, 255, 0.14);
+    --surface: var(--theme-times-dark-surface);
+    --surface-hover: var(--theme-times-dark-surface-hover);
+    --border: var(--theme-times-dark-border);
 
-    --accent: #79b8ff;
-    --accent-contrast: #0a0a0a;
+    --accent: var(--theme-times-dark-accent);
+    --accent-contrast: var(--theme-times-dark-accent-contrast);
   }
 }
 
@@ -108,4 +148,10 @@ a {
   margin: 0 auto;
   padding: 16px;
   box-sizing: content-box;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --card-gap: 8px;
+  }
 }

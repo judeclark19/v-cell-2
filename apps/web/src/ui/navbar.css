@@ -36,7 +36,7 @@
   font-weight: 700;
   letter-spacing: 0.3px;
   padding: 6px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 
 .navbar__brand:hover {
@@ -51,7 +51,7 @@
   width: 40px;
   height: 40px;
 
-  border-radius: 10px;
+  border-radius: var(--radius);
   border: 1px solid var(--nav-button-border);
   background: transparent;
   cursor: pointer;
@@ -131,7 +131,7 @@
   text-decoration: none;
 
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius);
 
   transition: background 120ms ease, border-color 120ms ease;
 }

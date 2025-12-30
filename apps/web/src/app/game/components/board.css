@@ -1,0 +1,59 @@
+:root {
+  /* 1) Define the desired height, capped */
+  /* --board-h: min(calc(100vh - 200px), 1440px); */
+  --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
+}
+
+.board-border {
+  width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
+  margin: 0 auto;
+
+  background-image: url("/images/wood.webp");
+  background-size: cover;
+  margin: auto;
+  box-sizing: border-box;
+  padding: 4px;
+  border-radius: var(--radius);
+  /* box-shadow: var(--board-box-shadow); */
+  background-color: transparent;
+}
+
+.board {
+  /* 2) Keep it portrait 3/4 (width/height) */
+  height: var(--board-h);
+  width: 100%;
+  /* width: min(100%, 900px, calc(var(--board-h) * 3 / 4)); */
+
+  /* (optional but nice as a safety net) */
+  aspect-ratio: 3 / 4;
+
+  overflow: auto;
+
+  background-color: var(--background);
+  padding: 4px;
+  border-radius: var(--radius);
+}
+
+.tableau {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+
+/* Each tableau column is its own stack */
+.tableau-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Empty slot placeholder (optional, but helps you see the grid) */
+.card-slot {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+
+  border-radius: var(--card-radius);
+  border: 1px dashed var(--border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}

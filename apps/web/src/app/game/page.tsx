@@ -1,6 +1,7 @@
 "use client";
 
 import { useGame } from "@/state/game/GameProvider";
+import Board from "./components/Board";
 
 function DebugPanel() {
   const { state, restart } = useGame();
@@ -34,5 +35,10 @@ function DebugPanel() {
 }
 
 export default function GamePage() {
-  return <DebugPanel />;
+  return (
+    <div>
+      <Board />
+      <DebugPanel />
+    </div>
+  );
 }
