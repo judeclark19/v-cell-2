@@ -8,14 +8,14 @@
   width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
   margin: 0 auto;
 
-  background-image: url("/images/wood.webp");
+  background-image: var(--board-border-image);
   background-size: cover;
   margin: auto;
   box-sizing: border-box;
   padding: 4px;
   border-radius: var(--radius);
   /* box-shadow: var(--board-box-shadow); */
-  background-color: transparent;
+  background-color: var(--board-border-color);
 }
 
 .board {
@@ -56,4 +56,40 @@
   border-radius: var(--card-radius);
   border: 1px dashed var(--border);
   background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.board-controls {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.board-controls__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.board-controls__button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  /* background: var(--surface-2); */
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.board-controls__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.board-controls__hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
 }

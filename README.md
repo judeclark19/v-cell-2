@@ -35,7 +35,7 @@ npm run check
 
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
-- Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history/leaderboards; guests see a login prompt)
+- Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
 - UI work-in-progress: basic board rendering + scalable card sizing; drag/drop and keyboard controls still pending
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
@@ -63,7 +63,11 @@ npm run dev
 - "/login" — MVP login (sets session mode; real auth later)
 - "/game" — Gameplay (engine wiring + debug panel currently)
 - "/settings" — Placeholder (next)
-- "/stats" — Placeholder; shows login prompt for guests
+- "/stats" — Placeholder; guests see a login prompt; leaderboard UI comes later
+
+## Leaderboards & Profiles (Later)
+
+Leaderboards are a real “scope multiplier.” We’ll treat them as a later phase after core gameplay UI and stats syncing are solid. When we do them, we’ll need to decide what stats are public, whether users have viewable profiles, and what privacy defaults apply.
 
 Note: game state is provided at **app scope** via a `GameProvider`, so it can be shared across routes.
 

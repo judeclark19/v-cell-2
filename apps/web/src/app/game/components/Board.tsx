@@ -26,7 +26,23 @@ function Board() {
           </div>
         </div>
       </div>
-      <p>CONTROLS HERE!</p>
+      <section className="board-controls" aria-label="Game actions">
+        <div className="board-controls__row">
+          <button type="button" className="board-controls__button" disabled>
+            Restart deal (same seed)
+          </button>
+          <button type="button" className="board-controls__button" disabled>
+            New deal (new seed)
+          </button>
+          <button type="button" className="board-controls__button" disabled>
+            Abandon current game
+          </button>
+        </div>
+        <p className="board-controls__hint">
+          Wiring next: hook these to GameProvider (restart/newSeed/abandon) and
+          stats.
+        </p>
+      </section>
     </>
   );
 }

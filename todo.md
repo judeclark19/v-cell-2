@@ -120,6 +120,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Navbar (global) with Login/Logout + route links
 - [x] Navbar responsive behavior (mobile open/close, active link styling, hamburger morph)
 - [x] Hydration-safe SessionProvider (no SSR localStorage reads; client-only hydrate flag)
+- [ ] Decide leaderboards scope + privacy model (later): public leaderboard page, what stats are shared, and whether users can view each other’s profiles
 
 ---
 
@@ -138,6 +139,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
   - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
   - [ ] Keyboard play is a first-class requirement (design focus/move-intent model now so we don’t retrofit later)
+  - [ ] Define keyboard interaction spec (later): focus model, pick-up/drop intent, shortcuts, and screen reader announcements
 
 ### 4.2 Input
 
@@ -178,6 +180,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] User profile fields
   - [ ] theme, showTimer, knowsHowToPlay, soundOn
   - [ ] undoLimitDefault, faceDownCountDefault, allowFoundationPullbackDefault
+- [ ] Define public profile scope (later): what fields exist, what’s public vs private, and whether profiles are viewable by other users
+- [ ] Leaderboards (later): global + friends, filters by rules, and anti-cheat / integrity plan
 
 ---
 
@@ -187,6 +191,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Aggregates (wins, total, abandons, best time, streaks)
 - [ ] Filtering/sorting by settings in UI (later phase)
 - [ ] Offline-first syncing + conflict-safe merges
+- [ ] Decide which stats can be shared publicly (leaderboards) vs private-only (per-user history)
 
 ---
 
@@ -219,6 +224,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts
 - [ ] Store background assets locally (move remote background image into repo and reference via Next public/ or import)
+- [ ] Background assets: move remote images into repo (Next public/) and document the convention
 - [ ] Eliminate redundant color vars; introduce semantic tokens (e.g., Poker/default alias; Times Dark aligns with OS dark)
 
 ## 10) Release Checklist

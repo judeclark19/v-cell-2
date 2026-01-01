@@ -17,6 +17,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: Added global navbar; /stats now renders for guests but prompts login instead of redirecting.
 - 2025-12: Added responsive navbar (hamburger, active route styling) and basic theme foundation (Poker default).
 - 2025-12: Implemented hydration-safe SessionProvider (client-only restore, avoids SSR/localStorage mismatches).
+- 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
 
 ## 2. High-Level Architecture
 
@@ -325,6 +326,12 @@ UI note:
 
 - Keep **engine state** (GameState) global via `GameProvider`.
 - Keep **session/auth state** separate (e.g. `SessionProvider`) so it can gate routes like `/stats` without entangling the engine.
+
+### 12.5 Leaderboards & Privacy (Later)
+
+- Leaderboards are planned but not MVP.
+- They imply decisions about what stats are public, whether users have public profiles, and what the default privacy mode should be.
+- MVP approach: keep per-user stats private; add leaderboards only after real auth + sync are stable.
 
 ---
 
