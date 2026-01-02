@@ -24,7 +24,7 @@ npm -w @vcell/engine run build
 # Run the web app
 npm -w @vcell/web dev
 
-# Typecheck / lint (if scripts exist)
+# Typecheck / lint (ensure scripts exist in the target workspace)
 npm -w @vcell/web run check
 
 # Run everything from root
@@ -36,7 +36,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: basic board rendering + scalable card sizing; drag/drop and keyboard controls still pending
+- UI work-in-progress: early board rendering + scalable card sizing (tableau currently renders); free cells + foundations + stacking next; drag/drop and keyboard controls still pending
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -61,7 +61,7 @@ npm run dev
 
 - "/" — Entry (if session unset: entry flow; otherwise redirects to /game)
 - "/login" — MVP login (sets session mode; real auth later)
-- "/game" — Gameplay (engine wiring + debug panel currently)
+- "/game" — Gameplay (engine wiring + early board rendering; tableau first)
 - "/settings" — Placeholder (next)
 - "/stats" — Placeholder; guests see a login prompt; leaderboard UI comes later
 
@@ -90,4 +90,4 @@ We’ve implemented a minimal local-only “session mode” (guest vs user) to s
 
 ## Themes (Early)
 
-Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection will ultimately be driven by CSS variables + a root data-theme attribute.
+Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection is driven by CSS variables + a root data-theme attribute.

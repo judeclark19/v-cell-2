@@ -18,6 +18,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: Added responsive navbar (hamburger, active route styling) and basic theme foundation (Poker default).
 - 2025-12: Implemented hydration-safe SessionProvider (client-only restore, avoids SSR/localStorage mismatches).
 - 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
+- 2026-01: Began board rendering in web UI; tableau is rendering first, with free cells + foundations next.
 
 ## 2. High-Level Architecture
 
@@ -46,7 +47,7 @@ We have the first two routes in place, and the rest are planned:
 
 - "/" — Entry (if session unset: show entry choices or redirect to /login; if set: redirect to /game)
 - "/login" — MVP login (sets guest vs user; real auth later)
-- "/game" — Gameplay (engine wired; UI still a debug panel)
+- "/game" — Gameplay (engine wired; early board rendering in progress — tableau first)
 - "/settings" — Game + user settings (placeholder)
 - "/stats" — Play history + leaderboards (placeholder; guests see login prompt)
 
@@ -246,6 +247,16 @@ Treat keyboard play as a core acceptance criterion for the web UI, not a later p
   - Spacing
   - Hit-testing
 
+### 10.1A Board Layout (V1-inspired)
+
+Target layout behavior:
+
+- Landscape viewports: three-column shell (Nav left, Board center, Controls right)
+- Portrait viewports: stack these regions vertically (Nav, Board, Controls)
+- Board area stays visually “portrait-ish” (target ~3:4 aspect) with sensible max width/height clamps
+
+Implementation note: keep layout + scaling in CSS (tokens/variables) so themes can adjust spacing without rewriting components.
+
 ### 10.2 Themes
 
 - Theme via CSS design tokens
@@ -309,6 +320,7 @@ On first arrival ("/"), the app uses a minimal local session model:
 
 - session is initially "unset"
 - user can choose **Play as guest** or **Log in** (MVP local-only for now)
+- Guests can see the shell of restricted pages (e.g., /stats) but content is replaced with a login prompt. This avoids hard redirects and keeps navigation predictable.
 
 Access behavior (MVP):
 

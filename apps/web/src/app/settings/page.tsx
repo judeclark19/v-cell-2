@@ -1,10 +1,16 @@
+"use client";
+
 // Settings is intentionally a UI skeleton for now.
 // We’re mapping the knobs we’ll need before wiring them to persistence or the engine.
 
+import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
+
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
+
   return (
     <main>
-      <header className="max-width-container">
+      <header>
         <h1 className="title">Settings</h1>
         <p className="subtitle">
           This page is a scaffold: the controls below are placeholders so we can
@@ -12,6 +18,7 @@ export default function SettingsPage() {
           engine rules next.
         </p>
       </header>
+
       <section>
         <h2 className="h2">Gameplay</h2>
         <div className="grid">
@@ -52,6 +59,39 @@ export default function SettingsPage() {
             </select>
             <small className="hint">
               When enabled, top foundation card can move to tableau/freecell.
+            </small>
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="h2">Appearance</h2>
+        <div className="grid">
+          <label className="field">
+            Theme
+            <select
+              className="control"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as Theme)}
+            >
+              <option value="poker">Poker</option>
+              <option value="times-light">Times Light</option>
+              <option value="times-dark">Times Dark</option>
+            </select>
+            <small className="hint">
+              Saved locally. If you haven’t chosen a theme yet, OS dark mode
+              defaults to Times Dark.
+            </small>
+          </label>
+
+          <label className="field">
+            Show timer
+            <select className="control" disabled defaultValue="on">
+              <option value="on">On</option>
+              <option value="off">Off</option>
+            </select>
+            <small className="hint">
+              Cosmetic; we’ll wire this up after theme.
             </small>
           </label>
         </div>

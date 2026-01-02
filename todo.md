@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; right now we run via workspace scripts
+  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; right now we run via workspace scripts (and "check" isn’t consistently available in web)
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -129,7 +129,16 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Move GameProvider out of page components into a dedicated module
 - [x] Provide GameProvider at app scope (shared across routes)
 - [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
-- [ ] Render tableau/free cells/foundations from engine state (in progress — basic rendering + scaling underway)
+- [ ] Render all zones from engine state
+  - [x] Tableau rendering (basic)
+  - [ ] Free cells rendering (5 slots; 3 may be occupied)
+  - [ ] Foundations rendering (4 slots; suit is dynamic)
+  - [ ] Empty-slot visuals (free cell / foundation / empty tableau)
+- [ ] Card stacking + layout
+  - [ ] Overlap/stacking in tableau columns (vertical offset)
+  - [ ] Z-index strategy so dragged/selected cards sit on top
+  - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
+  - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
@@ -138,6 +147,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] Theme system foundation (CSS variables, semantic tokens, `data-theme`; Poker default; Times Light/Dark next)
   - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
   - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
+  - [ ] Accessibility baseline: ensure stacked cards remain individually focusable (roving tabindex or equivalent)
   - [ ] Keyboard play is a first-class requirement (design focus/move-intent model now so we don’t retrofit later)
   - [ ] Define keyboard interaction spec (later): focus model, pick-up/drop intent, shortcuts, and screen reader announcements
 
@@ -222,9 +232,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
 - [ ] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
-- [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts
-- [ ] Store background assets locally (move remote background image into repo and reference via Next public/ or import)
-- [ ] Background assets: move remote images into repo (Next public/) and document the convention
+- [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
+- [ ] Store background assets locally (move remote background image into repo under Next public/ and document the convention)
 - [ ] Eliminate redundant color vars; introduce semantic tokens (e.g., Poker/default alias; Times Dark aligns with OS dark)
 
 ## 10) Release Checklist
@@ -245,4 +254,4 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Moved the GameProvider out of the page file and hoisted it to app scope.
 - Added a minimal SessionProvider (guest vs user) persisted locally (no real auth yet).
 - Added MVP /login + navbar with Login/Logout links.
-- Added /stats placeholder that prompts guests to log in instead of redirecting.
+- Added /stats page that renders for guests but shows a login prompt instead of redirecting.
