@@ -1,0 +1,89 @@
+/* apps/web/src/styles/themes.css */
+
+/* -------------------------------------------------------------------------- */
+/* Semantics (components use ONLY these vars)                                  */
+/* Default theme = Poker                                                      */
+/* -------------------------------------------------------------------------- */
+:root {
+  --background: #35654d;
+  --foreground: #e9f6ee;
+  --surface: #0f2216;
+  --surface-hover: #16301f;
+  --border: rgba(233, 246, 238, 0.18);
+  --accent: #d4af37;
+  --accent-contrast: #08140c;
+  --muted: rgba(233, 246, 238, 0.65);
+
+  --board-border-image: url("/images/wood.webp");
+  --board-border-color: transparent;
+
+  /* tweak per theme only if you want */
+  --focus-alpha: 35%;
+
+  /* Derived tokens (usually do NOT need per-theme overrides) */
+  --focus-ring: 0 0 0 3px
+    color-mix(in srgb, var(--accent) var(--focus-alpha), transparent);
+
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--accent-contrast);
+  --btn-secondary-bg: color-mix(in srgb, var(--surface-hover) 70%, transparent);
+  --btn-secondary-fg: var(--foreground);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Explicit themes                                                            */
+/* -------------------------------------------------------------------------- */
+:root[data-theme="poker"] {
+  /* optional: keep empty or repeat if you like explicitness */
+}
+
+:root[data-theme="times-light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+  --surface: #f6f6f6;
+  --surface-hover: #ececec;
+  --border: rgba(0, 0, 0, 0.12);
+  --accent: #1f6feb;
+  --accent-contrast: #ffffff;
+  --muted: rgba(23, 23, 23, 0.55);
+
+  --board-border-image: none;
+  --board-border-color: var(--border);
+
+  --focus-alpha: 25%;
+}
+
+:root[data-theme="times-dark"] {
+  --background: #0b0b0d;
+  --foreground: #f1f1f1;
+  --surface: #16161a;
+  --surface-hover: #1f1f24;
+  --border: rgba(255, 255, 255, 0.14);
+  --accent: #79b8ff;
+  --accent-contrast: #0b0b0d;
+  --muted: rgba(241, 241, 241, 0.6);
+
+  --board-border-image: none;
+  --board-border-color: var(--border);
+
+  --focus-alpha: 35%;
+}
+
+/* OS dark mode => Times Dark ONLY when no explicit data-theme */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --background: #0b0b0d;
+    --foreground: #f1f1f1;
+    --surface: #16161a;
+    --surface-hover: #1f1f24;
+    --border: rgba(255, 255, 255, 0.14);
+    --accent: #79b8ff;
+    --accent-contrast: #0b0b0d;
+    --muted: rgba(241, 241, 241, 0.6);
+
+    --board-border-image: none;
+    --board-border-color: var(--border);
+
+    --focus-alpha: 35%;
+  }
+}

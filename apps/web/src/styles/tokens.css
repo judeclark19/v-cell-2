@@ -1,0 +1,51 @@
+/* apps/web/src/styles/tokens.css */
+
+:root {
+  /* -------- Semantic tokens (used everywhere) -------- */
+  --background: #000;
+  --foreground: #fff;
+
+  --surface: #111;
+  --surface-hover: #1a1a1a;
+  --border: rgba(255, 255, 255, 0.14);
+
+  --accent: #79b8ff;
+  --accent-contrast: #0b0b0d;
+
+  --board-border-image: none;
+  --board-border-color: transparent;
+
+  /* Typography */
+  --font-ui: Arial, Helvetica, sans-serif;
+
+  /* Radii / spacing */
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  /* Focus */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Cards/layout */
+  --card-radius: 8px;
+  --card-gap: 12px;
+
+  /* Buttons (semantic) */
+  --btn-radius: 10px;
+  --btn-border: var(--border);
+
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--accent-contrast);
+
+  --btn-secondary-bg: color-mix(in srgb, var(--surface) 85%, transparent);
+  --btn-secondary-fg: var(--foreground);
+
+  --btn-ghost-bg: transparent;
+  --btn-ghost-fg: var(--foreground);
+}
+
+/* Small spacing tweaks */
+@media (max-width: 640px) {
+  :root {
+    --card-gap: 8px;
+  }
+}

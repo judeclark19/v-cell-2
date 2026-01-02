@@ -1,0 +1,24 @@
+/* apps/web/src/styles/typography.css */
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin-top: 8px;
+  opacity: 0.85;
+  line-height: 1.45;
+}
+
+.h2 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.muted {
+  opacity: 0.75;
+}
