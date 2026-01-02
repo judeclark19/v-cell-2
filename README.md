@@ -24,7 +24,7 @@ npm -w @vcell/engine run build
 # Run the web app
 npm -w @vcell/web dev
 
-# Typecheck / lint (ensure scripts exist in the target workspace)
+# Typecheck / lint (scripts are still being standardized across workspaces)
 npm -w @vcell/web run check
 
 # Run everything from root
@@ -36,7 +36,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: early board rendering + scalable card sizing (tableau currently renders); free cells + foundations + stacking next; drag/drop and keyboard controls still pending
+- UI work-in-progress: foundations + tableau + free cells are rendering; stacking/overlap + drag/drop + keyboard controls are next; move highlighting uses an engine-provided “playable” mask.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -62,8 +62,8 @@ npm run dev
 - "/" — Entry (if session unset: entry flow; otherwise redirects to /game)
 - "/login" — MVP login (sets session mode; real auth later)
 - "/game" — Gameplay (engine wiring + early board rendering; tableau first)
-- "/settings" — Placeholder (next)
-- "/stats" — Placeholder; guests see a login prompt; leaderboard UI comes later
+- "/settings" — Settings skeleton (gameplay + appearance; wiring in progress)
+- "/stats" — Renders for guests but shows a login prompt; real stats + leaderboards later
 
 ## Leaderboards & Profiles (Later)
 
@@ -91,3 +91,4 @@ We’ve implemented a minimal local-only “session mode” (guest vs user) to s
 ## Themes (Early)
 
 Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection is driven by CSS variables + a root data-theme attribute.
+Theme variables live in global CSS; the root element uses a data-theme attribute set by ThemeProvider.

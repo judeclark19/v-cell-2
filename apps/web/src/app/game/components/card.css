@@ -2,59 +2,91 @@
   border-radius: var(--card-radius);
   width: 100%;
   aspect-ratio: 2 / 3;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--card-front-bg);
+  color: var(--card-front-fg);
+  border: 1px solid var(--card-front-border);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
 
   user-select: none;
   cursor: pointer;
+
+  container-type: inline-size;
 
   transition: transform 120ms ease, box-shadow 120ms ease,
     background-color 120ms ease;
 }
 
-/* Inner wrapper lets us animate flip later */
 .card-inner {
   width: 100%;
   height: 100%;
 
   display: flex;
-  align-items: center;
+  /* align-items: center; */
   justify-content: center;
-
-  font-size: 32px; /* temporary placeholder */
+  font-size: 40cqw;
+  color: inherit;
 }
 
-/* Hover / focus affordance */
 .card:hover {
-  background: var(--surface-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover);
 }
 
 .card:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring), 0 4px 12px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--focus-ring), inset 0 1px 0 var(--card-front-inset),
+    var(--card-shadow-hover);
 }
 
-/* Drag affordance (future-proofing) */
 .card.is-dragging {
   cursor: grabbing;
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
 }
 
-/* Face-down variant (engine already knows faceDown) */
 .card.face-down {
   background: repeating-linear-gradient(
-    45deg,
-    var(--surface),
-    var(--surface) 8px,
-    color-mix(in srgb, var(--surface) 85%, black) 8px,
-    color-mix(in srgb, var(--surface) 85%, black) 16px
-  );
+      45deg,
+      var(--card-back-pattern-a),
+      var(--card-back-pattern-a) 8px,
+      var(--card-back-pattern-b) 8px,
+      var(--card-back-pattern-b) 16px
+    ),
+    var(--card-back-bg);
+  border: 1px solid var(--card-back-border);
+  box-shadow: inset 0 0 0 2px
+      color-mix(in srgb, var(--card-back-border) 55%, transparent),
+    var(--card-shadow);
+}
+
+.card-slot {
+  border-radius: var(--card-radius);
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: var(--card-slot-bg);
+  border: 1px dashed var(--card-slot-border);
+  box-shadow: none;
+  opacity: 0.9;
+}
+
+/* -------------------------------------------------------------------------- */
+/* State styling: playable vs locked (face-up but not currently movable)       */
+/* -------------------------------------------------------------------------- */
+
+.card:not(.is-playable) {
+  background-color: var(--card-front-bg-locked);
+}
+
+.card.is-playable {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow),
+    0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.card.is-playable:hover {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover),
+    0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent);
 }

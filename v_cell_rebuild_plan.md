@@ -19,6 +19,8 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: Implemented hydration-safe SessionProvider (client-only restore, avoids SSR/localStorage mismatches).
 - 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
 - 2026-01: Began board rendering in web UI; tableau is rendering first, with free cells + foundations next.
+- 2026-01: Rendered foundations + tableau + free cells using a unified 7-column board rhythm (no placeholder slots).
+- 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling in progress).
 
 ## 2. High-Level Architecture
 
@@ -48,8 +50,8 @@ We have the first two routes in place, and the rest are planned:
 - "/" — Entry (if session unset: show entry choices or redirect to /login; if set: redirect to /game)
 - "/login" — MVP login (sets guest vs user; real auth later)
 - "/game" — Gameplay (engine wired; early board rendering in progress — tableau first)
-- "/settings" — Game + user settings (placeholder)
-- "/stats" — Play history + leaderboards (placeholder; guests see login prompt)
+- "/settings" — Settings skeleton (gameplay + appearance); wiring and persistence in progress
+- "/stats" — Stats/history shell; guests see a login prompt; leaderboards later
 
 The engine remains UI-agnostic; routing and access control live in the web app.
 
@@ -192,6 +194,8 @@ Additional UX behavior (confirmed):
   - If multiple foundation slots are valid targets (e.g., placing an Ace into any empty slot), choose deterministically (e.g., lowest slot index).
 - A face-up card can still be inactive if there is an invalid break above the exposed card. The grabbable stack is the contiguous valid run from the exposed card upward.
 
+UI semantics note: “playable” means “pick-up-able right now” (part of the current movable run in a tableau column, or a free-cell card). A face-up card can still be non-playable if the run is broken above the exposed card.
+
 ### 8.1 Accessibility (Keyboard Play)
 
 V-Cell V2 should be fully playable without a mouse:
@@ -254,6 +258,7 @@ Target layout behavior:
 - Landscape viewports: three-column shell (Nav left, Board center, Controls right)
 - Portrait viewports: stack these regions vertically (Nav, Board, Controls)
 - Board area stays visually “portrait-ish” (target ~3:4 aspect) with sensible max width/height clamps
+- In-board zones: foundations row at top, tableau in the middle, free cells row at bottom (all aligned to a 7-column rhythm)
 
 Implementation note: keep layout + scaling in CSS (tokens/variables) so themes can adjust spacing without rewriting components.
 
@@ -262,6 +267,7 @@ Implementation note: keep layout + scaling in CSS (tokens/variables) so themes c
 - Theme via CSS design tokens
 - Applied with root attribute (e.g. `data-theme="midnight"`)
 - Preference stored locally and optionally synced
+  Implementation: ThemeProvider sets `data-theme` on the root element; OS dark mode maps to Times Dark by default.
 
 ---
 

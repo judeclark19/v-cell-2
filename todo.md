@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-  - [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; right now we run via workspace scripts (and "check" isn’t consistently available in web)
+- [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; today we run via workspace scripts and lint/typecheck scripts aren’t consistent across packages.
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -119,6 +119,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] MVP /login route + session persistence (local-only; real auth later)
 - [x] Navbar (global) with Login/Logout + route links
 - [x] Navbar responsive behavior (mobile open/close, active link styling, hamburger morph)
+- [x] ThemeProvider + SessionProvider both hydration-safe (no SSR localStorage reads; client-only hydrate flag)
 - [x] Hydration-safe SessionProvider (no SSR localStorage reads; client-only hydrate flag)
 - [ ] Decide leaderboards scope + privacy model (later): public leaderboard page, what stats are shared, and whether users can view each other’s profiles
 
@@ -131,25 +132,33 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
 - [ ] Render all zones from engine state
   - [x] Tableau rendering (basic)
-  - [ ] Free cells rendering (5 slots; 3 may be occupied)
-  - [ ] Foundations rendering (4 slots; suit is dynamic)
-  - [ ] Empty-slot visuals (free cell / foundation / empty tableau)
+  - [x] Free cells rendering (5 slots; 3 may be occupied)
+  - [x] Foundations rendering (4 slots; suit is dynamic)
+  - [x] Empty-slot visuals (free cell / foundation / empty tableau)
 - [ ] Card stacking + layout
+  - [x] Board layout: foundations on top, free cells on bottom (V1-inspired)
+  - [x] All zones share the same 7-column rhythm (no placeholder “unused” slots rendered)
   - [ ] Overlap/stacking in tableau columns (vertical offset)
   - [ ] Z-index strategy so dragged/selected cards sit on top
   - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
   - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
+  - [ ] Visually distinguish: empty slot vs face-down vs face-up (per-theme)
+  - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)
+  - [ ] Define and wire a single source of truth for “playable” (engine mask → UI)
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
   - [x] Aspect-ratio constraints for board container (target 3:4; clamp max width/height)
   - [x] Theme system (CSS variables, `data-theme`)
   - [x] Theme system foundation (CSS variables, semantic tokens, `data-theme`; Poker default; Times Light/Dark next)
+  - [x] Card sizing: card width derived from 7-column board; height follows 3:2 ratio
+  - [ ] Clamp + scale: confirm consistent vertical spacing ratios (stack offset as % of card height)
   - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
   - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
   - [ ] Accessibility baseline: ensure stacked cards remain individually focusable (roving tabindex or equivalent)
   - [ ] Keyboard play is a first-class requirement (design focus/move-intent model now so we don’t retrofit later)
   - [ ] Define keyboard interaction spec (later): focus model, pick-up/drop intent, shortcuts, and screen reader announcements
+  - [ ] Keyboard spec + implementation should include a “pick up stack” affordance aligned with the engine’s movable run definition
 
 ### 4.2 Input
 
@@ -171,6 +180,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 ## 5) Offline Support (PWA)
 
 - [ ] Fix dev 404 for /sw.js (either add a stub SW or disable any SW registration until we actually do PWA)
+- [ ] Decide whether we’re doing PWA via next-pwa or a custom service worker (don’t half-register it)
 - [ ] Add PWA support (service worker + caching strategy)
 - [ ] Confirm: app loads offline, play works offline
 - [ ] Store queued stats locally while offline
@@ -230,7 +240,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 ## 9A) Web App Polish (Early)
 
 - [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
-- [ ] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
+- [x] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
+- [ ] Fix ThemeProvider lint/type issues (no setState-in-effect warnings; no implicit any; media-query listener types)
+- [ ] Add tests for engine playable mask helper (getPlayableMask)
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
 - [ ] Store background assets locally (move remote background image into repo under Next public/ and document the convention)
@@ -255,3 +267,5 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Added a minimal SessionProvider (guest vs user) persisted locally (no real auth yet).
 - Added MVP /login + navbar with Login/Logout links.
 - Added /stats page that renders for guests but shows a login prompt instead of redirecting.
+- Rendered foundations + tableau + free cells in the new board layout (foundations top, free cells bottom).
+- Implemented theme selection plumbing (ThemeProvider) and applied Poker as default + Times Dark for OS dark.

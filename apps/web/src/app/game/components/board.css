@@ -1,60 +1,81 @@
-:root {
-  /* 1) Define the desired height, capped */
-  /* --board-h: min(calc(100vh - 200px), 1440px); */
-  --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
-}
-
 .board-border {
+  /* Board sizing vars live here to avoid global leakage */
+  --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
+  --card-gap: 10px;
+
   width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
   margin: 0 auto;
 
   background-image: var(--board-border-image);
   background-size: cover;
-  margin: auto;
   box-sizing: border-box;
   padding: 4px;
   border-radius: var(--radius);
-  /* box-shadow: var(--board-box-shadow); */
   background-color: var(--board-border-color);
 }
 
 .board {
-  /* 2) Keep it portrait 3/4 (width/height) */
   height: var(--board-h);
   width: 100%;
-  /* width: min(100%, 900px, calc(var(--board-h) * 3 / 4)); */
-
-  /* (optional but nice as a safety net) */
   aspect-ratio: 3 / 4;
 
-  overflow: auto;
+  /* overflow: auto; */
 
-  background-color: var(--background);
+  background-color: var(--board-bg);
   padding: 4px;
   border-radius: var(--radius);
+
+  display: flex;
+  flex-direction: column;
 }
 
-.tableau {
+/* Foundations row (top) */
+.board-top {
+  margin-bottom: var(--card-gap);
+}
+
+/* Freecells row (bottom) */
+.board-bottom {
+  margin-top: var(--card-gap);
+}
+
+.pile-row {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--card-gap);
+}
+
+/* Tableau grid */
+.tableau {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--card-gap, 10px);
+  padding: 4px;
+  background-color: var(--tableau-bg);
+  border-radius: var(--radius);
+  overflow: auto;
+  flex-grow: 1;
 }
 
 /* Each tableau column is its own stack */
 .tableau-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-/* Empty slot placeholder (optional, but helps you see the grid) */
-.card-slot {
+/* Tableau stack overlap */
+.tableau-col > .card,
+.tableau-col > .card-slot {
+  margin-top: -85%;
+}
+
+.tableau-col > .card:first-child,
+.tableau-col > .card-slot:first-child {
+  margin-top: 0;
+}
+
+/* Occupies a grid cell but renders no slot UI (used for centering foundations/freecells) */
+.pile-spacer {
   width: 100%;
   aspect-ratio: 2 / 3;
-  height: auto;
-
-  border-radius: var(--card-radius);
-  border: 1px dashed var(--border);
-  /* background: color-mix(in srgb, var(--surface) 70%, transparent); */
-  background: var(--surface);
 }

@@ -14,6 +14,11 @@
   --accent-contrast: #08140c;
   --muted: rgba(233, 246, 238, 0.65);
 
+  /* Board + tableau surfaces (semantic) */
+  --board-bg: var(--background);
+  /* Tableau should read as a subtle “panel” on top of the board */
+  --tableau-bg: color-mix(in srgb, var(--background) 85%, #ffffff 15%);
+
   --board-border-image: url("/images/wood.webp");
   --board-border-color: transparent;
 
@@ -28,6 +33,32 @@
   --btn-primary-fg: var(--accent-contrast);
   --btn-secondary-bg: color-mix(in srgb, var(--surface-hover) 70%, transparent);
   --btn-secondary-fg: var(--foreground);
+
+  /* ---------------------------------------------------------------------- */
+  /* Card materials (face-up / face-down / slot)                             */
+  /* ---------------------------------------------------------------------- */
+  /* Face-up */
+  --card-front-bg: #f7f3e8;
+  /* Locked cards: noticeably darker + colder */
+  --card-front-bg-locked: #d6ccb6;
+  --card-front-fg: #111;
+  --card-front-border: rgba(0, 0, 0, 0.35);
+  --card-front-border-locked: rgba(0, 0, 0, 0.45);
+  --card-front-inset: rgba(255, 255, 255, 0.35);
+
+  /* Face-down (back) */
+  --card-back-bg: color-mix(in srgb, var(--surface) 70%, #000 30%);
+  --card-back-border: color-mix(in srgb, var(--accent) 60%, transparent);
+  --card-back-pattern-a: rgba(255, 255, 255, 0.08);
+  --card-back-pattern-b: rgba(0, 0, 0, 0.18);
+
+  /* Empty slot */
+  --card-slot-bg: color-mix(in srgb, var(--background) 85%, #000 15%);
+  --card-slot-border: rgba(233, 246, 238, 0.25);
+
+  /* Depth */
+  --card-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  --card-shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.45);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -47,10 +78,36 @@
   --accent-contrast: #ffffff;
   --muted: rgba(23, 23, 23, 0.55);
 
+  --board-bg: var(--background);
+  --tableau-bg: color-mix(in srgb, var(--background) 94%, #000000 6%);
+
   --board-border-image: none;
   --board-border-color: var(--border);
 
   --focus-alpha: 25%;
+
+  /* Card materials */
+  --card-front-bg: #ffffff;
+  /* Locked cards: clearly gray, paper‑like */
+  --card-front-bg-locked: #e2e2e2;
+  --card-front-fg: #111;
+  --card-front-border: rgba(0, 0, 0, 0.22);
+  --card-front-border-locked: rgba(0, 0, 0, 0.32);
+  --card-front-inset: rgba(255, 255, 255, 0.7);
+
+  --card-back-bg: #eef4ff;
+  --card-back-border: color-mix(in srgb, var(--accent) 55%, transparent);
+  --card-back-pattern-a: rgba(31, 111, 235, 0.1);
+  --card-back-pattern-b: rgba(0, 0, 0, 0.06);
+
+  --card-slot-bg: rgba(0, 0, 0, 0.03);
+  --card-slot-border: rgba(0, 0, 0, 0.18);
+
+  --card-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+  --card-shadow-hover: 0 12px 24px rgba(0, 0, 0, 0.2);
+
+  --card-locked-opacity: 0.7;
+  --card-locked-filter: saturate(0.55) brightness(0.98);
 }
 
 :root[data-theme="times-dark"] {
@@ -63,10 +120,36 @@
   --accent-contrast: #0b0b0d;
   --muted: rgba(241, 241, 241, 0.6);
 
+  --board-bg: var(--background);
+  --tableau-bg: color-mix(in srgb, var(--background) 82%, #ffffff 18%);
+
   --board-border-image: none;
   --board-border-color: var(--border);
 
   --focus-alpha: 35%;
+
+  /* Card materials */
+  --card-front-bg: #141418;
+  /* Locked cards: deeper charcoal to read as “inactive” */
+  --card-front-bg-locked: #24242c;
+  --card-front-fg: #f4f4f4;
+  --card-front-border: rgba(255, 255, 255, 0.22);
+  --card-front-border-locked: rgba(255, 255, 255, 0.32);
+  --card-front-inset: rgba(255, 255, 255, 0.1);
+
+  --card-back-bg: #0f0f13;
+  --card-back-border: color-mix(in srgb, var(--accent) 55%, transparent);
+  --card-back-pattern-a: rgba(121, 184, 255, 0.1);
+  --card-back-pattern-b: rgba(0, 0, 0, 0.35);
+
+  --card-slot-bg: rgba(255, 255, 255, 0.03);
+  --card-slot-border: rgba(255, 255, 255, 0.16);
+
+  --card-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
+  --card-shadow-hover: 0 14px 28px rgba(0, 0, 0, 0.65);
+
+  --card-locked-opacity: 0.68;
+  --card-locked-filter: saturate(0.55) brightness(0.92);
 }
 
 /* OS dark mode => Times Dark ONLY when no explicit data-theme */
@@ -81,9 +164,35 @@
     --accent-contrast: #0b0b0d;
     --muted: rgba(241, 241, 241, 0.6);
 
+    --board-bg: var(--background);
+    --tableau-bg: color-mix(in srgb, var(--background) 82%, #ffffff 18%);
+
     --board-border-image: none;
     --board-border-color: var(--border);
 
     --focus-alpha: 35%;
+
+    /* Card materials */
+    --card-front-bg: #141418;
+    /* Locked cards: deeper charcoal to read as “inactive” */
+    --card-front-bg-locked: #24242c;
+    --card-front-fg: #f4f4f4;
+    --card-front-border: rgba(255, 255, 255, 0.22);
+    --card-front-border-locked: rgba(255, 255, 255, 0.32);
+    --card-front-inset: rgba(255, 255, 255, 0.1);
+
+    --card-back-bg: #0f0f13;
+    --card-back-border: color-mix(in srgb, var(--accent) 55%, transparent);
+    --card-back-pattern-a: rgba(121, 184, 255, 0.1);
+    --card-back-pattern-b: rgba(0, 0, 0, 0.35);
+
+    --card-slot-bg: rgba(255, 255, 255, 0.03);
+    --card-slot-border: rgba(255, 255, 255, 0.16);
+
+    --card-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
+    --card-shadow-hover: 0 14px 28px rgba(0, 0, 0, 0.65);
+
+    --card-locked-opacity: 0.68;
+    --card-locked-filter: saturate(0.55) brightness(0.92);
   }
 }
