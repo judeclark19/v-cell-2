@@ -61,7 +61,7 @@
   display: block;
   width: 18px;
   height: 2px;
-  background: currentColor;
+  background: var(--foreground);
   border-radius: 999px;
   transition: transform 250ms ease, opacity 200ms ease;
   transform-origin: center;
@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 
   /* padding: 0 16px 12px; */
 }
@@ -91,14 +91,14 @@
 .navbar__links {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .navbar__right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-left: auto;
 }
 
@@ -181,7 +181,8 @@
   }
 
   .navbar__select {
-    padding: 10px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .navbar__panel {

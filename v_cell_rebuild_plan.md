@@ -21,7 +21,9 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
 - 2026-01: Began board rendering in web UI; tableau is rendering first, with free cells + foundations next.
 - 2026-01: Rendered foundations + tableau + free cells using a unified 7-column board rhythm (no placeholder slots).
-- 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling + theme tokens in progress).
+  - 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling + theme tokens in progress).
+  - 2026-01: Added Navbar theme control (select) wired to ThemeProvider context.
+  - 2026-01: Planned timer UI as a web-only feature (show/hide preference; local-first, sync later).
 
 ## 2. High-Level Architecture
 

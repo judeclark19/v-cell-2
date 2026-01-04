@@ -135,9 +135,9 @@
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f1f1f1' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
 
   /* Card materials */
-  --card-front-bg: #141418;
+  --card-front-bg: #24242c;
   /* Locked cards: deeper charcoal to read as “inactive” */
-  --card-front-bg-locked: #24242c;
+  --card-front-bg-locked: #141418;
   --card-front-fg: #f4f4f4;
   --card-front-border: rgba(255, 255, 255, 0.22);
   --card-front-border-locked: rgba(255, 255, 255, 0.32);
@@ -177,11 +177,12 @@
     --board-border-color: var(--border);
 
     --focus-alpha: 35%;
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f1f1f1' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
 
     /* Card materials */
-    --card-front-bg: #141418;
+    --card-front-bg: #24242c;
     /* Locked cards: deeper charcoal to read as “inactive” */
-    --card-front-bg-locked: #24242c;
+    --card-front-bg-locked: #141418;
     --card-front-fg: #f4f4f4;
     --card-front-border: rgba(255, 255, 255, 0.22);
     --card-front-border-locked: rgba(255, 255, 255, 0.32);

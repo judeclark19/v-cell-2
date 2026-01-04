@@ -5,7 +5,7 @@ import { getPlayableMask } from "@vcell/engine";
 import { useMemo } from "react";
 
 function Board() {
-  const { state } = useGame();
+  const { state, showTimer } = useGame();
   const playable = useMemo(() => getPlayableMask(state), [state]);
   console.log("Playable mask:", playable);
 
@@ -48,7 +48,18 @@ function Board() {
             <div className="pile-row" aria-label="Foundations">
               {foundationsRow.map((card, i) =>
                 card === undefined ? (
-                  <div key={i} className="pile-spacer" aria-hidden="true" />
+                  <div
+                    key={i}
+                    className={`pile-spacer ${i === 0 ? "timer-cell" : ""}`}
+                    aria-hidden={!showTimer}
+                  >
+                    {i === 0 && (
+                      <>
+                        <div className="timer">00:00</div>
+                        <button className="btn btn--primary">⏸︎</button>
+                      </>
+                    )}
+                  </div>
                 ) : (
                   <Card
                     key={i}

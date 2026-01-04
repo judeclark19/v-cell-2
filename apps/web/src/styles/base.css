@@ -37,6 +37,10 @@ a {
   margin: 0 auto;
   padding: 16px;
   box-sizing: content-box;
+
+  @media (max-width: 600px) {
+    padding: 8px;
+  }
 }
 
 header {

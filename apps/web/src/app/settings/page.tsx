@@ -4,9 +4,11 @@
 // We’re mapping the knobs we’ll need before wiring them to persistence or the engine.
 
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
+import { useGame } from "@/state/game/GameProvider";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { showTimer, setShowTimer } = useGame();
 
   return (
     <main>
@@ -24,7 +26,12 @@ export default function SettingsPage() {
         <div className="grid">
           <label className="field">
             Face-down cards at deal
-            <select className="control" disabled defaultValue="7">
+            <select
+              className="control"
+              disabled
+              defaultValue="7"
+              id="face-down-cards"
+            >
               <option value="0">0 (all face-up)</option>
               <option value="7">7 (classic)</option>
               <option value="14">14</option>
@@ -38,7 +45,12 @@ export default function SettingsPage() {
 
           <label className="field">
             Undo limit
-            <select className="control" disabled defaultValue="unlimited">
+            <select
+              className="control"
+              disabled
+              defaultValue="unlimited"
+              id="undo-limit"
+            >
               <option value="0">0</option>
               <option value="1">1</option>
               <option value="3">3</option>
@@ -86,13 +98,16 @@ export default function SettingsPage() {
 
           <label className="field">
             Show timer
-            <select className="control" disabled defaultValue="on">
-              <option value="on">On</option>
-              <option value="off">Off</option>
+            <select
+              className="control"
+              defaultValue="true"
+              id="show-timer"
+              value={showTimer ? "true" : "false"}
+              onChange={(e) => setShowTimer(e.target.value === "true")}
+            >
+              <option value="true">Show</option>
+              <option value="false">Hide</option>
             </select>
-            <small className="hint">
-              Cosmetic; we’ll wire this up after theme.
-            </small>
           </label>
         </div>
       </section>

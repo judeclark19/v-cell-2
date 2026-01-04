@@ -1,5 +1,4 @@
 .board-border {
-  /* Board sizing vars live here to avoid global leakage */
   --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
   --card-gap: 10px;
 
@@ -12,6 +11,10 @@
   padding: 4px;
   border-radius: var(--radius);
   background-color: var(--board-border-color);
+
+  @media (max-width: 450px) {
+    --board-h: min(550px, 70vh);
+  }
 }
 
 .board {
@@ -78,4 +81,20 @@
 .pile-spacer {
   width: 100%;
   aspect-ratio: 2 / 3;
+}
+
+.timer-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+
+  .timer {
+    text-align: center;
+    font-size: 24px;
+  }
+
+  &[aria-hidden="true"] {
+    visibility: hidden;
+  }
 }

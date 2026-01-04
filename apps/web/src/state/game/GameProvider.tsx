@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { applyMove, createGame } from "@vcell/engine";
 
 // NOTE: We'll fully lock the engine contract later. For now we can still keep things
@@ -12,7 +12,11 @@ type GameContextValue = {
   state: GameState;
   dispatchMove: (move: Move) => void;
   restart: () => void;
+  showTimer: boolean;
+  setShowTimer: (next: boolean) => void;
 };
+
+const SHOW_TIMER_KEY = "vcell:showTimer";
 
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -40,6 +44,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Create the initial game exactly once.
   const [state, setState] = useState<GameState>(() => createGame(seed, rules));
+  const [showTimer, setShowTimer] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true; // default
+    const raw = window.localStorage.getItem(SHOW_TIMER_KEY);
+    if (raw == null) return true;
+    return raw === "true";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
+  }, [showTimer]);
 
   const dispatchMove = (move: Move) => {
     setState((prev: GameState) => applyMove(prev, move));
@@ -49,6 +63,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setState(createGame(seed, rules));
   };
 
-  const value: GameContextValue = { state, dispatchMove, restart };
+  const value: GameContextValue = {
+    state,
+    dispatchMove,
+    restart,
+    showTimer,
+    setShowTimer
+  };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

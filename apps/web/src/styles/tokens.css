@@ -16,7 +16,7 @@
   --board-border-color: transparent;
 
   /* Typography */
-  --font-ui: Arial, Helvetica, sans-serif;
+  --font-ui: Questrial, Questrial Fallback, Arial, Helvetica, sans-serif;
 
   /* Radii / spacing */
   --radius: 8px;

@@ -146,6 +146,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)
   - [ ] Define and wire a single source of truth for “playable” (engine mask → UI)
   - [ ] Add tests for engine playable mask helper (getPlayableMask)
+  - [ ] Timer UI (web): show/hide toggle wired from Settings → Game UI
+    - [ ] Persist `showTimer` preference locally (ThemeProvider-style) and later sync to user profile
+    - [ ] Ensure timer container sets `aria-hidden` when hidden
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
@@ -248,7 +251,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
 - [ ] Store background assets locally (move remote background image into repo under `public/` and document the convention + CSS URL syntax)
-- [ ] Eliminate redundant color vars; introduce semantic tokens (Poker/default alias; Times Dark aligns with OS dark; add `--muted` and other semantic tokens once)
+  - [ ] Eliminate redundant color vars; introduce semantic tokens (Poker/default alias; Times Dark aligns with OS dark; add `--muted` and other semantic tokens once)
+  - [ ] Select chevron styling: ensure it remains visible on hover and uses theme token (e.g. `--foreground`)
+  - [ ] SVG suit icons: confirm a scalable sizing strategy (prefer `em`/`currentColor` where possible) and document the convention
 
 ## 10) Release Checklist
 

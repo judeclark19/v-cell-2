@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "@/state/session/SessionProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import "./navbar.css";
+import Image from "next/image";
 
 const NAV_LINKS = [
   { href: "/game", label: "Game" },
@@ -76,7 +77,13 @@ export function NavBar() {
       <div className="max-width-container">
         <div className="navbar__bar">
           <Link className="navbar__brand" href="/game" onClick={closeMenu}>
-            V-Cell
+            {/* V-Cell */}
+            <Image
+              src="/images/vcell-logo.webp"
+              alt="V-Cell"
+              width={120}
+              height={30}
+            />
           </Link>
 
           <button
