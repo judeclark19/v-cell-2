@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "@/state/session/SessionProvider";
+import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import "./navbar.css";
 
 const NAV_LINKS = [
@@ -12,8 +13,15 @@ const NAV_LINKS = [
   { href: "/stats", label: "Stats" }
 ];
 
+const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: "poker", label: "🃏" },
+  { value: "times-light", label: "☀️" },
+  { value: "times-dark", label: "🌙" }
+];
+
 export function NavBar() {
   const { isUser, logout, hydrated } = useSession();
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -41,6 +49,26 @@ export function NavBar() {
     <Link className="navbar__link" href="/login" onClick={closeMenu}>
       Log in
     </Link>
+  );
+
+  const ThemeControl = (
+    <div className="navbar__theme">
+      {/* <label className="navbar__themeLabel" htmlFor="navbar-theme">
+        Theme
+      </label> */}
+      <select
+        id="navbar-theme"
+        className="navbar__select"
+        value={theme}
+        onChange={(e) => setTheme(e.target.value as Theme)}
+      >
+        {THEME_OPTIONS.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 
   return (
@@ -81,12 +109,10 @@ export function NavBar() {
                   {label}
                 </Link>
               ))}
-              <div className="navbar__auth navbar__auth--desktop">
-                {AuthControl}
-              </div>
             </div>
 
-            <div className="navbar__auth navbar__auth--mobile">
+            <div className="navbar__right">
+              {ThemeControl}
               {AuthControl}
             </div>
           </div>

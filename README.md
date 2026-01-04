@@ -36,7 +36,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations + tableau + free cells are rendering; stacking/overlap + drag/drop + keyboard controls are next; move highlighting uses an engine-provided “playable” mask.
+- UI work-in-progress: foundations + tableau + free cells are rendering in a 7-column rhythm (foundations top, free cells bottom). Next: tableau overlap/stacking + drag/drop + keyboard controls. Move highlighting uses an engine-provided “playable” mask.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -91,4 +91,4 @@ We’ve implemented a minimal local-only “session mode” (guest vs user) to s
 ## Themes (Early)
 
 Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection is driven by CSS variables + a root data-theme attribute.
-Theme variables live in global CSS; the root element uses a data-theme attribute set by ThemeProvider.
+Theme can also be changed via a select control in the Navbar (wired to ThemeProvider context).

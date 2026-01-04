@@ -1,5 +1,5 @@
 import { useGame } from "@/state/game/GameProvider";
-import CardView from "./CardView";
+import Card from "./Card";
 import "./board.css";
 import { getPlayableMask } from "@vcell/engine";
 import { useMemo } from "react";
@@ -50,7 +50,11 @@ function Board() {
                 card === undefined ? (
                   <div key={i} className="pile-spacer" aria-hidden="true" />
                 ) : (
-                  <CardView key={i} card={card} />
+                  <Card
+                    key={i}
+                    card={card}
+                    playable={playable.foundations[i - 3]} // -3 accounts for spacers
+                  />
                 )
               )}
             </div>
@@ -65,14 +69,14 @@ function Board() {
                 aria-label={`Tableau column ${colIndex + 1}`}
               >
                 {col.length === 0 ? (
-                  <CardView card={null} />
+                  <Card card={null} />
                 ) : (
-                  col.map((tc) => (
-                    <CardView
+                  col.map((tc, tcIndex) => (
+                    <Card
                       key={tc.card.id}
                       card={tc.card}
                       faceDown={tc.faceDown}
-                      playable={playable.tableau[colIndex][col.indexOf(tc)]}
+                      playable={playable.tableau[colIndex][tcIndex]}
                     />
                   ))
                 )}
@@ -87,7 +91,11 @@ function Board() {
                 card === undefined ? (
                   <div key={i} className="pile-spacer" aria-hidden="true" />
                 ) : (
-                  <CardView key={i} card={card} />
+                  <Card
+                    key={i}
+                    card={card}
+                    playable={playable.freeCells[i - 1]} // -1 accounts for spacer
+                  />
                 )
               )}
             </div>
@@ -98,19 +106,15 @@ function Board() {
       <section className="control" aria-label="Game actions">
         <div className="row">
           <button type="button" className="btn btn--primary" disabled>
-            Restart deal (same seed)
-          </button>
-          <button type="button" className="btn btn--primary" disabled>
             New deal (new seed)
           </button>
           <button type="button" className="btn btn--secondary" disabled>
-            Abandon current game
+            Restart deal (same seed)
+          </button>
+          <button type="button" className="btn btn--secondary" disabled>
+            Undo
           </button>
         </div>
-        <p className="hint">
-          Wiring next: hook these to GameProvider (restart/newSeed/abandon) and
-          stats.
-        </p>
       </section>
     </>
   );

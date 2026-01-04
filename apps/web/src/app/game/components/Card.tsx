@@ -1,7 +1,7 @@
 import type { Card } from "@vcell/engine";
 import "./card.css";
 
-function CardView({
+function Card({
   card,
   faceDown = false,
   playable = false,
@@ -24,14 +24,14 @@ function CardView({
     <div
       // className={`card ${faceDown ? "face-down" : ""} ${className}`.trim()}
       className={`card ${faceDown ? "face-down" : ""} ${
-        playable ? "is-playable" : ""
+        playable ? "is-playable" : "is-locked"
       } ${className}`.trim()}
       aria-label={faceDown ? "Face-down card" : `Card ${card.id}`}
-      tabIndex={0}
+      tabIndex={playable ? 0 : -1}
     >
       <div className="card-inner">{faceDown ? "🂠" : card.id}</div>
     </div>
   );
 }
 
-export default CardView;
+export default Card;

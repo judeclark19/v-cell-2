@@ -14,7 +14,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Monorepo setup (workspaces)
   - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
   - [x] Root `npm install` works (workspaces:\*)
-- [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; today we run via workspace scripts and lint/typecheck scripts aren’t consistent across packages.
+- [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; workspace scripts exist but root-level "check"/"build" should be reliable.
 - [ ] Repo structure created
   - [x] `packages/engine`
   - [x] `apps/web`
@@ -138,13 +138,14 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Card stacking + layout
   - [x] Board layout: foundations on top, free cells on bottom (V1-inspired)
   - [x] All zones share the same 7-column rhythm (no placeholder “unused” slots rendered)
-  - [ ] Overlap/stacking in tableau columns (vertical offset)
-  - [ ] Z-index strategy so dragged/selected cards sit on top
+  - [ ] Overlap/stacking in tableau columns (vertical offset as % of card height)
+  - [ ] Z-index/stacking-context strategy (avoid filter/opacity creating new stacking contexts; ensure dragged/selected cards sit on top)
   - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
   - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
   - [ ] Visually distinguish: empty slot vs face-down vs face-up (per-theme)
   - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)
   - [ ] Define and wire a single source of truth for “playable” (engine mask → UI)
+  - [ ] Add tests for engine playable mask helper (getPlayableMask)
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
@@ -241,12 +242,13 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 - [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
 - [x] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
-- [ ] Fix ThemeProvider lint/type issues (no setState-in-effect warnings; no implicit any; media-query listener types)
+- [x] Theme switcher UI in Navbar (select control)
+- [x] ThemeProvider lint/type issues resolved (no setState-in-effect warnings; no implicit any; media-query listener types)
 - [ ] Add tests for engine playable mask helper (getPlayableMask)
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
-- [ ] Store background assets locally (move remote background image into repo under Next public/ and document the convention)
-- [ ] Eliminate redundant color vars; introduce semantic tokens (e.g., Poker/default alias; Times Dark aligns with OS dark)
+- [ ] Store background assets locally (move remote background image into repo under `public/` and document the convention + CSS URL syntax)
+- [ ] Eliminate redundant color vars; introduce semantic tokens (Poker/default alias; Times Dark aligns with OS dark; add `--muted` and other semantic tokens once)
 
 ## 10) Release Checklist
 

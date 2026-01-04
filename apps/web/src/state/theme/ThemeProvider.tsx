@@ -12,6 +12,7 @@ import React, {
 export type Theme = "poker" | "times-light" | "times-dark";
 
 const STORAGE_KEY = "vcell-theme";
+const THEME_EVENT = "vcell-theme-change";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -63,6 +64,9 @@ function subscribe(callback: () => void) {
 
   window.addEventListener("storage", onStorage);
 
+  const onThemeEvent = () => callback();
+  window.addEventListener(THEME_EVENT, onThemeEvent);
+
   // Listen for OS theme changes.
   const onMql = () => callback();
 
@@ -85,6 +89,7 @@ function subscribe(callback: () => void) {
 
   return () => {
     window.removeEventListener("storage", onStorage);
+    window.removeEventListener(THEME_EVENT, onThemeEvent);
     if (mql) {
       if (typeof mql.removeEventListener === "function") {
         mql.removeEventListener("change", onMql);
@@ -136,7 +141,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+
+    // Apply immediately for responsiveness.
     applyThemeToDom(next);
+
+    // Notify same-tab subscribers (the `storage` event won’t fire in this tab).
+    try {
+      window.dispatchEvent(new Event(THEME_EVENT));
+    } catch {
+      // ignore
+    }
   }, []);
 
   const value = useMemo<ThemeContextValue>(

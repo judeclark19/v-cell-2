@@ -16,11 +16,12 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2025-12: Added minimal SessionProvider (guest vs user) persisted locally + MVP /login route.
 - 2025-12: Added global navbar; /stats now renders for guests but prompts login instead of redirecting.
 - 2025-12: Added responsive navbar (hamburger, active route styling) and basic theme foundation (Poker default).
+- 2026-01: Added theme switching control in the Navbar (select) wired to ThemeProvider; OS dark maps to Times Dark.
 - 2025-12: Implemented hydration-safe SessionProvider (client-only restore, avoids SSR/localStorage mismatches).
 - 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
 - 2026-01: Began board rendering in web UI; tableau is rendering first, with free cells + foundations next.
 - 2026-01: Rendered foundations + tableau + free cells using a unified 7-column board rhythm (no placeholder slots).
-- 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling in progress).
+- 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling + theme tokens in progress).
 
 ## 2. High-Level Architecture
 
@@ -216,6 +217,8 @@ Implementation note (engine):
 
 Treat keyboard play as a core acceptance criterion for the web UI, not a later polish item.
 
+Testing note: add dedicated engine tests for `getPlayableMask` so UI highlighting stays correct as rules evolve.
+
 ---
 
 ## 9. Win, Auto-Complete, and Celebration
@@ -259,6 +262,7 @@ Target layout behavior:
 - Portrait viewports: stack these regions vertically (Nav, Board, Controls)
 - Board area stays visually “portrait-ish” (target ~3:4 aspect) with sensible max width/height clamps
 - In-board zones: foundations row at top, tableau in the middle, free cells row at bottom (all aligned to a 7-column rhythm)
+- Card stacking/overlap in tableau: vertical offset should be expressed as a percentage of card height; be mindful of CSS stacking contexts (e.g., filter/opacity) when managing z-index
 
 Implementation note: keep layout + scaling in CSS (tokens/variables) so themes can adjust spacing without rewriting components.
 
@@ -267,7 +271,7 @@ Implementation note: keep layout + scaling in CSS (tokens/variables) so themes c
 - Theme via CSS design tokens
 - Applied with root attribute (e.g. `data-theme="midnight"`)
 - Preference stored locally and optionally synced
-  Implementation: ThemeProvider sets `data-theme` on the root element; OS dark mode maps to Times Dark by default.
+  Implementation: ThemeProvider sets `data-theme` on the root element and persists selection locally; OS dark mode maps to Times Dark by default. Theme selection is also exposed via a Navbar select control.
 
 ---
 
