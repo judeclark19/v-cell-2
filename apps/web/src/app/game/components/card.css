@@ -2,20 +2,17 @@
   border-radius: var(--card-radius);
   width: 100%;
   aspect-ratio: 2 / 3;
-  background: var(--card-front-bg);
-  color: var(--card-front-fg);
   border: 1px solid var(--card-front-border);
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* 3D flip container */
+  perspective: 900px;
 
-  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+  display: block;
   user-select: none;
   container-type: inline-size;
+  touch-action: none;
 
-  transition: transform 120ms ease, box-shadow 120ms ease,
-    background-color 120ms ease;
+  transition: box-shadow 120ms ease, background-color 120ms ease;
 }
 
 .card-inner {
@@ -23,12 +20,33 @@
   width: 100%;
   height: 100%;
 
+  /* the flipping element */
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 220ms ease;
+}
+
+.card.face-down .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--card-radius);
+  backface-visibility: hidden;
+
   display: flex;
   flex-direction: column;
-  /* align-items: center; */
   justify-content: center;
+
   font-size: 40cqw;
-  color: inherit;
+}
+
+.card-face--front {
+  background: var(--card-front-bg);
+  color: var(--card-front-fg);
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
   padding: 8px;
 
   @media (max-width: 600px) {
@@ -36,9 +54,27 @@
   }
 }
 
+.card-face--back {
+  transform: rotateY(180deg);
+  background-color: var(--card-back-bg);
+
+  /* Base: semi-transparent diagonal stripe pattern */
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--card-back-pattern-a),
+    var(--card-back-pattern-a) 8px,
+    var(--card-back-pattern-b) 8px,
+    var(--card-back-pattern-b) 16px
+  );
+
+  box-shadow: inset 0 0 0 2px
+      color-mix(in srgb, var(--card-back-border) 55%, transparent),
+    var(--card-shadow);
+}
+
 .card-suit--small {
-  width: 1em;
-  height: 1em;
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .card-suit--large {
@@ -58,35 +94,28 @@
   place-items: center;
 }
 
-.card:hover {
+.card:hover .card-face--front {
   box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover);
 }
 
 .card:focus-visible {
   outline: none;
+}
+
+.card:focus-visible .card-face--front {
   box-shadow: var(--focus-ring), inset 0 1px 0 var(--card-front-inset),
     var(--card-shadow-hover);
 }
 
 .card.is-dragging {
   cursor: grabbing;
-  transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  margin-top: 0; /* prevent tableau overlap margin from affecting fixed drag */
 }
 
-.card.face-down {
-  background: repeating-linear-gradient(
-      45deg,
-      var(--card-back-pattern-a),
-      var(--card-back-pattern-a) 8px,
-      var(--card-back-pattern-b) 8px,
-      var(--card-back-pattern-b) 16px
-    ),
-    var(--card-back-bg);
-  /* border: 1px solid var(--card-back-border); */
-  box-shadow: inset 0 0 0 2px
-      color-mix(in srgb, var(--card-back-border) 55%, transparent),
-    var(--card-shadow);
+.card.is-dragging,
+.card.is-returning {
+  margin-top: 0;
 }
 
 .card-slot {
@@ -97,29 +126,61 @@
   border: 1px dashed var(--card-slot-border);
   box-shadow: none;
   opacity: 0.9;
+  container-type: inline-size;
+
+  display: grid;
+  place-items: center;
+
+  .empty-label {
+    color: var(--muted);
+    font-size: 80cqw;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
-/* State styling: playable vs locked (face-up but not currently movable)       */
+/* State styling: playable vs locked       */
 /* -------------------------------------------------------------------------- */
 
-.card.is-locked {
+.card.is-locked .card-face--front {
   background-color: var(--card-front-bg-locked);
 }
 
 .card.is-playable {
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow),
-    0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+  cursor: grab;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .card.is-playable:hover {
-  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover),
-    0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .card.is-playable:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 88%, transparent);
+}
+
+.card.is-playable:active {
+  cursor: grabbing;
+}
+
+.card.is-playable .card-face--front {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+}
+
+.card.is-playable:hover .card-face--front {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover);
+}
+
+.card.is-playable:focus-visible .card-face--front {
   box-shadow: var(--focus-ring), inset 0 1px 0 var(--card-front-inset),
-    var(--card-shadow-hover),
-    0 0 0 2px color-mix(in srgb, var(--accent) 88%, transparent);
+    var(--card-shadow-hover);
+}
+
+/* Freecell needs a slot under the card */
+.pile-cell {
+  position: relative;
+}
+
+.pile-card {
+  position: absolute;
+  inset: 0;
 }

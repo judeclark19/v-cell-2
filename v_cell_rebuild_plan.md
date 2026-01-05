@@ -21,9 +21,12 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Noted future scope: leaderboards likely imply a public stats/privacy policy and possibly viewable user profiles.
 - 2026-01: Began board rendering in web UI; tableau is rendering first, with free cells + foundations next.
 - 2026-01: Rendered foundations + tableau + free cells using a unified 7-column board rhythm (no placeholder slots).
-  - 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling + theme tokens in progress).
-  - 2026-01: Added Navbar theme control (select) wired to ThemeProvider context.
-  - 2026-01: Planned timer UI as a web-only feature (show/hide preference; local-first, sync later).
+- 2026-01: Began “playable vs locked” UI semantics using an engine-provided playable mask (styling + theme tokens in progress).
+- 2026-01: Added Navbar theme control (select) wired to ThemeProvider context.
+- 2026-01: Planned timer UI as a web-only feature (show/hide preference; local-first, sync later).
+- 2026-01: Implemented early card interaction: draggable single playable cards (MVP) + snap-back on release; z-index/stacking context fixes for dragging.
+- 2026-01: Wired Settings → Timer visibility into the Game UI (incl. aria-hidden for accessibility).
+- 2026-01: Added branded card-back art (PNG) and recolored variants for Times Light/Dark themes.
 
 ## 2. High-Level Architecture
 
@@ -221,6 +224,8 @@ Treat keyboard play as a core acceptance criterion for the web UI, not a later p
 
 Testing note: add dedicated engine tests for `getPlayableMask` so UI highlighting stays correct as rules evolve.
 
+UI note: timer visibility already respects aria-hidden; keep that pattern for other hide/show UI controls.
+
 ---
 
 ## 9. Win, Auto-Complete, and Celebration
@@ -265,6 +270,7 @@ Target layout behavior:
 - Board area stays visually “portrait-ish” (target ~3:4 aspect) with sensible max width/height clamps
 - In-board zones: foundations row at top, tableau in the middle, free cells row at bottom (all aligned to a 7-column rhythm)
 - Card stacking/overlap in tableau: vertical offset should be expressed as a percentage of card height; be mindful of CSS stacking contexts (e.g., filter/opacity) when managing z-index
+- Dragging must escape scroll/overflow regions (tableau) without clipping; if tableau scroll stays, dragged cards should temporarily render above it.
 
 Implementation note: keep layout + scaling in CSS (tokens/variables) so themes can adjust spacing without rewriting components.
 
@@ -274,6 +280,8 @@ Implementation note: keep layout + scaling in CSS (tokens/variables) so themes c
 - Applied with root attribute (e.g. `data-theme="midnight"`)
 - Preference stored locally and optionally synced
   Implementation: ThemeProvider sets `data-theme` on the root element and persists selection locally; OS dark mode maps to Times Dark by default. Theme selection is also exposed via a Navbar select control.
+
+Asset note: card-back art currently uses PNG variants (Poker / Times Light / Times Dark). We can later convert to SVG or generate via CSS if we want perfect scaling, but PNG is fine for MVP.
 
 ---
 

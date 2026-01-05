@@ -5,6 +5,8 @@
 /* Default theme = Poker                                                      */
 /* -------------------------------------------------------------------------- */
 :root {
+  --poker-red: #ef3e56;
+
   --background: #35654d;
   --foreground: #e9f6ee;
   --surface: #0f2216;
@@ -51,8 +53,8 @@
   /* Face-down (back) */
   --card-back-bg: color-mix(in srgb, var(--surface) 70%, #000 30%);
   --card-back-border: color-mix(in srgb, var(--card-front-bg) 60%, transparent);
-  --card-back-pattern-a: rgba(255, 255, 255, 0.08);
-  --card-back-pattern-b: rgba(0, 0, 0, 0.18);
+  --card-back-pattern-a: var(--poker-red);
+  --card-back-pattern-b: color-mix(in srgb, var(--poker-red) 85%, #000 15%);
 
   /* Empty slot */
   --card-slot-bg: color-mix(in srgb, var(--background) 85%, #000 15%);
@@ -102,7 +104,7 @@
   --card-back-bg: #eef4ff;
   --card-back-border: color-mix(in srgb, var(--card-front-bg) 55%, transparent);
   --card-back-pattern-a: rgba(31, 111, 235, 0.1);
-  --card-back-pattern-b: rgba(0, 0, 0, 0.06);
+  --card-back-pattern-b: rgba(31, 111, 235, 0.2);
 
   --card-slot-bg: rgba(0, 0, 0, 0.03);
   --card-slot-border: rgba(0, 0, 0, 0.18);

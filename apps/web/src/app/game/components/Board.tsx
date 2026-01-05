@@ -50,10 +50,12 @@ function Board() {
                 card === undefined ? (
                   <div
                     key={i}
-                    className={`pile-spacer ${i === 0 ? "timer-cell" : ""}`}
-                    aria-hidden={!showTimer}
+                    className={`pile-spacer ${i === 1 ? "timer-cell" : ""}`}
+                    aria-hidden={
+                      i !== 1 ? "true" : showTimer ? "false" : "true"
+                    }
                   >
-                    {i === 0 && (
+                    {i === 1 && (
                       <>
                         <div className="timer">00:00</div>
                         <button className="btn btn--primary">⏸︎</button>
@@ -64,6 +66,7 @@ function Board() {
                   <Card
                     key={i}
                     card={card}
+                    emptyLabel="A"
                     playable={playable.foundations[i - 3]} // -3 accounts for spacers
                   />
                 )
@@ -80,7 +83,7 @@ function Board() {
                 aria-label={`Tableau column ${colIndex + 1}`}
               >
                 {col.length === 0 ? (
-                  <Card card={null} />
+                  <Card card={null} emptyLabel="K" />
                 ) : (
                   col.map((tc, tcIndex) => (
                     <Card
@@ -102,11 +105,19 @@ function Board() {
                 card === undefined ? (
                   <div key={i} className="pile-spacer" aria-hidden="true" />
                 ) : (
-                  <Card
-                    key={i}
-                    card={card}
-                    playable={playable.freeCells[i - 1]} // -1 accounts for spacer
-                  />
+                  <div key={i} className="pile-cell">
+                    {/* Always show the slot */}
+                    <Card card={null} className="pile-slot" />
+
+                    {/* If a card exists, render it on top of the slot */}
+                    {card && (
+                      <Card
+                        card={card}
+                        playable={playable.freeCells[i - 1]} // -1 accounts for spacer
+                        className="pile-card"
+                      />
+                    )}
+                  </div>
                 )
               )}
             </div>
@@ -117,10 +128,10 @@ function Board() {
       <section className="control" aria-label="Game actions">
         <div className="row">
           <button type="button" className="btn btn--primary" disabled>
-            New deal (new seed)
+            New deal
           </button>
           <button type="button" className="btn btn--secondary" disabled>
-            Restart deal (same seed)
+            Restart deal
           </button>
           <button type="button" className="btn btn--secondary" disabled>
             Undo

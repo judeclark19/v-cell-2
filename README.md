@@ -24,10 +24,11 @@ npm -w @vcell/engine run build
 # Run the web app
 npm -w @vcell/web dev
 
-# Typecheck / lint (scripts are still being standardized across workspaces)
-npm -w @vcell/web run check
+# Lint + typecheck (web)
+npm -w @vcell/web lint
+npm -w @vcell/web typecheck
 
-# Run everything from root
+# Run everything (root scripts are still being finalized)
 npm run check
 ```
 
@@ -36,7 +37,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations + tableau + free cells are rendering in a 7-column rhythm (foundations top, free cells bottom). Next: tableau overlap/stacking + drag/drop + keyboard controls. Move highlighting uses an engine-provided “playable” mask. A timer UI toggle (show/hide) is planned as a web-only preference.
+- UI work-in-progress: foundations + tableau + free cells are rendering in a 7-column rhythm (foundations top, free cells bottom). Tableau overlap/stacking is in place, and single playable cards can be dragged (MVP) and snap back on release. Next: real drop targets + legal move application + keyboard controls. Move highlighting uses an engine-provided “playable” mask. Timer visibility is wired from Settings → Game UI (web-only preference for now).
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests
@@ -61,7 +62,7 @@ npm run dev
 
 - "/" — Entry (if session unset: entry flow; otherwise redirects to /game)
 - "/login" — MVP login (sets session mode; real auth later)
-- "/game" — Gameplay (engine wiring + early board rendering; tableau first)
+- "/game" — Gameplay (engine wiring + board rendering + MVP drag + timer UI)
 - "/settings" — Settings skeleton (gameplay + appearance; wiring in progress)
 - "/stats" — Renders for guests but shows a login prompt; real stats + leaderboards later
 
@@ -92,3 +93,4 @@ We’ve implemented a minimal local-only “session mode” (guest vs user) to s
 
 Poker is the current default theme. Times Light and Times Dark are planned; Times Dark should also apply automatically when the OS prefers dark mode (prefers-color-scheme: dark). Theme selection is driven by CSS variables + a root data-theme attribute.
 Theme can also be changed via a select control in the Navbar (wired to ThemeProvider context). The default is Poker; OS dark mode maps to Times Dark.
+Card backs currently use a branded logo PNG with theme-specific recolors (Times Light/Dark).

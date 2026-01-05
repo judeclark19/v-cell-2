@@ -136,19 +136,20 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] Foundations rendering (4 slots; suit is dynamic)
   - [x] Empty-slot visuals (free cell / foundation / empty tableau)
 - [ ] Card stacking + layout
+  - [x] Card backs: branded V-Cell logo back (PNG), recolored for Times Light/Dark
   - [x] Board layout: foundations on top, free cells on bottom (V1-inspired)
   - [x] All zones share the same 7-column rhythm (no placeholder “unused” slots rendered)
-  - [ ] Overlap/stacking in tableau columns (vertical offset as % of card height)
-  - [ ] Z-index/stacking-context strategy (avoid filter/opacity creating new stacking contexts; ensure dragged/selected cards sit on top)
+  - [x] Overlap/stacking in tableau columns (vertical offset as % of card height)
+  - [x] Z-index/stacking-context strategy (avoid filter/opacity creating new stacking contexts; ensure dragged/selected cards sit on top)
   - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
   - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
   - [ ] Visually distinguish: empty slot vs face-down vs face-up (per-theme)
   - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)
   - [ ] Define and wire a single source of truth for “playable” (engine mask → UI)
   - [ ] Add tests for engine playable mask helper (getPlayableMask)
-  - [ ] Timer UI (web): show/hide toggle wired from Settings → Game UI
-    - [ ] Persist `showTimer` preference locally (ThemeProvider-style) and later sync to user profile
-    - [ ] Ensure timer container sets `aria-hidden` when hidden
+  - [x] Timer UI (web): show/hide toggle wired from Settings → Game UI
+    - [x] Persist `showTimer` preference locally (ThemeProvider-style) and later sync to user profile
+    - [x] Ensure timer container sets `aria-hidden` when hidden
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
 - [ ] Card components + pile components
 - [ ] Continuous scaling system (single scale factor)
@@ -166,6 +167,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ### 4.2 Input
 
+- [x] Drag a single playable card around the screen (MVP), snapping back on release
+- [ ] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
 - [ ] Drag/drop for single card + sub-stack
 - [ ] Magnetic snapping (snap radius + target priority)
 - [ ] Valid target highlighting
@@ -184,6 +187,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 ## 5) Offline Support (PWA)
 
 - [ ] Fix dev 404 for /sw.js (either add a stub SW or disable any SW registration until we actually do PWA)
+  - [ ] If we are not doing PWA yet, remove/disable any service worker registration so dev stays clean
 - [ ] Decide whether we’re doing PWA via next-pwa or a custom service worker (don’t half-register it)
 - [ ] Add PWA support (service worker + caching strategy)
 - [ ] Confirm: app loads offline, play works offline
@@ -247,9 +251,10 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
 - [x] Theme switcher UI in Navbar (select control)
 - [x] ThemeProvider lint/type issues resolved (no setState-in-effect warnings; no implicit any; media-query listener types)
-- [ ] Add tests for engine playable mask helper (getPlayableMask)
+- [x] Add tests for engine playable mask helper (getPlayableMask)
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
+- [x] Settings → Timer toggle wired into Game UI (incl. aria-hidden)
 - [ ] Store background assets locally (move remote background image into repo under `public/` and document the convention + CSS URL syntax)
   - [ ] Eliminate redundant color vars; introduce semantic tokens (Poker/default alias; Times Dark aligns with OS dark; add `--muted` and other semantic tokens once)
   - [ ] Select chevron styling: ensure it remains visible on hover and uses theme token (e.g. `--foreground`)

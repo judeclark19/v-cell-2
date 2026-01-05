@@ -67,7 +67,7 @@
 }
 
 /* Tableau stack overlap */
-.tableau-col > .card,
+.tableau-col > .card:not(.is-dragging):not(.is-returning),
 .tableau-col > .card-slot {
   margin-top: -85%;
 }
