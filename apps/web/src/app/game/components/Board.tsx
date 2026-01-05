@@ -1,18 +1,42 @@
 import { useGame } from "@/state/game/GameProvider";
 import Card from "./Card";
 import "./board.css";
-import { getPlayableMask } from "@vcell/engine";
-import { useMemo } from "react";
+import { applyMove, getLegalMoves, getPlayableMask } from "@vcell/engine";
+import type { PileRef } from "@vcell/engine";
+import { useCallback, useMemo } from "react";
 
 function Board() {
-  const { state, showTimer } = useGame();
+  const { state, showTimer, dispatchMove, undo, canUndo } = useGame();
   const playable = useMemo(() => getPlayableMask(state), [state]);
   console.log("Playable mask:", playable);
+
+  type Move = Parameters<typeof applyMove>[1];
+
+  const legalMoves = useMemo(() => getLegalMoves(state), [state]);
 
   const getTopFoundationCard = (i: number) => {
     const slot = state.foundations[i];
     return slot.cards.length ? slot.cards[slot.cards.length - 1] : null;
   };
+
+  const tryAutoFoundation = useCallback(
+    (from: PileRef) => {
+      const candidates = legalMoves.filter(
+        (m): m is Extract<Move, { kind: "single" }> =>
+          m.kind === "single" &&
+          m.from.type === from.type &&
+          m.to.type === "foundation" &&
+          (m.from as any).index === (from as any).index
+      );
+
+      if (candidates.length === 0) return;
+
+      // Choose deterministically: lowest foundation index.
+      candidates.sort((a, b) => a.to.index - b.to.index);
+      dispatchMove(candidates[0]);
+    },
+    [dispatchMove, legalMoves]
+  );
 
   // `undefined` = padding (renders no slot), `null` = empty slot (renders a slot)
   const foundationsRow: Array<
@@ -75,27 +99,36 @@ function Board() {
           </div>
 
           {/* Tableau in the middle */}
-          <div className="tableau" aria-label="Tableau">
-            {state.tableau.map((col, colIndex) => (
-              <div
-                key={colIndex}
-                className="tableau-col"
-                aria-label={`Tableau column ${colIndex + 1}`}
-              >
-                {col.length === 0 ? (
-                  <Card card={null} emptyLabel="K" />
-                ) : (
-                  col.map((tc, tcIndex) => (
-                    <Card
-                      key={tc.card.id}
-                      card={tc.card}
-                      faceDown={tc.faceDown}
-                      playable={playable.tableau[colIndex][tcIndex]}
-                    />
-                  ))
-                )}
-              </div>
-            ))}
+          <div className="tableau-scroll" aria-label="Tableau">
+            <div className="tableau" aria-label="Tableau grid">
+              {state.tableau.map((col, colIndex) => (
+                <div
+                  key={colIndex}
+                  className="tableau-col"
+                  aria-label={`Tableau column ${colIndex + 1}`}
+                >
+                  {col.length === 0 ? (
+                    <Card card={null} emptyLabel="K" />
+                  ) : (
+                    col.map((tc, tcIndex) => (
+                      <Card
+                        key={tc.card.id}
+                        card={tc.card}
+                        faceDown={tc.faceDown}
+                        playable={playable.tableau[colIndex][tcIndex]}
+                        style={{ zIndex: tcIndex + 1 }}
+                        onActivate={() =>
+                          tryAutoFoundation({
+                            type: "tableau",
+                            index: colIndex as any
+                          })
+                        }
+                      />
+                    ))
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Free cells on bottom */}
@@ -115,6 +148,12 @@ function Board() {
                         card={card}
                         playable={playable.freeCells[i - 1]} // -1 accounts for spacer
                         className="pile-card"
+                        onActivate={() =>
+                          tryAutoFoundation({
+                            type: "freecell",
+                            index: (i - 1) as any
+                          })
+                        }
                       />
                     )}
                   </div>
@@ -133,7 +172,12 @@ function Board() {
           <button type="button" className="btn btn--secondary" disabled>
             Restart deal
           </button>
-          <button type="button" className="btn btn--secondary" disabled>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={undo}
+            disabled={!canUndo}
+          >
             Undo
           </button>
         </div>

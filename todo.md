@@ -142,6 +142,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] Overlap/stacking in tableau columns (vertical offset as % of card height)
   - [x] Z-index/stacking-context strategy (avoid filter/opacity creating new stacking contexts; ensure dragged/selected cards sit on top)
   - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
+  - [ ] Introduce move history stack in GameProvider (record applied moves + prior GameState snapshots) to enable Undo
   - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
   - [ ] Visually distinguish: empty slot vs face-down vs face-up (per-theme)
   - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)

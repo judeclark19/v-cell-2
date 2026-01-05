@@ -35,13 +35,17 @@ function Card({
   faceDown = false,
   playable = false,
   emptyLabel = "",
-  className = ""
+  className = "",
+  style,
+  onActivate
 }: {
   card?: Card | null;
   faceDown?: boolean;
   playable?: boolean;
   emptyLabel?: string;
   className?: string;
+  style?: React.CSSProperties;
+  onActivate?: () => void;
 }) {
   const isEmpty = !card;
 
@@ -63,6 +67,8 @@ function Card({
   } | null>(null);
 
   const canDrag = Boolean(card) && playable && !faceDown;
+  const canActivate =
+    Boolean(card) && playable && !faceDown && Boolean(onActivate);
 
   const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     if (!canDrag) return;
@@ -136,7 +142,7 @@ function Card({
 
   if (isEmpty) {
     return (
-      <div className={`card-slot ${className}`.trim()}>
+      <div className={`card-slot ${className}`.trim()} style={style}>
         {emptyLabel && <span className="empty-label">{emptyLabel}</span>}
       </div>
     );
@@ -152,21 +158,30 @@ function Card({
       style={
         (isDragging || isReturning) && startRef.current
           ? {
+              ...style,
               position: "fixed",
               left: startRef.current.startLeft,
               top: startRef.current.startTop,
               width: startRef.current.width,
               height: startRef.current.height,
               transform: `translate3d(${drag.x}px, ${drag.y}px, 0)`,
-              zIndex: 9999,
+              zIndex: 999999,
               marginTop: 0,
               marginLeft: 0,
               transition: isReturning ? "transform 180ms ease" : "none"
             }
-          : undefined
+          : style
       }
       aria-label={`Card ${card.id}${faceDown ? ", face down" : ""}`}
       tabIndex={playable ? 0 : -1}
+      onDoubleClick={() => canActivate && onActivate?.()}
+      onKeyDown={(e) => {
+        if (!canActivate) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onActivate?.();
+        }
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

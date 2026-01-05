@@ -27,6 +27,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Implemented early card interaction: draggable single playable cards (MVP) + snap-back on release; z-index/stacking context fixes for dragging.
 - 2026-01: Wired Settings → Timer visibility into the Game UI (incl. aria-hidden for accessibility).
 - 2026-01: Added branded card-back art (PNG) and recolored variants for Times Light/Dark themes.
+- 2026-01: Decided to implement Undo via UI-level move history (GameProvider), not inside the engine, preserving engine purity.
 
 ## 2. High-Level Architecture
 
@@ -182,6 +183,8 @@ Affects legality, hints, and difficulty labeling.
 - Undo limits: `0 / 1 / 3 / 5 / unlimited`
 - Implemented via deterministic history or replay
 - Undo limit recorded as part of session rules
+
+Implementation note (V2): Undo will be implemented in the web layer by recording a history of prior GameState snapshots (or reversible move records) whenever applyMove is called. The engine remains pure and stateless; undo availability and limits are enforced by the UI according to rules.undoLimit.
 
 ---
 

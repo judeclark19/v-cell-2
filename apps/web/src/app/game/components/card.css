@@ -108,6 +108,7 @@
 }
 
 .card.is-dragging {
+  z-index: 999999;
   cursor: grabbing;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   margin-top: 0; /* prevent tableau overlap margin from affecting fixed drag */
@@ -183,4 +184,9 @@
 .pile-card {
   position: absolute;
   inset: 0;
+}
+
+/* Ensure overlapping tableau cards respect z-index */
+.tableau-col > .card {
+  position: relative;
 }

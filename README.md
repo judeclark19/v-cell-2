@@ -38,6 +38,7 @@ npm run check
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
 - UI work-in-progress: foundations + tableau + free cells are rendering in a 7-column rhythm (foundations top, free cells bottom). Tableau overlap/stacking is in place, and single playable cards can be dragged (MVP) and snap back on release. Next: real drop targets + legal move application + keyboard controls. Move highlighting uses an engine-provided “playable” mask. Timer visibility is wired from Settings → Game UI (web-only preference for now).
+- We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
 ## Running Engine Tests

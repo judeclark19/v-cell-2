@@ -12,6 +12,8 @@ type GameContextValue = {
   state: GameState;
   dispatchMove: (move: Move) => void;
   restart: () => void;
+  undo: () => void;
+  canUndo: boolean;
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
 };
@@ -19,6 +21,16 @@ type GameContextValue = {
 const SHOW_TIMER_KEY = "vcell:showTimer";
 
 const GameContext = createContext<GameContextValue | null>(null);
+
+type HistoryState = {
+  present: GameState;
+  past: GameState[];
+};
+
+function undoLimitToCap(undoLimit: GameState["rules"]["undoLimit"]): number {
+  if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
+  return undoLimit;
+}
 
 export function useGame() {
   const ctx = useContext(GameContext);
@@ -43,7 +55,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Create the initial game exactly once.
-  const [state, setState] = useState<GameState>(() => createGame(seed, rules));
+  const [history, setHistory] = useState<HistoryState>(() => ({
+    present: createGame(seed, rules),
+    past: []
+  }));
+
+  const state = history.present;
+
   const [showTimer, setShowTimer] = useState<boolean>(() => {
     if (typeof window === "undefined") return true; // default
     const raw = window.localStorage.getItem(SHOW_TIMER_KEY);
@@ -56,17 +74,47 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [showTimer]);
 
   const dispatchMove = (move: Move) => {
-    setState((prev: GameState) => applyMove(prev, move));
+    setHistory((h) => {
+      const next = applyMove(h.present, move);
+
+      const cap = undoLimitToCap(next.rules.undoLimit);
+      const nextPast = [...h.past, h.present];
+
+      if (Number.isFinite(cap) && nextPast.length > cap) {
+        // Keep the most recent `cap` states
+        nextPast.splice(0, nextPast.length - cap);
+      }
+
+      return {
+        present: next,
+        past: nextPast
+      };
+    });
   };
 
   const restart = () => {
-    setState(createGame(seed, rules));
+    setHistory({ present: createGame(seed, rules), past: [] });
   };
+
+  const undo = () => {
+    setHistory((h) => {
+      if (h.past.length === 0) return h;
+      const prev = h.past[h.past.length - 1];
+      return {
+        present: prev,
+        past: h.past.slice(0, -1)
+      };
+    });
+  };
+
+  const canUndo = history.past.length > 0;
 
   const value: GameContextValue = {
     state,
     dispatchMove,
     restart,
+    undo,
+    canUndo,
     showTimer,
     setShowTimer
   };
