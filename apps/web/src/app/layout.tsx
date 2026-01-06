@@ -34,7 +34,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body
+        className={`${questrial.variable} ${poppins.variable} ${luckiestGuy.variable}`}
+      >
         <Providers>
           <NavBar />
           <div className="max-width-container">{children}</div>

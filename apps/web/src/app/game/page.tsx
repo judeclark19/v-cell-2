@@ -1,7 +1,7 @@
 "use client";
 
 import { useGame } from "@/state/game/GameProvider";
-import Board from "./components/Board";
+import Board from "./components/board/Board";
 
 function DebugPanel() {
   const { state, restart } = useGame();

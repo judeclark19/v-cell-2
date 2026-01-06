@@ -1,12 +1,8 @@
 .board-border {
-  container-type: inline-size;
-
   /* keep your existing --board-h + width rules */
   --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
   width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
 
-  /* IMPORTANT: cqw = “container query width”, i.e. board-border’s width */
-  --card-w: calc((100cqw - (6 * var(--card-gap))) / 7);
   background-image: var(--board-border-image);
   background-size: cover;
   box-sizing: border-box;
@@ -21,6 +17,11 @@
 }
 
 .board {
+  container-type: inline-size;
+
+  /* IMPORTANT: cqw = “container query width”, i.e. board’s inner content width */
+  --card-w: calc((100cqw - (8px) - (6 * var(--card-gap))) / 7);
+
   height: var(--board-h);
   width: 100%;
   aspect-ratio: 3 / 4;
@@ -47,6 +48,8 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--card-gap);
+  box-sizing: border-box;
+  padding: 4px;
 }
 
 /* Tableau grid */
@@ -60,7 +63,7 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--card-gap, 10px);
-  /* padding: 4px; */
+  padding: 4px;
   background-color: var(--tableau-bg);
   border-radius: var(--radius);
   overflow: visible;

@@ -37,7 +37,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations + tableau + free cells are rendering in a 7-column rhythm (foundations top, free cells bottom). Tableau overlap/stacking is in place, and single playable cards can be dragged (MVP) and snap back on release. Next: real drop targets + legal move application + keyboard controls. Move highlighting uses an engine-provided “playable” mask. Timer visibility is wired from Settings → Game UI (web-only preference for now).
+- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Board owns orchestration and drag state; zone components are render-only. Single playable cards can be dragged (MVP) and snap back on release. Next: real drop targets, legal move application, and keyboard controls.
 - We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 

@@ -60,6 +60,12 @@ function Card({
   });
   const [isDragging, setIsDragging] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
+  const [fixedRect, setFixedRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const startRef = useRef<{
     pointerId: number;
@@ -92,6 +98,13 @@ function Card({
     e.preventDefault();
     const el = e.currentTarget as HTMLDivElement;
     const rect = el.getBoundingClientRect();
+
+    setFixedRect({
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height
+    });
 
     el.setPointerCapture(e.pointerId);
     startRef.current = {
@@ -153,6 +166,7 @@ function Card({
 
     // Return animation finished; now it's safe to drop the fixed-position styling.
     startRef.current = null;
+    setFixedRect(null);
     setIsReturning(false);
     setDrag({ x: 0, y: 0 });
   };
@@ -173,14 +187,14 @@ function Card({
         isReturning ? "is-returning" : ""
       } ${className}`.trim()}
       style={
-        (isDragging || isReturning) && startRef.current
+        (isDragging || isReturning) && fixedRect
           ? {
               ...style,
               position: "fixed",
-              left: startRef.current.startLeft,
-              top: startRef.current.startTop,
-              width: startRef.current.width,
-              height: startRef.current.height,
+              left: fixedRect.left,
+              top: fixedRect.top,
+              width: fixedRect.width,
+              height: fixedRect.height,
               transform: `translate3d(${drag.x}px, ${drag.y}px, 0)`,
               zIndex: 999999,
               marginTop: 0,

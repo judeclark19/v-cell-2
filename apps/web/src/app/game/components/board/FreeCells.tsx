@@ -1,0 +1,50 @@
+import type { Card as EngineCard, PileRef } from "@vcell/engine";
+import Card from "../Card";
+
+type FreeCellIndex = 0 | 1 | 2 | 3 | 4;
+
+type FreeCellsProps = {
+  freeCellsRow: Array<EngineCard | null | undefined>;
+  playableFreeCells: boolean[];
+  tryAutoFoundation: (from: PileRef) => void;
+};
+
+function FreeCells({
+  freeCellsRow,
+  playableFreeCells,
+  tryAutoFoundation
+}: FreeCellsProps) {
+  return (
+    <div className="board-bottom" aria-label="Free cells">
+      <div className="pile-row" aria-label="Free cells">
+        {freeCellsRow.map((card, i) =>
+          card === undefined ? (
+            <div key={i} className="pile-spacer" aria-hidden="true" />
+          ) : (
+            <div key={i} className="pile-cell">
+              {/* Always show the slot */}
+              <Card card={null} className="pile-slot" />
+
+              {/* If a card exists, render it on top of the slot */}
+              {card && (
+                <Card
+                  card={card}
+                  playable={playableFreeCells[i - 1]} // -1 accounts for spacer
+                  className="pile-card"
+                  onActivate={() =>
+                    tryAutoFoundation({
+                      type: "freecell",
+                      index: (i - 1) as FreeCellIndex
+                    })
+                  }
+                />
+              )}
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default FreeCells;

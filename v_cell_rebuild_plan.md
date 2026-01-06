@@ -28,6 +28,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Wired Settings → Timer visibility into the Game UI (incl. aria-hidden for accessibility).
 - 2026-01: Added branded card-back art (PNG) and recolored variants for Times Light/Dark themes.
 - 2026-01: Decided to implement Undo via UI-level move history (GameProvider), not inside the engine, preserving engine purity.
+- 2026-01: Refactored Board UI into presentational zone components (Foundations, Tableau, FreeCells) with Board as the single orchestrator; centralized drag logic extracted into `useTableauDrag` hook.
 
 ## 2. High-Level Architecture
 

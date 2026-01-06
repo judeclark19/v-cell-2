@@ -125,16 +125,13 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 ---
 
-## 4) UI + Interaction (Feel)
-
 - [x] Move GameProvider out of page components into a dedicated module
 - [x] Provide GameProvider at app scope (shared across routes)
 - [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
-- [ ] Render all zones from engine state
-  - [x] Tableau rendering (basic)
-  - [x] Free cells rendering (5 slots; 3 may be occupied)
-  - [x] Foundations rendering (4 slots; suit is dynamic)
-  - [x] Empty-slot visuals (free cell / foundation / empty tableau)
+- [x] Render all zones from engine state
+  - [x] Foundations extracted into presentational component
+  - [x] Tableau extracted into presentational component
+  - [x] Free cells extracted into presentational component
 - [ ] Card stacking + layout
   - [x] Card backs: branded V-Cell logo back (PNG), recolored for Times Light/Dark
   - [x] Board layout: foundations on top, free cells on bottom (V1-inspired)
@@ -152,8 +149,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
     - [x] Persist `showTimer` preference locally (ThemeProvider-style) and later sync to user profile
     - [x] Ensure timer container sets `aria-hidden` when hidden
 - [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
-- [ ] Card components + pile components
+- [x] Card components + pile components (initial extraction)
 - [ ] Continuous scaling system (single scale factor)
+
   - [x] Aspect-ratio constraints for board container (target 3:4; clamp max width/height)
   - [x] Theme system (CSS variables, `data-theme`)
   - [x] Theme system foundation (CSS variables, semantic tokens, `data-theme`; Poker default; Times Light/Dark next)
@@ -166,9 +164,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [ ] Define keyboard interaction spec (later): focus model, pick-up/drop intent, shortcuts, and screen reader announcements
   - [ ] Keyboard spec + implementation should include a “pick up stack” affordance aligned with the engine’s movable run definition
 
-### 4.2 Input
-
 - [x] Drag a single playable card around the screen (MVP), snapping back on release
+- [x] Centralized drag state via `useTableauDrag` hook (Board-owned)
 - [ ] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
 - [ ] Drag/drop for single card + sub-stack
 - [ ] Magnetic snapping (snap radius + target priority)
