@@ -1,6 +1,6 @@
 import type { Card as EngineCard, PileRef } from "@vcell/engine";
 import Card from "../Card";
-import type { useTableauDrag } from "@/ui/useTableauDrag";
+import type { useCardDrag } from "@/ui/useCardDrag";
 
 type TableauIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -11,9 +11,9 @@ type TableauProps = {
   playable: {
     tableau: Array<Array<boolean>>;
   };
-  drag: ReturnType<typeof useTableauDrag>["drag"];
+  drag: ReturnType<typeof useCardDrag>["drag"];
   handleTableauPointerDown: ReturnType<
-    typeof useTableauDrag
+    typeof useCardDrag
   >["handleTableauPointerDown"];
   tryAutoFoundation: (from: PileRef) => void;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
@@ -27,6 +27,8 @@ function Tableau({
   tryAutoFoundation,
   setTableauColRef
 }: TableauProps) {
+  const tableauSource = drag.source?.type === "tableau" ? drag.source : null;
+
   return (
     <div className="tableau-scroll" aria-label="Tableau">
       <div className="tableau" aria-label="Tableau grid">
@@ -43,14 +45,14 @@ function Tableau({
               col.map((tc, tcIndex) => {
                 const isDraggedFromThisCol =
                   drag.active &&
-                  drag.source?.type === "tableau" &&
-                  drag.source.colIndex === colIndex;
+                  tableauSource != null &&
+                  tableauSource.colIndex === colIndex;
 
                 const inDraggedRange =
                   isDraggedFromThisCol &&
-                  drag.source != null &&
-                  tcIndex >= drag.source.startIndex &&
-                  tcIndex < drag.source.startIndex + drag.stack.length;
+                  tableauSource != null &&
+                  tcIndex >= tableauSource.startIndex &&
+                  tcIndex < tableauSource.startIndex + drag.stack.length;
 
                 if (inDraggedRange) {
                   return (

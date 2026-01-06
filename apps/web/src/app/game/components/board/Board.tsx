@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "../Card";
 import "./board.css";
-import { useTableauDrag } from "@/ui/useTableauDrag";
+import { useCardDrag } from "@/ui/useCardDrag";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -65,28 +65,138 @@ function Board() {
     []
   );
 
-  const { drag, handleTableauPointerDown } = useTableauDrag(state, playable, {
+  const freeCellRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const setFreeCellRef = useCallback(
+    (index: number, el: HTMLDivElement | null) => {
+      freeCellRefs.current[index] = el;
+    },
+    []
+  );
+
+  const foundationRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const setFoundationRef = useCallback(
+    (index: number, el: HTMLDivElement | null) => {
+      foundationRefs.current[index] = el;
+    },
+    []
+  );
+
+  const {
+    drag,
+    finalizeDrag,
+    handleTableauPointerDown,
+    handleFreeCellPointerDown
+  } = useCardDrag(state, playable, {
     getTableauCols: () => tableauColRefs.current,
+    getFreeCells: () => freeCellRefs.current,
+    getFoundations: () => foundationRefs.current,
     onDrop: ({ drag, dropTarget }) => {
-      // Single-card tableau → tableau drops only for now.
-      if (drag.stack.length !== 1) return;
-      if (!drag.source || drag.source.type !== "tableau") return;
-      if (!dropTarget || dropTarget.type !== "tableau") return;
-      if (dropTarget.colIndex === drag.source.colIndex) return;
+      // Single-card drops only for now.
+      if (drag.stack.length !== 1) return false;
+      if (!drag.source) return false;
+      if (!dropTarget) return false;
 
-      const fromIndex = drag.source.colIndex as TableauIndex;
-      const toIndex = dropTarget.colIndex as TableauIndex;
+      const source = drag.source;
+      const fromTableauIndex =
+        source.type === "tableau" ? (source.colIndex as TableauIndex) : null;
 
-      const move = legalMoves.find(
-        (m): m is Extract<Move, { kind: "single" }> =>
-          m.kind === "single" &&
-          m.from.type === "tableau" &&
-          m.to.type === "tableau" &&
-          m.from.index === fromIndex &&
-          m.to.index === toIndex
-      );
+      if (dropTarget.type === "tableau") {
+        const toIndex = dropTarget.colIndex as TableauIndex;
 
-      if (move) dispatchMove(move);
+        if (source.type === "tableau" && fromTableauIndex != null) {
+          if (toIndex === source.colIndex) return false;
+
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "tableau" &&
+              m.to.type === "tableau" &&
+              m.from.index === fromTableauIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        if (source.type === "freecell") {
+          const fromIndex = source.index;
+
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "freecell" &&
+              m.to.type === "tableau" &&
+              m.from.index === fromIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        return false;
+      }
+
+      if (dropTarget.type === "freecell") {
+        if (source.type !== "tableau" || fromTableauIndex == null) return false;
+        const toIndex = dropTarget.index;
+
+        const move = legalMoves.find(
+          (m): m is Extract<Move, { kind: "single" }> =>
+            m.kind === "single" &&
+            m.from.type === "tableau" &&
+            m.to.type === "freecell" &&
+            m.from.index === fromTableauIndex &&
+            m.to.index === toIndex
+        );
+
+        if (!move) return false;
+        dispatchMove(move);
+        return true;
+      }
+
+      if (dropTarget.type === "foundation") {
+        const toIndex = dropTarget.index;
+
+        if (source.type === "tableau" && fromTableauIndex != null) {
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "tableau" &&
+              m.to.type === "foundation" &&
+              m.from.index === fromTableauIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        if (source.type === "freecell") {
+          const fromIndex = source.index;
+
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "freecell" &&
+              m.to.type === "foundation" &&
+              m.from.index === fromIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        return false;
+      }
+
+      return false;
     }
   });
 
@@ -125,6 +235,7 @@ function Board() {
             foundationsRow={foundationsRow}
             playableFoundations={playable.foundations}
             showTimer={showTimer}
+            setFoundationRef={setFoundationRef}
           />
 
           {/* Tableau in the middle */}
@@ -140,7 +251,10 @@ function Board() {
           {/* Drag overlay layer */}
           {drag.active && drag.stack.length > 0 && (
             <div
-              className="drag-layer"
+              className={`drag-layer ${drag.isReturning ? "is-returning" : ""}`}
+              onTransitionEnd={() => {
+                if (drag.isReturning) finalizeDrag();
+              }}
               style={{
                 left: 0,
                 top: 0,
@@ -171,6 +285,9 @@ function Board() {
             freeCellsRow={freeCellsRow}
             playableFreeCells={playable.freeCells}
             tryAutoFoundation={tryAutoFoundation}
+            setFreeCellRef={setFreeCellRef}
+            drag={drag}
+            handleFreeCellPointerDown={handleFreeCellPointerDown}
           />
         </div>
       </div>

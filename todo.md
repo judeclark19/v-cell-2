@@ -166,8 +166,17 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 - [x] Drag a single playable card around the screen (MVP), snapping back on release
 - [x] Centralized drag state via `useTableauDrag` hook (Board-owned)
-- [ ] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
-- [ ] Drag/drop for single card + sub-stack
+- [x] Drag single card from tableau → tableau
+- [x] Drag single card from tableau → free cell
+- [x] Drag single card from tableau → foundation
+- [x] Drag single card from free cell → tableau
+- [x] Drag single card from free cell → foundation
+- [x] Foundation slots render as persistent empty slots (2-layer render)
+- [x] Centralized drag state supports multiple source types (tableau, free cell)
+- [x] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
+- [ ] Smooth return animation for invalid drops
+- [ ] Highlight valid drop targets during drag
+- [x] Drag/drop for single card + sub-stack
 - [ ] Magnetic snapping (snap radius + target priority)
 - [ ] Valid target highlighting
 - [ ] Double-click/double-tap auto-send to foundation

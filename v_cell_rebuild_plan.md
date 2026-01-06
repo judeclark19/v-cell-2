@@ -29,6 +29,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Added branded card-back art (PNG) and recolored variants for Times Light/Dark themes.
 - 2026-01: Decided to implement Undo via UI-level move history (GameProvider), not inside the engine, preserving engine purity.
 - 2026-01: Refactored Board UI into presentational zone components (Foundations, Tableau, FreeCells) with Board as the single orchestrator; centralized drag logic extracted into `useTableauDrag` hook.
+- 2026-01: Drag/drop architecture generalized — centralized drag logic now supports multiple source zones (tableau, free cells) and destination zones (tableau, free cells, foundations). Board owns move commitment; zone components remain presentational.
 
 ## 2. High-Level Architecture
 
@@ -140,6 +141,8 @@ Notes:
 
 ## 6. Foundations (Configurable)
 
+- UI note: Foundation slots are always rendered as persistent empty targets; cards are layered above slots so dragging a foundation card never removes the visual drop target.
+
 ### 6.1 Build Rules (Dynamic foundation suit)
 
 - There are **4 foundation slots** (not pre-assigned to suits).
@@ -197,6 +200,8 @@ Implementation note (V2): Undo will be implemented in the web layer by recording
   - Partial-stack pickup
   - Full-stack pickup
   - Magnetic snapping to valid targets
+- Drag sources include tableau stacks and single free-cell cards (foundation cards next).
+- UI validates drag intent exclusively via engine-provided legal moves.
 
 Additional UX behavior (confirmed):
 

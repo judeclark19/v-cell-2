@@ -5,12 +5,14 @@ type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;
   playableFoundations: boolean[];
   showTimer: boolean;
+  setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
 };
 
 function Foundations({
   foundationsRow,
   playableFoundations,
-  showTimer
+  showTimer,
+  setFoundationRef
 }: FoundationsProps) {
   return (
     <div className="board-top" aria-label="Foundations">
@@ -30,12 +32,23 @@ function Foundations({
               )}
             </div>
           ) : (
-            <Card
+            <div
               key={i}
-              card={card}
-              emptyLabel="A"
-              playable={playableFoundations[i - 3]} // -3 accounts for spacers
-            />
+              className="pile-cell"
+              ref={(el) => setFoundationRef(i - 3, el)}
+            >
+              {/* Slot always visible */}
+              <Card card={null} className="pile-slot" emptyLabel="A" />
+
+              {/* Card layer (if present) */}
+              {card && (
+                <Card
+                  card={card}
+                  className="pile-card"
+                  playable={playableFoundations[i - 3]} // -3 accounts for spacers
+                />
+              )}
+            </div>
           )
         )}
       </div>

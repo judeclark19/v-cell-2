@@ -108,6 +108,11 @@
   will-change: transform;
   width: var(--card-w);
   height: auto;
+  transition: none;
+}
+
+.drag-layer.is-returning {
+  transition: transform 180ms ease;
 }
 
 .drag-layer__stack {

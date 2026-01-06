@@ -40,7 +40,7 @@ export function useGame() {
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   // Keep seed stable for this session.
-  const seed = useMemo(() => "dev-seed-004", []);
+  const seed = useMemo(() => "dev-seed-003", []);
 
   // Minimal starter rules; we'll replace this with a typed Rules object soon.
   type Rules = Parameters<typeof createGame>[1];
