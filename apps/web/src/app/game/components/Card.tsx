@@ -1,10 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useRef } from "react";
-import type { Card } from "@vcell/engine";
+import type { Card, Suit } from "@vcell/engine";
 import "./card.css";
 
-function suitSymbol(suit: string, size: "small" | "large" = "large") {
+function suitSymbol(suit: Suit, size: "small" | "large" = "large") {
   return (
     <img
       src={`/images/${suit}.svg`}
@@ -37,7 +38,9 @@ function Card({
   emptyLabel = "",
   className = "",
   style,
-  onActivate
+  onActivate,
+  onPointerDownCard,
+  disableInternalDrag
 }: {
   card?: Card | null;
   faceDown?: boolean;
@@ -46,6 +49,8 @@ function Card({
   className?: string;
   style?: React.CSSProperties;
   onActivate?: () => void;
+  onPointerDownCard?: (e: React.PointerEvent<HTMLDivElement>) => void;
+  disableInternalDrag?: boolean;
 }) {
   const isEmpty = !card;
 
@@ -66,11 +71,20 @@ function Card({
     height: number;
   } | null>(null);
 
-  const canDrag = Boolean(card) && playable && !faceDown;
+  const canDrag =
+    Boolean(card) &&
+    playable &&
+    !faceDown &&
+    !disableInternalDrag &&
+    !onPointerDownCard;
   const canActivate =
     Boolean(card) && playable && !faceDown && Boolean(onActivate);
 
   const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    if (onPointerDownCard) {
+      onPointerDownCard(e);
+      return;
+    }
     if (!canDrag) return;
     // Only primary button for mouse; touch/pen are fine.
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -109,6 +123,8 @@ function Card({
     if (!s) return;
 
     // Switch to “returning” state so we can animate transform back to 0,0.
+    // IMPORTANT: do NOT clear startRef here — we still need the original
+    // left/top/width/height while the return transition runs.
     setIsReturning(true);
     setIsDragging(false);
 
@@ -135,6 +151,7 @@ function Card({
     if (!isReturning) return;
     if (e.propertyName !== "transform") return;
 
+    // Return animation finished; now it's safe to drop the fixed-position styling.
     startRef.current = null;
     setIsReturning(false);
     setDrag({ x: 0, y: 0 });
@@ -154,7 +171,7 @@ function Card({
         playable ? "is-playable" : "is-locked"
       } ${isDragging ? "is-dragging" : ""} ${
         isReturning ? "is-returning" : ""
-      }${className}`.trim()}
+      } ${className}`.trim()}
       style={
         (isDragging || isReturning) && startRef.current
           ? {

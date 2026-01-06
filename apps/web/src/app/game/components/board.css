@@ -1,14 +1,17 @@
 .board-border {
+  container-type: inline-size;
+
+  /* keep your existing --board-h + width rules */
   --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
-  --card-gap: 10px;
-
   width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
-  margin: 0 auto;
 
+  /* IMPORTANT: cqw = “container query width”, i.e. board-border’s width */
+  --card-w: calc((100cqw - (6 * var(--card-gap))) / 7);
   background-image: var(--board-border-image);
   background-size: cover;
   box-sizing: border-box;
   padding: 4px;
+  margin: 0 auto;
   border-radius: var(--radius);
   background-color: var(--board-border-color);
 
@@ -57,7 +60,7 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--card-gap, 10px);
-  padding: 4px;
+  /* padding: 4px; */
   background-color: var(--tableau-bg);
   border-radius: var(--radius);
   overflow: visible;
@@ -92,6 +95,26 @@
 
 .tableau-col > .card-slot:first-child {
   margin-top: 0;
+}
+
+/* Drag overlay layer (above everything, no layout reflow) */
+.drag-layer {
+  position: fixed;
+  z-index: 1000000;
+  pointer-events: none; /* lets mouse events pass through */
+  will-change: transform;
+  width: var(--card-w);
+  height: auto;
+}
+
+.drag-layer__stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.drag-layer__stack > .card:not(:first-child) {
+  margin-top: calc(var(--card-w) * -0.85);
 }
 
 /* Occupies a grid cell but renders no slot UI (used for centering foundations/freecells) */
