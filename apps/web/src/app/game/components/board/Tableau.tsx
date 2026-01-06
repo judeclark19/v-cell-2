@@ -16,6 +16,7 @@ type TableauProps = {
     typeof useTableauDrag
   >["handleTableauPointerDown"];
   tryAutoFoundation: (from: PileRef) => void;
+  setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
 };
 
 function Tableau({
@@ -23,7 +24,8 @@ function Tableau({
   playable,
   drag,
   handleTableauPointerDown,
-  tryAutoFoundation
+  tryAutoFoundation,
+  setTableauColRef
 }: TableauProps) {
   return (
     <div className="tableau-scroll" aria-label="Tableau">
@@ -33,6 +35,7 @@ function Tableau({
             key={colIndex}
             className="tableau-col"
             aria-label={`Tableau column ${colIndex + 1}`}
+            ref={(el) => setTableauColRef(colIndex, el)}
           >
             {col.length === 0 ? (
               <Card card={null} emptyLabel="K" />

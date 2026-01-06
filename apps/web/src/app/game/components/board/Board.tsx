@@ -1,6 +1,6 @@
 import { applyMove, getLegalMoves, getPlayableMask } from "@vcell/engine";
 import type { Card as EngineCard, PileRef } from "@vcell/engine";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "../Card";
 import "./board.css";
@@ -53,10 +53,42 @@ function Board() {
   const playable = useMemo(() => getPlayableMask(state), [state]);
 
   type Move = Parameters<typeof applyMove>[1];
+  type TableauIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
   const legalMoves = useMemo(() => getLegalMoves(state), [state]);
 
-  const { drag, handleTableauPointerDown } = useTableauDrag(state, playable);
+  const tableauColRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const setTableauColRef = useCallback(
+    (colIndex: number, el: HTMLDivElement | null) => {
+      tableauColRefs.current[colIndex] = el;
+    },
+    []
+  );
+
+  const { drag, handleTableauPointerDown } = useTableauDrag(state, playable, {
+    getTableauCols: () => tableauColRefs.current,
+    onDrop: ({ drag, dropTarget }) => {
+      // Single-card tableau → tableau drops only for now.
+      if (drag.stack.length !== 1) return;
+      if (!drag.source || drag.source.type !== "tableau") return;
+      if (!dropTarget || dropTarget.type !== "tableau") return;
+      if (dropTarget.colIndex === drag.source.colIndex) return;
+
+      const fromIndex = drag.source.colIndex as TableauIndex;
+      const toIndex = dropTarget.colIndex as TableauIndex;
+
+      const move = legalMoves.find(
+        (m): m is Extract<Move, { kind: "single" }> =>
+          m.kind === "single" &&
+          m.from.type === "tableau" &&
+          m.to.type === "tableau" &&
+          m.from.index === fromIndex &&
+          m.to.index === toIndex
+      );
+
+      if (move) dispatchMove(move);
+    }
+  });
 
   const tryAutoFoundation = useCallback(
     (from: PileRef) => {
@@ -102,6 +134,7 @@ function Board() {
             drag={drag}
             handleTableauPointerDown={handleTableauPointerDown}
             tryAutoFoundation={tryAutoFoundation}
+            setTableauColRef={setTableauColRef}
           />
 
           {/* Drag overlay layer */}

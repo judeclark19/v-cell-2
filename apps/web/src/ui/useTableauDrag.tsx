@@ -23,6 +23,18 @@ export type DragState<TTableauItem> = {
   source: DragSource | null;
 };
 
+export type DropTarget = { type: "tableau"; colIndex: number } | null;
+
+type UseTableauDragOptions<TTableauItem> = {
+  getTableauCols?: () => Array<HTMLElement | null>;
+  onDrop?: (args: {
+    clientX: number;
+    clientY: number;
+    drag: DragState<TTableauItem>;
+    dropTarget: DropTarget;
+  }) => void;
+};
+
 /**
  * Owns drag state + global pointer listeners for picking up stacks from the tableau.
  * Board remains the orchestrator; this hook is the drag engine.
@@ -30,7 +42,11 @@ export type DragState<TTableauItem> = {
 export function useTableauDrag<
   TState extends { tableau: Array<Array<TableauCardLike>> },
   TPlayable extends { tableau: Array<Array<boolean>> }
->(state: TState, playable: TPlayable) {
+>(
+  state: TState,
+  playable: TPlayable,
+  options?: UseTableauDragOptions<TState["tableau"][number][number]>
+) {
   type TableauItem = TState["tableau"][number][number];
 
   const [drag, setDrag] = useState<DragState<TableauItem>>({
@@ -99,6 +115,31 @@ export function useTableauDrag<
     const cur = dragRef.current;
     if (!cur.active) return;
     if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
+
+    let dropTarget: DropTarget = null;
+    const cols = options?.getTableauCols?.() ?? [];
+    const targetIndex = cols.findIndex((el) => {
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return (
+        e.clientX >= r.left &&
+        e.clientX <= r.right &&
+        e.clientY >= r.top &&
+        e.clientY <= r.bottom
+      );
+    });
+
+    if (targetIndex >= 0) {
+      dropTarget = { type: "tableau", colIndex: targetIndex };
+    }
+
+    options?.onDrop?.({
+      clientX: e.clientX,
+      clientY: e.clientY,
+      drag: cur,
+      dropTarget
+    });
+
     endDrag();
   };
 
