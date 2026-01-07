@@ -17,6 +17,14 @@ type OnDropArgs<TCardItem> = {
   dropTarget: DropTarget;
 };
 
+type TableauStackMove = Extract<Move, { kind: "tableauStack" }>;
+
+type HasKind = { kind?: unknown };
+
+function isTableauStackMove(m: Move): m is TableauStackMove {
+  return (m as HasKind).kind === "tableauStack";
+}
+
 /**
  * Produces the `onDrop` handler for `useCardDrag`, based on engine legalMoves.
  * \n
@@ -52,15 +60,17 @@ export function useBoardDrop({ legalMoves, dispatchMove }: UseBoardDropArgs) {
 
           // Engine represents stack moves as a distinct kind.
           // Match by shape to avoid over-constraining types.
-          const stackMove = legalMoves.find(
-            (m): m is Extract<Move, { kind: "tableauStack" }> =>
-              (m as unknown as { kind?: string }).kind === "tableauStack" &&
-              (m as any).from?.type === "tableau" &&
-              (m as any).to?.type === "tableau" &&
-              (m as any).from.index === fromTableauIndex &&
-              (m as any).to.index === toIndex &&
-              (m as any).startIndex === startIndex
-          );
+          const stackMove = legalMoves.find((m): m is TableauStackMove => {
+            if (!isTableauStackMove(m)) return false;
+
+            return (
+              m.from.type === "tableau" &&
+              m.to.type === "tableau" &&
+              m.from.index === fromTableauIndex &&
+              m.to.index === toIndex &&
+              m.startIndex === startIndex
+            );
+          });
 
           if (!stackMove) return false;
           dispatchMove(stackMove);

@@ -359,8 +359,8 @@ export function useCardDrag<
     // Free cell drags are always a single card.
     // Cast to TableauItem-like shape so the overlay renderer can reuse Card.
     const stack = [
-      { card: card as any, faceDown: false }
-    ] as unknown as Array<TableauItem>;
+      { card: card as unknown as TableauItem["card"], faceDown: false }
+    ] as Array<TableauItem>;
 
     setDrag({
       active: false,

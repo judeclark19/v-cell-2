@@ -8,6 +8,7 @@ import type {
 } from "../types/piles";
 import { applyMove } from "./applyMove";
 import { areAllCardsUnlocked } from "./areAllCardsUnlocked";
+import { areAllCardsFaceUp } from "./areAllCardsFaceUp";
 
 function canPlaceOnFoundation(
   card: Card,
@@ -44,7 +45,7 @@ function exposedTableauCard(state: GameState, col: TableauIndex): Card | null {
 }
 
 export function getAutoCompleteMoves(state: GameState): Move[] {
-  if (!areAllCardsUnlocked(state)) return [];
+  if (!areAllCardsFaceUp(state)) return [];
 
   const moves: Move[] = [];
   let s: GameState = state;
