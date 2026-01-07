@@ -113,27 +113,67 @@ export function useBoardDrop({ legalMoves, dispatchMove }: UseBoardDropArgs) {
           return true;
         }
 
+        // foundation -> tableau (single only)
+        if (source.type === "foundation") {
+          const fromIndex = source.index;
+
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "foundation" &&
+              m.to.type === "tableau" &&
+              m.from.index === fromIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
         return false;
       }
 
-      // tableau -> freecell (single only)
+      // tableau/foundation -> freecell (single only)
       if (dropTarget.type === "freecell") {
         if (drag.stack.length !== 1) return false;
-        if (source.type !== "tableau" || fromTableauIndex == null) return false;
         const toIndex = dropTarget.index;
 
-        const move = legalMoves.find(
-          (m): m is Extract<Move, { kind: "single" }> =>
-            m.kind === "single" &&
-            m.from.type === "tableau" &&
-            m.to.type === "freecell" &&
-            m.from.index === fromTableauIndex &&
-            m.to.index === toIndex
-        );
+        // tableau -> freecell
+        if (source.type === "tableau" && fromTableauIndex != null) {
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "tableau" &&
+              m.to.type === "freecell" &&
+              m.from.index === fromTableauIndex &&
+              m.to.index === toIndex
+          );
 
-        if (!move) return false;
-        dispatchMove(move);
-        return true;
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        // foundation -> freecell
+        if (source.type === "foundation") {
+          const fromIndex = source.index;
+
+          const move = legalMoves.find(
+            (m): m is Extract<Move, { kind: "single" }> =>
+              m.kind === "single" &&
+              m.from.type === "foundation" &&
+              m.to.type === "freecell" &&
+              m.from.index === fromIndex &&
+              m.to.index === toIndex
+          );
+
+          if (!move) return false;
+          dispatchMove(move);
+          return true;
+        }
+
+        return false;
       }
 
       // tableau/freecell -> foundation (single only)

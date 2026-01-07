@@ -114,7 +114,8 @@ function Board() {
     drag,
     finalizeDrag,
     handleTableauPointerDown,
-    handleFreeCellPointerDown
+    handleFreeCellPointerDown,
+    handleFoundationPointerDown
   } = useCardDrag(state, playable, {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
@@ -128,14 +129,17 @@ function Board() {
   return (
     <>
       <WinAlertEffect isWon={isWon} />
-      <div className="board-border">
+      <div className="board-border" key={state.seed}>
         <div className="board" aria-label="Game board">
           {/* Foundations on top */}
           <Foundations
             foundationsRow={foundationsRow}
+            foundations={state.foundations}
+            drag={drag}
             playableFoundations={playable.foundations}
             showTimer={showTimer}
             setFoundationRef={setFoundationRef}
+            handleFoundationPointerDown={handleFoundationPointerDown}
           />
 
           {/* Tableau in the middle */}
@@ -149,7 +153,7 @@ function Board() {
           />
 
           {/* Drag overlay layer */}
-          {drag.active && drag.stack.length > 0 && (
+          {(drag.active || drag.pending) && drag.stack.length > 0 && (
             <div
               className={`drag-layer ${drag.isReturning ? "is-returning" : ""}`}
               onTransitionEnd={() => {

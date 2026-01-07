@@ -1,18 +1,37 @@
+import type React from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "../Card";
 
 type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;
+  foundations?: Array<{ cards: EngineCard[] }>;
+  drag?: {
+    active: boolean;
+    pending: boolean;
+    isReturning: boolean;
+    source:
+      | { type: "foundation"; index: number }
+      | { type: "freecell"; index: number }
+      | { type: "tableau"; colIndex: number; startIndex: number }
+      | null;
+  };
   playableFoundations: boolean[];
   showTimer: boolean;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
+  handleFoundationPointerDown?: (
+    e: React.PointerEvent<HTMLDivElement>,
+    index: number
+  ) => void;
 };
 
 function Foundations({
   foundationsRow,
+  foundations,
+  drag,
   playableFoundations,
   showTimer,
-  setFoundationRef
+  setFoundationRef,
+  handleFoundationPointerDown
 }: FoundationsProps) {
   return (
     <div className="board-top" aria-label="Foundations">
@@ -32,23 +51,47 @@ function Foundations({
               )}
             </div>
           ) : (
-            <div
-              key={i}
-              className="pile-cell"
-              ref={(el) => setFoundationRef(i - 3, el)}
-            >
-              {/* Slot always visible */}
-              <Card card={null} className="pile-slot" emptyLabel="A" />
+            (() => {
+              const foundationIndex = i - 3;
 
-              {/* Card layer (if present) */}
-              {card && (
-                <Card
-                  card={card}
-                  className="pile-card"
-                  playable={playableFoundations[i - 3]} // -3 accounts for spacers
-                />
-              )}
-            </div>
+              const isDraggingFromThisFoundation =
+                !!drag &&
+                (drag.active || drag.pending || drag.isReturning) &&
+                drag.source?.type === "foundation" &&
+                drag.source.index === foundationIndex;
+
+              const pile = foundations?.[foundationIndex];
+              const effectiveCard = pile
+                ? pile.cards[
+                    pile.cards.length -
+                      1 -
+                      (isDraggingFromThisFoundation ? 1 : 0)
+                  ] ?? null
+                : card ?? null;
+
+              return (
+                <div
+                  key={i}
+                  className="pile-cell"
+                  ref={(el) => setFoundationRef(foundationIndex, el)}
+                >
+                  {/* Slot always visible */}
+                  <Card card={null} className="pile-slot" emptyLabel="A" />
+
+                  {/* Card layer (if present) */}
+                  {effectiveCard && (
+                    <Card
+                      card={effectiveCard}
+                      className="pile-card"
+                      playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
+                      onPointerDownCard={(e) =>
+                        handleFoundationPointerDown?.(e, foundationIndex)
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })()
           )
         )}
       </div>

@@ -11,6 +11,10 @@ export type DragSource =
   | {
       type: "freecell";
       index: number;
+    }
+  | {
+      type: "foundation";
+      index: number;
     };
 
 export type DragState<TCardItem> = {
@@ -57,6 +61,7 @@ export function useCardDrag<
   TState extends {
     tableau: Array<Array<CardLike>>;
     freeCells: Array<{ id: string | number } | null>;
+    foundations: Array<{ cards: Array<{ id: string | number }> }>;
   },
   TPlayable extends {
     tableau: Array<Array<boolean>>;
@@ -381,12 +386,56 @@ export function useCardDrag<
     });
   };
 
+  const handleFoundationPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    // Only primary button for mouse; touch/pen are fine.
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    const slot = state.foundations[index];
+    const cards = slot?.cards;
+    if (!cards || cards.length === 0) return;
+
+    const card = cards[cards.length - 1];
+
+    e.preventDefault();
+    const el = e.currentTarget as HTMLDivElement;
+    const rect = el.getBoundingClientRect();
+
+    el.setPointerCapture(e.pointerId);
+
+    // Foundation drags are always a single card.
+    const stack = [
+      { card: card as unknown as TableauItem["card"], faceDown: false }
+    ] as Array<TableauItem>;
+
+    setDrag({
+      active: false,
+      isReturning: false,
+      pending: true,
+      pointerId: e.pointerId,
+      captureEl: el,
+      x: 0,
+      y: 0,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseLeft: rect.left,
+      baseTop: rect.top,
+      width: rect.width,
+      height: rect.height,
+      stack,
+      source: { type: "foundation", index }
+    });
+  };
+
   return {
     drag,
     setDrag,
     endDrag,
     finalizeDrag,
     handleTableauPointerDown,
-    handleFreeCellPointerDown
+    handleFreeCellPointerDown,
+    handleFoundationPointerDown
   };
 }

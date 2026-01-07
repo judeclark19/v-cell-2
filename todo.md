@@ -172,6 +172,9 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Drag single card from free cell → tableau
 - [x] Drag single card from free cell → foundation
 - [x] Foundation slots render as persistent empty slots (2-layer render)
+- [x] Drag single card from foundation → tableau
+- [x] Drag single card from foundation → free cell
+- [ ] While dragging from foundation, hide the dragged card in-place and reveal the card underneath
 - [x] Centralized drag state supports multiple source types (tableau, free cell)
 - [x] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
 - [ ] Smooth return animation for invalid drops
@@ -182,6 +185,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Extract board drop-resolution logic into hooks (useBoardDrop)
 - [x] Extract auto-foundation logic into hook (useAutoFoundation)
 - [x] Board.tsx reduced to layout + wiring (no embedded game rules)
+- [ ] Finalize responsibility split: Board passes state + drag; Foundations handles drag-aware rendering
 - [ ] Magnetic snapping (snap radius + target priority)
 - [ ] Valid target highlighting
 - [ ] Double-click/double-tap auto-send to foundation
@@ -192,8 +196,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Move animations (drop, slide, lift)
 - [ ] Auto-complete animation sequence
 - [ ] Win celebration (confetti / flourish)
-- [x] Mobile nav polish: hamburger icon morph (≡ → ✕) + smooth open/close transition
-- [ ] Replace win alert with a real win celebration UI (modal / animation)
+- [ ] Suppress all card flip / transition animations on new deal or restart deal
+- [ ] Ensure drag overlay renders immediately on pointer-down (no behind-then-pop effect)
 
 ---
 
@@ -297,3 +301,4 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Centralized win detection in the engine and exposed it via GameProvider as `isWon`.
 - Refactored Board.tsx to delegate move commitment and auto-foundation behavior to dedicated hooks.
 - Confirmed V-Cell win condition as unlocking all tableau cards (foundation completion is cosmetic).
+- Enabled dragging cards out of foundations (pullback) to tableau and free cells; remaining work is purely visual polish (in-place hiding, cursor affordances, animation timing).

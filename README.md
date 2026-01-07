@@ -37,7 +37,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Board owns orchestration and drag state; zone components are render-only. Single cards can be dragged between tableau, free cells, and foundations, with legality enforced by the engine. Board orchestration has been refactored so that Board.tsx focuses on layout and wiring only. Drag/drop resolution, move commitment, and auto-foundation behavior are handled by extracted hooks that interpret engine-provided legal moves. Win detection is engine-driven and surfaced via GameProvider, with UI components responsible only for side effects (alerts, animations).
+- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations, including foundation pullback. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality.
 - We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
@@ -59,6 +59,8 @@ cd apps/web
 npm run dev
 ```
 
+Note: current gameplay is fully functional. Outstanding work is focused on UI polish (drag z-index timing, cursor affordances, and animation suppression on fresh deals), not on core game rules.
+
 ## Current Web Routes
 
 - "/" — Entry (if session unset: entry flow; otherwise redirects to /game)
@@ -78,8 +80,7 @@ Note: game state is provided at **app scope** via a `GameProvider`, so it can be
 - Pure, deterministic, and UI-agnostic core logic
 - All game rules and state transitions are handled in the engine package
 - The engine can be tested and used independently of any frontend
-
-Accessibility note: the web UI is planned to support full keyboard play (no-mouse gameplay), so UI state and move intent should be modeled in a way that supports both drag/drop and keyboard interactions.
+- UI layers may temporarily diverge from engine state for visual feedback during interactions (e.g. hiding a dragged foundation card), but engine state is never mutated until a move is committed
 
 ## Guest vs Logged-in
 
