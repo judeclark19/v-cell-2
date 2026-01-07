@@ -38,7 +38,7 @@ export default function GamePage() {
   return (
     <>
       <Board />
-      <DebugPanel />
+      {/* <DebugPanel /> */}
     </>
   );
 }

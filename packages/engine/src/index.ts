@@ -12,7 +12,7 @@ export type { Move } from "./types/move";
 export { createGame } from "./core/createGame";
 export { getLegalMoves } from "./core/getLegalMoves";
 export { applyMove } from "./core/applyMove";
-export { areAllCardsExposed } from "./core/areAllCardsExposed";
+export { areAllCardsUnlocked } from "./core/areAllCardsUnlocked";
 export { isWin } from "./core/isWin";
 export { getAutoCompleteMoves } from "./core/getAutoCompleteMoves";
 export { getPlayableMask } from "./core/getPlayableMask";

@@ -30,6 +30,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Decided to implement Undo via UI-level move history (GameProvider), not inside the engine, preserving engine purity.
 - 2026-01: Refactored Board UI into presentational zone components (Foundations, Tableau, FreeCells) with Board as the single orchestrator; centralized drag logic extracted into `useTableauDrag` hook.
 - 2026-01: Drag/drop architecture generalized — centralized drag logic now supports multiple source zones (tableau, free cells) and destination zones (tableau, free cells, foundations). Board owns move commitment; zone components remain presentational.
+- 2026-01: Began Board orchestration refactor. Move-commitment logic (onDrop) and auto-foundation logic extracted into dedicated hooks. Win condition finalized as all tableau cards unlocked and centralized in the engine (areAllCardsUnlocked → isWin), with UI handling only side effects.
 
 ## 2. High-Level Architecture
 
@@ -73,7 +74,7 @@ The engine exposes a small, stable API consumed by the UI:
 - `createGame(seed, rules) → GameState`
 - `getLegalMoves(state) → Move[]`
 - `applyMove(state, move) → GameState`
-- `areAllCardsExposed(state) → boolean`
+- `areAllCardsUnlocked(state) → boolean`
 - `getAutoCompleteMoves(state) → Move[]`
 - `isWin(state) → boolean`
 
@@ -211,6 +212,14 @@ Additional UX behavior (confirmed):
 
 UI semantics note: “playable” means “pick-up-able right now” (part of the current movable run in a tableau column, or a free-cell card). A face-up card can still be non-playable if the run is broken above the exposed card.
 
+**Board orchestration model (confirmed)**
+
+Board.tsx is an orchestration layer only. It wires engine state to presentational zones and coordinates drag intent, but does not contain game rules.
+
+- Move selection and commitment live in extracted hooks (e.g. drop resolution, auto-foundation).
+- Legality is always derived from engine legalMoves.
+- Zone components (Tableau, FreeCells, Foundations) are render-only and never apply moves themselv
+
 ### 8.1 Accessibility (Keyboard Play)
 
 V-Cell V2 should be fully playable without a mouse:
@@ -239,12 +248,15 @@ UI note: timer visibility already respects aria-hidden; keep that pattern for ot
 
 ## 9. Win, Auto-Complete, and Celebration
 
-### 9.1 Win Condition (Primary)
+### 9.1 Primary Win Condition
 
-- The game is **won when all cards are exposed** (no buried cards)
+- The game is **won when all tableau cards are unlocked** (i.e. no locked cards remain).
 - Timer stops here; stats are recorded
+- Implemented engine-side via areAllCardsUnlocked(state)
+- Exposed as isWin(state)
+- Foundation completion is cosmetic and not required for a win
 
-### 9.2 Completion (Secondary)
+### 9.2 Secondary Completion
 
 - Optional: all 52 cards in foundations
 
@@ -896,7 +908,7 @@ Notes:
 
 ```ts
 // Public helpers
-export function areAllCardsExposed(state: GameState): boolean;
+export function areAllCardsUnlocked(state: GameState): boolean;
 export function getAutoCompleteMoves(state: GameState): Move[];
 export function isWin(state: GameState): boolean; // true when all cards exposed
 

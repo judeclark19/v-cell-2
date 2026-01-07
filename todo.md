@@ -72,8 +72,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
   - [x] foundation suit set/unset rules
 - [x] Derived helpers
   - [x] `getMovableRunLengths(state)` (internal helper; not exported in public engine contract)
-  - [x] `areAllCardsExposed(state)`
-  - [x] `isWin(state)` (win when all exposed)
+  - [x] `areAllCardsUnlocked(state)` (true when no locked tableau cards remain)
+  - [x] `isWin(state)` (delegates to `areAllCardsUnlocked`)
   - [x] `getAutoCompleteMoves(state)` (safe deterministic sequence)
 - [x] **Tableau stack legality, stack slicing, and auto-flip behavior are fully implemented and verified by tests.**
 
@@ -177,6 +177,11 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Smooth return animation for invalid drops
 - [ ] Highlight valid drop targets during drag
 - [x] Drag/drop for single card + sub-stack
+- [x] Double-click/double-tap auto-send to foundation
+- [x] deterministic foundation slot selection if multiple valid
+- [x] Extract board drop-resolution logic into hooks (useBoardDrop)
+- [x] Extract auto-foundation logic into hook (useAutoFoundation)
+- [x] Board.tsx reduced to layout + wiring (no embedded game rules)
 - [ ] Magnetic snapping (snap radius + target priority)
 - [ ] Valid target highlighting
 - [ ] Double-click/double-tap auto-send to foundation
@@ -188,6 +193,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Auto-complete animation sequence
 - [ ] Win celebration (confetti / flourish)
 - [x] Mobile nav polish: hamburger icon morph (≡ → ✕) + smooth open/close transition
+- [ ] Replace win alert with a real win celebration UI (modal / animation)
 
 ---
 
@@ -288,3 +294,6 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Added /stats page that renders for guests but shows a login prompt instead of redirecting.
 - Rendered foundations + tableau + free cells in the new board layout (foundations top, free cells bottom).
 - Implemented theme selection plumbing (ThemeProvider) and applied Poker as default + Times Dark for OS dark.
+- Centralized win detection in the engine and exposed it via GameProvider as `isWon`.
+- Refactored Board.tsx to delegate move commitment and auto-foundation behavior to dedicated hooks.
+- Confirmed V-Cell win condition as unlocking all tableau cards (foundation completion is cosmetic).

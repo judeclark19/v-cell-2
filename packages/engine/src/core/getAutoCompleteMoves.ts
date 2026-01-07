@@ -7,14 +7,18 @@ import type {
   TableauIndex
 } from "../types/piles";
 import { applyMove } from "./applyMove";
-import { areAllCardsExposed } from "./areAllCardsExposed";
+import { areAllCardsUnlocked } from "./areAllCardsUnlocked";
 
 function canPlaceOnFoundation(
   card: Card,
   slot: GameState["foundations"][number]
 ): boolean {
   if (slot.cards.length === 0) {
-    return slot.suit === null && card.rank === 1; // Ace
+    if (card.rank !== 1) return false; // must be Ace
+
+    // Some games pre-assign a suit to each foundation slot; others start unassigned.
+    // Accept an Ace if the slot is unassigned OR if it matches the slot's suit.
+    return slot.suit === null || slot.suit === card.suit;
   }
   const top = slot.cards[slot.cards.length - 1];
   return slot.suit === card.suit && card.rank === top.rank + 1;
@@ -35,12 +39,12 @@ function exposedTableauCard(state: GameState, col: TableauIndex): Card | null {
   const stack = state.tableau[col];
   if (stack.length === 0) return null;
   const tc = stack[stack.length - 1]; // exposed is LAST
-  if (tc.faceDown) return null; // should be unreachable if areAllCardsExposed == true
+  if (tc.faceDown) return null; // should be unreachable if areAllCardsUnlocked == true
   return tc.card;
 }
 
 export function getAutoCompleteMoves(state: GameState): Move[] {
-  if (!areAllCardsExposed(state)) return [];
+  if (!areAllCardsUnlocked(state)) return [];
 
   const moves: Move[] = [];
   let s: GameState = state;

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { applyMove, createGame } from "@vcell/engine";
+import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 
 // NOTE: We'll fully lock the engine contract later. For now we can still keep things
 // flexible while staying type-safe by deriving types from the engine functions.
@@ -10,8 +10,10 @@ type Move = Parameters<typeof applyMove>[1];
 
 type GameContextValue = {
   state: GameState;
+  isWon: boolean;
   dispatchMove: (move: Move) => void;
   restart: () => void;
+  newDeal: () => void;
   undo: () => void;
   canUndo: boolean;
   showTimer: boolean;
@@ -39,8 +41,13 @@ export function useGame() {
 }
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  // Keep seed stable for this session.
-  const seed = useMemo(() => "dev-seed-003", []);
+  // Session-only seed counter. Refresh resets back to 001.
+  const [seedNumber, setSeedNumber] = useState<number>(1);
+
+  const seed = useMemo(() => {
+    const padded = String(seedNumber).padStart(3, "0");
+    return `dev-seed-${padded}`;
+  }, [seedNumber]);
 
   // Minimal starter rules; we'll replace this with a typed Rules object soon.
   type Rules = Parameters<typeof createGame>[1];
@@ -61,6 +68,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }));
 
   const state = history.present;
+
+  const isWon = useMemo(() => areAllCardsUnlocked(state), [state]);
 
   const [showTimer, setShowTimer] = useState<boolean>(() => {
     if (typeof window === "undefined") return true; // default
@@ -96,6 +105,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setHistory({ present: createGame(seed, rules), past: [] });
   };
 
+  const newDeal = () => {
+    setSeedNumber((n) => {
+      const next = n + 1;
+      const padded = String(next).padStart(3, "0");
+      const nextSeed = `dev-seed-${padded}`;
+      setHistory({ present: createGame(nextSeed, rules), past: [] });
+      return next;
+    });
+  };
+
   const undo = () => {
     setHistory((h) => {
       if (h.past.length === 0) return h;
@@ -111,8 +130,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const value: GameContextValue = {
     state,
+    isWon,
     dispatchMove,
     restart,
+    newDeal,
     undo,
     canUndo,
     showTimer,

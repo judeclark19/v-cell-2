@@ -1,6 +1,6 @@
-import { applyMove, getLegalMoves, getPlayableMask } from "@vcell/engine";
-import type { Card as EngineCard, PileRef } from "@vcell/engine";
-import { useCallback, useMemo, useRef } from "react";
+import { getLegalMoves, getPlayableMask } from "@vcell/engine";
+import type { Card as EngineCard } from "@vcell/engine";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "../Card";
 import "./board.css";
@@ -8,6 +8,26 @@ import { useCardDrag } from "@/ui/useCardDrag";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
+import { useBoardDrop } from "./useBoardDrop";
+import { useAutoFoundation } from "./useAutoFoundation";
+
+function WinAlertEffect({ isWon }: { isWon: boolean }) {
+  const hasAlertedWinRef = useRef(false);
+
+  useEffect(() => {
+    if (isWon) {
+      if (!hasAlertedWinRef.current) {
+        hasAlertedWinRef.current = true;
+        window.alert("You won!");
+      }
+    } else {
+      // Reset between deals / restarts.
+      hasAlertedWinRef.current = false;
+    }
+  }, [isWon]);
+
+  return null;
+}
 
 type BoardStateShape = {
   foundations: Array<{ cards: EngineCard[] }>;
@@ -49,13 +69,22 @@ function buildFreeCellsRow(
 }
 
 function Board() {
-  const { state, showTimer, dispatchMove, undo, canUndo } = useGame();
+  const {
+    state,
+    isWon,
+    showTimer,
+    dispatchMove,
+    undo,
+    canUndo,
+    newDeal,
+    restart
+  } = useGame();
   const playable = useMemo(() => getPlayableMask(state), [state]);
 
-  type Move = Parameters<typeof applyMove>[1];
-  type TableauIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-
   const legalMoves = useMemo(() => getLegalMoves(state), [state]);
+
+  const onDrop = useBoardDrop({ legalMoves, dispatchMove });
+  const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
 
   const tableauColRefs = useRef<Array<HTMLDivElement | null>>([]);
   const setTableauColRef = useCallback(
@@ -90,144 +119,15 @@ function Board() {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
-    onDrop: ({ drag, dropTarget }) => {
-      // Single-card drops only for now.
-      if (drag.stack.length !== 1) return false;
-      if (!drag.source) return false;
-      if (!dropTarget) return false;
-
-      const source = drag.source;
-      const fromTableauIndex =
-        source.type === "tableau" ? (source.colIndex as TableauIndex) : null;
-
-      if (dropTarget.type === "tableau") {
-        const toIndex = dropTarget.colIndex as TableauIndex;
-
-        if (source.type === "tableau" && fromTableauIndex != null) {
-          if (toIndex === source.colIndex) return false;
-
-          const move = legalMoves.find(
-            (m): m is Extract<Move, { kind: "single" }> =>
-              m.kind === "single" &&
-              m.from.type === "tableau" &&
-              m.to.type === "tableau" &&
-              m.from.index === fromTableauIndex &&
-              m.to.index === toIndex
-          );
-
-          if (!move) return false;
-          dispatchMove(move);
-          return true;
-        }
-
-        if (source.type === "freecell") {
-          const fromIndex = source.index;
-
-          const move = legalMoves.find(
-            (m): m is Extract<Move, { kind: "single" }> =>
-              m.kind === "single" &&
-              m.from.type === "freecell" &&
-              m.to.type === "tableau" &&
-              m.from.index === fromIndex &&
-              m.to.index === toIndex
-          );
-
-          if (!move) return false;
-          dispatchMove(move);
-          return true;
-        }
-
-        return false;
-      }
-
-      if (dropTarget.type === "freecell") {
-        if (source.type !== "tableau" || fromTableauIndex == null) return false;
-        const toIndex = dropTarget.index;
-
-        const move = legalMoves.find(
-          (m): m is Extract<Move, { kind: "single" }> =>
-            m.kind === "single" &&
-            m.from.type === "tableau" &&
-            m.to.type === "freecell" &&
-            m.from.index === fromTableauIndex &&
-            m.to.index === toIndex
-        );
-
-        if (!move) return false;
-        dispatchMove(move);
-        return true;
-      }
-
-      if (dropTarget.type === "foundation") {
-        const toIndex = dropTarget.index;
-
-        if (source.type === "tableau" && fromTableauIndex != null) {
-          const move = legalMoves.find(
-            (m): m is Extract<Move, { kind: "single" }> =>
-              m.kind === "single" &&
-              m.from.type === "tableau" &&
-              m.to.type === "foundation" &&
-              m.from.index === fromTableauIndex &&
-              m.to.index === toIndex
-          );
-
-          if (!move) return false;
-          dispatchMove(move);
-          return true;
-        }
-
-        if (source.type === "freecell") {
-          const fromIndex = source.index;
-
-          const move = legalMoves.find(
-            (m): m is Extract<Move, { kind: "single" }> =>
-              m.kind === "single" &&
-              m.from.type === "freecell" &&
-              m.to.type === "foundation" &&
-              m.from.index === fromIndex &&
-              m.to.index === toIndex
-          );
-
-          if (!move) return false;
-          dispatchMove(move);
-          return true;
-        }
-
-        return false;
-      }
-
-      return false;
-    }
+    onDrop
   });
-
-  const tryAutoFoundation = useCallback(
-    (from: PileRef) => {
-      const candidates = legalMoves.filter(
-        (m): m is Extract<Move, { kind: "single" }> => {
-          if (m.kind !== "single") return false;
-          if (m.from.type !== from.type) return false;
-          if (m.to.type !== "foundation") return false;
-
-          const mFromIndex = (m.from as { index?: number }).index;
-          const fromIndex = (from as { index?: number }).index;
-          return mFromIndex === fromIndex;
-        }
-      );
-
-      if (candidates.length === 0) return;
-
-      // Choose deterministically: lowest foundation index.
-      candidates.sort((a, b) => a.to.index - b.to.index);
-      dispatchMove(candidates[0]);
-    },
-    [dispatchMove, legalMoves]
-  );
 
   const foundationsRow = buildFoundationsRow(state);
   const freeCellsRow = buildFreeCellsRow(state);
 
   return (
     <>
+      <WinAlertEffect isWon={isWon} />
       <div className="board-border">
         <div className="board" aria-label="Game board">
           {/* Foundations on top */}
@@ -293,11 +193,23 @@ function Board() {
       </div>
 
       <section className="control" aria-label="Game actions">
+        <h2
+          style={{
+            textAlign: "center"
+          }}
+        >
+          Seed: {state?.seed ?? "(unknown)"}
+        </h2>
+        <br />
         <div className="row">
-          <button type="button" className="btn btn--primary" disabled>
+          <button type="button" className="btn btn--primary" onClick={newDeal}>
             New deal
           </button>
-          <button type="button" className="btn btn--secondary" disabled>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={restart}
+          >
             Restart deal
           </button>
           <button
