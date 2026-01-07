@@ -18,8 +18,8 @@ export default function SettingsPage() {
   return (
     <main>
       <header>
-        <h1 className="title">Settings</h1>
-        <p className="subtitle">
+        <h1>Settings</h1>
+        <p>
           This page is a scaffold: the controls below are placeholders so we can
           agree on what needs to exist. We’ll wire these to session/profile +
           engine rules next.
@@ -27,7 +27,7 @@ export default function SettingsPage() {
       </header>
 
       <section>
-        <h2 className="h2">Gameplay</h2>
+        <h2>Gameplay</h2>
         <div className="grid">
           <label className="field">
             Face-down cards at deal
@@ -89,7 +89,7 @@ export default function SettingsPage() {
       </section>
 
       <section>
-        <h2 className="h2">Appearance</h2>
+        <h2>Appearance</h2>
         <div className="grid">
           <label className="field">
             Theme

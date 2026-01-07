@@ -104,3 +104,53 @@ select {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Prose (scoped typography for docs-like pages, avoids global side effects)   */
+/* -------------------------------------------------------------------------- */
+
+.prose {
+  line-height: 1.5;
+}
+
+.prose h1 {
+  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+  letter-spacing: -0.02em;
+}
+
+.prose h2 {
+  margin-top: 2px;
+  font-size: 1.15rem;
+}
+
+.prose h3 {
+  margin-top: 2px;
+  font-size: 1rem;
+}
+
+.prose p {
+  margin-top: 10px;
+  color: var(--foreground);
+}
+
+.prose p.hint,
+.prose .hint {
+  color: var(--muted);
+}
+
+.prose ul {
+  margin-top: 10px;
+  padding-left: 1.1rem;
+}
+
+.prose li {
+  margin-top: 8px;
+}
+
+.prose li:first-child {
+  margin-top: 0;
+}
+
+.prose strong {
+  font-weight: 700;
+}

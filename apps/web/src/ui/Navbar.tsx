@@ -10,6 +10,7 @@ import Image from "next/image";
 
 const NAV_LINKS = [
   { href: "/game", label: "Game" },
+  { href: "/how-to-play", label: "How to Play" },
   { href: "/settings", label: "Settings" },
   { href: "/stats", label: "Stats" }
 ];

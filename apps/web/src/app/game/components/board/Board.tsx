@@ -205,14 +205,6 @@ function Board() {
       </div>
 
       <section className="control" aria-label="Game actions">
-        <h2
-          style={{
-            textAlign: "center"
-          }}
-        >
-          Seed: {state?.seed ?? "(unknown)"}
-        </h2>
-        <br />
         <div className="row">
           <button type="button" className="btn btn--primary" onClick={newDeal}>
             New deal
@@ -233,6 +225,10 @@ function Board() {
             Undo
           </button>
         </div>
+
+        <p className="hint" style={{ textAlign: "center" }}>
+          Seed: {state?.seed ?? "(unknown)"}
+        </p>
       </section>
     </>
   );

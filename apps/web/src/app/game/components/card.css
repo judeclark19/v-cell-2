@@ -105,7 +105,12 @@
 }
 
 .card:focus-visible .card-face--front {
-  box-shadow: var(--focus-ring), inset 0 1px 0 var(--card-front-inset),
+  background-color: color-mix(
+    in srgb,
+    var(--card-front-bg) 86%,
+    var(--accent) 14%
+  );
+  box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset),
     var(--card-shadow-hover);
 }
 
@@ -150,15 +155,15 @@
 
 .card.is-playable {
   cursor: grab;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .card.is-playable:hover {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
 }
 
 .card.is-playable:focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 88%, transparent);
+  box-shadow: none;
 }
 
 .card.is-playable:active {
@@ -196,7 +201,12 @@
 }
 
 .card.is-playable:focus-visible .card-face--front {
-  box-shadow: var(--focus-ring), inset 0 1px 0 var(--card-front-inset),
+  background-color: color-mix(
+    in srgb,
+    var(--card-front-bg) 86%,
+    var(--accent) 14%
+  );
+  box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset),
     var(--card-shadow-hover);
 }
 
@@ -213,4 +223,22 @@
 /* Ensure overlapping tableau cards respect z-index */
 .tableau-col > .card {
   position: relative;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reduced motion                                                             */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card-inner {
+    transition: none;
+  }
+
+  .card-face--front {
+    transition: none;
+  }
 }

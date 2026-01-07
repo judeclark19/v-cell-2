@@ -31,6 +31,11 @@
   --focus-ring: 0 0 0 3px
     color-mix(in srgb, var(--accent) var(--focus-alpha), transparent);
 
+  /* Stronger, unmistakable ring for keyboard focus */
+  --focus-ring-strong: 0 0 0 5px
+      color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--accent) 90%, transparent);
+
   --btn-primary-bg: var(--accent);
   --btn-primary-fg: var(--accent-contrast);
   --btn-secondary-bg: color-mix(in srgb, var(--surface-hover) 70%, transparent);
