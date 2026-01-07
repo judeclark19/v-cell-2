@@ -7,8 +7,13 @@ import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useGame } from "@/state/game/GameProvider";
 
 export default function SettingsPage() {
+  const {
+    showTimer,
+    setShowTimer,
+    allowFoundationPullback,
+    setAllowFoundationPullback
+  } = useGame();
   const { theme, setTheme } = useTheme();
-  const { showTimer, setShowTimer } = useGame();
 
   return (
     <main>
@@ -65,7 +70,14 @@ export default function SettingsPage() {
 
           <label className="field">
             Foundation pullback
-            <select className="control" disabled defaultValue="on">
+            <select
+              className="control"
+              id="foundation-pullback"
+              value={allowFoundationPullback ? "on" : "off"}
+              onChange={(e) =>
+                setAllowFoundationPullback(e.target.value === "on")
+              }
+            >
               <option value="on">On (easier)</option>
               <option value="off">Off (harder)</option>
             </select>
@@ -100,7 +112,6 @@ export default function SettingsPage() {
             Show timer
             <select
               className="control"
-              defaultValue="true"
               id="show-timer"
               value={showTimer ? "true" : "false"}
               onChange={(e) => setShowTimer(e.target.value === "true")}

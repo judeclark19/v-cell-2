@@ -37,7 +37,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations, including foundation pullback. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality.
+- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations. Foundation pullback is a configurable rule: when disabled, the engine generates no pullback moves and the UI prevents pickup with a not-allowed cursor. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality.
 - We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
@@ -81,6 +81,7 @@ Note: game state is provided at **app scope** via a `GameProvider`, so it can be
 - All game rules and state transitions are handled in the engine package
 - The engine can be tested and used independently of any frontend
 - UI layers may temporarily diverge from engine state for visual feedback during interactions (e.g. hiding a dragged foundation card), but engine state is never mutated until a move is committed
+- Difficulty toggles (e.g. foundation pullback) are enforced first in the engine and mirrored in the UI purely for affordance and feedback.
 
 ## Guest vs Logged-in
 

@@ -174,7 +174,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Foundation slots render as persistent empty slots (2-layer render)
 - [x] Drag single card from foundation → tableau
 - [x] Drag single card from foundation → free cell
-- [ ] While dragging from foundation, hide the dragged card in-place and reveal the card underneath
+- [x] While dragging from foundation, hide the dragged card in-place and reveal the card underneath
 - [x] Centralized drag state supports multiple source types (tableau, free cell)
 - [x] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
 - [ ] Smooth return animation for invalid drops
@@ -197,7 +197,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [ ] Auto-complete animation sequence
 - [ ] Win celebration (confetti / flourish)
 - [ ] Suppress all card flip / transition animations on new deal or restart deal
-- [ ] Ensure drag overlay renders immediately on pointer-down (no behind-then-pop effect)
+- [x] Ensure drag overlay renders immediately on pointer-down (no behind-then-pop effect)
 
 ---
 
@@ -302,3 +302,4 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Refactored Board.tsx to delegate move commitment and auto-foundation behavior to dedicated hooks.
 - Confirmed V-Cell win condition as unlocking all tableau cards (foundation completion is cosmetic).
 - Enabled dragging cards out of foundations (pullback) to tableau and free cells; remaining work is purely visual polish (in-place hiding, cursor affordances, animation timing).
+- Added a Settings toggle for foundation pullback; engine legality, UI drag guards, cursor affordances, and visual disabling are all wired through a single rule flag.

@@ -16,6 +16,7 @@ type FoundationsProps = {
       | null;
   };
   playableFoundations: boolean[];
+  allowFoundationPullback: boolean;
   showTimer: boolean;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
@@ -29,6 +30,7 @@ function Foundations({
   foundations,
   drag,
   playableFoundations,
+  allowFoundationPullback,
   showTimer,
   setFoundationRef,
   handleFoundationPointerDown
@@ -79,16 +81,30 @@ function Foundations({
                   <Card card={null} className="pile-slot" emptyLabel="A" />
 
                   {/* Card layer (if present) */}
-                  {effectiveCard && (
-                    <Card
-                      card={effectiveCard}
-                      className="pile-card"
-                      playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
-                      onPointerDownCard={(e) =>
-                        handleFoundationPointerDown?.(e, foundationIndex)
-                      }
-                    />
-                  )}
+                  {effectiveCard &&
+                    (() => {
+                      const pullbackDisabled = !allowFoundationPullback;
+
+                      return (
+                        <Card
+                          card={effectiveCard}
+                          className={`pile-card${
+                            pullbackDisabled ? " is-pullback-disabled" : ""
+                          }`}
+                          playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
+                          onPointerDownCard={
+                            pullbackDisabled
+                              ? undefined
+                              : (e) =>
+                                  handleFoundationPointerDown?.(
+                                    e,
+                                    foundationIndex
+                                  )
+                          }
+                          disableInternalDrag={pullbackDisabled}
+                        />
+                      );
+                    })()}
                 </div>
               );
             })()

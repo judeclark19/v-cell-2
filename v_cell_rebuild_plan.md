@@ -31,6 +31,7 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Refactored Board UI into presentational zone components (Foundations, Tableau, FreeCells) with Board as the single orchestrator; centralized drag logic extracted into `useTableauDrag` hook.
 - 2026-01: Drag/drop architecture generalized — centralized drag logic now supports multiple source zones (tableau, free cells, foundations) and destination zones (tableau, free cells, foundations), including foundation pullback. Board owns move commitment; zone components remain presentational.
 - 2026-01: Began Board orchestration refactor. Move-commitment logic (onDrop) and auto-foundation logic extracted into dedicated hooks. Win condition finalized as all tableau cards unlocked and centralized in the engine (areAllCardsUnlocked → isWin), with UI handling only side effects.
+- 2026-01: Implemented foundation pullback as a full difficulty toggle, enforced in the engine (`getLegalMoves`) and surfaced in the UI with disabled drag, cursor feedback, and visual affordances.
 
 ## 2. High-Level Architecture
 
@@ -169,7 +170,7 @@ Pullback legality (confirmed):
 
 Affects legality, hints, and difficulty labeling.
 
----
+UI enforcement mirrors engine legality: when `allowFoundationPullback` is false, foundation cards cannot be picked up, show a `not-allowed` cursor, and do not initiate drag state. The engine remains the single source of truth; the UI never commits illegal moves.
 
 ## 7. Game Session Controls
 
@@ -220,6 +221,7 @@ Board.tsx is an orchestration layer only. It wires engine state to presentationa
 - Move selection and commitment live in extracted hooks (e.g. drop resolution, auto-foundation).
 - Legality is always derived from engine legalMoves.
 - Zone components (Tableau, FreeCells, Foundations) are render-only and never apply moves themselves
+- Rule flags (e.g. allowFoundationPullback) are threaded from `GameProvider` into drag/drop hooks and zone components, but legality always derives from engine legal moves.
 
 ### 8.1 Accessibility (Keyboard Play)
 

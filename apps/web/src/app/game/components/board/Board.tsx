@@ -73,6 +73,7 @@ function Board() {
     state,
     isWon,
     showTimer,
+    allowFoundationPullback,
     dispatchMove,
     undo,
     canUndo,
@@ -117,6 +118,7 @@ function Board() {
     handleFreeCellPointerDown,
     handleFoundationPointerDown
   } = useCardDrag(state, playable, {
+    allowFoundationPullback,
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
@@ -137,6 +139,7 @@ function Board() {
             foundations={state.foundations}
             drag={drag}
             playableFoundations={playable.foundations}
+            allowFoundationPullback={allowFoundationPullback}
             showTimer={showTimer}
             setFoundationRef={setFoundationRef}
             handleFoundationPointerDown={handleFoundationPointerDown}

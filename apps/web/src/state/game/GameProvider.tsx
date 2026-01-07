@@ -18,6 +18,8 @@ type GameContextValue = {
   canUndo: boolean;
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
+  allowFoundationPullback: boolean;
+  setAllowFoundationPullback: (next: boolean) => void;
 };
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
@@ -52,13 +54,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Minimal starter rules; we'll replace this with a typed Rules object soon.
   type Rules = Parameters<typeof createGame>[1];
 
+  const [allowFoundationPullback, setAllowFoundationPullback] =
+    useState<boolean>(true);
+
   const rules = useMemo<Rules>(
     () => ({
-      allowFoundationPullback: true,
+      allowFoundationPullback,
       faceDownCount: 7,
       undoLimit: "unlimited"
     }),
-    []
+    [allowFoundationPullback]
   );
 
   // Create the initial game exactly once.
@@ -68,6 +73,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }));
 
   const state = history.present;
+
+  useEffect(() => {
+    // Apply the updated rules immediately by restarting the current deal.
+    // Keeps the current seed (dev-seed-XYZ) but resets move history.
+    setHistory({ present: createGame(seed, rules), past: [] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowFoundationPullback]);
 
   const isWon = useMemo(() => areAllCardsUnlocked(state), [state]);
 
@@ -137,7 +149,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undo,
     canUndo,
     showTimer,
-    setShowTimer
+    setShowTimer,
+    allowFoundationPullback,
+    setAllowFoundationPullback
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

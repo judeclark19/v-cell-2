@@ -42,6 +42,7 @@ export type DropTarget =
   | null;
 
 type UseCardDragOptions<TCardItem> = {
+  allowFoundationPullback?: boolean;
   getTableauCols?: () => Array<HTMLElement | null>;
   getFreeCells?: () => Array<HTMLElement | null>;
   getFoundations?: () => Array<HTMLElement | null>;
@@ -392,6 +393,9 @@ export function useCardDrag<
   ) => {
     // Only primary button for mouse; touch/pen are fine.
     if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    // If rules disallow foundation pullback, do not start a drag.
+    if (options?.allowFoundationPullback === false) return;
 
     const slot = state.foundations[index];
     const cards = slot?.cards;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Questrial, Poppins, Luckiest_Guy } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/ui/Navbar";
@@ -33,7 +34,37 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try {
+    var stored =
+      localStorage.getItem("vcell-theme") ||
+      localStorage.getItem("vc2-theme") ||
+      localStorage.getItem("theme");
+
+    var theme = stored;
+
+    if (!theme) {
+      var prefersDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      // Match your CSS defaulting behavior: dark -> times-dark; light -> poker.
+      theme = prefersDark ? "times-dark" : "poker";
+    }
+
+    document.documentElement.dataset.theme = theme;
+  } catch (e) {
+    // no-op
+  }
+})();`
+          }}
+        />
+      </head>
       <body
         className={`${questrial.variable} ${poppins.variable} ${luckiestGuy.variable}`}
       >
