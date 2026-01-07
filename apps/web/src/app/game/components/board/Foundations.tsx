@@ -18,6 +18,7 @@ type FoundationsProps = {
   playableFoundations: boolean[];
   allowFoundationPullback: boolean;
   showTimer: boolean;
+  onPause: () => void;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
     e: React.PointerEvent<HTMLDivElement>,
@@ -32,6 +33,7 @@ function Foundations({
   playableFoundations,
   allowFoundationPullback,
   showTimer,
+  onPause,
   setFoundationRef,
   handleFoundationPointerDown
 }: FoundationsProps) {
@@ -48,7 +50,14 @@ function Foundations({
               {i === 1 && (
                 <>
                   <div className="timer">00:00</div>
-                  <button className="btn btn--primary">⏸︎</button>
+                  <button
+                    className="btn btn--primary"
+                    aria-label="Pause timer"
+                    type="button"
+                    onClick={onPause}
+                  >
+                    ⏸︎
+                  </button>
                 </>
               )}
             </div>

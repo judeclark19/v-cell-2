@@ -18,6 +18,8 @@ type GameContextValue = {
   canUndo: boolean;
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
+  paused: boolean;
+  setPaused: (next: boolean) => void;
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
 };
@@ -90,6 +92,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return raw === "true";
   });
 
+  const [paused, setPaused] = useState<boolean>(false);
+
   useEffect(() => {
     window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
   }, [showTimer]);
@@ -150,6 +154,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     canUndo,
     showTimer,
     setShowTimer,
+    paused,
+    setPaused,
     allowFoundationPullback,
     setAllowFoundationPullback
   };

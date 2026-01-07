@@ -8,6 +8,7 @@ import { useCardDrag } from "@/ui/useCardDrag";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
+import PauseOverlay from "./PauseOverlay";
 import { useBoardDrop } from "./useBoardDrop";
 import { useAutoFoundation } from "./useAutoFoundation";
 
@@ -73,6 +74,8 @@ function Board() {
     state,
     isWon,
     showTimer,
+    paused,
+    setPaused,
     allowFoundationPullback,
     dispatchMove,
     undo,
@@ -143,6 +146,7 @@ function Board() {
             showTimer={showTimer}
             setFoundationRef={setFoundationRef}
             handleFoundationPointerDown={handleFoundationPointerDown}
+            onPause={() => setPaused(true)}
           />
 
           {/* Tableau in the middle */}
@@ -197,6 +201,7 @@ function Board() {
             handleFreeCellPointerDown={handleFreeCellPointerDown}
           />
         </div>
+        {paused && <PauseOverlay onClose={() => setPaused(false)} />}
       </div>
 
       <section className="control" aria-label="Game actions">
