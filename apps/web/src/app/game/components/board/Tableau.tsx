@@ -40,7 +40,14 @@ function Tableau({
             ref={(el) => setTableauColRef(colIndex, el)}
           >
             {col.length === 0 ? (
-              <Card card={null} emptyLabel="K" />
+              <div
+                className="tableau-empty-slot"
+                data-kb-focusable="true"
+                role="button"
+                aria-label={`Tableau column ${colIndex + 1} empty slot`}
+              >
+                <Card card={null} emptyLabel="K" />
+              </div>
             ) : (
               col.map((tc, tcIndex) => {
                 const isDraggedFromThisCol =

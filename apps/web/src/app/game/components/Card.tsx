@@ -204,11 +204,11 @@ function Card({
           : style
       }
       aria-label={`Card ${card.id}${faceDown ? ", face down" : ""}`}
-      tabIndex={playable ? 0 : -1}
+      tabIndex={-1}
       onDoubleClick={() => canActivate && onActivate?.()}
       onKeyDown={(e) => {
         if (!canActivate) return;
-        if (e.key === "Enter" || e.key === " ") {
+        if (e.key === "Enter") {
           e.preventDefault();
           onActivate?.();
         }

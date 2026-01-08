@@ -14,6 +14,11 @@
   --border: rgba(233, 246, 238, 0.18);
   --accent: #d4af37;
   --accent-contrast: #08140c;
+
+  /* Keyboard carry/drop highlight (separate from --accent) */
+  --kb-highlight: #7c3aed; /* violet 600 */
+  --kb-highlight-contrast: #ffffff;
+
   --muted: rgba(233, 246, 238, 0.65);
 
   /* Board + tableau surfaces (semantic) */
@@ -85,6 +90,11 @@
   --border: rgba(0, 0, 0, 0.12);
   --accent: #1f6feb;
   --accent-contrast: #ffffff;
+
+  /* Keyboard carry/drop highlight (separate from --accent) */
+  --kb-highlight: #b45309; /* amber 700 */
+  --kb-highlight-contrast: #ffffff;
+
   --muted: rgba(23, 23, 23, 0.55);
 
   --board-bg: var(--background);
@@ -129,6 +139,11 @@
   --border: rgba(255, 255, 255, 0.14);
   --accent: #79b8ff;
   --accent-contrast: #0b0b0d;
+
+  /* Keyboard carry/drop highlight (separate from --accent) */
+  --kb-highlight: #22c55e; /* green 500 */
+  --kb-highlight-contrast: #0b0b0d;
+
   --muted: rgba(241, 241, 241, 0.6);
 
   --board-bg: var(--background);
@@ -175,6 +190,11 @@
     --border: rgba(255, 255, 255, 0.14);
     --accent: #79b8ff;
     --accent-contrast: #0b0b0d;
+
+    /* Keyboard carry/drop highlight (separate from --accent) */
+    --kb-highlight: #22c55e; /* green 500 */
+    --kb-highlight-contrast: #0b0b0d;
+
     --muted: rgba(241, 241, 241, 0.6);
 
     --board-bg: var(--background);

@@ -34,6 +34,11 @@ function FreeCells({
               key={i}
               className="pile-cell"
               ref={(el) => setFreeCellRef(i - 1, el)}
+              data-kb-focusable={!card ? "true" : undefined}
+              role={!card ? "button" : undefined}
+              aria-label={
+                !card ? `Free cell ${i} empty slot` : `Free cell ${i}`
+              }
             >
               {/* Always show the slot */}
               <Card card={null} className="pile-slot" />

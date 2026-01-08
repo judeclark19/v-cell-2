@@ -80,11 +80,20 @@ function Foundations({
                   ] ?? null
                 : card ?? null;
 
+              const isEmptySlot = !effectiveCard;
+
               return (
                 <div
                   key={i}
                   className="pile-cell"
                   ref={(el) => setFoundationRef(foundationIndex, el)}
+                  data-kb-focusable={isEmptySlot ? "true" : undefined}
+                  role={isEmptySlot ? "button" : undefined}
+                  aria-label={
+                    isEmptySlot
+                      ? `Foundation ${foundationIndex + 1} empty slot`
+                      : `Foundation ${foundationIndex + 1}`
+                  }
                 >
                   {/* Slot always visible */}
                   <Card card={null} className="pile-slot" emptyLabel="A" />

@@ -429,6 +429,32 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Keyboard carry mode                                                        */
+/* -------------------------------------------------------------------------- */
+
+.board-border.is-kb-carrying {
+  outline: 3px dashed var(--kb-highlight);
+  outline-offset: 6px;
+}
+
+.board-border.is-kb-carrying::after {
+  content: "Carrying — choose a target";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+
+  background: color-mix(in srgb, var(--kb-highlight) 85%, transparent);
+  color: var(--kb-highlight-contrast, #000);
+
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
 
