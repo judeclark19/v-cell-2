@@ -1,9 +1,8 @@
 import { useCallback } from "react";
-import { applyMove } from "@vcell/engine";
+import { applyMove, TableauIndex } from "@vcell/engine";
 import type { DropTarget, DragState } from "@/ui/useCardDrag";
 
 type Move = Parameters<typeof applyMove>[1];
-type TableauIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 type UseBoardDropArgs = {
   legalMoves: Move[];

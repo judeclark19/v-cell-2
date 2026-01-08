@@ -202,14 +202,6 @@ function assertInvariantsIfDev(s: GameState): void {
   assertStateInvariants(s);
 }
 
-// function topTableauCard(state: GameState, i: TableauIndex): Card | null {
-//   const col = state.tableau[i];
-//   if (!col || col.length === 0) return null;
-//   const tc = col[0]; // index 0 is TOP
-//   if (tc.faceDown) return null;
-//   return tc.card;
-// }
-
 function flipTopIfNeeded(col: TableauCard[]): void {
   if (col.length === 0) return;
   if (col[col.length - 1].faceDown) col[col.length - 1].faceDown = false;

@@ -14,7 +14,7 @@ import {
   findTableauSourceForEl,
   type KbDrag,
   type TableauCard
-} from "./boardDomMapping";
+} from "../dom/boardDomMapping";
 
 export type BoardNodeMeta =
   | {

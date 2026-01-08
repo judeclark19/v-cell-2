@@ -1,22 +1,21 @@
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
-import type { Card as EngineCard } from "@vcell/engine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGame } from "@/state/game/GameProvider";
-import Card from "../Card";
-import "./board.css";
+import Card from "./Card";
+import "../styles/board.css";
 import { useCardDrag } from "@/ui/useCardDrag";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
 import PauseOverlay from "./PauseOverlay";
-import { useBoardDrop } from "./useBoardDrop";
-import { useAutoFoundation } from "./useAutoFoundation";
-import { useAutoFreeCell } from "./useAutoFreeCell";
-import { useBoardKeyboardNav } from "./useBoardKeyboardNav";
-import { useBoardKeyboardCarryDrop } from "./useBoardKeyboardCarryDrop";
-import { useBoardDomRegistry } from "./boardDomRegistry";
-import { useBoardDomMapping } from "./useBoardDomMapping";
-import { buildFoundationsRow, buildFreeCellsRow } from "./boardRows";
+import { useBoardDomRegistry } from "../dom/boardDomRegistry";
+import { useBoardDrop } from "../hooks/useBoardDrop";
+import { useAutoFoundation } from "../hooks/useAutoFoundation";
+import { useAutoFreeCell } from "../hooks/useAutoFreeCell";
+import { useBoardKeyboardNav } from "../hooks/useBoardKeyboardNav";
+import { useBoardKeyboardCarryDrop } from "../hooks/useBoardKeyboardCarryDrop";
+import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
+import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 
 function WinAlertEffect({ isWon }: { isWon: boolean }) {
   const hasAlertedWinRef = useRef(false);

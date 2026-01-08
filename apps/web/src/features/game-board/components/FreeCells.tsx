@@ -1,5 +1,5 @@
 import type { Card as EngineCard, PileRef } from "@vcell/engine";
-import Card from "../Card";
+import Card from "./Card";
 import type { useCardDrag } from "@/ui/useCardDrag";
 
 type FreeCellIndex = 0 | 1 | 2 | 3 | 4;

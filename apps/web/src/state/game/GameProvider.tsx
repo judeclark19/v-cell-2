@@ -47,6 +47,8 @@ export function useGame() {
 export function GameProvider({ children }: { children: React.ReactNode }) {
   // Session-only seed counter. Refresh resets back to 100.
   const [seedNumber, setSeedNumber] = useState<number>(100);
+  // const randomSeedStart = Math.floor(Math.random() * 800) + 1;
+  // const [seedNumber, setSeedNumber] = useState<number>(randomSeedStart);
 
   const seed = useMemo(() => {
     const padded = String(seedNumber).padStart(3, "0");

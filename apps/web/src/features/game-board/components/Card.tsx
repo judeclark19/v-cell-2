@@ -3,7 +3,7 @@
 
 import React, { useState, useRef } from "react";
 import type { Card, Suit } from "@vcell/engine";
-import "./card.css";
+import "../styles/card.css";
 
 function suitSymbol(suit: Suit, size: "small" | "large" = "large") {
   return (

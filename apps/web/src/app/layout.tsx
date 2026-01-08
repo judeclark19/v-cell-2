@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Questrial, Poppins, Luckiest_Guy } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/ui/Navbar";
@@ -34,11 +33,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="poker">
       <head>
-        <Script
+        <script
           id="theme-init"
-          strategy="beforeInteractive"
+          // Inline script runs as soon as the parser reaches it.
           dangerouslySetInnerHTML={{
             __html: `(function(){
   try {

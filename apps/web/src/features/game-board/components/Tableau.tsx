@@ -1,8 +1,6 @@
-import type { Card as EngineCard, PileRef } from "@vcell/engine";
-import Card from "../Card";
+import type { Card as EngineCard, PileRef, TableauIndex } from "@vcell/engine";
+import Card from "./Card";
 import type { useCardDrag } from "@/ui/useCardDrag";
-
-type TableauIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 type TableauProps = {
   state: {

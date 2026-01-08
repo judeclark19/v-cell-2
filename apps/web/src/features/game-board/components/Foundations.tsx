@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Card as EngineCard } from "@vcell/engine";
-import Card from "../Card";
+import Card from "./Card";
 
 type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;

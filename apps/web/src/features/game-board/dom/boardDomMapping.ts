@@ -84,11 +84,7 @@ export function buildPileRefFromEl(args: {
 
   const t = findTableauSourceForEl(el, tableauColRefs, tableau);
   if (t) {
-    const index = {
-      colIndex: t.colIndex,
-      startIndex: t.startIndex
-    } as unknown as TableauIndex;
-    return { type: "tableau", index };
+    return { type: "tableau", index: t.colIndex as TableauIndex };
   }
 
   const freeIndex = findFreeCellIndexForEl(el, freeCellRefs);
