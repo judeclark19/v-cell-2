@@ -293,6 +293,44 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Keyboard carry mode: prevent hover/focus transition "bloom"                 */
+/* -------------------------------------------------------------------------- */
+
+/* While carrying via keyboard, make visuals deterministic: no hover fighting,
+   and no transitions on the properties we toggle every arrow press. */
+.board-border.is-kb-carrying .card-face--front {
+  transition: none;
+}
+
+/* Don’t let mouse hover override kb target highlighting while carrying. */
+.board-border.is-kb-carrying
+  .card:not(.is-kb-drop-target):not(.is-kb-carried):not(
+    .is-kb-carried-stack
+  ):hover
+  .card-face--front {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+}
+
+.board-border.is-kb-carrying
+  .card.is-playable:not(.is-kb-drop-target):not(.is-kb-carried):not(
+    .is-kb-carried-stack
+  ):hover
+  .card-face--front {
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+}
+
+/* Don’t apply the accent focus treatment while kb carry is active.
+   (Kb target/carry classes will handle focus visuals.) */
+.board-border.is-kb-carrying
+  .card:not(.is-kb-drop-target):not(.is-kb-carried):not(
+    .is-kb-carried-stack
+  ):focus-visible
+  .card-face--front {
+  background-color: var(--card-front-bg);
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
 

@@ -31,11 +31,12 @@ export function useAutoFoundation({
         }
       );
 
-      if (candidates.length === 0) return;
+      if (candidates.length === 0) return false;
 
       // Deterministic choice: lowest foundation index.
       candidates.sort((a, b) => a.to.index - b.to.index);
       dispatchMove(candidates[0]);
+      return true;
     },
     [dispatchMove, legalMoves]
   );
