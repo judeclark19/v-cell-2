@@ -37,7 +37,7 @@ npm run check
 - `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
 - `apps/web` — Next.js web app (UI)
 - Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations. Foundation pullback is a configurable rule: when disabled, the engine generates no pullback moves and the UI prevents pickup with a not-allowed cursor. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality.
+- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations. Foundation pullback is a configurable rule: when disabled, the engine generates no pullback moves and the UI prevents pickup with a not-allowed cursor. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality. Full keyboard play is supported: Tab/Shift+Tab enter and exit the board, arrow keys navigate spatially, Space toggles carry mode, Enter commits drops, F auto-sends to foundations, and C auto-sends to free cells. Visual focus, carry, and target states are fully theme-aware and respect reduced-motion preferences.
 - We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
 - `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
 
@@ -59,7 +59,7 @@ cd apps/web
 npm run dev
 ```
 
-Note: current gameplay is fully functional. Outstanding work is focused on UI polish (drag z-index timing, cursor affordances, and animation suppression on fresh deals), not on core game rules.
+Note: current gameplay is fully functional via mouse and keyboard. Outstanding work is focused on UI polish (autocomplete affordances, win-state presentation, and final animation tuning), not on core rules or legality.
 
 ## Current Web Routes
 
@@ -82,6 +82,7 @@ Note: game state is provided at **app scope** via a `GameProvider`, so it can be
 - The engine can be tested and used independently of any frontend
 - UI layers may temporarily diverge from engine state for visual feedback during interactions (e.g. hiding a dragged foundation card), but engine state is never mutated until a move is committed
 - Difficulty toggles (e.g. foundation pullback) are enforced first in the engine and mirrored in the UI purely for affordance and feedback.
+- Keyboard interaction semantics (navigation, carry/drop, auto-moves) are implemented entirely in the UI layer and always resolve through engine-generated legal moves; the engine has no concept of input modality.
 
 ## Guest vs Logged-in
 

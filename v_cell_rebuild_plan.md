@@ -32,6 +32,13 @@ This document captures **decisions already made**, reorganized into a stable ref
 - 2026-01: Drag/drop architecture generalized — centralized drag logic now supports multiple source zones (tableau, free cells, foundations) and destination zones (tableau, free cells, foundations), including foundation pullback. Board owns move commitment; zone components remain presentational.
 - 2026-01: Began Board orchestration refactor. Move-commitment logic (onDrop) and auto-foundation logic extracted into dedicated hooks. Win condition finalized as all tableau cards unlocked and centralized in the engine (areAllCardsUnlocked → isWin), with UI handling only side effects.
 - 2026-01: Implemented foundation pullback as a full difficulty toggle, enforced in the engine (`getLegalMoves`) and surfaced in the UI with disabled drag, cursor feedback, and visual affordances.
+- 2026-01: Implemented keyboard navigation across the full board (Tab enters/leaves board; arrow keys move within the board) with focus restricted to playable items by default.
+- 2026-01: Added keyboard "carry" mode (Space toggles pick-up/drop) including visual states for carrying + target selection, and cancellation when focus leaves the board.
+- 2026-01: Added keyboard shortcuts: Enter/F attempts auto-foundation; C attempts auto-move to a free cell when legal (deterministic target selection).
+- 2026-01: Introduced a dedicated semantic token for keyboard interaction highlighting (kb highlight) to avoid overusing the accent color across themes.
+- 2026-01: Refactored Board orchestration by extracting DOM→engine mapping and row/layout construction into dedicated modules/hooks (e.g., boardDomMapping, boardRows, useBoardDomMapping) to reduce Board.tsx complexity.
+- 2026-01: Reorganized board-related hooks and orchestration into a feature-oriented folder structure (away from route-level app components) to keep `apps/web/app` focused on UI + routing.
+- 2026-01: Hardened theme initialization in RootLayout to prevent a flash of the default theme before the selected theme applies (hydration-safe theme init).
 
 ## 2. High-Level Architecture
 
@@ -212,7 +219,7 @@ Additional UX behavior (confirmed):
   - If multiple foundation slots are valid targets (e.g., placing an Ace into any empty slot), choose deterministically (e.g., lowest slot index).
 - A face-up card can still be inactive if there is an invalid break above the exposed card. The grabbable stack is the contiguous valid run from the exposed card upward.
 
-UI semantics note: “playable” means “pick-up-able right now” (part of the current movable run in a tableau column, or a free-cell card). A face-up card can still be non-playable if the run is broken above the exposed card.
+UI semantics note: **playable** means “pick-up-able right now” (part of the current movable run in a tableau column, or a free-cell/foundation top card when rules allow). **faceDown** and **locked** are different concepts: only some locked cards start face-down; win is based on _unlocking_ (mask coverage), while auto-complete will cosmetically send the cards to the foundations.
 
 **Board orchestration model (confirmed)**
 
@@ -225,27 +232,34 @@ Board.tsx is an orchestration layer only. It wires engine state to presentationa
 
 ### 8.1 Accessibility (Keyboard Play)
 
-V-Cell V2 should be fully playable without a mouse:
+Keyboard play is a core acceptance criterion (not polish).
 
-- Tab/Shift+Tab navigates between piles and actionable controls
-- Arrow keys navigate within a pile (e.g., move focus up/down a tableau)
-- Enter/Space picks up a card/stack; Enter/Space drops on a valid target
-- Clear focus styles and ARIA labels for cards/piles
+**Implemented behavior (current):**
 
-This is a product requirement (not a nice-to-have) and should be considered during UI architecture (focus management + move intent model).
+- **Tab / Shift+Tab** enters or leaves the board region.
+- **Arrow keys** move focus within the board.
+- Only **playable items are focusable by default**.
+- **Carry mode:** Space **toggles** carrying (pick up / put down). While carrying:
+  - Potential drop targets (including empty slots) become focusable/targetable.
+  - Carry mode **cancels if focus leaves the board**.
+- **Shortcuts:**
+  - **Enter** and **F** attempt auto-foundation (deterministic target selection).
+  - **C** attempts auto-move to a free cell when legal (deterministic target selection).
 
-Implementation note (engine):
+**UI semantics (definitions):**
 
-- Tableau arrays are **TOP→BOTTOM**; the exposed card is the **last** element.
-- `getMovableRunLength(column)` counts the contiguous _alternating-color, descending-rank_ run ending at the exposed card, moving upward.
-- Stack moves (`tableauStack`) are only allowed when the moved slice is internally valid and contains **no face-down** cards.
-- Note: `getMovableRunLengths` is an internal/UI-helper and is not part of the public engine contract.
+- **faceDown**: a tableau card that is dealt face-down per the V pattern; it is not movable until auto-flipped by the engine.
+- **locked/unlocked**: a _gameplay_ concept. “Unlocked” means the card is in the engine’s playable mask at least once over the course of the game; win is defined by there being **no locked tableau cards remaining** (see §9.1).
+- **playable**: “pick-up-able right now” (part of the current movable run in a tableau column, or a free-cell/foundation top card when rules allow).
 
-Treat keyboard play as a core acceptance criterion for the web UI, not a later polish item.
+**Visual affordances:**
 
-Testing note: add dedicated engine tests for `getPlayableMask` so UI highlighting stays correct as rules evolve.
+- Keyboard carry + target highlighting uses a dedicated semantic token (see §10.2), not the global accent.
 
-UI note: timer visibility already respects aria-hidden; keep that pattern for other hide/show UI controls.
+**Still needed / later:**
+
+- Screen-reader announcements for carry state and drop results (ARIA live region).
+- Finalize a stable “roving focus” strategy and focus restoration rules after a committed move.
 
 ---
 
@@ -253,11 +267,12 @@ UI note: timer visibility already respects aria-hidden; keep that pattern for ot
 
 ### 9.1 Primary Win Condition
 
-- The game is **won when all tableau cards are unlocked** (i.e. no locked cards remain).
-- Timer stops here; stats are recorded
-- Implemented engine-side via areAllCardsUnlocked(state)
-- Exposed as isWin(state)
-- Foundation completion is cosmetic and not required for a win
+- The game is **won when there are no locked tableau cards remaining**.
+  - “Locked” is defined by the engine’s _playable mask_, not by whether a card is face-down.
+- Timer stops here; stats are recorded.
+- Implemented engine-side via `areAllCardsUnlocked(state)`.
+- Exposed as `isWin(state)`.
+- Foundation completion is cosmetic and not required for a win.
 
 ### 9.2 Secondary Completion
 
@@ -265,9 +280,7 @@ UI note: timer visibility already respects aria-hidden; keep that pattern for ot
 
 ### 9.3 Auto-Complete
 
-- Offered once all cards are exposed
-- User-triggered
-- Engine provides deterministic move sequence
+Auto-Complete becomes available once the tableau is fully unlocked (win condition). It then cosmetically moves remaining tableau cards to foundations. The player may continue manual play instead.
 
 ### 9.4 Win Animation
 
@@ -304,6 +317,12 @@ Implementation note: keep layout + scaling in CSS (tokens/variables) so themes c
 - Applied with root attribute (e.g. `data-theme="midnight"`)
 - Preference stored locally and optionally synced
   Implementation: ThemeProvider sets `data-theme` on the root element and persists selection locally; OS dark mode maps to Times Dark by default. Theme selection is also exposed via a Navbar select control.
+
+### 10.2A Interaction Tokens
+
+In addition to the theme’s core palette (background/text/accent), we maintain semantic interaction tokens so we don’t overload `--accent` for every affordance.
+
+- `--kb-highlight`: used for keyboard carry + target highlighting and related focus/target affordances.
 
 Asset note: card-back art currently uses PNG variants (Poker / Times Light / Times Dark). We can later convert to SVG or generate via CSS if we want perfect scaling, but PNG is fine for MVP.
 
@@ -912,10 +931,12 @@ Notes:
 ```ts
 // Public helpers
 export function areAllCardsUnlocked(state: GameState): boolean;
+export function areAllCardsFaceUp(state: GameState): boolean;
 export function getAutoCompleteMoves(state: GameState): Move[];
-export function isWin(state: GameState): boolean; // true when all cards exposed
+export function isWin(state: GameState): boolean; // win = all tableau cards unlocked (mask-based)
 
 // Internal/UI helpers (not exported from the engine public index)
+export function getPlayableMask(state: GameState): boolean[][]; // source of truth for "playable" styling/navigation
 export function getMovableRunLengths(state: GameState): number[]; // UI highlight for grabbable run
 ```
 

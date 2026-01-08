@@ -152,17 +152,46 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Card components + pile components (initial extraction)
 - [ ] Continuous scaling system (single scale factor)
 
-  - [x] Aspect-ratio constraints for board container (target 3:4; clamp max width/height)
-  - [x] Theme system (CSS variables, `data-theme`)
-  - [x] Theme system foundation (CSS variables, semantic tokens, `data-theme`; Poker default; Times Light/Dark next)
-  - [x] Card sizing: card width derived from 7-column board; height follows 3:2 ratio
   - [ ] Clamp + scale: confirm consistent vertical spacing ratios (stack offset as % of card height)
-  - [ ] Accessibility baseline: make the game fully playable by keyboard (tab focus, arrow navigation, pick up/drop, shortcuts)
-  - [ ] Accessibility baseline: visible focus styles and ARIA labels for piles/cards/buttons
-  - [ ] Accessibility baseline: ensure stacked cards remain individually focusable (roving tabindex or equivalent)
-  - [ ] Keyboard play is a first-class requirement (design focus/move-intent model now so we don’t retrofit later)
-  - [ ] Define keyboard interaction spec (later): focus model, pick-up/drop intent, shortcuts, and screen reader announcements
-  - [ ] Keyboard spec + implementation should include a “pick up stack” affordance aligned with the engine’s movable run definition
+  - [x] Accessibility baseline: playable by keyboard (tab enters/leaves board; arrow navigation within board; Space toggles carry mode; Enter commits drop)
+    - [ ] Keyboard interaction spec (checklist)
+    - [ ] Define focus model
+      - What is focusable when idle
+      - What is focusable while carrying
+      - Whether non-playable cards ever receive focus
+    - [ ] Define arrow-key navigation rules
+      - Left/Right always move to adjacent tableau columns (no skipping)
+      - Up/Down symmetry guarantee (Down returns to previous node when possible)
+      - Priority rules for staying within tableau vs leaving it
+    - [x] Define carry mode semantics
+      - [x] Space toggles carry mode on focused card
+      - [x] Escape cancels carry mode and clears visuals
+      - [x] Carry mode cancels if focus leaves the board
+    - [x] Define commit shortcuts
+      - [x] Enter commits drop to focused target
+      - [x] F sends to foundation (if legal)
+      - [x] C sends to free cell (if legal)
+    - [x] Define valid target highlighting rules
+      - [x] Targets highlighted only while carrying
+      - [x] Empty slots included as targets
+      - [x] Hover must not suppress keyboard target visuals
+    - [x] Define post-move focus behavior
+      - [x] Focus moves to the revealed card behind the moved card
+      - [x] Focus stays in the same column when possible
+    - [ ] Define failure feedback
+      - Visual feedback for invalid drop
+      - No-op feedback when F/C has no legal moves
+    - [ ] Define screen reader announcements
+      - Focus changes
+      - Carry start / carry end
+      - Move committed (source → destination)
+    - [ ] Define reduced-motion behavior
+      - Keyboard moves respect reduced-motion preferences
+      - No transition flashes during carry or commit
+  - [x] Accessibility baseline: clear focus and carry/target visuals (theme-aware tokens; hover doesn’t erase focus)
+  - [ ] Accessibility baseline: screen reader announcements for focus/carry/commit (ARIA live region)
+  - [ ] Accessibility baseline: ensure stacked cards remain individually focusable (roving tabindex or equivalent) — revisit once stack focus UX is finalized
+  - [ ] Document keyboard interaction spec (focus model + carry/drop + shortcuts + SR announcements)
 
 - [x] Drag a single playable card around the screen (MVP), snapping back on release
 - [x] Centralized drag state via `useTableauDrag` hook (Board-owned)
@@ -195,6 +224,8 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 
 - [ ] Move animations (drop, slide, lift)
 - [ ] Auto-complete animation sequence
+- [ ] Show Auto-Complete button when the tableau is fully unlocked (win-eligible), and run cosmetic completion (send remaining tableau cards to foundations)
+- [ ] Auto-Complete should be optional: player can keep manually moving cards to foundations after unlock
 - [ ] Win celebration (confetti / flourish)
 - [ ] Suppress all card flip / transition animations on new deal or restart deal
 - [x] Ensure drag overlay renders immediately on pointer-down (no behind-then-pop effect)
@@ -268,7 +299,7 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - [x] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
 - [x] Theme switcher UI in Navbar (select control)
 - [x] ThemeProvider lint/type issues resolved (no setState-in-effect warnings; no implicit any; media-query listener types)
-- [x] Add tests for engine playable mask helper (getPlayableMask)
+- [ ] Add tests for engine playable mask helper (getPlayableMask) — (was previously marked done; re-verify coverage and re-check if truly complete)
 - [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
 - [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
 - [x] Settings → Timer toggle wired into Game UI (incl. aria-hidden)
@@ -303,3 +334,5 @@ This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with 
 - Confirmed V-Cell win condition as unlocking all tableau cards (foundation completion is cosmetic).
 - Enabled dragging cards out of foundations (pullback) to tableau and free cells; remaining work is purely visual polish (in-place hiding, cursor affordances, animation timing).
 - Added a Settings toggle for foundation pullback; engine legality, UI drag guards, cursor affordances, and visual disabling are all wired through a single rule flag.
+- Keyboard play MVP: tab/arrow navigation, Space carry mode, and Enter/F/C shortcuts for auto-foundation / auto-freecell (where legal).
+- Refactored Board logic into focused hooks/modules (keyboard nav/carry-drop, DOM mapping, board rows) and moved board feature code under a features-style folder.
