@@ -118,7 +118,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       if (!carried || !target) return false;
 
-      // Build drag + drop from DOM
+      // Build drag + drop from DOM (forward interpretation: carried -> target)
       const drag = buildKbDragFromEl(carried);
       const dropTarget = buildKbDropTargetFromEl(target);
 
@@ -129,11 +129,41 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       if (movedId) lastKbMovedCardIdRef.current = movedId;
 
       // Delegate the actual rule-checking + dispatch to the same logic as mouse drops
-      return commitBoardDrop({
+      const didForward = commitBoardDrop({
         legalMoves,
         dispatchMove,
         drag,
         dropTarget
+      } as CommitArgs);
+
+      if (didForward) return true;
+
+      // Keyboard leniency: if this was tableau -> tableau and forward failed,
+      // try the reversed interpretation (target -> carried).
+      const dragSourceType = (drag as any)?.source?.type;
+      const dropType = (dropTarget as any)?.type;
+
+      if (dragSourceType !== "tableau" || dropType !== "tableau") return false;
+
+      const reverseDrag = buildKbDragFromEl(target);
+      const reverseDropTarget = buildKbDropTargetFromEl(carried);
+
+      if (!reverseDrag || !reverseDropTarget) return false;
+
+      const reverseDragSourceType = (reverseDrag as any)?.source?.type;
+      const reverseDropType = (reverseDropTarget as any)?.type;
+
+      if (reverseDragSourceType !== "tableau" || reverseDropType !== "tableau")
+        return false;
+
+      const reverseMovedId = getCardIdFromEl(target);
+      if (reverseMovedId) lastKbMovedCardIdRef.current = reverseMovedId;
+
+      return commitBoardDrop({
+        legalMoves,
+        dispatchMove,
+        drag: reverseDrag,
+        dropTarget: reverseDropTarget
       } as CommitArgs);
     },
     [

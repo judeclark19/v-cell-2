@@ -1,338 +1,225 @@
-# V-Cell V2 — Project TODO (High-Level)
+# V-Cell V2 — TODO (Source of Truth)
 
-This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with a pure TS engine, a web app UI, offline-first support, and account-based stat sync. We’ll break items down further as we reach them.
+This is the end-to-end checklist for rebuilding V-Cell as a clean monorepo with a pure TS engine and a web UI that supports mouse + full keyboard play. We treat “unlocking the tableau” as the win condition; foundation completion is cosmetic (auto-complete).
 
-**Code phrase:** When I say **“update documentation”**, please review and propose edits to `todo.md`, `v_cell_rebuild_plan.md`, and `README.md` based on current repo state.
-
----
-
-## 0) Repo + Tooling Baseline
-
-- [x] Root `.gitignore` (node_modules, dist, env files, etc.)
-- [x] Decide package manager (npm vs pnpm vs yarn) and stick to it - decided npm
-- [x] TypeScript node environment sanity (ensure `console` is typed via `@types/node` and tsconfig `types: ["node"]`)
-- [x] Monorepo setup (workspaces)
-  - [x] Root `package.json` with workspaces: `packages/*`, `apps/*`
-  - [x] Root `npm install` works (workspaces:\*)
-- [ ] Root tooling scripts (dev/test/check/build entrypoints for web + engine) — still needed; workspace scripts exist but root-level "check"/"build" should be reliable.
-- [ ] Repo structure created
-  - [x] `packages/engine`
-  - [x] `apps/web`
-  - [ ] `packages/ui` (optional; can come later)
+**Doc workflow:** When I say **“update documentation”**, update `todo.md`, `v_cell_rebuild_plan.md`, and `README.md` to match the current repo reality.
 
 ---
 
-## 1) Planning Doc (Source of Truth)
+## A) Foundations: Repo + Tooling
 
-- [x] Keep `v_cell_rebuild_plan.md` updated as decisions get locked
-- [ ] Add any remaining rule clarifications as they arise
-- [ ] Keep a “Decision Log” section (date + what changed) (optional but nice)
+### A1) Monorepo baseline
 
----
+- [x] Root `.gitignore`
+- [x] npm workspaces (`packages/*`, `apps/*`)
+- [x] Workspace installs and local linking working
 
-## 2) Engine Package Scaffolding (`packages/engine`)
+### A2) Root scripts (still needed)
 
-- [x] `packages/engine/package.json` set up (build/test scripts)
-- [x] Install dev deps (typescript, vitest, tsup)
-- [x] Add `tsconfig.json` (dev)
-- [x] Add `tsconfig.build.json` (build output)
-- [x] Add `src/index.ts` (public exports only)
-- [x] Add Vitest smoke test (pipeline sanity)
-- [x] Add test runner config if needed (vitest defaults often fine)
-
-### 2.2 Engine Types (Contract)
-
-- [x] Add core types
-  - [x] `Rules` (faceDownCount 0/7/14/21, allowFoundationPullback, undoLimit)
-  - [x] `Card`, `TableauCard(faceDown)`
-  - [x] `PileRef` (foundation by slot index)
-  - [x] `FoundationSlot` (suit null until Ace, cards[])
-  - [x] `Move` union
-  - [x] `GameState`
-  - [x] Clarify tableau ordering (TOP→BOTTOM array; exposed card is last element)
-
-### 2.3 Core Engine Functions (Pure)
-
-- [x] `createGame(seed, rules)`
-  - [x] createGame function scaffold exists
-  - [x] shuffleInPlace utility exists (Fisher–Yates)
-  - [x] deterministic shuffle
-  - [x] deal 49 to tableau, 3 to free cells
-  - [x] apply V-shape face-down layering
-- [x] `getLegalMoves(state)`
-  - [x] tableau stack moves
-  - [x] moves to free cells / foundations
-  - [x] kings-only into empty tableau columns
-  - [x] dynamic foundation suit logic
-  - [x] foundation pullback rules
-- [x] `applyMove(state, move)`
-  - [x] enforce legality (or assume legal + assert in dev)
-  - [x] update state
-  - [x] auto-flip when face-down becomes exposed
-  - [x] foundation suit set/unset rules
-- [x] Derived helpers
-  - [x] `getMovableRunLengths(state)` (internal helper; not exported in public engine contract)
-  - [x] `areAllCardsUnlocked(state)` (true when no locked tableau cards remain)
-  - [x] `isWin(state)` (delegates to `areAllCardsUnlocked`)
-  - [x] `getAutoCompleteMoves(state)` (safe deterministic sequence)
-- [x] **Tableau stack legality, stack slicing, and auto-flip behavior are fully implemented and verified by tests.**
-
-### 2.5 Engine Guardrails (Dev Assertions)
-
-- [x] `applyMove` asserts the provided move is legal (via `getLegalMoves`) in dev/test
-- [x] `applyMove` validates moved tableau stacks are internally valid (alternating colors + descending ranks, no face-down cards)
-- [ ] Confirm error messages are stable enough for debugging (not a public API guarantee)
-
-### 2.4 Engine Test Strategy
-
-- [x] Determinism tests
-  - [x] same (seed,rules) => identical board
-- [x] Invariant tests
-  - [x] all 52 unique cards present exactly once
-  - [x] correct counts in tableau/freecells/foundations
-  - [x] faceDownCount matches rules (0/7/14/21)
-- [x] Legality tests
-  - [x] getLegalMoves: single-card moves + pullback behavior
-  - [x] kings-only empty columns
-  - [x] tableau stack validity
-  - [x] foundation slot suit locking/unlocking
-  - [x] pullback only top card and allowed destinations
-- [x] Apply-move correctness tests
-  - [x] tableauStack slice + order correctness
-  - [x] tableauStack auto-flip when newly exposed
-  - [x] auto-flip behavior
-  - [x] move results stable and predictable
-- [x] **Stack-move legality and run semantics are now covered by regression tests.**
+- [ ] Root `npm run dev` runs web (and watches engine if needed)
+- [ ] Root `npm run check` runs lint + typecheck (web + engine) reliably
+- [ ] Root `npm run build` builds engine + web reliably
 
 ---
 
-## 3) Web App Scaffolding (`apps/web`)
+## B) Engine (`packages/engine`) — Pure TS rules + tests
 
-- [x] Create Next.js app (App Router)
-- [x] Install and link `@vcell/engine`
-- [x] App layout + routing (initial)
-- [x] Basic game screen skeleton with engine wiring + debug JSON
-- [x] Add route structure: / and /game (done)
-- [x] Add route structure: /settings and /stats (placeholders first)
-- [x] Landing flow: choose guest vs login (minimal session model)
-- [x] /stats renders for guests but shows a login prompt instead of redirecting
-- [x] MVP /login route + session persistence (local-only; real auth later)
-- [x] Navbar (global) with Login/Logout + route links
-- [x] Navbar responsive behavior (mobile open/close, active link styling, hamburger morph)
-- [x] ThemeProvider + SessionProvider both hydration-safe (no SSR localStorage reads; client-only hydrate flag)
-- [x] Hydration-safe SessionProvider (no SSR localStorage reads; client-only hydrate flag)
-- [ ] Decide leaderboards scope + privacy model (later): public leaderboard page, what stats are shared, and whether users can view each other’s profiles
+### B1) Core types / contract
+
+- [x] Core types: `Rules`, `Card`, `TableauCard`, `FoundationSlot`, `Move`, `GameState`
+- [x] Rule flags: `faceDownCount`, `allowFoundationPullback`, `undoLimit`
+- [x] Tableau ordering defined (TOP→BOTTOM array; exposed card is last element)
+
+### B2) Core functions
+
+- [x] `createGame(seed, rules)` deterministic dealing + V-layering
+- [x] `getLegalMoves(state)` (tableau/freecell/foundation; kings-only empty columns; pullback rules)
+- [x] `applyMove(state, move)` correctness + auto-flip + foundation suit logic
+- [x] Derived helpers:
+  - [x] `areAllCardsUnlocked(state)` (win condition)
+  - [x] `isWin(state)` delegates to unlock condition
+  - [x] `getAutoCompleteMoves(state)` deterministic cosmetic completion
+
+### B3) Guardrails + tests
+
+- [x] Determinism tests + invariants + legality tests + apply-move correctness
+- [x] Dev assertions: illegal moves fail fast (via `getLegalMoves`) in dev/test
+- [ ] Error messaging sanity (debuggability; not a public API guarantee)
 
 ---
 
-- [x] Move GameProvider out of page components into a dedicated module
-- [x] Provide GameProvider at app scope (shared across routes)
-- [x] Provide SessionProvider at app scope (guest vs user; persisted locally)
-- [x] Render all zones from engine state
-  - [x] Foundations extracted into presentational component
-  - [x] Tableau extracted into presentational component
-  - [x] Free cells extracted into presentational component
-- [ ] Card stacking + layout
-  - [x] Card backs: branded V-Cell logo back (PNG), recolored for Times Light/Dark
-  - [x] Board layout: foundations on top, free cells on bottom (V1-inspired)
-  - [x] All zones share the same 7-column rhythm (no placeholder “unused” slots rendered)
-  - [x] Overlap/stacking in tableau columns (vertical offset as % of card height)
-  - [x] Z-index/stacking-context strategy (avoid filter/opacity creating new stacking contexts; ensure dragged/selected cards sit on top)
-  - [ ] Click targets + hit-testing regions (prep for drag/drop + keyboard)
-  - [ ] Introduce move history stack in GameProvider (record applied moves + prior GameState snapshots) to enable Undo
-  - [ ] Align board layout with V1: nav/board/controls (landscape) and stacked layout (portrait)
-  - [ ] Visually distinguish: empty slot vs face-down vs face-up (per-theme)
-  - [ ] Visually distinguish: face-up playable vs face-up locked (per-theme)
-  - [ ] Define and wire a single source of truth for “playable” (engine mask → UI)
-  - [ ] Add tests for engine playable mask helper (getPlayableMask)
-  - [x] Timer UI (web): show/hide toggle wired from Settings → Game UI
-    - [x] Persist `showTimer` preference locally (ThemeProvider-style) and later sync to user profile
-    - [x] Ensure timer container sets `aria-hidden` when hidden
-- [ ] Decide state boundaries: keep engine state global; keep per-page UI state local
-- [x] Card components + pile components (initial extraction)
-- [ ] Continuous scaling system (single scale factor)
+## C) Web App (`apps/web`) — Gameplay MVP
 
-  - [ ] Clamp + scale: confirm consistent vertical spacing ratios (stack offset as % of card height)
-  - [x] Accessibility baseline: playable by keyboard (tab enters/leaves board; arrow navigation within board; Space toggles carry mode; Enter commits drop)
-    - [ ] Keyboard interaction spec (checklist)
-    - [ ] Define focus model
-      - What is focusable when idle
-      - What is focusable while carrying
-      - Whether non-playable cards ever receive focus
-    - [ ] Define arrow-key navigation rules
-      - Left/Right always move to adjacent tableau columns (no skipping)
-      - Up/Down symmetry guarantee (Down returns to previous node when possible)
-      - Priority rules for staying within tableau vs leaving it
-    - [x] Define carry mode semantics
-      - [x] Space toggles carry mode on focused card
-      - [x] Escape cancels carry mode and clears visuals
-      - [x] Carry mode cancels if focus leaves the board
-    - [x] Define commit shortcuts
-      - [x] Enter commits drop to focused target
-      - [x] F sends to foundation (if legal)
-      - [x] C sends to free cell (if legal)
-    - [x] Define valid target highlighting rules
-      - [x] Targets highlighted only while carrying
-      - [x] Empty slots included as targets
-      - [x] Hover must not suppress keyboard target visuals
-    - [x] Define post-move focus behavior
-      - [x] Focus moves to the revealed card behind the moved card
-      - [x] Focus stays in the same column when possible
-    - [ ] Define failure feedback
-      - Visual feedback for invalid drop
-      - No-op feedback when F/C has no legal moves
-    - [ ] Define screen reader announcements
-      - Focus changes
-      - Carry start / carry end
-      - Move committed (source → destination)
-    - [ ] Define reduced-motion behavior
-      - Keyboard moves respect reduced-motion preferences
-      - No transition flashes during carry or commit
-  - [x] Accessibility baseline: clear focus and carry/target visuals (theme-aware tokens; hover doesn’t erase focus)
-  - [ ] Accessibility baseline: screen reader announcements for focus/carry/commit (ARIA live region)
-  - [ ] Accessibility baseline: ensure stacked cards remain individually focusable (roving tabindex or equivalent) — revisit once stack focus UX is finalized
-  - [ ] Document keyboard interaction spec (focus model + carry/drop + shortcuts + SR announcements)
+### C1) App shell
 
-- [x] Drag a single playable card around the screen (MVP), snapping back on release
-- [x] Centralized drag state via `useTableauDrag` hook (Board-owned)
-- [x] Drag single card from tableau → tableau
-- [x] Drag single card from tableau → free cell
-- [x] Drag single card from tableau → foundation
-- [x] Drag single card from free cell → tableau
-- [x] Drag single card from free cell → foundation
-- [x] Foundation slots render as persistent empty slots (2-layer render)
-- [x] Drag single card from foundation → tableau
-- [x] Drag single card from foundation → free cell
-- [x] While dragging from foundation, hide the dragged card in-place and reveal the card underneath
-- [x] Centralized drag state supports multiple source types (tableau, free cell)
-- [x] “Slide back” animation on release (no lag while dragging; transition only after mouseup/touchend)
-- [ ] Smooth return animation for invalid drops
+- [x] Next.js App Router scaffold
+- [x] Routes: `/`, `/game`, `/settings`, `/stats`, `/login` (minimal)
+- [x] Navbar (responsive)
+- [x] Theme system (Poker / Times Light / Times Dark) hydration-safe
+- [x] Session model (guest vs user) local-only for now
+
+### C2) GameProvider (single source of truth)
+
+- [x] GameProvider hoisted to app scope
+- [x] Engine state wired into UI
+- [x] Undo stack exists and can undo via keyboard (`U`)
+- [x] Rules/preferences state wired:
+  - [x] Show timer (settings → UI)
+  - [x] Allow foundation pullback (settings → UI + drag guards)
+
+### C3) Board layout + rendering
+
+- [x] Board layout: foundations top, free cells bottom (7-column rhythm)
+- [x] Foundations / FreeCells / Tableau extracted into components
+- [x] Card stacking / offsets / z-index strategy stable
+- [x] Face-down vs face-up vs empty slot visual distinction (theme aware)
+- [ ] Continuous scaling system (single scale factor; clamp + spacing ratios)
+
+---
+
+## D) Input: Mouse + Drag/Drop
+
+### D1) Drag/drop core (DONE)
+
+- [x] Drag single card and sub-stack
+- [x] Tableau ↔ tableau
+- [x] Tableau ↔ free cell
+- [x] Tableau ↔ foundation
+- [x] Free cell ↔ tableau / foundation
+- [x] Foundation pullback ↔ tableau / free cell (respect rules)
+- [x] Drag overlay behavior: immediate on pointer-down
+- [x] Slide-back transition (transition only after release)
+
+### D2) Drag/drop polish (NEXT)
+
 - [ ] Highlight valid drop targets during drag
-- [x] Drag/drop for single card + sub-stack
-- [x] Double-click/double-tap auto-send to foundation
-- [x] deterministic foundation slot selection if multiple valid
-- [x] Extract board drop-resolution logic into hooks (useBoardDrop)
-- [x] Extract auto-foundation logic into hook (useAutoFoundation)
-- [x] Board.tsx reduced to layout + wiring (no embedded game rules)
-- [ ] Finalize responsibility split: Board passes state + drag; Foundations handles drag-aware rendering
+- [ ] Smooth return animation for invalid drops
 - [ ] Magnetic snapping (snap radius + target priority)
-- [ ] Valid target highlighting
-- [ ] Double-click/double-tap auto-send to foundation
-  - [ ] deterministic foundation slot selection if multiple valid
-
-### 4.3 Animation
-
-- [ ] Move animations (drop, slide, lift)
-- [ ] Auto-complete animation sequence
-- [ ] Show Auto-Complete button when the tableau is fully unlocked (win-eligible), and run cosmetic completion (send remaining tableau cards to foundations)
-- [ ] Auto-Complete should be optional: player can keep manually moving cards to foundations after unlock
-- [ ] Win celebration (confetti / flourish)
-- [ ] Suppress all card flip / transition animations on new deal or restart deal
-- [x] Ensure drag overlay renders immediately on pointer-down (no behind-then-pop effect)
+- [ ] Hit-testing/click-target refinements (touch friendliness)
 
 ---
 
-## 5) Offline Support (PWA)
+## E) Input: Keyboard (Core Play)
 
-- [ ] Fix dev 404 for /sw.js (either add a stub SW or disable any SW registration until we actually do PWA)
-  - [ ] If we are not doing PWA yet, remove/disable any service worker registration so dev stays clean
-- [ ] Decide whether we’re doing PWA via next-pwa or a custom service worker (don’t half-register it)
-- [ ] Add PWA support (service worker + caching strategy)
-- [ ] Confirm: app loads offline, play works offline
-- [ ] Store queued stats locally while offline
-- [ ] Sync queued stats when online returns
+Keyboard is treated as a first-class control scheme (not “bonus accessibility”).
+
+### E1) Navigation + focus (DONE)
+
+- [x] Tab/Shift+Tab enter/leave the board
+- [x] Arrow keys navigate within the board
+- [x] Clicking inside the board focuses:
+  - [x] clicked playable card, or
+  - [x] first playable card if clicking non-playable area
+- [x] Focus styles visible on `:focus` and `:focus-visible`
+- [x] Hover never suppresses keyboard focus/target visuals
+
+### E2) Carry mode + commit (DONE)
+
+- [x] Space toggles carry mode
+- [x] Escape cancels carry mode and clears visuals
+- [x] Carry cancels when focus leaves the board
+- [x] Targets are highlighted only while carrying
+- [x] Empty slots are targets only while carrying
+- [x] Enter commits drop to focused target
+- [x] Tableau→tableau commit is direction-agnostic (“either direction”)
+
+### E3) Shortcut actions (DONE / IN PROGRESS)
+
+- [x] `F` = attempt auto-foundation from focused playable card
+- [x] `C` = attempt auto-free-cell from focused playable card
+- [x] `U` = undo; focus restores to moved card when possible
+- [ ] `P` = pause toggle (must suspend timer + disable input while paused)
+- [ ] `N` = new deal (random seed 1–800) without hydration issues
+
+### E4) Keyboard interaction spec (needs a single checklist)
+
+- [ ] Define focus model (idle vs carrying; what is focusable)
+- [ ] Define arrow-key symmetry expectations (up/down should reverse when possible)
+- [ ] Failure feedback:
+  - [ ] invalid drop feedback
+  - [ ] no-op feedback when F/C has no legal moves
+- [ ] Screen reader announcements (ARIA live region):
+  - [ ] carry start/end
+  - [ ] move committed (source → destination)
+  - [ ] undo
+- [ ] Reduced motion support:
+  - [ ] transitions respect prefers-reduced-motion
+  - [ ] no “theme flash” or transition bloom during carry/targets
 
 ---
 
-## 6) Auth + User Profile (Cross-Device)
+## F) Timer + Pause
+
+### F1) Timer logic (DONE)
+
+- [x] Timer measures active play time only (not wall-clock elapsed)
+- [x] Timer starts on first committed move (not on deal / load)
+- [x] Timer stops when tab inactive
+- [x] Timer stops while paused
+- [x] Timer display (mm:ss) in Foundations
+- [x] Show/hide timer setting wired and persisted locally
+
+### F2) Timer/pause polish (NEXT)
+
+- [ ] Timer should appear muted before first move
+- [ ] Pause button disabled before first move
+- [ ] Pause overlay UX (board-border sized; close button; keyboard accessible)
+
+---
+
+## G) Win condition + Auto-complete
+
+Win condition is: **no locked tableau cards remain**. Foundations are cosmetic.
+
+- [x] Win logic implemented in engine (`areAllCardsUnlocked`)
+- [ ] Auto-complete button appears when tableau fully unlocked
+- [ ] Auto-complete runs cosmetic completion (send tableau cards to foundations)
+- [ ] Auto-complete optional (player can keep manually playing)
+
+---
+
+## H) Visual polish + Theme correctness
+
+- [x] Theme tokens + semantic tokens exist; kb highlight uses semantic token
+- [ ] Fix Times Dark “flash of wrong colors” on page refresh (board-only)
+- [ ] Ensure new deal/restart suppresses flip/transition animations
+- [ ] Ensure disabled foundation pullback shows `cursor: not-allowed` and blocks pointerdown consistently
+
+---
+
+## I) Offline Support (Later)
+
+- [ ] Decide: next-pwa vs custom service worker
+- [ ] Remove/disable any accidental SW registration until chosen (avoid dev 404s)
+- [ ] Offline play works; stats queue while offline; sync later
+
+---
+
+## J) Auth + Profile + Stats (Later)
+
+### J1) Auth
 
 - [ ] Choose backend (Firebase vs Supabase vs custom)
-- [ ] Auth
-  - [ ] Google sign-in
-  - [ ] Email/password fallback
-  - [ ] Account linking strategy (avoid split stats)
-- [ ] Guest mode support (no account required; gate stats/leaderboards behind login)
-- [ ] Add minimal session mode first (guest vs user) + route gating for /stats (before real auth)
-- [ ] User profile fields
-  - [ ] theme, showTimer, knowsHowToPlay, soundOn
-  - [ ] undoLimitDefault, faceDownCountDefault, allowFoundationPullbackDefault
-- [ ] Define public profile scope (later): what fields exist, what’s public vs private, and whether profiles are viewable by other users
-- [ ] Leaderboards (later): global + friends, filters by rules, and anti-cheat / integrity plan
+- [ ] Real login (Google, email/password)
+- [ ] Guest mode remains supported
+
+### J2) Profile settings sync
+
+- [ ] theme, showTimer, knowsHowToPlay, soundOn
+- [ ] defaults for rules (undoLimit, faceDownCount, allowFoundationPullback)
+
+### J3) Stats + leaderboards
+
+- [ ] Per-game records
+- [ ] Aggregates + best times
+- [ ] Privacy model + leaderboard scope
 
 ---
 
-## 7) Stats Model + Sync (Logged-in only)
+## Recently Completed (keep short + factual)
 
-- [ ] Per-game record format (includes settings used)
-- [ ] Aggregates (wins, total, abandons, best time, streaks)
-- [ ] Filtering/sorting by settings in UI (later phase)
-- [ ] Offline-first syncing + conflict-safe merges
-- [ ] Decide which stats can be shared publicly (leaderboards) vs private-only (per-user history)
-
----
-
-## 8) V1 → V2 Import
-
-- [ ] Finalize `sanitizeV1Export()` implementation location
-- [ ] Import UI flow in V2
-- [ ] Write targets
-  - [ ] `users/{uid}/profile`
-  - [ ] `users/{uid}/games/{gameId}` (legacyImported)
-  - [ ] `users/{uid}/stats` (legacyImported)
-  - [ ] idempotency using `importId`
-- [ ] Test with your V1 JSON snapshot(s)
-
----
-
-## 9) Hints + Winnable Pools (Later Phase)
-
-- [ ] Phase 1: heuristic hints (rank moves)
-- [ ] Phase 2: shallow lookahead
-- [ ] Phase 3: solver-backed (optional)
-- [ ] Winnable seed pool strategy (beaten seeds first)
-
----
-
-## 9A) Web App Polish (Early)
-
-- [x] Navbar responsive behavior (mobile open/close, active link styling, layout)
-- [x] Theme switching + prefers-color-scheme mapping (Poker default; OS dark => Times Dark)
-- [x] Theme switcher UI in Navbar (select control)
-- [x] ThemeProvider lint/type issues resolved (no setState-in-effect warnings; no implicit any; media-query listener types)
-- [ ] Add tests for engine playable mask helper (getPlayableMask) — (was previously marked done; re-verify coverage and re-check if truly complete)
-- [x] Hydration safety pass for session/localStorage (fixed SSR mismatch + localStorage on server issues)
-- [ ] Add "check" script for web package (tsc --noEmit + lint) and wire into root scripts (so root "npm run check" is reliable)
-- [x] Settings → Timer toggle wired into Game UI (incl. aria-hidden)
-- [ ] Store background assets locally (move remote background image into repo under `public/` and document the convention + CSS URL syntax)
-  - [ ] Eliminate redundant color vars; introduce semantic tokens (Poker/default alias; Times Dark aligns with OS dark; add `--muted` and other semantic tokens once)
-  - [ ] Select chevron styling: ensure it remains visible on hover and uses theme token (e.g. `--foreground`)
-  - [ ] SVG suit icons: confirm a scalable sizing strategy (prefer `em`/`currentColor` where possible) and document the convention
-
-## 10) Release Checklist
-
-- [ ] Smoke test on desktop + mobile
-- [ ] Offline airplane-mode test
-- [ ] Migration import test (dad + girlfriend)
-- [ ] Deploy (Netlify/Vercel/etc.)
-- [ ] Add “Export V1 Stats” button to V1 site
-- [ ] Add “Import V1 Stats” in V2
-
----
-
-## Recently completed
-
-- Wired the web app to the engine and verified the app loads with a deterministic dev seed.
-- Split routing so the landing page (/) and gameplay (/game) are separate pages.
-- Moved the GameProvider out of the page file and hoisted it to app scope.
-- Added a minimal SessionProvider (guest vs user) persisted locally (no real auth yet).
-- Added MVP /login + navbar with Login/Logout links.
-- Added /stats page that renders for guests but shows a login prompt instead of redirecting.
-- Rendered foundations + tableau + free cells in the new board layout (foundations top, free cells bottom).
-- Implemented theme selection plumbing (ThemeProvider) and applied Poker as default + Times Dark for OS dark.
-- Centralized win detection in the engine and exposed it via GameProvider as `isWon`.
-- Refactored Board.tsx to delegate move commitment and auto-foundation behavior to dedicated hooks.
-- Confirmed V-Cell win condition as unlocking all tableau cards (foundation completion is cosmetic).
-- Enabled dragging cards out of foundations (pullback) to tableau and free cells; remaining work is purely visual polish (in-place hiding, cursor affordances, animation timing).
-- Added a Settings toggle for foundation pullback; engine legality, UI drag guards, cursor affordances, and visual disabling are all wired through a single rule flag.
-- Keyboard play MVP: tab/arrow navigation, Space carry mode, and Enter/F/C shortcuts for auto-foundation / auto-freecell (where legal).
-- Refactored Board logic into focused hooks/modules (keyboard nav/carry-drop, DOM mapping, board rows) and moved board feature code under a features-style folder.
+- Engine rules + tests stabilized; win condition is tableau unlock.
+- Full drag/drop implemented for single cards and sub-stacks across tableau/free cells/foundations (including pullback when enabled).
+- Keyboard play MVP implemented: arrow navigation, carry mode, target highlighting, Enter commit, and F/C/U shortcuts.
+- Timer measures active play time only and starts on first move; show/hide preference wired.
+- Board logic refactored into feature hooks/modules; layout mostly wiring-only.

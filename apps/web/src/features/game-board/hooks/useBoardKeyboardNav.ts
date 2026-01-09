@@ -235,13 +235,7 @@ export function useBoardKeyboardNav({
         requestAnimationFrame(() => focusByIndex(bestIdx));
       }
     },
-    [
-      activeFocusIndex,
-      focusByIndex,
-      getCenter,
-      getActiveFocusableEl,
-      getNodeMeta
-    ]
+    [focusByIndex, getCenter, getActiveFocusableEl, getNodeMeta]
   );
 
   const onBoardFocusCapture = useCallback(() => {

@@ -177,7 +177,6 @@ function Board() {
           tabIndex={0}
           onKeyDown={onBoardKeyDown}
           onPointerDownCapture={(e) => {
-            console.log("BOARD POINTER DOWN CAPTURE", e.target);
             const root = boardRef.current;
             if (!root) return;
 
