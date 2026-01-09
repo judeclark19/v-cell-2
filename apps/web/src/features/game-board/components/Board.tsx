@@ -13,7 +13,7 @@ import { useBoardDrop } from "../hooks/useBoardDrop";
 import { useAutoFoundation } from "../hooks/useAutoFoundation";
 import { useAutoFreeCell } from "../hooks/useAutoFreeCell";
 import { useBoardKeyboardNav } from "../hooks/useBoardKeyboardNav";
-import { useBoardKeyboardCarryDrop } from "../hooks/useBoardKeyboardCarryDrop";
+import { useBoardKeyboardController } from "../hooks/useBoardKeyboardController";
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 
@@ -139,12 +139,16 @@ function Board() {
     clearKbCarryVisuals,
     kbCarriedElRef,
     setKeyboardDropTarget
-  } = useBoardKeyboardCarryDrop({
+  } = useBoardKeyboardController({
     boardRef,
     kbCarrying,
     setKbCarrying,
     legalMoves,
     dispatchMove,
+    undo,
+    canUndo,
+    newDeal,
+    restart,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
     findNextByDirection,

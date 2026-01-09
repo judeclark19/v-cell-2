@@ -1,13 +1,13 @@
 import { useCallback, useRef } from "react";
 
 export type BoardDomRegistry = {
-  tableauColRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
+  tableauColRefs: React.RefObject<Array<HTMLDivElement | null>>;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
 
-  freeCellRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
+  freeCellRefs: React.RefObject<Array<HTMLDivElement | null>>;
   setFreeCellRef: (index: number, el: HTMLDivElement | null) => void;
 
-  foundationRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
+  foundationRefs: React.RefObject<Array<HTMLDivElement | null>>;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
 };
 

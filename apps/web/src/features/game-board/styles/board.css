@@ -85,7 +85,7 @@
 /* Tableau stack overlap */
 .tableau-col > .card:not(.is-dragging):not(.is-returning),
 .tableau-col > .card-slot {
-  margin-top: -95%;
+  margin-top: -107%;
 }
 
 /* IMPORTANT:
@@ -123,7 +123,7 @@
 }
 
 .drag-layer__stack > .card:not(:first-child) {
-  margin-top: calc(var(--card-w) * -0.95);
+  margin-top: calc(var(--card-w) * -1.07);
 }
 
 /* Occupies a grid cell but renders no slot UI (used for centering foundations/freecells) */
@@ -300,7 +300,7 @@
 /* Tableau stack overlap */
 .tableau-col > .card:not(.is-dragging):not(.is-returning),
 .tableau-col > .card-slot {
-  margin-top: -95%;
+  margin-top: -107%;
 }
 
 /* IMPORTANT:
@@ -338,7 +338,7 @@
 }
 
 .drag-layer__stack > .card:not(:first-child) {
-  margin-top: calc(var(--card-w) * -0.95);
+  margin-top: calc(var(--card-w) * -1.07);
 }
 
 /* Occupies a grid cell but renders no slot UI (used for centering foundations/freecells) */

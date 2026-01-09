@@ -8,7 +8,11 @@ import type {
 
 import type { DragSource, DropTarget } from "@/ui/useCardDrag";
 
-export type TableauSource = { colIndex: number; startIndex: number };
+function toBoundedIndex<T extends number>(n: number, len: number): T | null {
+  return Number.isInteger(n) && n >= 0 && n < len ? (n as T) : null;
+}
+
+type TableauSource = { colIndex: TableauIndex; startIndex: number };
 
 export function getCardIdFromEl(el: HTMLElement): string | null {
   const dataId = el.getAttribute("data-card-id") || el.dataset.cardId;
@@ -27,11 +31,12 @@ export function getCardIdFromEl(el: HTMLElement): string | null {
 export function findFreeCellIndexForEl(
   el: HTMLElement,
   freeCellRefs: Array<HTMLDivElement | null>
-): number | null {
+): FreeCellIndex | null {
   for (let i = 0; i < freeCellRefs.length; i++) {
     const slotEl = freeCellRefs[i];
     if (!slotEl) continue;
-    if (slotEl.contains(el) || slotEl === el) return i;
+    if (slotEl.contains(el) || slotEl === el)
+      return toBoundedIndex<FreeCellIndex>(i, freeCellRefs.length);
   }
   return null;
 }
@@ -39,11 +44,12 @@ export function findFreeCellIndexForEl(
 export function findFoundationIndexForEl(
   el: HTMLElement,
   foundationRefs: Array<HTMLDivElement | null>
-): number | null {
+): FoundationIndex | null {
   for (let i = 0; i < foundationRefs.length; i++) {
     const slotEl = foundationRefs[i];
     if (!slotEl) continue;
-    if (slotEl.contains(el) || slotEl === el) return i;
+    if (slotEl.contains(el) || slotEl === el)
+      return toBoundedIndex<FoundationIndex>(i, foundationRefs.length);
   }
   return null;
 }
@@ -67,7 +73,10 @@ export function findTableauSourceForEl(
     const startIndex = col.findIndex((tc) => tc.card.id === cardId);
     if (startIndex < 0) return null;
 
-    return { colIndex, startIndex };
+    const ti = toBoundedIndex<TableauIndex>(colIndex, tableauColRefs.length);
+    if (ti == null) return null;
+
+    return { colIndex: ti, startIndex };
   }
 
   return null;
@@ -84,16 +93,14 @@ export function buildPileRefFromEl(args: {
 
   const t = findTableauSourceForEl(el, tableauColRefs, tableau);
   if (t) {
-    return { type: "tableau", index: t.colIndex as TableauIndex };
+    return { type: "tableau", index: t.colIndex };
   }
 
   const freeIndex = findFreeCellIndexForEl(el, freeCellRefs);
-  if (freeIndex != null)
-    return { type: "freecell", index: freeIndex as FreeCellIndex };
+  if (freeIndex != null) return { type: "freecell", index: freeIndex };
 
   const fIndex = findFoundationIndexForEl(el, foundationRefs);
-  if (fIndex != null)
-    return { type: "foundation", index: fIndex as FoundationIndex };
+  if (fIndex != null) return { type: "foundation", index: fIndex };
 
   return null;
 }
