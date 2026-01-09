@@ -65,6 +65,9 @@ export type UseKeyboardActionsArgs = {
   newDeal: () => void;
   restart: () => void;
 
+  paused: boolean;
+  setPaused: (next: boolean) => void;
+
   /** UI helpers (already exist elsewhere; we call them as a first-class behavior) */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
   tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
@@ -258,14 +261,18 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
     args.restart();
   }, [args]);
 
+  const handlePauseToggle = useCallback((): void => {
+    args.setPaused(!args.paused);
+  }, [args]);
+
   return {
     lastKbMovedCardIdRef,
-
     tryCommitKeyboardDrop,
     handleAutoFoundation,
     handleAutoFreeCell,
     handleUndo,
     handleNewDeal,
-    handleRestart
+    handleRestart,
+    handlePauseToggle
   };
 }

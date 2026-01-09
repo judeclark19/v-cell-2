@@ -47,7 +47,10 @@ function Board() {
     undo,
     canUndo,
     newDeal,
-    restart
+    restart,
+    seedReady,
+    timeElapsedMs,
+    hasStarted
   } = useGame();
 
   const playable = useMemo(() => getPlayableMask(state), [state]);
@@ -126,7 +129,9 @@ function Board() {
     lastFocusPointRef,
     getCenter,
     findNextByDirection,
-    onBoardFocusCapture
+    onBoardFocusCapture,
+    focusFirstPlayable,
+    focusElIfFocusable
   } = useBoardKeyboardNav({
     state,
     playable,
@@ -149,6 +154,8 @@ function Board() {
     canUndo,
     newDeal,
     restart,
+    paused,
+    setPaused,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
     findNextByDirection,
@@ -161,13 +168,37 @@ function Board() {
       <WinAlertEffect isWon={isWon} />
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
-        key={state.seed}
+        key={seedReady ? state.seed : "loading"}
       >
         <div
           className="board"
           aria-label="Game board"
           ref={boardRef}
+          tabIndex={0}
           onKeyDown={onBoardKeyDown}
+          onPointerDownCapture={(e) => {
+            console.log("BOARD POINTER DOWN CAPTURE", e.target);
+            const root = boardRef.current;
+            if (!root) return;
+
+            const target = e.target as HTMLElement | null;
+            if (!target) {
+              focusFirstPlayable();
+              return;
+            }
+
+            // Prefer focusing the nearest element that could be in the focusables list.
+            const candidate =
+              (target.closest(
+                "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
+              ) as HTMLElement | null) || target;
+
+            const focused = focusElIfFocusable(candidate);
+            if (!focused) {
+              // Clicking in empty space should still "enter" keyboard mode.
+              focusFirstPlayable();
+            }
+          }}
           onFocusCapture={() => {
             hadBoardFocusRef.current = true;
             onBoardFocusCapture();
@@ -199,70 +230,80 @@ function Board() {
             }
           }}
         >
-          {/* Foundations on top */}
-          <Foundations
-            foundationsRow={foundationsRow}
-            foundations={state.foundations}
-            drag={drag}
-            playableFoundations={playable.foundations}
-            allowFoundationPullback={allowFoundationPullback}
-            showTimer={showTimer}
-            setFoundationRef={setFoundationRef}
-            handleFoundationPointerDown={handleFoundationPointerDown}
-            onPause={() => setPaused(true)}
-          />
+          {seedReady ? (
+            <>
+              {/* Foundations on top */}
+              <Foundations
+                hasStarted={hasStarted}
+                timeElapsedMs={timeElapsedMs}
+                foundationsRow={foundationsRow}
+                foundations={state.foundations}
+                drag={drag}
+                playableFoundations={playable.foundations}
+                allowFoundationPullback={allowFoundationPullback}
+                showTimer={showTimer}
+                setFoundationRef={setFoundationRef}
+                handleFoundationPointerDown={handleFoundationPointerDown}
+                onPause={() => setPaused(true)}
+              />
 
-          {/* Tableau in the middle */}
-          <Tableau
-            state={state}
-            playable={playable}
-            drag={drag}
-            handleTableauPointerDown={handleTableauPointerDown}
-            tryAutoFoundation={tryAutoFoundation}
-            setTableauColRef={setTableauColRef}
-          />
+              {/* Tableau in the middle */}
+              <Tableau
+                state={state}
+                playable={playable}
+                drag={drag}
+                handleTableauPointerDown={handleTableauPointerDown}
+                tryAutoFoundation={tryAutoFoundation}
+                setTableauColRef={setTableauColRef}
+              />
 
-          {/* Drag overlay layer */}
-          {(drag.active || drag.pending) && drag.stack.length > 0 && (
-            <div
-              className={`drag-layer ${drag.isReturning ? "is-returning" : ""}`}
-              onTransitionEnd={() => {
-                if (drag.isReturning) finalizeDrag();
-              }}
-              style={{
-                left: 0,
-                top: 0,
-                transform: `translate3d(${drag.baseLeft + drag.x}px, ${
-                  drag.baseTop + drag.y
-                }px, 0)`
-              }}
-              aria-hidden="true"
-            >
-              <div className="drag-layer__stack tableau-col">
-                {drag.stack.map((tc, i) => (
-                  <Card
-                    key={tc.card.id}
-                    card={tc.card}
-                    faceDown={tc.faceDown}
-                    playable
-                    disableInternalDrag
-                    // Ensure the stack keeps its normal spacing
-                    style={{ zIndex: i + 1 }}
-                  />
-                ))}
-              </div>
-            </div>
+              {/* Drag overlay layer */}
+              {(drag.active || drag.pending) && drag.stack.length > 0 && (
+                <div
+                  className={`drag-layer ${
+                    drag.isReturning ? "is-returning" : ""
+                  }`}
+                  onTransitionEnd={() => {
+                    if (drag.isReturning) finalizeDrag();
+                  }}
+                  style={{
+                    left: 0,
+                    top: 0,
+                    transform: `translate3d(${drag.baseLeft + drag.x}px, ${
+                      drag.baseTop + drag.y
+                    }px, 0)`
+                  }}
+                  aria-hidden="true"
+                >
+                  <div className="drag-layer__stack tableau-col">
+                    {drag.stack.map((tc, i) => (
+                      <Card
+                        key={tc.card.id}
+                        card={tc.card}
+                        faceDown={tc.faceDown}
+                        playable
+                        disableInternalDrag
+                        // Ensure the stack keeps its normal spacing
+                        style={{ zIndex: i + 1 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Free cells on bottom */}
+              <FreeCells
+                freeCellsRow={freeCellsRow}
+                playableFreeCells={playable.freeCells}
+                tryAutoFoundation={tryAutoFoundation}
+                setFreeCellRef={setFreeCellRef}
+                drag={drag}
+                handleFreeCellPointerDown={handleFreeCellPointerDown}
+              />
+            </>
+          ) : (
+            <div className="board-loading" aria-label="Loading deal" />
           )}
-
-          {/* Free cells on bottom */}
-          <FreeCells
-            freeCellsRow={freeCellsRow}
-            playableFreeCells={playable.freeCells}
-            tryAutoFoundation={tryAutoFoundation}
-            setFreeCellRef={setFreeCellRef}
-            drag={drag}
-            handleFreeCellPointerDown={handleFreeCellPointerDown}
-          />
         </div>
         {paused && <PauseOverlay onClose={() => setPaused(false)} />}
       </div>

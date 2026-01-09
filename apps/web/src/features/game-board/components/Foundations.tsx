@@ -18,6 +18,8 @@ type FoundationsProps = {
   playableFoundations: boolean[];
   allowFoundationPullback: boolean;
   showTimer: boolean;
+  timeElapsedMs: number;
+  hasStarted: boolean;
   onPause: () => void;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
@@ -33,10 +35,21 @@ function Foundations({
   playableFoundations,
   allowFoundationPullback,
   showTimer,
+  timeElapsedMs,
+  hasStarted,
   onPause,
   setFoundationRef,
   handleFoundationPointerDown
 }: FoundationsProps) {
+  const formatElapsed = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const mm = String(minutes).padStart(2, "0");
+    const ss = String(seconds).padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
   return (
     <div className="board-top" aria-label="Foundations">
       <div className="pile-row" aria-label="Foundations">
@@ -49,12 +62,15 @@ function Foundations({
             >
               {i === 1 && (
                 <>
-                  <div className="timer">00:00</div>
+                  <div className={`timer${!hasStarted ? " muted" : ""}`}>
+                    {showTimer ? formatElapsed(timeElapsedMs) : ""}
+                  </div>
                   <button
                     className="btn btn--primary"
                     aria-label="Pause timer"
                     type="button"
                     onClick={onPause}
+                    disabled={!hasStarted}
                   >
                     ⏸︎
                   </button>

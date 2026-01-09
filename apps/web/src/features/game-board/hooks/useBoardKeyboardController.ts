@@ -29,6 +29,8 @@ type UseBoardKeyboardControllerArgs = {
   canUndo: boolean;
   newDeal: () => void;
   restart: () => void;
+  paused: boolean;
+  setPaused: (next: boolean) => void;
 
   /** Attempt to send the focused (or carried) card to a legal foundation slot. */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
@@ -56,6 +58,8 @@ export function useBoardKeyboardController({
   canUndo,
   newDeal,
   restart,
+  paused,
+  setPaused,
   tryAutoFoundationFromEl,
   tryAutoFreeCellFromEl,
   findNextByDirection,
@@ -72,6 +76,8 @@ export function useBoardKeyboardController({
     canUndo,
     newDeal,
     restart,
+    paused,
+    setPaused,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
     buildKbDragFromEl,
@@ -169,6 +175,19 @@ export function useBoardKeyboardController({
       e.preventDefault();
 
       actions.handleRestart();
+
+      if (kbCarrying) {
+        setKbCarrying(false);
+        visuals.clearKbCarryVisuals();
+      }
+      return;
+    }
+
+    // P: pause toggle
+    if (e.key === "p" || e.key === "P") {
+      e.preventDefault();
+
+      actions.handlePauseToggle();
 
       if (kbCarrying) {
         setKbCarrying(false);

@@ -84,6 +84,7 @@ export function NavBar() {
               alt="V-Cell"
               width={120}
               height={30}
+              loading="eager"
             />
           </Link>
 

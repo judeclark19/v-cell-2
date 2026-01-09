@@ -85,41 +85,51 @@ export default function HowToPlayPage() {
           an automatic foundation move.
         </p>
       </section> */}
-
       <section>
         <h2>Keyboard controls</h2>
         <p className="hint">
-          Keyboard support is designed so you can play without the mouse. Update
-          the list below to match what’s currently implemented.
+          Keyboard play is fully supported. Only playable cards are focusable.
+          Use the keyboard to navigate and move cards efficiently.
         </p>
 
         <ul>
           <li>
-            <strong>Tab / Shift+Tab</strong>: move focus between interactive
-            elements (playable cards, buttons).
+            <strong>Arrow keys (↑ ↓ ← →)</strong>: move focus spatially around
+            the board (tableau, free cells, foundations).
           </li>
           <li>
-            <strong>Enter / Space</strong>: activate a focused control (or pick
-            up / drop a focused card, if implemented).
+            <strong>Space</strong>: toggle “carry mode” (pick up / put down a
+            card). Carry mode shows a visual highlight on the carried card and
+            current drop target.
           </li>
           <li>
-            <strong>Esc</strong>: cancel a drag / close an overlay (and resume
-            from pause).
+            <strong>Enter</strong>: commit the currently focused move (drop
+            carried card, or send card to foundation when applicable).
           </li>
           <li>
-            <strong>U</strong>: undo (if available).
+            <strong>F</strong>: send focused card to a foundation (if legal).
           </li>
           <li>
-            <strong>P</strong>: pause / resume.
+            <strong>C</strong>: send focused card to a free cell (if legal).
           </li>
           <li>
-            <strong>R</strong>: restart deal.
+            <strong>U</strong>: undo the last move (focus returns to the moved
+            card).
           </li>
           <li>
-            <strong>N</strong>: new deal.
+            <strong>Esc</strong>: cancel carry mode or close overlays.
           </li>
           <li>
-            <strong>?</strong>: open this How to Play page.
+            <strong>P</strong>: pause / resume the game.
+          </li>
+          <li>
+            <strong>R</strong>: restart the current deal.
+          </li>
+          <li>
+            <strong>N</strong>: start a new deal.
+          </li>
+          <li>
+            <strong>?</strong>: open the How to Play page.
           </li>
         </ul>
       </section>

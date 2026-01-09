@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 
 // NOTE: We'll fully lock the engine contract later. For now we can still keep things
@@ -22,6 +29,9 @@ type GameContextValue = {
   setPaused: (next: boolean) => void;
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
+  seedReady: boolean;
+  timeElapsedMs: number;
+  hasStarted: boolean;
 };
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
@@ -45,10 +55,11 @@ export function useGame() {
 }
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  // Session-only seed counter. Refresh resets back to 100.
-  const [seedNumber, setSeedNumber] = useState<number>(100);
-  // const randomSeedStart = Math.floor(Math.random() * 800) + 1;
-  // const [seedNumber, setSeedNumber] = useState<number>(randomSeedStart);
+  // Session-only seed counter.
+  // IMPORTANT: keep the initial value deterministic to avoid Next.js hydration mismatches.
+  // We'll randomize on the client *after mount*.
+  const [seedNumber, setSeedNumber] = useState<number>(1);
+  const [seedReady, setSeedReady] = useState<boolean>(false);
 
   const seed = useMemo(() => {
     const padded = String(seedNumber).padStart(3, "0");
@@ -70,15 +81,50 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [allowFoundationPullback]
   );
 
+  const didInitRandomSeedRef = useRef(false);
+
+  // New timer state and refs
+  const [timeElapsedMs, setTimeElapsedMs] = useState<number>(0);
+  const lastTickAtRef = useRef<number | null>(null);
+  const intervalIdRef = useRef<number | null>(null);
+  const lastCallbackAtRef = useRef<number | null>(null);
+  const [hasStarted, setHasStarted] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Choose a random starting seed on the client after mount.
+    // This avoids hydration mismatches while still giving variety per refresh.
+    if (didInitRandomSeedRef.current) return;
+    didInitRandomSeedRef.current = true;
+
+    const n = Math.floor(Math.random() * 800) + 1;
+    setSeedNumber(n);
+
+    const padded = String(n).padStart(3, "0");
+    const nextSeed = `dev-seed-${padded}`;
+    setHistory({ present: createGame(nextSeed, rules), past: [] });
+    setTimeElapsedMs(0);
+    setHasStarted(false);
+    setSeedReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Create the initial game exactly once.
   const [history, setHistory] = useState<HistoryState>(() => ({
     present: createGame(seed, rules),
     past: []
   }));
-
   const state = history.present;
 
+  const didApplyRulesEffectOnceRef = useRef(false);
+
   useEffect(() => {
+    // Skip the initial mount; otherwise we clobber the client-only random seed init
+    // and reset back to dev-seed-001.
+    if (!didApplyRulesEffectOnceRef.current) {
+      didApplyRulesEffectOnceRef.current = true;
+      return;
+    }
+
     // Apply the updated rules immediately by restarting the current deal.
     // Keeps the current seed (dev-seed-XYZ) but resets move history.
     setHistory({ present: createGame(seed, rules), past: [] });
@@ -100,7 +146,70 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
   }, [showTimer]);
 
+  // Timer effect
+  useEffect(() => {
+    function clearTimerInterval() {
+      if (intervalIdRef.current !== null) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
+      lastTickAtRef.current = null;
+      lastCallbackAtRef.current = null;
+    }
+
+    function startTimerInterval() {
+      if (intervalIdRef.current !== null) return;
+      lastTickAtRef.current = performance.now();
+      intervalIdRef.current = window.setInterval(() => {
+        const now = performance.now();
+
+        // Delta since the last tick (used for accumulation)
+        const lastTickAt = lastTickAtRef.current;
+        const deltaMs = lastTickAt == null ? 0 : now - lastTickAt;
+
+        // Cadence between *callbacks* (helps diagnose interval jitter / throttling)
+        lastCallbackAtRef.current = now;
+
+        if (lastTickAt != null) {
+          setTimeElapsedMs((prev) => prev + deltaMs);
+        }
+
+        lastTickAtRef.current = now;
+      }, 250);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        clearTimerInterval();
+      } else if (
+        document.visibilityState === "visible" &&
+        !paused &&
+        seedReady &&
+        hasStarted
+      ) {
+        startTimerInterval();
+      }
+    }
+
+    if (
+      !paused &&
+      seedReady &&
+      hasStarted &&
+      document.visibilityState === "visible"
+    ) {
+      startTimerInterval();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearTimerInterval();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [paused, seedReady, hasStarted]);
+
   const dispatchMove = (move: Move) => {
+    setHasStarted(true);
     setHistory((h) => {
       const next = applyMove(h.present, move);
 
@@ -129,6 +238,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const padded = String(next).padStart(3, "0");
       const nextSeed = `dev-seed-${padded}`;
       setHistory({ present: createGame(nextSeed, rules), past: [] });
+      setTimeElapsedMs(0);
+      setHasStarted(false);
       return next;
     });
   };
@@ -159,7 +270,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     paused,
     setPaused,
     allowFoundationPullback,
-    setAllowFoundationPullback
+    setAllowFoundationPullback,
+    seedReady,
+    timeElapsedMs,
+    hasStarted
   };
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

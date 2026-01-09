@@ -77,6 +77,31 @@ export function useBoardKeyboardNav({
     next.focus();
   }, []);
 
+  const focusFirstPlayable = useCallback(() => {
+    refreshKeyboardFocusables();
+    const els = focusablesRef.current;
+    if (els.length === 0) return;
+
+    setActiveFocusIndex(0);
+    requestAnimationFrame(() => els[0]?.focus());
+  }, [refreshKeyboardFocusables]);
+
+  const focusElIfFocusable = useCallback(
+    (el: HTMLElement | null) => {
+      refreshKeyboardFocusables();
+      if (!el) return false;
+
+      const els = focusablesRef.current;
+      const idx = els.indexOf(el);
+      if (idx < 0) return false;
+
+      setActiveFocusIndex(idx);
+      requestAnimationFrame(() => el.focus());
+      return true;
+    },
+    [refreshKeyboardFocusables]
+  );
+
   const focusNearestToLastPoint = useCallback(() => {
     const els = focusablesRef.current;
     const p = lastFocusPointRef.current;
@@ -243,6 +268,8 @@ export function useBoardKeyboardNav({
     focusByIndex,
     focusNearestToLastPoint,
     findNextByDirection,
-    onBoardFocusCapture
+    onBoardFocusCapture,
+    focusFirstPlayable,
+    focusElIfFocusable
   };
 }

@@ -358,6 +358,10 @@
     font-size: 24px;
   }
 
+  .timer.muted {
+    color: var(--muted);
+  }
+
   &[aria-hidden="true"] {
     visibility: hidden;
   }
