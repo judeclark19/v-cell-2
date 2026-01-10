@@ -15,6 +15,8 @@ type TableauProps = {
   >["handleTableauPointerDown"];
   tryAutoFoundation: (from: PileRef) => void;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
+  showAcp: boolean;
+  isWon: boolean;
 };
 
 function Tableau({
@@ -23,7 +25,9 @@ function Tableau({
   drag,
   handleTableauPointerDown,
   tryAutoFoundation,
-  setTableauColRef
+  setTableauColRef,
+  showAcp,
+  isWon
 }: TableauProps) {
   const tableauSource = drag.source?.type === "tableau" ? drag.source : null;
 
@@ -96,6 +100,23 @@ function Tableau({
             )}
           </div>
         ))}
+        <div
+          className={`autocomplete-drawer${
+            showAcp ? " autocomplete-drawer--visible" : ""
+          }`}
+          aria-hidden={showAcp ? "false" : "true"}
+        >
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => {
+              console.log("autocomplete clicked");
+            }}
+            disabled={!showAcp}
+          >
+            Autocomplete
+          </button>
+        </div>
       </div>
     </div>
   );

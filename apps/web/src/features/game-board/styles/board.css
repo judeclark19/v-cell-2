@@ -69,6 +69,7 @@
   border-radius: var(--radius);
   overflow: visible;
   min-height: 100%;
+  position: relative;
 }
 
 /* Each tableau column is its own stack */
@@ -101,219 +102,21 @@
   margin-top: 0;
 }
 
-/* Drag overlay layer (above everything, no layout reflow) */
-.drag-layer {
-  position: fixed;
-  z-index: 1000000;
-  pointer-events: none; /* lets mouse events pass through */
-  will-change: transform;
-  width: var(--card-w);
-  height: auto;
-  transition: none;
-}
-
-.drag-layer.is-returning {
-  transition: transform 180ms ease;
-}
-
-.drag-layer__stack {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.drag-layer__stack > .card:not(:first-child) {
-  margin-top: calc(var(--card-w) * -1.07);
-}
-
-/* Occupies a grid cell but renders no slot UI (used for centering foundations/freecells) */
-.pile-spacer {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-}
-
-.timer-cell {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-
-  .timer {
-    text-align: center;
-    font-size: 24px;
-  }
-
-  &[aria-hidden="true"] {
-    visibility: hidden;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Pause overlay                                                              */
-/* -------------------------------------------------------------------------- */
-
-.pause-overlay {
+.autocomplete-drawer {
   position: absolute;
-  inset: 0;
-  z-index: 1000001; /* above drag-layer */
-
-  display: grid;
-  place-items: center;
-
-  background: color-mix(in srgb, var(--board-bg) 35%, transparent);
-  backdrop-filter: blur(2px);
-}
-
-.pause-overlay__panel {
-  width: min(420px, 92%);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
-  border: 1px solid
-    color-mix(in srgb, var(--card-front-border) 35%, transparent);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
-  padding: 16px;
-}
-
-.pause-overlay__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.pause-overlay__title {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.pause-overlay__close {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-}
-
-.pause-overlay__close:hover {
-  background: color-mix(in srgb, var(--muted) 20%, transparent);
-}
-
-.pause-overlay__body {
-  display: grid;
-  gap: 12px;
-}
-
-.pause-overlay__hint {
-  margin: 0;
-  color: var(--muted);
-}
-
-.board-border {
-  /* keep your existing --board-h + width rules */
-  position: relative;
-  --board-h: min(max(450px, calc(100vh - 200px)), 1440px);
-  width: min(100%, 900px, calc(var(--board-h) * 3 / 4));
-
-  background-image: var(--board-border-image);
-  background-size: cover;
-  box-sizing: border-box;
-  padding: 4px;
-  margin: 0 auto;
-  border-radius: var(--radius);
-  background-color: var(--board-border-color);
-
-  @media (max-width: 450px) {
-    --board-h: min(550px, 70vh);
-  }
-}
-
-.board {
-  container-type: inline-size;
-
-  /* IMPORTANT: cqw = “container query width”, i.e. board’s inner content width */
-  --card-w: calc((100cqw - (8px) - (6 * var(--card-gap))) / 7);
-
-  height: var(--board-h);
+  bottom: 0;
+  transform: translateY(100%);
+  transition: transform 180ms ease;
+  will-change: transform;
   width: 100%;
-  aspect-ratio: 3 / 4;
-
   background-color: var(--board-bg);
-  padding: 4px;
-  border-radius: var(--radius);
-
+  padding: 8px;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
 }
 
-/* Foundations row (top) */
-.board-top {
-  margin-bottom: var(--card-gap);
-}
-
-/* Freecells row (bottom) */
-.board-bottom {
-  margin-top: var(--card-gap);
-}
-
-.pile-row {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--card-gap);
-  box-sizing: border-box;
-  padding: 4px;
-}
-
-/* Tableau grid */
-
-.tableau-scroll {
-  overflow: auto;
-  flex-grow: 1;
-}
-
-.tableau {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--card-gap, 10px);
-  padding: 4px;
-  background-color: var(--tableau-bg);
-  border-radius: var(--radius);
-  overflow: visible;
-  min-height: 100%;
-}
-
-/* Each tableau column is its own stack */
-.tableau-col {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ensure overlapping tableau cards respect z-index */
-.tableau-col > .card {
-  position: relative;
-}
-
-/* Tableau stack overlap */
-.tableau-col > .card:not(.is-dragging):not(.is-returning),
-.tableau-col > .card-slot {
-  margin-top: -107%;
-}
-
-/* IMPORTANT:
-   The overlap selector above is more specific than `.card:first-child`,
-   because `:not(.is-dragging):not(.is-returning)` contributes specificity.
-   So we must match that specificity here to ensure the first card stays at 0.
-*/
-.tableau-col > .card:first-child:not(.is-dragging):not(.is-returning) {
-  margin-top: 0;
-}
-
-.tableau-col > .card-slot:first-child {
-  margin-top: 0;
+.autocomplete-drawer--visible {
+  transform: translateY(0);
 }
 
 /* Drag overlay layer (above everything, no layout reflow) */
@@ -469,5 +272,9 @@
 
   .pause-overlay {
     backdrop-filter: none;
+  }
+
+  .autocomplete-drawer {
+    transition: none;
   }
 }

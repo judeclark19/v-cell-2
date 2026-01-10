@@ -28,6 +28,9 @@ export default function SettingsPage() {
 
       <section>
         <h2>Gameplay</h2>
+        <p className="hint" style={{ marginBottom: "1em" }}>
+          Changing any gameplay setting starts a new game.
+        </p>
         <div className="grid">
           <label className="field">
             Face-down cards at deal

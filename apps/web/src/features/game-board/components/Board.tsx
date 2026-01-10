@@ -1,5 +1,6 @@
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "./Card";
 import "../styles/board.css";
@@ -35,6 +36,31 @@ function WinAlertEffect({ isWon }: { isWon: boolean }) {
   return null;
 }
 
+export function throwConfetti() {
+  const confetti = new JSConfetti();
+
+  const cardEl = document.querySelector<HTMLElement>(".card");
+  const cardWidth = cardEl?.getBoundingClientRect().width;
+
+  // Derive emoji size from card width (fallback to 24)
+  const rawEmojiSize = cardWidth ? cardWidth * 0.3 : 24;
+
+  // Clamp to a sensible range
+  const emojiSize = Math.max(16, Math.min(40, Math.round(rawEmojiSize)));
+
+  // custom confetti
+  confetti.addConfetti({
+    emojis: ["🎰", "🃏", "❤️", "♠️", "♣️", "♦️"],
+    emojiSize,
+    confettiNumber: 200
+  });
+
+  // plus standard confetti
+  confetti.addConfetti({
+    confettiNumber: 200
+  });
+}
+
 function Board() {
   const {
     state,
@@ -60,6 +86,8 @@ function Board() {
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
+
+  const [showAcp, setShowAcp] = useState(true);
 
   const {
     tableauColRefs,
@@ -166,6 +194,13 @@ function Board() {
   return (
     <>
       <WinAlertEffect isWon={isWon} />
+      <button
+        type="button"
+        className="btn btn--secondary"
+        onClick={throwConfetti}
+      >
+        Throw Confetti
+      </button>
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
         key={seedReady ? state.seed : "loading"}
@@ -254,6 +289,8 @@ function Board() {
                 handleTableauPointerDown={handleTableauPointerDown}
                 tryAutoFoundation={tryAutoFoundation}
                 setTableauColRef={setTableauColRef}
+                showAcp={showAcp}
+                isWon={isWon}
               />
 
               {/* Drag overlay layer */}
@@ -326,6 +363,13 @@ function Board() {
             disabled={!canUndo}
           >
             Undo
+          </button>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => setShowAcp(!showAcp)}
+          >
+            toggle acp
           </button>
         </div>
 
