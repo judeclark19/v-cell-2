@@ -1,6 +1,9 @@
 import { useCallback } from "react";
 import { applyMove, TableauIndex } from "@vcell/engine";
-import type { DropTarget, DragState } from "@/ui/useCardDrag";
+import type {
+  DropTarget,
+  DragState
+} from "@/features/game-board/animations/useCardDrag";
 
 type Move = Parameters<typeof applyMove>[1];
 

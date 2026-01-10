@@ -1,6 +1,6 @@
 import type { Card as EngineCard, PileRef, TableauIndex } from "@vcell/engine";
 import Card from "./Card";
-import type { useCardDrag } from "@/ui/useCardDrag";
+import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 
 type TableauProps = {
   state: {

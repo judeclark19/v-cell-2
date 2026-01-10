@@ -6,7 +6,10 @@ import type {
   FoundationIndex
 } from "@vcell/engine";
 
-import type { DragSource, DropTarget } from "@/ui/useCardDrag";
+import type {
+  DragSource,
+  DropTarget
+} from "@/features/game-board/animations/useCardDrag";
 
 function toBoundedIndex<T extends number>(n: number, len: number): T | null {
   return Number.isInteger(n) && n >= 0 && n < len ? (n as T) : null;

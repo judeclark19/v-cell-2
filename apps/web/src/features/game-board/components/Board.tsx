@@ -4,7 +4,8 @@ import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "./Card";
 import "../styles/board.css";
-import { useCardDrag } from "@/ui/useCardDrag";
+import { useCardDrag } from "@/features/game-board/animations/useCardDrag";
+import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoardFlipAnimation";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -84,6 +85,7 @@ function Board() {
   const legalMoves = useMemo(() => getLegalMoves(state), [state]);
 
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
+
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
@@ -130,6 +132,24 @@ function Board() {
     [buildPileRefFromEl, tryAutoFreeCell]
   );
 
+  const prevCardRectsRef = useRef<Map<string, DOMRect>>(new Map());
+  // If a pointer drag just committed a move, skip FLIP for the next render.
+  const suppressFlipOnceRef = useRef(false);
+
+  const newDealNoFlip = useCallback(() => {
+    // New deal should not animate card movement.
+    suppressFlipOnceRef.current = true;
+    prevCardRectsRef.current = new Map();
+    newDeal();
+  }, [newDeal]);
+
+  const restartNoFlip = useCallback(() => {
+    // Restarting should not animate card movement.
+    suppressFlipOnceRef.current = true;
+    prevCardRectsRef.current = new Map();
+    restart();
+  }, [restart]);
+
   const {
     drag,
     finalizeDrag,
@@ -141,7 +161,11 @@ function Board() {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
-    onDrop
+    onDrop: (...args) => {
+      const didCommit = (onDrop as any)(...args);
+      if (didCommit) suppressFlipOnceRef.current = true;
+      return didCommit;
+    }
   });
 
   const foundationsRow = buildFoundationsRow(state);
@@ -180,8 +204,8 @@ function Board() {
     dispatchMove,
     undo,
     canUndo,
-    newDeal,
-    restart,
+    newDeal: newDealNoFlip,
+    restart: restartNoFlip,
     paused,
     setPaused,
     tryAutoFoundationFromEl,
@@ -190,6 +214,19 @@ function Board() {
     buildKbDragFromEl,
     buildKbDropTargetFromEl
   });
+
+  // --- FLIP animation for instant (non-drag) moves ---
+  useBoardFlipAnimation({
+    boardRef,
+    state,
+    seedReady,
+    kbCarrying,
+    drag,
+    getNodeMeta,
+    suppressFlipOnceRef,
+    prevCardRectsRef
+  });
+  // --- end FLIP animation ---
 
   return (
     <>
@@ -346,13 +383,17 @@ function Board() {
 
       <section className="control" aria-label="Game actions">
         <div className="row">
-          <button type="button" className="btn btn--primary" onClick={newDeal}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={newDealNoFlip}
+          >
             New deal
           </button>
           <button
             type="button"
             className="btn btn--secondary"
-            onClick={restart}
+            onClick={restartNoFlip}
           >
             Restart deal
           </button>

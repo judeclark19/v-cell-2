@@ -5,8 +5,8 @@ import type { Move } from "@vcell/engine";
 
 import { useKbCarryVisuals } from "./useKbCarryVisuals";
 import { useKeyboardActions } from "./useKeyboardActions";
-import type { DragSource } from "@/ui/useCardDrag";
-import type { DropTarget } from "@/ui/useCardDrag";
+import type { DragSource } from "@/features/game-board/animations/useCardDrag";
+import type { DropTarget } from "@/features/game-board/animations/useCardDrag";
 
 type DragLike = {
   source: DragSource;

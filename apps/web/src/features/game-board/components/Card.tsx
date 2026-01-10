@@ -181,6 +181,7 @@ function Card({
 
   return (
     <div
+      data-card-id={card.id}
       className={`card ${faceDown ? "face-down" : ""} ${
         playable ? "is-playable" : "is-locked"
       } ${isDragging ? "is-dragging" : ""} ${
