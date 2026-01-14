@@ -89,7 +89,7 @@ function Board() {
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
-  const [showAcp, setShowAcp] = useState(true);
+  const [showAcp, setShowAcp] = useState(false);
 
   const {
     tableauColRefs,
