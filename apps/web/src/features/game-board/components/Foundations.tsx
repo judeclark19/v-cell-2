@@ -88,13 +88,21 @@ function Foundations({
                 drag.source.index === foundationIndex;
 
               const pile = foundations?.[foundationIndex];
+
+              const displayIndex = pile
+                ? pile.cards.length - 1 - (isDraggingFromThisFoundation ? 1 : 0)
+                : -1;
+
               const effectiveCard = pile
-                ? pile.cards[
-                    pile.cards.length -
-                      1 -
-                      (isDraggingFromThisFoundation ? 1 : 0)
-                  ] ?? null
+                ? pile.cards[displayIndex] ?? null
                 : card ?? null;
+
+              // Card directly underneath the displayed card (used as an underlay).
+              const underlayCard = pile
+                ? displayIndex - 1 >= 0
+                  ? pile.cards[displayIndex - 1] ?? null
+                  : null
+                : null;
 
               const isEmptySlot = !effectiveCard;
 
@@ -120,23 +128,34 @@ function Foundations({
                       const pullbackDisabled = !allowFoundationPullback;
 
                       return (
-                        <Card
-                          card={effectiveCard}
-                          className={`pile-card${
-                            pullbackDisabled ? " is-pullback-disabled" : ""
-                          }`}
-                          playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
-                          onPointerDownCard={
-                            pullbackDisabled
-                              ? undefined
-                              : (e) =>
-                                  handleFoundationPointerDown?.(
-                                    e,
-                                    foundationIndex
-                                  )
-                          }
-                          disableInternalDrag={pullbackDisabled}
-                        />
+                        <>
+                          {underlayCard && (
+                            <Card
+                              card={underlayCard}
+                              className="pile-card pile-card--underlay"
+                              playable={false}
+                              disableInternalDrag={true}
+                            />
+                          )}
+
+                          <Card
+                            card={effectiveCard}
+                            className={`pile-card${
+                              pullbackDisabled ? " is-pullback-disabled" : ""
+                            }`}
+                            playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
+                            onPointerDownCard={
+                              pullbackDisabled
+                                ? undefined
+                                : (e) =>
+                                    handleFoundationPointerDown?.(
+                                      e,
+                                      foundationIndex
+                                    )
+                            }
+                            disableInternalDrag={pullbackDisabled}
+                          />
+                        </>
                       );
                     })()}
                 </div>

@@ -59,6 +59,11 @@ export function useBoardFlipAnimation({
   const internalPrevRectsRef = React.useRef<Map<string, DOMRect>>(new Map());
   const rectsRef = prevCardRectsRef ?? internalPrevRectsRef;
 
+  // Track overlapping ghost flights per card id so we don't permanently restore to opacity "0".
+  const ghostHideRef = React.useRef(
+    new Map<string, { count: number; prevOpacity: string }>()
+  );
+
   // --- FLIP animation for instant (non-drag) moves ---
   // Uses data-card-id on .card elements to animate from previous position to next.
   React.useLayoutEffect(() => {
@@ -106,7 +111,34 @@ export function useBoardFlipAnimation({
 
     // Ghost overlay helper for foundation/freecell landings
     const spawnGhost = (sourceEl: HTMLElement, from: DOMRect, to: DOMRect) => {
+      const cardId = sourceEl.getAttribute("data-card-id") || "";
+
+      // Snapshot opacity only on the first overlapping hide for this card.
+      let entry = cardId ? ghostHideRef.current.get(cardId) : null;
+      if (cardId) {
+        if (entry) {
+          entry.count += 1;
+        } else {
+          entry = { count: 1, prevOpacity: sourceEl.style.opacity };
+          ghostHideRef.current.set(cardId, entry);
+        }
+      } else {
+        // Fallback if somehow missing a card id.
+        entry = { count: 1, prevOpacity: sourceEl.style.opacity };
+      }
+
+      // Clone BEFORE hiding so the ghost remains visible.
       const ghost = sourceEl.cloneNode(true) as HTMLElement;
+
+      // Hide the real destination card only for the first overlapping flight.
+      const shouldHideReal = cardId
+        ? ghostHideRef.current.get(cardId)?.count === 1
+        : true;
+      if (shouldHideReal) {
+        sourceEl.style.opacity = "0";
+      }
+      // Ensure the clone stays visible even if the real is hidden.
+      ghost.style.opacity = entry?.prevOpacity ?? "";
 
       // Ensure the clone doesn't keep any transforms/transitions from the real node.
       ghost.style.transition = "none";
@@ -133,12 +165,35 @@ export function useBoardFlipAnimation({
         ghost.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
       });
 
-      const onEnd = () => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+
         ghost.removeEventListener("transitionend", onEnd);
         ghost.remove();
+
+        // Restore opacity only when the last overlapping flight completes.
+        if (cardId) {
+          const cur = ghostHideRef.current.get(cardId);
+          if (cur) {
+            cur.count -= 1;
+            if (cur.count <= 0) {
+              sourceEl.style.opacity = cur.prevOpacity;
+              ghostHideRef.current.delete(cardId);
+            }
+          } else {
+            sourceEl.style.opacity = entry?.prevOpacity ?? "";
+          }
+        } else {
+          sourceEl.style.opacity = entry?.prevOpacity ?? "";
+        }
       };
 
+      const onEnd = () => finish();
       ghost.addEventListener("transitionend", onEnd);
+      // Fallback if transitionend doesn't fire.
+      window.setTimeout(finish, 220);
     };
 
     // Invert: move elements back to where they used to be.
