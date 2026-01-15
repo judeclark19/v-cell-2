@@ -13,6 +13,7 @@ type FreeCellsProps = {
   handleFreeCellPointerDown: ReturnType<
     typeof useCardDrag
   >["handleFreeCellPointerDown"];
+  showAcp: boolean;
 };
 
 function FreeCells({
@@ -21,10 +22,28 @@ function FreeCells({
   tryAutoFoundation,
   setFreeCellRef,
   drag,
-  handleFreeCellPointerDown
+  handleFreeCellPointerDown,
+  showAcp
 }: FreeCellsProps) {
   return (
     <div className="board-bottom" aria-label="Free cells">
+      <div
+        className={`autocomplete-drawer${
+          showAcp ? " autocomplete-drawer--visible" : ""
+        }`}
+        aria-hidden={showAcp ? "false" : "true"}
+      >
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => {
+            console.log("autocomplete clicked");
+          }}
+          disabled={!showAcp}
+        >
+          Autocomplete
+        </button>
+      </div>
       <div className="pile-row" aria-label="Free cells">
         {freeCellsRow.map((card, i) =>
           card === undefined ? (

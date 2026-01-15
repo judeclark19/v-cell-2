@@ -43,6 +43,7 @@
 /* Freecells row (bottom) */
 .board-bottom {
   margin-top: var(--card-gap, 10px);
+  position: relative;
 }
 
 .pile-row {
@@ -51,6 +52,8 @@
   gap: var(--card-gap, 10px);
   box-sizing: border-box;
   padding: 4px;
+  background-color: var(--board-bg);
+  position: relative;
 }
 
 /* Tableau grid */
@@ -117,8 +120,8 @@
 
 .autocomplete-drawer {
   position: absolute;
-  bottom: 0;
-  transform: translateY(100%);
+  top: 0;
+  transform: translateY(0);
   transition: transform 180ms ease;
   will-change: transform;
   width: 100%;
@@ -129,7 +132,7 @@
 }
 
 .autocomplete-drawer--visible {
-  transform: translateY(0);
+  transform: translateY(-100%);
 }
 
 /* Drag overlay layer (above everything, no layout reflow) */

@@ -328,7 +328,6 @@ function Board() {
                 handleTableauPointerDown={handleTableauPointerDown}
                 tryAutoFoundation={tryAutoFoundation}
                 setTableauColRef={setTableauColRef}
-                showAcp={showAcp}
                 isWon={isWon}
               />
 
@@ -374,6 +373,7 @@ function Board() {
                 setFreeCellRef={setFreeCellRef}
                 drag={drag}
                 handleFreeCellPointerDown={handleFreeCellPointerDown}
+                showAcp={showAcp}
               />
             </>
           ) : (
