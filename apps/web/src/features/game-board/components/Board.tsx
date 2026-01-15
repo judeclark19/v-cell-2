@@ -163,8 +163,8 @@ function Board() {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
-    onDrop: (...args) => {
-      const didCommit = (onDrop as any)(...args);
+    onDrop: (...args: Parameters<typeof onDrop>) => {
+      const didCommit = onDrop(...args);
       if (didCommit) suppressFlipOnceRef.current = true;
       return didCommit;
     }

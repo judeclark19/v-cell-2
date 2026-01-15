@@ -56,8 +56,21 @@ export function useBoardFlipAnimation({
   suppressFlipOnceRef,
   prevCardRectsRef
 }: UseBoardFlipAnimationArgs) {
-  const internalPrevRectsRef = React.useRef<Map<string, DOMRect>>(new Map());
-  const rectsRef = prevCardRectsRef ?? internalPrevRectsRef;
+  const [prevRects, setPrevRects] = React.useState<Map<string, DOMRect>>(() => {
+    // Use an external ref only as an initial seed; do not mutate it (immutability lint).
+    return prevCardRectsRef?.current ?? new Map();
+  });
+
+  // Provide a stable, read-only ref-like view for callers that expect `.current`.
+  const rectsRef = React.useMemo(
+    () =>
+      ({
+        get current() {
+          return prevRects;
+        }
+      } as React.MutableRefObject<Map<string, DOMRect>>),
+    [prevRects]
+  );
 
   // Track overlapping ghost flights per card id so we don't permanently restore to opacity "0".
   const ghostHideRef = React.useRef(
@@ -110,24 +123,42 @@ export function useBoardFlipAnimation({
       nextRects.set(id, el.getBoundingClientRect());
     }
 
-    const prevRects = rectsRef.current;
+    const prevRectsForRun = prevRects;
+
+    const rectEq = (a: DOMRect, b: DOMRect) =>
+      a.left === b.left &&
+      a.top === b.top &&
+      a.width === b.width &&
+      a.height === b.height;
+
+    const rectMapEq = (a: Map<string, DOMRect>, b: Map<string, DOMRect>) => {
+      if (a.size !== b.size) return false;
+      for (const [id, ra] of a) {
+        const rb = b.get(id);
+        if (!rb) return false;
+        if (!rectEq(ra, rb)) return false;
+      }
+      return true;
+    };
+
+    const didRectsChange = !rectMapEq(prevRectsForRun, nextRects);
 
     // First paint (or reduced motion): just seed the map.
-    if (prevRects.size === 0 || prefersReducedMotion) {
-      rectsRef.current = nextRects;
+    if (prevRectsForRun.size === 0 || prefersReducedMotion) {
+      if (didRectsChange) setPrevRects(nextRects);
       return;
     }
 
     // If the last committed move came from pointer dragging, skip FLIP once.
     if (suppressFlipOnceRef.current) {
       suppressFlipOnceRef.current = false;
-      rectsRef.current = nextRects;
+      if (didRectsChange) setPrevRects(nextRects);
       return;
     }
 
     // If a pointer-drag overlay is active, don't try to FLIP (it will fight transforms).
     if (drag.active || drag.pending) {
-      rectsRef.current = nextRects;
+      if (didRectsChange) setPrevRects(nextRects);
       return;
     }
 
@@ -222,7 +253,7 @@ export function useBoardFlipAnimation({
     for (const el of cardEls) {
       const id = el.getAttribute("data-card-id");
       if (!id) continue;
-      const prev = prevRects.get(id);
+      const prev = prevRectsForRun.get(id);
       const next = nextRects.get(id);
       if (!prev || !next) continue;
 
@@ -296,7 +327,7 @@ export function useBoardFlipAnimation({
     });
 
     // Update the stored rects for the next move.
-    rectsRef.current = nextRects;
+    if (didRectsChange) setPrevRects(nextRects);
 
     return () => cancelAnimationFrame(raf);
   }, [
@@ -308,7 +339,7 @@ export function useBoardFlipAnimation({
     boardRef,
     getNodeMeta,
     suppressFlipOnceRef,
-    rectsRef
+    prevRects
   ]);
 
   return {

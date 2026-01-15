@@ -51,6 +51,17 @@ function isMoveToPileType(
   return getStr(to.type) === pileType;
 }
 
+function getDragSourceType(drag: unknown): string | null {
+  if (!isRecord(drag)) return null;
+  const source = getRecord(drag.source);
+  return source ? getStr(source.type) : null;
+}
+
+function getDropTargetType(dropTarget: unknown): string | null {
+  if (!isRecord(dropTarget)) return null;
+  return getStr(dropTarget.type);
+}
+
 // ---- Types derived from commitBoardDrop so we stay aligned with the real signature ----
 
 type CommitArgs = Parameters<typeof commitBoardDrop>[0];
@@ -140,8 +151,8 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       // Keyboard leniency: if this was tableau -> tableau and forward failed,
       // try the reversed interpretation (target -> carried).
-      const dragSourceType = (drag as any)?.source?.type;
-      const dropType = (dropTarget as any)?.type;
+      const dragSourceType = getDragSourceType(drag);
+      const dropType = getDropTargetType(dropTarget);
 
       if (dragSourceType !== "tableau" || dropType !== "tableau") return false;
 
@@ -150,8 +161,8 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       if (!reverseDrag || !reverseDropTarget) return false;
 
-      const reverseDragSourceType = (reverseDrag as any)?.source?.type;
-      const reverseDropType = (reverseDropTarget as any)?.type;
+      const reverseDragSourceType = getDragSourceType(reverseDrag);
+      const reverseDropType = getDropTargetType(reverseDropTarget);
 
       if (reverseDragSourceType !== "tableau" || reverseDropType !== "tableau")
         return false;
