@@ -73,6 +73,8 @@ function Board() {
     dispatchMove,
     undo,
     canUndo,
+    undoLimit,
+    undosRemaining,
     newDeal,
     restart,
     seedReady,
@@ -403,7 +405,9 @@ function Board() {
             onClick={undo}
             disabled={!canUndo}
           >
-            Undo
+            {undoLimit === "unlimited" || undoLimit === 0
+              ? "Undo"
+              : `Undo (${undosRemaining})`}
           </button>
           <button
             type="button"

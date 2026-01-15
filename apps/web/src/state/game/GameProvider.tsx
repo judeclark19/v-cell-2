@@ -9,14 +9,10 @@ import {
   useState
 } from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
+import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 
 // NOTE: We'll fully lock the engine contract later. For now we can still keep things
 // flexible while staying type-safe by deriving types from the engine functions.
-
-type GameState = ReturnType<typeof createGame>;
-type Move = Parameters<typeof applyMove>[1];
-
-type Rules = Parameters<typeof createGame>[1];
 
 type GameContextValue = {
   state: GameState;
@@ -26,6 +22,9 @@ type GameContextValue = {
   newDeal: () => void;
   undo: () => void;
   canUndo: boolean;
+  undoLimit: UndoLimit;
+  setUndoLimit: (next: UndoLimit) => void;
+  undosRemaining: number; // Infinity when unlimited
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
   paused: boolean;
@@ -47,6 +46,7 @@ type HistoryState = {
 };
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
+const UNDO_LIMIT_KEY = "vcell:undoLimit";
 
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -84,7 +84,7 @@ function diffKeys(prev: LogSnapshot | null, next: LogSnapshot): string[] {
   return changed;
 }
 
-function undoLimitToCap(undoLimit: GameState["rules"]["undoLimit"]): number {
+function undoLimitToCap(undoLimit: UndoLimit): number {
   if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
   return undoLimit;
 }
@@ -110,13 +110,42 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [allowFoundationPullback, setAllowFoundationPullback] =
     useState<boolean>(true);
 
+  // ---------------------------------------------------------------------------
+  // UI settings (localStorage)
+  // ---------------------------------------------------------------------------
+  const [showTimer, setShowTimer] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const raw = window.localStorage.getItem(SHOW_TIMER_KEY);
+    if (raw == null) return true;
+    return raw === "true";
+  });
+
+  const [undoLimit, setUndoLimit] = useState<UndoLimit>(() => {
+    // SSR-safe default to avoid hydration mismatch.
+    if (typeof window === "undefined") return "unlimited";
+    const raw = window.localStorage.getItem(UNDO_LIMIT_KEY);
+    if (raw == null) return "unlimited";
+    if (raw === "unlimited") return "unlimited";
+    const n = Number(raw);
+    if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
+    return "unlimited";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
+  }, [showTimer]);
+
+  useEffect(() => {
+    window.localStorage.setItem(UNDO_LIMIT_KEY, String(undoLimit));
+  }, [undoLimit]);
+
   const rules = useMemo<Rules>(
     () => ({
       allowFoundationPullback,
       faceDownCount: 7,
-      undoLimit: "unlimited"
+      undoLimit
     }),
-    [allowFoundationPullback]
+    [allowFoundationPullback, undoLimit]
   );
 
   // ---------------------------------------------------------------------------
@@ -199,13 +228,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setUndosUsed(0);
     setMoveCount(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowFoundationPullback]);
+  }, [allowFoundationPullback, undoLimit]);
 
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
   const isWon = useMemo(() => areAllCardsUnlocked(state), [state]);
-  const canUndo = !isWon && history.past.length > 0;
+
+  const undosRemaining = useMemo(() => {
+    if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
+    return Math.max(0, undoLimit - undosUsed);
+  }, [undoLimit, undosUsed]);
+
+  const canUndo =
+    !isWon &&
+    history.past.length > 0 &&
+    (undoLimit === "unlimited" || undosRemaining > 0);
 
   // Stamp end time once when the game is finished (won or abandoned).
   useEffect(() => {
@@ -213,20 +251,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!finished) return;
     setEndedAtMs((prev) => (prev == null ? Date.now() : prev));
   }, [isWon, isAbandoned]);
-
-  // ---------------------------------------------------------------------------
-  // UI settings (localStorage)
-  // ---------------------------------------------------------------------------
-  const [showTimer, setShowTimer] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    const raw = window.localStorage.getItem(SHOW_TIMER_KEY);
-    if (raw == null) return true;
-    return raw === "true";
-  });
-
-  useEffect(() => {
-    window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
-  }, [showTimer]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
@@ -322,7 +346,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return { present: next, past: h.past };
       }
 
-      const cap = undoLimitToCap(next.rules.undoLimit);
+      const cap = undoLimitToCap(undoLimit);
       const nextPast = [...h.past, h.present];
 
       if (Number.isFinite(cap) && nextPast.length > cap) {
@@ -365,11 +389,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Once the game is won, undo is disabled.
     if (isWon) return;
 
+    // Nothing to undo.
+    if (history.past.length === 0) return;
+
+    // Enforce undo limit.
+    if (undoLimit !== "unlimited" && undosUsed >= undoLimit) return;
+
+    // Count a successful undo exactly once (outside the history updater).
+    setUndosUsed((n) => n + 1);
+    setMoveCount((n) => Math.max(0, n - 1));
+
     setHistory((h) => {
       if (h.past.length === 0) return h;
       const prev = h.past[h.past.length - 1];
-      setUndosUsed((n) => n + 1);
-      setMoveCount((n) => Math.max(0, n - 1));
       return {
         present: prev,
         past: h.past.slice(0, -1)
@@ -478,6 +510,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     newDeal,
     undo,
     canUndo,
+    undoLimit,
+    setUndoLimit,
+    undosRemaining,
     showTimer,
     setShowTimer,
     paused,

@@ -5,15 +5,25 @@
 
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useGame } from "@/state/game/GameProvider";
+import { UndoLimit } from "@vcell/engine";
 
 export default function SettingsPage() {
   const {
     showTimer,
     setShowTimer,
     allowFoundationPullback,
-    setAllowFoundationPullback
+    setAllowFoundationPullback,
+    undoLimit,
+    setUndoLimit
   } = useGame();
   const { theme, setTheme } = useTheme();
+
+  const parseUndoLimit = (value: string): UndoLimit => {
+    if (value === "unlimited") return "unlimited";
+    const n = Number(value);
+    if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
+    return "unlimited";
+  };
 
   return (
     <main>
@@ -55,9 +65,9 @@ export default function SettingsPage() {
             Undo limit
             <select
               className="control"
-              disabled
-              defaultValue="unlimited"
               id="undo-limit"
+              value={String(undoLimit)}
+              onChange={(e) => setUndoLimit(parseUndoLimit(e.target.value))}
             >
               <option value="0">0</option>
               <option value="1">1</option>

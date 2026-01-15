@@ -64,6 +64,9 @@ export function useBoardFlipAnimation({
     new Map<string, { count: number; prevOpacity: string }>()
   );
 
+  // Tokenize each FLIP run so stale transitionend handlers can't clobber newer runs.
+  const flipRunIdRef = React.useRef(0);
+
   // --- FLIP animation for instant (non-drag) moves ---
   // Uses data-card-id on .card elements to animate from previous position to next.
   React.useLayoutEffect(() => {
@@ -76,9 +79,28 @@ export function useBoardFlipAnimation({
       window.matchMedia &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    const runId = ++flipRunIdRef.current;
+    const runIdStr = String(runId);
+
     const cardEls = Array.from(
       root.querySelectorAll<HTMLElement>(".card[data-card-id]")
     );
+
+    // If any previous run left transient styles, ensure they don't accumulate forever.
+    // We only clean up elements that still claim to belong to an older run.
+    for (const el of cardEls) {
+      if (el.dataset.flipRunId && el.dataset.flipRunId !== runIdStr) {
+        // Stale run marker; clear only transient bits.
+        el.style.transition = "";
+        el.style.transform = "";
+        el.style.willChange = "";
+        if (el.dataset.flipPrevZ != null) {
+          el.style.zIndex = el.dataset.flipPrevZ || "";
+          delete el.dataset.flipPrevZ;
+        }
+        delete el.dataset.flipRunId;
+      }
+    }
 
     // Measure new rects.
     const nextRects = new Map<string, DOMRect>();
@@ -226,6 +248,7 @@ export function useBoardFlipAnimation({
         el.dataset.flipPrevZ = el.style.zIndex || "";
       }
       el.style.zIndex = "999";
+      el.dataset.flipRunId = runIdStr;
     }
 
     // Play: on the next frame, remove the transform so it transitions into place.
@@ -233,12 +256,20 @@ export function useBoardFlipAnimation({
       for (const el of cardEls) {
         if (!el.style.transform) continue;
 
-        // If the element is already being styled by another transition, we still want our
-        // transform transition to win.
-        el.style.transition = "transform 160ms ease";
-        el.style.transform = "translate3d(0, 0, 0)";
+        let done = false;
+        let timeoutId: number | null = null;
 
-        const onEnd = () => {
+        const finish = () => {
+          if (done) return;
+          done = true;
+
+          // If a newer FLIP run has started on this element, don't clobber its styles.
+          if (el.dataset.flipRunId !== runIdStr) {
+            el.removeEventListener("transitionend", onEnd);
+            if (timeoutId != null) window.clearTimeout(timeoutId);
+            return;
+          }
+
           el.style.transition = "";
           el.style.transform = "";
           el.style.willChange = "";
@@ -246,11 +277,21 @@ export function useBoardFlipAnimation({
           // Restore original z-index after the FLIP completes.
           el.style.zIndex = el.dataset.flipPrevZ || "";
           delete el.dataset.flipPrevZ;
+          delete el.dataset.flipRunId;
 
           el.removeEventListener("transitionend", onEnd);
+          if (timeoutId != null) window.clearTimeout(timeoutId);
         };
 
+        const onEnd = () => finish();
         el.addEventListener("transitionend", onEnd);
+
+        // Fallback if transitionend doesn't fire (interrupted by rapid undos).
+        timeoutId = window.setTimeout(finish, 220);
+
+        // Trigger the transition by removing the transform.
+        el.style.transition = "transform 160ms ease";
+        el.style.transform = "translate3d(0, 0, 0)";
       }
     });
 
