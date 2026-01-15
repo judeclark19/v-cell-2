@@ -21,7 +21,7 @@
   container-type: inline-size;
 
   /* IMPORTANT: cqw = “container query width”, i.e. board’s inner content width */
-  --card-w: calc((100cqw - (8px) - (6 * var(--card-gap))) / 7);
+  --card-w: calc((100cqw - (8px) - (6 * var(--card-gap, 10px))) / 7);
 
   height: var(--board-h);
   width: 100%;
@@ -37,18 +37,18 @@
 
 /* Foundations row (top) */
 .board-top {
-  margin-bottom: var(--card-gap);
+  margin-bottom: var(--card-gap, 10px);
 }
 
 /* Freecells row (bottom) */
 .board-bottom {
-  margin-top: var(--card-gap);
+  margin-top: var(--card-gap, 10px);
 }
 
 .pile-row {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--card-gap);
+  gap: var(--card-gap, 10px);
   box-sizing: border-box;
   padding: 4px;
 }
@@ -76,29 +76,42 @@
 .tableau-col {
   display: flex;
   flex-direction: column;
+  position: relative;
+  /* Reserve at least one card height so empty columns show the underlay slot */
+  min-height: calc(var(--card-w) * 1.5);
 }
 
-/* Ensure overlapping tableau cards respect z-index */
-.tableau-col > .card {
+/* Empty tableau slot underlay (kept mounted for animation timing) */
+.tableau-empty-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  z-index: 0;
+}
+
+/* Ensure the inner Card slot fills the underlay */
+.tableau-empty-slot > .card,
+.tableau-empty-slot > .card-slot {
+  width: 100%;
+  height: 100%;
+}
+
+/* Ensure overlapping tableau cards respect z-index and sit above the underlay */
+.tableau-col > .card,
+.tableau-col > .card-slot {
   position: relative;
+  z-index: 1;
 }
 
 /* Tableau stack overlap */
-.tableau-col > .card:not(.is-dragging):not(.is-returning),
-.tableau-col > .card-slot {
+.tableau-col > :is(.card, .card-slot) + :is(.card, .card-slot) {
   margin-top: -107%;
 }
 
-/* IMPORTANT:
-   The overlap selector above is more specific than `.card:first-child`,
-   because `:not(.is-dragging):not(.is-returning)` contributes specificity.
-   So we must match that specificity here to ensure the first card stays at 0.
-*/
-.tableau-col > .card:first-child:not(.is-dragging):not(.is-returning) {
-  margin-top: 0;
-}
-
-.tableau-col > .card-slot:first-child {
+/* While a card is actively being dragged/returned, don't apply overlap via this rule */
+.tableau-col > :is(.card.is-dragging, .card.is-returning) {
   margin-top: 0;
 }
 
