@@ -1,3 +1,7 @@
+// NOTE TO SELF
+// currently trying to get focus to stay on free cell if you F from a free cell
+// check undo scrolly tableau situation (may have been solved by relocating the acp)
+
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type BoardNavNodeMeta = {

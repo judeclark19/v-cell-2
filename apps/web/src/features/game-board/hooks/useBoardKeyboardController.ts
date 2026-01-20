@@ -120,12 +120,33 @@ export function useBoardKeyboardController({
       e.preventDefault();
       if (!focusOrCarriedEl) return;
 
-      actions.handleAutoFoundation(focusOrCarriedEl);
+      // If the focused element is a card inside a freecell, keep focus on that freecell slot
+      // after the move (so focus doesn't jump up to tableau due to element replacement).
+      const dragLike = buildKbDragFromEl(focusOrCarriedEl);
+      const fromFreecell = dragLike?.source?.type === "freecell";
+
+      // Best-effort: capture the slot container element now; it should persist when emptied.
+      const freecellSlotEl =
+        (focusOrCarriedEl.closest(
+          '[data-region="freecell"], [data-pile-type="freecell"], [data-freecell-index], .freecell, .freecell-cell, .pile-cell'
+        ) as HTMLElement | null) ?? null;
+
+      const didMove = actions.handleAutoFoundation(focusOrCarriedEl);
 
       if (kbCarrying) {
         setKbCarrying(false);
         visuals.clearKbCarryVisuals();
       }
+
+      // Restore focus to the originating freecell slot if that's where the move came from.
+      if (didMove && fromFreecell) {
+        requestAnimationFrame(() => {
+          if (freecellSlotEl && freecellSlotEl.isConnected) {
+            freecellSlotEl.focus();
+          }
+        });
+      }
+
       return;
     }
 
