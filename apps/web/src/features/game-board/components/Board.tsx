@@ -1,5 +1,5 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
-import { useCallback, useMemo, useRef, useState } from "react";
 import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "./Card";
@@ -91,6 +91,21 @@ function Board() {
   const shouldShowWinModal = isWon
     ? dismissedWinSeed !== state.seed
     : devForceWinModal;
+
+  const isAnyModalOpen = paused || shouldShowWinModal;
+
+  const wasWinModalOpenRef = useRef(false);
+
+  useEffect(() => {
+    const isOpen = shouldShowWinModal;
+    const wasOpen = wasWinModalOpenRef.current;
+
+    if (isOpen && !wasOpen) {
+      throwConfetti();
+    }
+
+    wasWinModalOpenRef.current = isOpen;
+  }, [shouldShowWinModal]);
 
   const {
     tableauColRefs,
@@ -217,7 +232,8 @@ function Board() {
     tryAutoFreeCellFromEl,
     findNextByDirection,
     buildKbDragFromEl,
-    buildKbDropTargetFromEl
+    buildKbDropTargetFromEl,
+    isAnyModalOpen
   });
 
   // --- FLIP animation for instant (non-drag) moves ---
@@ -258,9 +274,17 @@ function Board() {
           className="board"
           aria-label="Game board"
           ref={boardRef}
-          tabIndex={0}
-          onKeyDown={onBoardKeyDown}
+          tabIndex={isAnyModalOpen ? -1 : 0}
+          onKeyDown={(e) => {
+            if (isAnyModalOpen) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            onBoardKeyDown(e);
+          }}
           onPointerDownCapture={(e) => {
+            if (isAnyModalOpen) return;
             const root = boardRef.current;
             if (!root) return;
 
@@ -283,6 +307,7 @@ function Board() {
             }
           }}
           onFocusCapture={() => {
+            if (isAnyModalOpen) return;
             hadBoardFocusRef.current = true;
             onBoardFocusCapture();
           }}
