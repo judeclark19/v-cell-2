@@ -26,6 +26,8 @@ type FoundationsProps = {
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => void;
+  isWon: boolean;
+  isAbandoned: boolean;
 };
 
 function Foundations({
@@ -39,7 +41,9 @@ function Foundations({
   hasStarted,
   onPause,
   setFoundationRef,
-  handleFoundationPointerDown
+  handleFoundationPointerDown,
+  isWon,
+  isAbandoned
 }: FoundationsProps) {
   const formatElapsed = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -70,7 +74,7 @@ function Foundations({
                     aria-label="Pause timer"
                     type="button"
                     onClick={onPause}
-                    disabled={!hasStarted}
+                    disabled={!hasStarted || isWon || isAbandoned}
                   >
                     ⏸︎
                   </button>
@@ -94,13 +98,13 @@ function Foundations({
                 : -1;
 
               const effectiveCard = pile
-                ? pile.cards[displayIndex] ?? null
-                : card ?? null;
+                ? (pile.cards[displayIndex] ?? null)
+                : (card ?? null);
 
               // Card directly underneath the displayed card (used as an underlay).
               const underlayCard = pile
                 ? displayIndex - 1 >= 0
-                  ? pile.cards[displayIndex - 1] ?? null
+                  ? (pile.cards[displayIndex - 1] ?? null)
                   : null
                 : null;
 

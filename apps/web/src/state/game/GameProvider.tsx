@@ -38,6 +38,7 @@ type GameContextValue = {
   hasStarted: boolean;
   isAbandoned: boolean;
   setIsAbandoned: (next: boolean) => void;
+  moveCount: number;
 };
 
 type HistoryState = {
@@ -525,7 +526,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     endedAtMs,
     hasStarted,
     isAbandoned,
-    setIsAbandoned
+    setIsAbandoned,
+    moveCount
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

@@ -1,5 +1,5 @@
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
 import Card from "./Card";
@@ -9,7 +9,6 @@ import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoard
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
-import PauseOverlay from "./PauseOverlay";
 import { useBoardDomRegistry } from "../dom/boardDomRegistry";
 import { useBoardDrop } from "../hooks/useBoardDrop";
 import { useAutoFoundation } from "../hooks/useAutoFoundation";
@@ -18,23 +17,14 @@ import { useBoardKeyboardNav } from "../hooks/useBoardKeyboardNav";
 import { useBoardKeyboardController } from "../hooks/useBoardKeyboardController";
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
+import ModalOverlay from "@/components/ModalOverlay";
 
-function WinAlertEffect({ isWon }: { isWon: boolean }) {
-  const hasAlertedWinRef = useRef(false);
-
-  useEffect(() => {
-    if (isWon) {
-      if (!hasAlertedWinRef.current) {
-        hasAlertedWinRef.current = true;
-        window.alert("You won!");
-      }
-    } else {
-      // Reset between deals / restarts.
-      hasAlertedWinRef.current = false;
-    }
-  }, [isWon]);
-
-  return null;
+function formatElapsed(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "0:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 export function throwConfetti() {
@@ -79,7 +69,8 @@ function Board() {
     restart,
     seedReady,
     timeElapsedMs,
-    hasStarted
+    hasStarted,
+    moveCount
   } = useGame();
 
   const playable = useMemo(() => getPlayableMask(state), [state]);
@@ -92,6 +83,14 @@ function Board() {
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
   const [showAcp, setShowAcp] = useState(false);
+  // Tracks which deal's win modal has been dismissed.
+  // When the seed changes (new deal), the modal can appear again.
+  const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
+  const [devForceWinModal, setDevForceWinModal] = useState(false);
+
+  const shouldShowWinModal = isWon
+    ? dismissedWinSeed !== state.seed
+    : devForceWinModal;
 
   const {
     tableauColRefs,
@@ -142,15 +141,19 @@ function Board() {
     // New deal should not animate card movement.
     suppressFlipOnceRef.current = true;
     prevCardRectsRef.current = new Map();
+    setDismissedWinSeed(null);
+    setDevForceWinModal(false);
     newDeal();
-  }, [newDeal]);
+  }, [newDeal, setDismissedWinSeed, setDevForceWinModal]);
 
   const restartNoFlip = useCallback(() => {
     // Restarting should not animate card movement.
     suppressFlipOnceRef.current = true;
     prevCardRectsRef.current = new Map();
+    setDismissedWinSeed(null);
+    setDevForceWinModal(false);
     restart();
-  }, [restart]);
+  }, [restart, setDismissedWinSeed, setDevForceWinModal]);
 
   const {
     drag,
@@ -232,7 +235,6 @@ function Board() {
 
   return (
     <>
-      <WinAlertEffect isWon={isWon} />
       <button
         type="button"
         className="btn btn--secondary"
@@ -240,6 +242,14 @@ function Board() {
       >
         Throw Confetti
       </button>
+      <button
+        type="button"
+        className="btn btn--secondary"
+        onClick={() => setDevForceWinModal(true)}
+      >
+        Dev: Show win modal
+      </button>
+
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
         key={seedReady ? state.seed : "loading"}
@@ -318,6 +328,8 @@ function Board() {
                 setFoundationRef={setFoundationRef}
                 handleFoundationPointerDown={handleFoundationPointerDown}
                 onPause={() => setPaused(true)}
+                isWon={isWon}
+                isAbandoned={false}
               />
 
               {/* Tableau in the middle */}
@@ -380,7 +392,31 @@ function Board() {
             <div className="board-loading" aria-label="Loading deal" />
           )}
         </div>
-        {paused && <PauseOverlay onClose={() => setPaused(false)} />}
+        {paused && (
+          <ModalOverlay
+            overlayAriaLabel="Game paused"
+            title="Paused"
+            buttonAriaLabel="Resume game"
+            onClose={() => setPaused(false)}
+            bodyText="Timer is paused. Gameplay is disabled until you resume."
+            primaryButtonLabel="Resume"
+          />
+        )}
+        {shouldShowWinModal && (
+          <ModalOverlay
+            overlayAriaLabel="Game won"
+            title="You won!"
+            buttonAriaLabel="Close win dialog"
+            onClose={() => {
+              if (isWon) setDismissedWinSeed(state.seed);
+              setDevForceWinModal(false);
+            }}
+            bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
+            primaryButtonLabel="New Deal"
+            primaryButtonAction={newDealNoFlip}
+            secondaryButtonLabel="Close"
+          />
+        )}
       </div>
 
       <section className="control" aria-label="Game actions">
