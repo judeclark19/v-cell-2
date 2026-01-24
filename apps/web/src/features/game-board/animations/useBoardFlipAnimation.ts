@@ -42,6 +42,9 @@ export type UseBoardFlipAnimationArgs = {
   // The existing “skip FLIP once after pointer drag commits” ref from Board
   suppressFlipOnceRef: React.MutableRefObject<boolean>;
 
+  /** Called when a FLIP run finishes (or is skipped). Useful for sequencing animations. */
+  onFlipComplete?: (runId: number) => void;
+
   // Optional: supply your own rect store if you want to persist it elsewhere
   prevCardRectsRef?: React.MutableRefObject<Map<string, DOMRect>>;
 };
@@ -54,6 +57,7 @@ export function useBoardFlipAnimation({
   drag,
   getNodeMeta,
   suppressFlipOnceRef,
+  onFlipComplete,
   prevCardRectsRef
 }: UseBoardFlipAnimationArgs) {
   const [prevRects, setPrevRects] = React.useState<Map<string, DOMRect>>(() => {
@@ -68,7 +72,7 @@ export function useBoardFlipAnimation({
         get current() {
           return prevRects;
         }
-      } as React.MutableRefObject<Map<string, DOMRect>>),
+      }) as React.MutableRefObject<Map<string, DOMRect>>,
     [prevRects]
   );
 
@@ -94,6 +98,17 @@ export function useBoardFlipAnimation({
 
     const runId = ++flipRunIdRef.current;
     const runIdStr = String(runId);
+
+    let pendingAnimations = 0;
+    let didComplete = false;
+
+    const maybeComplete = () => {
+      if (didComplete) return;
+      if (pendingAnimations <= 0) {
+        didComplete = true;
+        onFlipComplete?.(runId);
+      }
+    };
 
     const cardEls = Array.from(
       root.querySelectorAll<HTMLElement>(".card[data-card-id]")
@@ -146,6 +161,7 @@ export function useBoardFlipAnimation({
     // First paint (or reduced motion): just seed the map.
     if (prevRectsForRun.size === 0 || prefersReducedMotion) {
       if (didRectsChange) setPrevRects(nextRects);
+      onFlipComplete?.(runId);
       return;
     }
 
@@ -153,12 +169,14 @@ export function useBoardFlipAnimation({
     if (suppressFlipOnceRef.current) {
       suppressFlipOnceRef.current = false;
       if (didRectsChange) setPrevRects(nextRects);
+      onFlipComplete?.(runId);
       return;
     }
 
     // If a pointer-drag overlay is active, don't try to FLIP (it will fight transforms).
     if (drag.active || drag.pending) {
       if (didRectsChange) setPrevRects(nextRects);
+      onFlipComplete?.(runId);
       return;
     }
 
@@ -207,6 +225,7 @@ export function useBoardFlipAnimation({
       ghost.style.zIndex = "1000";
       ghost.style.willChange = "transform";
 
+      pendingAnimations += 1;
       document.body.appendChild(ghost);
 
       const dx = to.left - from.left;
@@ -241,6 +260,8 @@ export function useBoardFlipAnimation({
         } else {
           sourceEl.style.opacity = entry?.prevOpacity ?? "";
         }
+        pendingAnimations -= 1;
+        maybeComplete();
       };
 
       const onEnd = () => finish();
@@ -269,6 +290,7 @@ export function useBoardFlipAnimation({
         continue;
       }
 
+      pendingAnimations += 1;
       // Set the inverted transform with no transition.
       el.style.transition = "none";
       el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
@@ -298,6 +320,9 @@ export function useBoardFlipAnimation({
           if (el.dataset.flipRunId !== runIdStr) {
             el.removeEventListener("transitionend", onEnd);
             if (timeoutId != null) window.clearTimeout(timeoutId);
+            // This run no longer owns this element; treat it as complete for this run.
+            pendingAnimations -= 1;
+            maybeComplete();
             return;
           }
 
@@ -309,6 +334,9 @@ export function useBoardFlipAnimation({
           el.style.zIndex = el.dataset.flipPrevZ || "";
           delete el.dataset.flipPrevZ;
           delete el.dataset.flipRunId;
+
+          pendingAnimations -= 1;
+          maybeComplete();
 
           el.removeEventListener("transitionend", onEnd);
           if (timeoutId != null) window.clearTimeout(timeoutId);
@@ -329,6 +357,9 @@ export function useBoardFlipAnimation({
     // Update the stored rects for the next move.
     if (didRectsChange) setPrevRects(nextRects);
 
+    // If nothing animated this run, signal completion immediately.
+    maybeComplete();
+
     return () => cancelAnimationFrame(raf);
   }, [
     state,
@@ -339,7 +370,8 @@ export function useBoardFlipAnimation({
     boardRef,
     getNodeMeta,
     suppressFlipOnceRef,
-    prevRects
+    prevRects,
+    onFlipComplete
   ]);
 
   return {

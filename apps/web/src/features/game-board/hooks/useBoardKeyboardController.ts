@@ -32,8 +32,8 @@ type UseBoardKeyboardControllerArgs = {
   paused: boolean;
   setPaused: (next: boolean) => void;
 
-  /** Whether any modal overlay is open; when true, suppress board keyboard controls. */
-  isAnyModalOpen: boolean;
+  /** Whether input is currently suppressed (e.g., due to a modal or auto-completing). */
+  isInputSuppressed: boolean;
 
   /** Attempt to send the focused (or carried) card to a legal foundation slot. */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
@@ -63,7 +63,7 @@ export function useBoardKeyboardController({
   restart,
   paused,
   setPaused,
-  isAnyModalOpen: modalOpen,
+  isInputSuppressed,
   tryAutoFoundationFromEl,
   tryAutoFreeCellFromEl,
   findNextByDirection,
@@ -93,8 +93,7 @@ export function useBoardKeyboardController({
   });
 
   const onBoardKeyDown = (e: KeyboardEvent) => {
-    if (modalOpen) {
-      // Board keyboard controls are disabled while a modal is open.
+    if (isInputSuppressed) {
       return;
     }
     // Arrow-key navigation always works within the board.

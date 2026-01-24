@@ -93,6 +93,8 @@ function Board() {
     : devForceWinModal;
 
   const isAnyModalOpen = paused || shouldShowWinModal;
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false);
+  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   const wasWinModalOpenRef = useRef(false);
 
@@ -106,6 +108,31 @@ function Board() {
 
     wasWinModalOpenRef.current = isOpen;
   }, [shouldShowWinModal]);
+
+  const flipCompleteResolverRef = useRef<((runId: number) => void) | null>(
+    null
+  );
+
+  const waitForFlipComplete = useCallback((): Promise<void> => {
+    return new Promise((resolve) => {
+      // Failsafe so we never hang if transitionend doesn’t fire.
+      const timeoutId = window.setTimeout(() => {
+        flipCompleteResolverRef.current = null;
+        resolve();
+      }, 1000);
+
+      flipCompleteResolverRef.current = () => {
+        window.clearTimeout(timeoutId);
+        flipCompleteResolverRef.current = null;
+        resolve();
+      };
+    });
+  }, []);
+
+  const onFlipComplete = useCallback((runId: number) => {
+    // Resolve the most recent waiter (if any).
+    flipCompleteResolverRef.current?.(runId);
+  }, []);
 
   const {
     tableauColRefs,
@@ -158,8 +185,9 @@ function Board() {
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
+    setIsAutoCompleting(false);
     newDeal();
-  }, [newDeal, setDismissedWinSeed, setDevForceWinModal]);
+  }, [newDeal, setDismissedWinSeed, setDevForceWinModal, setIsAutoCompleting]);
 
   const restartNoFlip = useCallback(() => {
     // Restarting should not animate card movement.
@@ -167,8 +195,9 @@ function Board() {
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
+    setIsAutoCompleting(false);
     restart();
-  }, [restart, setDismissedWinSeed, setDevForceWinModal]);
+  }, [restart, setDismissedWinSeed, setDevForceWinModal, setIsAutoCompleting]);
 
   const {
     drag,
@@ -233,7 +262,7 @@ function Board() {
     findNextByDirection,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-    isAnyModalOpen
+    isInputSuppressed
   });
 
   // --- FLIP animation for instant (non-drag) moves ---
@@ -245,9 +274,122 @@ function Board() {
     drag,
     getNodeMeta,
     suppressFlipOnceRef,
+    onFlipComplete,
     prevCardRectsRef
   });
   // --- end FLIP animation ---
+
+  const isAutoCompletingRef = useRef(false);
+  useEffect(() => {
+    isAutoCompletingRef.current = isAutoCompleting;
+  }, [isAutoCompleting]);
+
+  const tryAutoFoundationFromElRef = useRef(tryAutoFoundationFromEl);
+  useEffect(() => {
+    tryAutoFoundationFromElRef.current = tryAutoFoundationFromEl;
+  }, [tryAutoFoundationFromEl]);
+
+  const pausedRef = useRef(paused);
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  const seedReadyRef = useRef(seedReady);
+  useEffect(() => {
+    seedReadyRef.current = seedReady;
+  }, [seedReady]);
+
+  const isWonRef = useRef(isWon);
+  useEffect(() => {
+    isWonRef.current = isWon;
+  }, [isWon]);
+
+  const shouldShowWinModalRef = useRef(shouldShowWinModal);
+  useEffect(() => {
+    shouldShowWinModalRef.current = shouldShowWinModal;
+  }, [shouldShowWinModal]);
+
+  const dragStateRef = useRef({ active: drag.active, pending: drag.pending });
+  useEffect(() => {
+    dragStateRef.current = { active: drag.active, pending: drag.pending };
+  }, [drag.active, drag.pending]);
+
+  const isAnyModalOpenRef = useRef(isAnyModalOpen);
+  useEffect(() => {
+    isAnyModalOpenRef.current = isAnyModalOpen;
+  }, [isAnyModalOpen]);
+
+  const stopAutoComplete = useCallback(() => {
+    isAutoCompletingRef.current = false;
+    setIsAutoCompleting(false);
+  }, []);
+
+  const runAutoComplete = useCallback(async () => {
+    // Don’t start if we’re already running or if UI is blocked by a modal.
+    if (isAutoCompleting || isAnyModalOpen) return;
+
+    isAutoCompletingRef.current = true;
+    setIsAutoCompleting(true);
+
+    try {
+      // Step one foundation move at a time so FLIP can animate each step.
+      // Prefer free cells first, then tableau.
+      // Stop when no foundation move exists or when UI becomes blocked.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        if (pausedRef.current) break;
+        if (isWonRef.current && shouldShowWinModalRef.current) break;
+        if (!seedReadyRef.current) break;
+        if (dragStateRef.current.active || dragStateRef.current.pending) break;
+        if (isAnyModalOpenRef.current) break;
+
+        const freeCells = freeCellRefs.current.filter(
+          (el): el is HTMLDivElement => el != null
+        );
+        const tableauCols = tableauColRefs.current.filter(
+          (el): el is HTMLDivElement => el != null
+        );
+
+        let didMove = false;
+
+        // 1) Free cells first
+        for (const fc of freeCells) {
+          if (tryAutoFoundationFromElRef.current(fc)) {
+            didMove = true;
+            break;
+          }
+        }
+
+        // 2) Tableau tops
+        if (!didMove) {
+          for (const col of tableauCols) {
+            const topCard = col.querySelector<HTMLElement>(".card:last-child");
+            if (topCard && tryAutoFoundationFromElRef.current(topCard)) {
+              didMove = true;
+              break;
+            }
+          }
+        }
+
+        if (!didMove) break;
+
+        // Wait for FLIP to finish (or timeout) before attempting the next move.
+        await waitForFlipComplete();
+
+        // If the user stopped it (button toggled), break.
+        if (!isAutoCompletingRef.current) break;
+      }
+    } finally {
+      isAutoCompletingRef.current = false;
+      setIsAutoCompleting(false);
+    }
+  }, [
+    freeCellRefs,
+    tableauColRefs,
+    isAnyModalOpen,
+    isAutoCompleting,
+    waitForFlipComplete
+  ]);
 
   return (
     <>
@@ -274,9 +416,9 @@ function Board() {
           className="board"
           aria-label="Game board"
           ref={boardRef}
-          tabIndex={isAnyModalOpen ? -1 : 0}
+          tabIndex={isInputSuppressed ? -1 : 0}
           onKeyDown={(e) => {
-            if (isAnyModalOpen) {
+            if (isInputSuppressed) {
               e.preventDefault();
               e.stopPropagation();
               return;
@@ -284,7 +426,7 @@ function Board() {
             onBoardKeyDown(e);
           }}
           onPointerDownCapture={(e) => {
-            if (isAnyModalOpen) return;
+            if (isInputSuppressed) return;
             const root = boardRef.current;
             if (!root) return;
 
@@ -307,7 +449,7 @@ function Board() {
             }
           }}
           onFocusCapture={() => {
-            if (isAnyModalOpen) return;
+            if (isInputSuppressed) return;
             hadBoardFocusRef.current = true;
             onBoardFocusCapture();
           }}
@@ -469,6 +611,17 @@ function Board() {
             {undoLimit === "unlimited" || undoLimit === 0
               ? "Undo"
               : `Undo (${undosRemaining})`}
+          </button>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => {
+              if (isAutoCompleting) stopAutoComplete();
+              else runAutoComplete();
+            }}
+            disabled={!seedReady || paused || shouldShowWinModal}
+          >
+            {isAutoCompleting ? "Stop" : "Autocomplete"}
           </button>
           <button
             type="button"
