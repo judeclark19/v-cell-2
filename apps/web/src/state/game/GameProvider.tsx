@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -40,6 +41,7 @@ type GameContextValue = {
   setIsAbandoned: (next: boolean) => void;
   moveCount: number;
   gameId: string;
+  completedGames: GameResult[];
 };
 
 type HistoryState = {
@@ -52,11 +54,26 @@ const UNDO_LIMIT_KEY = "vcell:undoLimit";
 
 const GameContext = createContext<GameContextValue | null>(null);
 
+type GameResult = {
+  gameId: string;
+  seed: string;
+  rules: GameState["rules"];
+  status: "won" | "abandoned";
+  startedAtMs: number | null;
+  endedAtMs: number;
+  timeElapsedMs: number;
+  moveCount: number;
+  undosUsed: number;
+  // Keep the move log so we can replay/debug later; can be trimmed when we persist.
+  moves: Move[];
+  cursor: number;
+};
+
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 // Intentionally excludes `timeElapsedMs` from the LOG signature so timer ticks don't spam logs.
 
 type GameSnapshot = {
-  gameId: string; // currently we use `seed` as the runtime identifier
+  gameId: string;
   seed: string;
   rules: GameState["rules"];
   hasStarted: boolean;
@@ -65,6 +82,9 @@ type GameSnapshot = {
   canUndo: boolean;
   moveCount: number; // number of moves made in the current timeline (net of undos)
   undosUsed: number;
+  moves: Move[];
+  cursor: number;
+  checkpoint: { at: number; state: GameState } | null;
   timeElapsedMs: number;
   startedAtMs: number | null;
   endedAtMs: number | null;
@@ -165,6 +185,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const state = history.present;
 
   // ---------------------------------------------------------------------------
+  // Completed games archive (in-memory, Phase A)
+  // ---------------------------------------------------------------------------
+  const [completedGames, setCompletedGames] = useState<GameResult[]>([]);
+  const [pendingNewDeal, setPendingNewDeal] = useState<boolean>(false);
+
+  // ---------------------------------------------------------------------------
   // Run state (timer + pause)
   // ---------------------------------------------------------------------------
   const [timeElapsedMs, setTimeElapsedMs] = useState<number>(0);
@@ -185,6 +211,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Score-keeping move count: freezes once the game is won. (Cosmetic post-win moves are allowed.)
   const [moveCount, setMoveCount] = useState<number>(0);
+  const [moves, setMoves] = useState<Move[]>([]);
+  const [cursor, setCursor] = useState<number>(0);
+
+  const cursorRef = useRef<number>(0);
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+
+  const [checkpoint, setCheckpoint] = useState<{
+    at: number;
+    state: GameState;
+  } | null>(null);
 
   // ---------------------------------------------------------------------------
   // Client-only seed init (avoids hydration mismatches)
@@ -207,8 +245,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setStartedAtMs(null);
     setEndedAtMs(null);
     setIsAbandoned(false);
+    setPendingNewDeal(false);
     setUndosUsed(0);
     setMoveCount(0);
+    setMoves([]);
+    setCursor(0);
+    cursorRef.current = 0;
+    setCheckpoint(null);
     setSeedReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -236,8 +279,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setStartedAtMs(null);
     setEndedAtMs(null);
     setIsAbandoned(false);
+    setPendingNewDeal(false);
     setUndosUsed(0);
     setMoveCount(0);
+    setMoves([]);
+    setCursor(0);
+    cursorRef.current = 0;
+    setCheckpoint(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowFoundationPullback, undoLimit]);
 
@@ -256,12 +304,79 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     history.past.length > 0 &&
     (undoLimit === "unlimited" || undosRemaining > 0);
 
-  // Stamp end time once when the game is finished (won or abandoned).
+  const startNewDealSession = useCallback(() => {
+    const newSeed = makeNewSeed();
+    const newGameId = makeNewGameId();
+    setSeed(newSeed);
+    setGameId(newGameId);
+
+    setHistory({ present: createGame(newSeed, rules), past: [] });
+    setTimeElapsedMs(0);
+    setHasStarted(false);
+    setStartedAtMs(null);
+    setEndedAtMs(null);
+    setIsAbandoned(false);
+    setPendingNewDeal(false);
+    setUndosUsed(0);
+    setMoveCount(0);
+    setMoves([]);
+    setCursor(0);
+    cursorRef.current = 0;
+    setCheckpoint(null);
+  }, [rules]);
+
+  // Stamp end time once when the game is finished (won or abandoned) and archive a result.
   useEffect(() => {
     const finished = isWon || isAbandoned;
     if (!finished) return;
-    setEndedAtMs((prev) => (prev == null ? Date.now() : prev));
-  }, [isWon, isAbandoned]);
+
+    // Only finalize once per game.
+    if (endedAtMs != null) return;
+
+    const ended = Date.now();
+    setEndedAtMs(ended);
+
+    const status: GameResult["status"] = isWon ? "won" : "abandoned";
+
+    setCompletedGames((prev) => {
+      if (prev.some((g) => g.gameId === gameId)) return prev;
+      return [
+        ...prev,
+        {
+          gameId,
+          seed,
+          rules: state.rules,
+          status,
+          startedAtMs,
+          endedAtMs: ended,
+          timeElapsedMs,
+          moveCount,
+          undosUsed,
+          moves,
+          cursor
+        }
+      ];
+    });
+
+    if (pendingNewDeal) {
+      startNewDealSession();
+    }
+  }, [
+    isWon,
+    isAbandoned,
+    endedAtMs,
+    gameId,
+    seed,
+    state.rules,
+    startedAtMs,
+    timeElapsedMs,
+    moveCount,
+    undosUsed,
+    moves,
+    cursor,
+    pendingNewDeal,
+    startNewDealSession
+  ]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
@@ -347,6 +462,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Score-keeping: only count moves up to the win.
     if (!isWon) {
       setMoveCount((n) => n + 1);
+      const baseCursor = cursorRef.current;
+
+      setMoves((prev) => {
+        const truncated = prev.slice(0, baseCursor);
+        return [...truncated, move];
+      });
+
+      const nextCursor = baseCursor + 1;
+      cursorRef.current = nextCursor;
+      setCursor(nextCursor);
     }
 
     setHistory((h) => {
@@ -365,6 +490,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         nextPast.splice(0, nextPast.length - cap);
       }
 
+      if (cursorRef.current > 0 && cursorRef.current % 20 === 0) {
+        setCheckpoint({ at: cursorRef.current, state: next });
+      }
+
       return {
         present: next,
         past: nextPast
@@ -378,24 +507,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setHistory({ present: createGame(seed, rules), past: [] });
     setUndosUsed(0);
     setMoveCount(0);
+    setMoves([]);
+    setCursor(0);
+    cursorRef.current = 0;
+    setCheckpoint(null);
     setEndedAtMs(null);
     setIsAbandoned(false);
+    setPendingNewDeal(false);
   };
 
   const newDeal = () => {
-    const newSeed = makeNewSeed();
-    const newGameId = makeNewGameId();
-    setSeed(newSeed);
-    setGameId(newGameId);
+    // If a game is in progress, abandon it first so it gets archived.
+    const isFinished = isWon || isAbandoned || endedAtMs != null;
 
-    setHistory({ present: createGame(newSeed, rules), past: [] });
-    setTimeElapsedMs(0);
-    setHasStarted(false);
-    setStartedAtMs(null);
-    setEndedAtMs(null);
-    setIsAbandoned(false);
-    setUndosUsed(0);
-    setMoveCount(0);
+    if (hasStarted && !isFinished) {
+      setPendingNewDeal(true);
+      setIsAbandoned(true);
+      return;
+    }
+
+    // Otherwise just start immediately.
+    startNewDealSession();
   };
 
   const undo = () => {
@@ -411,6 +543,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     // Count a successful undo exactly once (outside the history updater).
     setUndosUsed((n) => n + 1);
     setMoveCount((n) => Math.max(0, n - 1));
+    setCursor((c) => {
+      const next = Math.max(0, c - 1);
+      cursorRef.current = next;
+      return next;
+    });
 
     setHistory((h) => {
       if (h.past.length === 0) return h;
@@ -439,7 +576,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       timeElapsedMs,
       startedAtMs,
       endedAtMs,
-      state
+      state,
+      moves,
+      cursor,
+      checkpoint
     }),
     [
       seed,
@@ -453,14 +593,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       timeElapsedMs,
       startedAtMs,
       endedAtMs,
-      gameId
+      gameId,
+      moves,
+      cursor,
+      checkpoint
     ]
   );
 
   // Keep `timeElapsedMs` inside the snapshot, but exclude it from the LOG signature.
   const logSnapshot = useMemo<LogSnapshot>(
     () => ({
-      gameId: seed,
+      gameId,
       seed,
       rules: state.rules,
       hasStarted,
@@ -471,10 +614,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       undosUsed,
       startedAtMs,
       endedAtMs,
-      state
+      state,
+      moves,
+      cursor,
+      checkpoint
     }),
     [
       seed,
+      gameId,
       state,
       hasStarted,
       isAbandoned,
@@ -483,7 +630,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       moveCount,
       undosUsed,
       startedAtMs,
-      endedAtMs
+      endedAtMs,
+      moves,
+      cursor,
+      checkpoint
     ]
   );
 
@@ -541,7 +691,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isAbandoned,
     setIsAbandoned,
     moveCount,
-    gameId
+    gameId,
+    completedGames
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
