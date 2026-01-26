@@ -14,6 +14,12 @@ type FreeCellsProps = {
     typeof useCardDrag
   >["handleFreeCellPointerDown"];
   showAcp: boolean;
+  isAutoCompleting: boolean;
+  runAutoComplete: () => void;
+  stopAutoComplete: () => void;
+  seedReady: boolean;
+  paused: boolean;
+  shouldShowWinModal: boolean;
 };
 
 function FreeCells({
@@ -23,7 +29,13 @@ function FreeCells({
   setFreeCellRef,
   drag,
   handleFreeCellPointerDown,
-  showAcp
+  showAcp,
+  isAutoCompleting,
+  runAutoComplete,
+  stopAutoComplete,
+  seedReady,
+  paused,
+  shouldShowWinModal
 }: FreeCellsProps) {
   return (
     <div className="board-bottom" aria-label="Free cells">
@@ -37,11 +49,12 @@ function FreeCells({
           type="button"
           className="btn btn--primary"
           onClick={() => {
-            console.log("autocomplete clicked");
+            if (isAutoCompleting) stopAutoComplete();
+            else runAutoComplete();
           }}
-          disabled={!showAcp}
+          disabled={!seedReady || paused || shouldShowWinModal}
         >
-          Autocomplete
+          {isAutoCompleting ? "Stop" : "Autocomplete"}
         </button>
       </div>
       <div className="pile-row" aria-label="Free cells">

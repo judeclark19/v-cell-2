@@ -117,6 +117,14 @@ export function useBoardFlipAnimation({
     // If any previous run left transient styles, ensure they don't accumulate forever.
     // We only clean up elements that still claim to belong to an older run.
     for (const el of cardEls) {
+      // Self-heal: if a prior ghost flight hid the real card but cleanup was interrupted,
+      // restore opacity at the start of a new run.
+      if (el.dataset.ghostHidden === "1") {
+        el.style.opacity = el.dataset.ghostPrevOpacity ?? "";
+        delete el.dataset.ghostHidden;
+        delete el.dataset.ghostPrevOpacity;
+      }
+
       if (el.dataset.flipRunId && el.dataset.flipRunId !== runIdStr) {
         // Stale run marker; clear only transient bits.
         el.style.transition = "";
@@ -206,6 +214,9 @@ export function useBoardFlipAnimation({
         ? ghostHideRef.current.get(cardId)?.count === 1
         : true;
       if (shouldHideReal) {
+        // Mark hidden state so a later FLIP run can restore if this flight is interrupted.
+        sourceEl.dataset.ghostHidden = "1";
+        sourceEl.dataset.ghostPrevOpacity = entry?.prevOpacity ?? "";
         sourceEl.style.opacity = "0";
       }
       // Ensure the clone stays visible even if the real is hidden.
@@ -252,13 +263,19 @@ export function useBoardFlipAnimation({
             cur.count -= 1;
             if (cur.count <= 0) {
               sourceEl.style.opacity = cur.prevOpacity;
+              delete sourceEl.dataset.ghostHidden;
+              delete sourceEl.dataset.ghostPrevOpacity;
               ghostHideRef.current.delete(cardId);
             }
           } else {
             sourceEl.style.opacity = entry?.prevOpacity ?? "";
+            delete sourceEl.dataset.ghostHidden;
+            delete sourceEl.dataset.ghostPrevOpacity;
           }
         } else {
           sourceEl.style.opacity = entry?.prevOpacity ?? "";
+          delete sourceEl.dataset.ghostHidden;
+          delete sourceEl.dataset.ghostPrevOpacity;
         }
         pendingAnimations -= 1;
         maybeComplete();

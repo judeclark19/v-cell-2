@@ -18,6 +18,7 @@ import { useBoardKeyboardController } from "../hooks/useBoardKeyboardController"
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 import ModalOverlay from "@/components/ModalOverlay";
+import { useFoundationDrainAutoComplete } from "../hooks/useFoundationDrainAutoComplete";
 
 function formatElapsed(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "0:00";
@@ -82,19 +83,25 @@ function Board() {
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
-  const [showAcp, setShowAcp] = useState(false);
+  const [showAcpOverride, setShowAcpOverride] = useState(false);
+  const showAcp = isWon || showAcpOverride;
+  const stopAutoCompleteRef = useRef<(() => void) | null>(null);
   // Tracks which deal's win modal has been dismissed.
   // When the seed changes (new deal), the modal can appear again.
   const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
   const [devForceWinModal, setDevForceWinModal] = useState(false);
 
-  const shouldShowWinModal = isWon
+  const foundationCount = useMemo(() => {
+    return state.foundations.reduce((sum, pile) => sum + pile.cards.length, 0);
+  }, [state.foundations]);
+
+  const isFullyCollected = foundationCount === 52;
+
+  const shouldShowWinModal = isFullyCollected
     ? dismissedWinSeed !== state.seed
     : devForceWinModal;
 
   const isAnyModalOpen = paused || shouldShowWinModal;
-  const [isAutoCompleting, setIsAutoCompleting] = useState(false);
-  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   const wasWinModalOpenRef = useRef(false);
 
@@ -185,9 +192,10 @@ function Board() {
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
-    setIsAutoCompleting(false);
+    stopAutoCompleteRef.current?.();
+    setShowAcpOverride(false);
     newDeal();
-  }, [newDeal, setDismissedWinSeed, setDevForceWinModal, setIsAutoCompleting]);
+  }, [newDeal, setDismissedWinSeed, setDevForceWinModal, setShowAcpOverride]);
 
   const restartNoFlip = useCallback(() => {
     // Restarting should not animate card movement.
@@ -195,9 +203,10 @@ function Board() {
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
-    setIsAutoCompleting(false);
+    stopAutoCompleteRef.current?.();
+    setShowAcpOverride(false);
     restart();
-  }, [restart, setDismissedWinSeed, setDevForceWinModal, setIsAutoCompleting]);
+  }, [restart, setDismissedWinSeed, setDevForceWinModal, setShowAcpOverride]);
 
   const {
     drag,
@@ -262,7 +271,7 @@ function Board() {
     findNextByDirection,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-    isInputSuppressed
+    isInputSuppressed: isAnyModalOpen
   });
 
   // --- FLIP animation for instant (non-drag) moves ---
@@ -279,117 +288,24 @@ function Board() {
   });
   // --- end FLIP animation ---
 
-  const isAutoCompletingRef = useRef(false);
+  const { isAutoCompleting, runAutoComplete, stopAutoComplete } =
+    useFoundationDrainAutoComplete({
+      seedReady,
+      paused,
+      isAnyModalOpen,
+      shouldShowWinModal,
+      drag: { active: drag.active, pending: drag.pending },
+      freeCellRefs,
+      tableauColRefs,
+      tryAutoFoundationFromEl,
+      waitForFlipComplete
+    });
+
   useEffect(() => {
-    isAutoCompletingRef.current = isAutoCompleting;
-  }, [isAutoCompleting]);
+    stopAutoCompleteRef.current = stopAutoComplete;
+  }, [stopAutoComplete]);
 
-  const tryAutoFoundationFromElRef = useRef(tryAutoFoundationFromEl);
-  useEffect(() => {
-    tryAutoFoundationFromElRef.current = tryAutoFoundationFromEl;
-  }, [tryAutoFoundationFromEl]);
-
-  const pausedRef = useRef(paused);
-  useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
-
-  const seedReadyRef = useRef(seedReady);
-  useEffect(() => {
-    seedReadyRef.current = seedReady;
-  }, [seedReady]);
-
-  const isWonRef = useRef(isWon);
-  useEffect(() => {
-    isWonRef.current = isWon;
-  }, [isWon]);
-
-  const shouldShowWinModalRef = useRef(shouldShowWinModal);
-  useEffect(() => {
-    shouldShowWinModalRef.current = shouldShowWinModal;
-  }, [shouldShowWinModal]);
-
-  const dragStateRef = useRef({ active: drag.active, pending: drag.pending });
-  useEffect(() => {
-    dragStateRef.current = { active: drag.active, pending: drag.pending };
-  }, [drag.active, drag.pending]);
-
-  const isAnyModalOpenRef = useRef(isAnyModalOpen);
-  useEffect(() => {
-    isAnyModalOpenRef.current = isAnyModalOpen;
-  }, [isAnyModalOpen]);
-
-  const stopAutoComplete = useCallback(() => {
-    isAutoCompletingRef.current = false;
-    setIsAutoCompleting(false);
-  }, []);
-
-  const runAutoComplete = useCallback(async () => {
-    // Don’t start if we’re already running or if UI is blocked by a modal.
-    if (isAutoCompleting || isAnyModalOpen) return;
-
-    isAutoCompletingRef.current = true;
-    setIsAutoCompleting(true);
-
-    try {
-      // Step one foundation move at a time so FLIP can animate each step.
-      // Prefer free cells first, then tableau.
-      // Stop when no foundation move exists or when UI becomes blocked.
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        if (pausedRef.current) break;
-        if (isWonRef.current && shouldShowWinModalRef.current) break;
-        if (!seedReadyRef.current) break;
-        if (dragStateRef.current.active || dragStateRef.current.pending) break;
-        if (isAnyModalOpenRef.current) break;
-
-        const freeCells = freeCellRefs.current.filter(
-          (el): el is HTMLDivElement => el != null
-        );
-        const tableauCols = tableauColRefs.current.filter(
-          (el): el is HTMLDivElement => el != null
-        );
-
-        let didMove = false;
-
-        // 1) Free cells first
-        for (const fc of freeCells) {
-          if (tryAutoFoundationFromElRef.current(fc)) {
-            didMove = true;
-            break;
-          }
-        }
-
-        // 2) Tableau tops
-        if (!didMove) {
-          for (const col of tableauCols) {
-            const topCard = col.querySelector<HTMLElement>(".card:last-child");
-            if (topCard && tryAutoFoundationFromElRef.current(topCard)) {
-              didMove = true;
-              break;
-            }
-          }
-        }
-
-        if (!didMove) break;
-
-        // Wait for FLIP to finish (or timeout) before attempting the next move.
-        await waitForFlipComplete();
-
-        // If the user stopped it (button toggled), break.
-        if (!isAutoCompletingRef.current) break;
-      }
-    } finally {
-      isAutoCompletingRef.current = false;
-      setIsAutoCompleting(false);
-    }
-  }, [
-    freeCellRefs,
-    tableauColRefs,
-    isAnyModalOpen,
-    isAutoCompleting,
-    waitForFlipComplete
-  ]);
+  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   return (
     <>
@@ -553,6 +469,12 @@ function Board() {
                 drag={drag}
                 handleFreeCellPointerDown={handleFreeCellPointerDown}
                 showAcp={showAcp}
+                isAutoCompleting={isAutoCompleting}
+                runAutoComplete={runAutoComplete}
+                stopAutoComplete={stopAutoComplete}
+                seedReady={seedReady}
+                paused={paused}
+                shouldShowWinModal={shouldShowWinModal}
               />
             </>
           ) : (
@@ -575,7 +497,7 @@ function Board() {
             title="You won!"
             buttonAriaLabel="Close win dialog"
             onClose={() => {
-              if (isWon) setDismissedWinSeed(state.seed);
+              if (isFullyCollected) setDismissedWinSeed(state.seed);
               setDevForceWinModal(false);
             }}
             bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
@@ -612,7 +534,7 @@ function Board() {
               ? "Undo"
               : `Undo (${undosRemaining})`}
           </button>
-          <button
+          {/* <button
             type="button"
             className="btn btn--secondary"
             onClick={() => {
@@ -622,11 +544,11 @@ function Board() {
             disabled={!seedReady || paused || shouldShowWinModal}
           >
             {isAutoCompleting ? "Stop" : "Autocomplete"}
-          </button>
+          </button> */}
           <button
             type="button"
             className="btn btn--secondary"
-            onClick={() => setShowAcp(!showAcp)}
+            onClick={() => setShowAcpOverride((v) => !v)}
           >
             toggle acp
           </button>

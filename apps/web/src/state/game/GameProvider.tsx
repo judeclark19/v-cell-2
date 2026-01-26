@@ -39,6 +39,7 @@ type GameContextValue = {
   isAbandoned: boolean;
   setIsAbandoned: (next: boolean) => void;
   moveCount: number;
+  gameId: string;
 };
 
 type HistoryState = {
@@ -94,6 +95,10 @@ function makeNewSeed(): string {
   return crypto.randomUUID();
 }
 
+function makeNewGameId(): string {
+  return crypto.randomUUID();
+}
+
 export function useGame() {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error("useGame must be used within <GameProvider />");
@@ -106,6 +111,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Seed is initialized to a deterministic placeholder to avoid hydration mismatches.
   const [seed, setSeed] = useState<string>("seed-init");
+  const [gameId, setGameId] = useState<string>("game-init");
   const [seedReady, setSeedReady] = useState<boolean>(false);
 
   const [allowFoundationPullback, setAllowFoundationPullback] =
@@ -190,7 +196,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     didInitRandomSeedRef.current = true;
 
     const newSeed = makeNewSeed();
+    const newGameId = makeNewGameId();
     setSeed(newSeed);
+    setGameId(newGameId);
 
     // New session on mount.
     setHistory({ present: createGame(newSeed, rules), past: [] });
@@ -218,7 +226,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
 
     const newSeed = makeNewSeed();
+    const newGameId = makeNewGameId();
     setSeed(newSeed);
+    setGameId(newGameId);
 
     setHistory({ present: createGame(newSeed, rules), past: [] });
     setTimeElapsedMs(0);
@@ -374,7 +384,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const newDeal = () => {
     const newSeed = makeNewSeed();
+    const newGameId = makeNewGameId();
     setSeed(newSeed);
+    setGameId(newGameId);
 
     setHistory({ present: createGame(newSeed, rules), past: [] });
     setTimeElapsedMs(0);
@@ -415,7 +427,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({
-      gameId: seed,
+      gameId,
       seed,
       rules: state.rules,
       hasStarted,
@@ -440,7 +452,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       undosUsed,
       timeElapsedMs,
       startedAtMs,
-      endedAtMs
+      endedAtMs,
+      gameId
     ]
   );
 
@@ -527,7 +540,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     hasStarted,
     isAbandoned,
     setIsAbandoned,
-    moveCount
+    moveCount,
+    gameId
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
