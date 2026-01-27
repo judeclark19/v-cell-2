@@ -1,7 +1,7 @@
 import type { Card as EngineCard, PileRef } from "@vcell/engine";
 import { useContext } from "react";
 import Card from "./Card";
-import { BoardKbAttrsContext } from "./Board";
+import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 
 type FreeCellIndex = 0 | 1 | 2 | 3 | 4;

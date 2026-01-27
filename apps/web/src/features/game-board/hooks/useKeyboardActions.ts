@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 
 import { commitBoardDrop } from "@/features/game-board/hooks/useBoardDrop";
-import { getCardIdFromEl } from "@/features/game-board/dom/boardDomMapping";
+import { getCardIdFromEl } from "@/features/game-board/dom/domMappingCore";
 import { findFocusableCardElById } from "@/features/game-board/keyboard/keyboardFocusUtils";
 /**
  * The goal of this hook is to own *actions* (effects on the game),

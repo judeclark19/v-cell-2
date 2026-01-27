@@ -1,11 +1,8 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  createContext
-} from "react";
+  BoardKbAttrsContext,
+  useBoardKbAttrs
+} from "@/features/game-board/keyboard/boardKbAttrs";
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
 import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
@@ -60,17 +57,6 @@ export function throwConfetti() {
   });
 }
 
-export type BoardKbAttrsContextValue = {
-  kbCarrying: boolean;
-  isPlayableCardId: (cardId: string) => boolean;
-  getKbAttrsForEl: (
-    el: HTMLElement
-  ) => { focusable: boolean; dropTarget: boolean } | null;
-};
-
-export const BoardKbAttrsContext =
-  createContext<BoardKbAttrsContextValue | null>(null);
-
 function useFlipSequencer() {
   const flipCompleteResolverRef = useRef<((runId: number) => void) | null>(
     null
@@ -124,46 +110,6 @@ function Board() {
   const playable = useMemo(() => getPlayableMask(state), [state]);
 
   const legalMoves = useMemo(() => getLegalMoves(state), [state]);
-
-  const playableCardIdSet = useMemo(() => {
-    const ids = new Set<string>();
-
-    // Tableau
-    for (let col = 0; col < state.tableau.length; col++) {
-      const pile = state.tableau[col];
-      const playableCol = playable.tableau[col] ?? [];
-      for (let i = 0; i < pile.length; i++) {
-        if (playableCol[i]) ids.add(pile[i].card.id);
-      }
-    }
-
-    // Free cells
-    for (let i = 0; i < state.freeCells.length; i++) {
-      const c = state.freeCells[i];
-      if (c && playable.freeCells[i]) ids.add(c.id);
-    }
-
-    // Foundations (top card)
-    for (let i = 0; i < state.foundations.length; i++) {
-      const pile = state.foundations[i];
-      const top = pile.cards[pile.cards.length - 1];
-      if (top && playable.foundations[i]) ids.add(top.id);
-    }
-
-    return ids;
-  }, [
-    state.tableau,
-    state.freeCells,
-    state.foundations,
-    playable.tableau,
-    playable.freeCells,
-    playable.foundations
-  ]);
-
-  const isPlayableCardId = useCallback(
-    (cardId: string) => playableCardIdSet.has(cardId),
-    [playableCardIdSet]
-  );
 
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
 
@@ -325,6 +271,19 @@ function Board() {
     ((el: HTMLElement) => boolean) | null
   >(null);
 
+  const isLegalDropTargetEl = useCallback(
+    (el: HTMLElement) => isLegalKeyboardDropTargetElRef.current?.(el) ?? false,
+    []
+  );
+
+  const { kbAttrsContextValue } = useBoardKbAttrs({
+    kbCarrying,
+    state,
+    playable,
+    getKbAttrsForElCore: getKbAttrsForEl,
+    isLegalDropTargetEl
+  });
+
   const {
     boardRef,
     focusablesRef,
@@ -341,8 +300,7 @@ function Board() {
     playable,
     kbCarrying,
     getNodeMeta,
-    isLegalDropTargetEl: (el) =>
-      isLegalKeyboardDropTargetElRef.current?.(el) ?? false
+    isLegalDropTargetEl
   });
 
   const {
@@ -374,27 +332,6 @@ function Board() {
   useEffect(() => {
     isLegalKeyboardDropTargetElRef.current = isLegalKeyboardDropTargetEl;
   }, [isLegalKeyboardDropTargetEl]);
-
-  const getKbAttrsForElement = useCallback(
-    (el: HTMLElement) => {
-      return getKbAttrsForEl(el, {
-        kbCarrying,
-        isPlayableCardId,
-        isLegalDropTargetEl: (el) =>
-          isLegalKeyboardDropTargetElRef.current?.(el) ?? false
-      });
-    },
-    [getKbAttrsForEl, kbCarrying, isPlayableCardId]
-  );
-
-  const kbAttrsContextValue = useMemo<BoardKbAttrsContextValue>(
-    () => ({
-      kbCarrying,
-      isPlayableCardId,
-      getKbAttrsForEl: getKbAttrsForElement
-    }),
-    [kbCarrying, isPlayableCardId, getKbAttrsForElement]
-  );
 
   // --- FLIP animation for instant (non-drag) moves ---
   useBoardFlipAnimation({

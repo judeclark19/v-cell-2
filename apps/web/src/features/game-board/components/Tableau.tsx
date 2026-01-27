@@ -1,8 +1,8 @@
 import type { Card as EngineCard, PileRef, TableauIndex } from "@vcell/engine";
 import { useContext } from "react";
 import Card from "./Card";
-import { BoardKbAttrsContext } from "./Board";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
+import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 
 type TableauProps = {
   state: {

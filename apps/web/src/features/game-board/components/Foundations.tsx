@@ -2,7 +2,7 @@ import type React from "react";
 import { useContext } from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
-import { BoardKbAttrsContext } from "./Board";
+import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 
 type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;

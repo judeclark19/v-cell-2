@@ -16,7 +16,7 @@ import {
   type KbAttrs,
   type KbDrag,
   type TableauCard
-} from "../dom/boardDomMapping";
+} from "../dom/domMappingCore";
 
 export type BoardNodeMeta =
   | {
