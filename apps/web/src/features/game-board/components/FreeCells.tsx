@@ -1,5 +1,7 @@
 import type { Card as EngineCard, PileRef } from "@vcell/engine";
+import { useContext } from "react";
 import Card from "./Card";
+import { BoardKbAttrsContext } from "./Board";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 
 type FreeCellIndex = 0 | 1 | 2 | 3 | 4;
@@ -37,6 +39,8 @@ function FreeCells({
   paused,
   shouldShowWinModal
 }: FreeCellsProps) {
+  const kbAttrsCtx = useContext(BoardKbAttrsContext);
+  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
   return (
     <div className="board-bottom" aria-label="Free cells">
       <div
@@ -66,8 +70,8 @@ function FreeCells({
               key={i}
               className="pile-cell"
               ref={(el) => setFreeCellRef(i - 1, el)}
-              data-kb-focusable={!card ? "true" : undefined}
-              role={!card ? "button" : undefined}
+              data-kb-focusable={kbCarrying && !card ? "true" : undefined}
+              role={kbCarrying && !card ? "button" : undefined}
               aria-label={
                 !card ? `Free cell ${i} empty slot` : `Free cell ${i}`
               }
@@ -80,6 +84,9 @@ function FreeCells({
                 <Card
                   card={card}
                   playable={playableFreeCells[i - 1]} // -1 accounts for spacer
+                  data-kb-focusable={
+                    playableFreeCells[i - 1] ? "true" : "false"
+                  }
                   className="pile-card"
                   onActivate={() =>
                     tryAutoFoundation({
@@ -88,7 +95,6 @@ function FreeCells({
                     })
                   }
                   onPointerDownCard={(e) => handleFreeCellPointerDown(e, i - 1)}
-                  disableInternalDrag
                   style={
                     drag.active &&
                     drag.source?.type === "freecell" &&

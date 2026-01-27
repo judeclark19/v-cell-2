@@ -1,6 +1,8 @@
 import type React from "react";
+import { useContext } from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
+import { BoardKbAttrsContext } from "./Board";
 
 type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;
@@ -45,6 +47,9 @@ function Foundations({
   isWon,
   isAbandoned
 }: FoundationsProps) {
+  const kbAttrsCtx = useContext(BoardKbAttrsContext);
+  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
+
   const formatElapsed = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -115,8 +120,10 @@ function Foundations({
                   key={i}
                   className="pile-cell"
                   ref={(el) => setFoundationRef(foundationIndex, el)}
-                  data-kb-focusable={isEmptySlot ? "true" : undefined}
-                  role={isEmptySlot ? "button" : undefined}
+                  data-kb-focusable={
+                    kbCarrying && isEmptySlot ? "true" : undefined
+                  }
+                  role={kbCarrying && isEmptySlot ? "button" : undefined}
                   aria-label={
                     isEmptySlot
                       ? `Foundation ${foundationIndex + 1} empty slot`
@@ -138,7 +145,6 @@ function Foundations({
                               card={underlayCard}
                               className="pile-card pile-card--underlay"
                               playable={false}
-                              disableInternalDrag={true}
                             />
                           )}
 
@@ -148,6 +154,11 @@ function Foundations({
                               pullbackDisabled ? " is-pullback-disabled" : ""
                             }`}
                             playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
+                            data-kb-focusable={
+                              playableFoundations[foundationIndex]
+                                ? "true"
+                                : "false"
+                            }
                             onPointerDownCard={
                               pullbackDisabled
                                 ? undefined
@@ -157,7 +168,6 @@ function Foundations({
                                       foundationIndex
                                     )
                             }
-                            disableInternalDrag={pullbackDisabled}
                           />
                         </>
                       );

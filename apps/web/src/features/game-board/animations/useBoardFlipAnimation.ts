@@ -9,8 +9,6 @@ import * as React from "react";
  * - Skips FLIP once after pointer-drag commits.
  * - Skips FLIP while pointer-drag overlay is active/pending.
  * - Supports "no flip" wrappers for newDeal/restart.
- * - Uses a ghost/clone animation for cards landing in foundation/freecell regions
- *   so the destination slot doesn't appear empty during the animation.
  *
  * Assumptions:
  * - Card DOM nodes include `.card[data-card-id="..."]`
@@ -40,7 +38,7 @@ export type UseBoardFlipAnimationArgs = {
   getNodeMeta: (el: HTMLElement) => BoardNodeMeta | null;
 
   // The existing “skip FLIP once after pointer drag commits” ref from Board
-  suppressFlipOnceRef: React.MutableRefObject<boolean>;
+  consumeSuppressFlipOnce: () => boolean;
 
   /** Called when a FLIP run finishes (or is skipped). Useful for sequencing animations. */
   onFlipComplete?: (runId: number) => void;
@@ -56,7 +54,7 @@ export function useBoardFlipAnimation({
   kbCarrying,
   drag,
   getNodeMeta,
-  suppressFlipOnceRef,
+  consumeSuppressFlipOnce,
   onFlipComplete,
   prevCardRectsRef
 }: UseBoardFlipAnimationArgs) {
@@ -74,11 +72,6 @@ export function useBoardFlipAnimation({
         }
       }) as React.MutableRefObject<Map<string, DOMRect>>,
     [prevRects]
-  );
-
-  // Track overlapping ghost flights per card id so we don't permanently restore to opacity "0".
-  const ghostHideRef = React.useRef(
-    new Map<string, { count: number; prevOpacity: string }>()
   );
 
   // Tokenize each FLIP run so stale transitionend handlers can't clobber newer runs.
@@ -117,14 +110,6 @@ export function useBoardFlipAnimation({
     // If any previous run left transient styles, ensure they don't accumulate forever.
     // We only clean up elements that still claim to belong to an older run.
     for (const el of cardEls) {
-      // Self-heal: if a prior ghost flight hid the real card but cleanup was interrupted,
-      // restore opacity at the start of a new run.
-      if (el.dataset.ghostHidden === "1") {
-        el.style.opacity = el.dataset.ghostPrevOpacity ?? "";
-        delete el.dataset.ghostHidden;
-        delete el.dataset.ghostPrevOpacity;
-      }
-
       if (el.dataset.flipRunId && el.dataset.flipRunId !== runIdStr) {
         // Stale run marker; clear only transient bits.
         el.style.transition = "";
@@ -174,10 +159,9 @@ export function useBoardFlipAnimation({
     }
 
     // If the last committed move came from pointer dragging, skip FLIP once.
-    if (suppressFlipOnceRef.current) {
-      suppressFlipOnceRef.current = false;
+
+    if (consumeSuppressFlipOnce()) {
       if (didRectsChange) setPrevRects(nextRects);
-      onFlipComplete?.(runId);
       return;
     }
 
@@ -187,105 +171,6 @@ export function useBoardFlipAnimation({
       onFlipComplete?.(runId);
       return;
     }
-
-    // Ghost overlay helper for foundation/freecell landings
-    const spawnGhost = (sourceEl: HTMLElement, from: DOMRect, to: DOMRect) => {
-      const cardId = sourceEl.getAttribute("data-card-id") || "";
-
-      // Snapshot opacity only on the first overlapping hide for this card.
-      let entry = cardId ? ghostHideRef.current.get(cardId) : null;
-      if (cardId) {
-        if (entry) {
-          entry.count += 1;
-        } else {
-          entry = { count: 1, prevOpacity: sourceEl.style.opacity };
-          ghostHideRef.current.set(cardId, entry);
-        }
-      } else {
-        // Fallback if somehow missing a card id.
-        entry = { count: 1, prevOpacity: sourceEl.style.opacity };
-      }
-
-      // Clone BEFORE hiding so the ghost remains visible.
-      const ghost = sourceEl.cloneNode(true) as HTMLElement;
-
-      // Hide the real destination card only for the first overlapping flight.
-      const shouldHideReal = cardId
-        ? ghostHideRef.current.get(cardId)?.count === 1
-        : true;
-      if (shouldHideReal) {
-        // Mark hidden state so a later FLIP run can restore if this flight is interrupted.
-        sourceEl.dataset.ghostHidden = "1";
-        sourceEl.dataset.ghostPrevOpacity = entry?.prevOpacity ?? "";
-        sourceEl.style.opacity = "0";
-      }
-      // Ensure the clone stays visible even if the real is hidden.
-      ghost.style.opacity = entry?.prevOpacity ?? "";
-
-      // Ensure the clone doesn't keep any transforms/transitions from the real node.
-      ghost.style.transition = "none";
-      ghost.style.transform = "translate3d(0, 0, 0)";
-
-      ghost.style.position = "fixed";
-      ghost.style.left = `${from.left}px`;
-      ghost.style.top = `${from.top}px`;
-      ghost.style.width = `${from.width}px`;
-      ghost.style.height = `${from.height}px`;
-      ghost.style.margin = "0";
-      ghost.style.pointerEvents = "none";
-      ghost.style.zIndex = "1000";
-      ghost.style.willChange = "transform";
-
-      pendingAnimations += 1;
-      document.body.appendChild(ghost);
-
-      const dx = to.left - from.left;
-      const dy = to.top - from.top;
-
-      // Play on next frame.
-      requestAnimationFrame(() => {
-        ghost.style.transition = "transform 160ms ease";
-        ghost.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
-      });
-
-      let finished = false;
-      const finish = () => {
-        if (finished) return;
-        finished = true;
-
-        ghost.removeEventListener("transitionend", onEnd);
-        ghost.remove();
-
-        // Restore opacity only when the last overlapping flight completes.
-        if (cardId) {
-          const cur = ghostHideRef.current.get(cardId);
-          if (cur) {
-            cur.count -= 1;
-            if (cur.count <= 0) {
-              sourceEl.style.opacity = cur.prevOpacity;
-              delete sourceEl.dataset.ghostHidden;
-              delete sourceEl.dataset.ghostPrevOpacity;
-              ghostHideRef.current.delete(cardId);
-            }
-          } else {
-            sourceEl.style.opacity = entry?.prevOpacity ?? "";
-            delete sourceEl.dataset.ghostHidden;
-            delete sourceEl.dataset.ghostPrevOpacity;
-          }
-        } else {
-          sourceEl.style.opacity = entry?.prevOpacity ?? "";
-          delete sourceEl.dataset.ghostHidden;
-          delete sourceEl.dataset.ghostPrevOpacity;
-        }
-        pendingAnimations -= 1;
-        maybeComplete();
-      };
-
-      const onEnd = () => finish();
-      ghost.addEventListener("transitionend", onEnd);
-      // Fallback if transitionend doesn't fire.
-      window.setTimeout(finish, 220);
-    };
 
     // Invert: move elements back to where they used to be.
     for (const el of cardEls) {
@@ -298,14 +183,6 @@ export function useBoardFlipAnimation({
       const dx = prev.left - next.left;
       const dy = prev.top - next.top;
       if (dx === 0 && dy === 0) continue;
-
-      // If the card landed in a foundation/freecell, animate a clone overlay instead of
-      // translating the real DOM node (prevents the destination slot from appearing empty).
-      const meta = getNodeMeta(el);
-      if (meta?.region === "foundation" || meta?.region === "freecell") {
-        spawnGhost(el, prev, next);
-        continue;
-      }
 
       pendingAnimations += 1;
       // Set the inverted transform with no transition.
@@ -386,7 +263,7 @@ export function useBoardFlipAnimation({
     drag.pending,
     boardRef,
     getNodeMeta,
-    suppressFlipOnceRef,
+    consumeSuppressFlipOnce,
     prevRects,
     onFlipComplete
   ]);

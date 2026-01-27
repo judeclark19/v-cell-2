@@ -12,6 +12,8 @@ import {
   findFoundationIndexForEl,
   findFreeCellIndexForEl,
   findTableauSourceForEl,
+  getKbAttrsForMeta,
+  type KbAttrs,
   type KbDrag,
   type TableauCard
 } from "../dom/boardDomMapping";
@@ -37,6 +39,14 @@ export interface UseBoardDomMappingArgs {
   freeCells: Array<Card | null>;
   foundations: Array<{ cards: Card[] }>;
 }
+
+export type GetKbAttrsContext = {
+  kbCarrying: boolean;
+  /** True if the card id is playable (not necessarily a legal move right now). */
+  isPlayableCardId: (cardId: string) => boolean;
+  /** Optional: true if the element represents a legal drop target for the current carry source. */
+  isLegalDropTargetEl?: (el: HTMLElement) => boolean;
+};
 
 /**
  * Drop-in extraction of the DOM→engine mapping logic that used to live inline in Board.tsx.
@@ -157,10 +167,50 @@ export function useBoardDomMapping({
     [tableau, tableauColRefs, freeCellRefs, foundationRefs]
   );
 
+  const getKbAttrsForEl = useCallback(
+    (el: HTMLElement, ctx: GetKbAttrsContext): KbAttrs | null => {
+      const meta = getNodeMeta(el);
+      if (!meta) return null;
+
+      const kbCarrying = ctx.kbCarrying;
+
+      // Empty slot detection by region.
+      let isEmptySlot = false;
+      if (meta.region === "tableau") {
+        // tableauIndex === -1 represents the empty slot / column container.
+        isEmptySlot = meta.tableauIndex === -1;
+      } else if (meta.region === "freecell") {
+        isEmptySlot = freeCells[meta.index] == null;
+      } else if (meta.region === "foundation") {
+        isEmptySlot = foundations[meta.index]?.cards.length === 0;
+      }
+
+      // Determine playable based on a card element’s data-card-id.
+      const cardEl =
+        (el.closest?.(".card[data-card-id]") as HTMLElement | null) ||
+        (el.querySelector?.(".card[data-card-id]") as HTMLElement | null);
+      const cardId = cardEl?.getAttribute("data-card-id") ?? null;
+      const playable = cardId ? ctx.isPlayableCardId(cardId) : false;
+
+      const isLegalDropTarget = Boolean(
+        kbCarrying && ctx.isLegalDropTargetEl?.(el)
+      );
+
+      return getKbAttrsForMeta({
+        kbCarrying,
+        playable,
+        isEmptySlot,
+        isLegalDropTarget
+      });
+    },
+    [getNodeMeta, freeCells, foundations]
+  );
+
   return {
     buildPileRefFromEl,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-    getNodeMeta
+    getNodeMeta,
+    getKbAttrsForEl
   };
 }

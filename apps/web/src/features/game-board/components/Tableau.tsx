@@ -1,5 +1,7 @@
 import type { Card as EngineCard, PileRef, TableauIndex } from "@vcell/engine";
+import { useContext } from "react";
 import Card from "./Card";
+import { BoardKbAttrsContext } from "./Board";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 
 type TableauProps = {
@@ -27,6 +29,8 @@ function Tableau({
   setTableauColRef
 }: TableauProps) {
   const tableauSource = drag.source?.type === "tableau" ? drag.source : null;
+  const kbAttrsCtx = useContext(BoardKbAttrsContext);
+  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
 
   return (
     <div className="tableau-scroll" aria-label="Tableau">
@@ -56,7 +60,9 @@ function Tableau({
             >
               <div
                 className="tableau-empty-slot"
-                data-kb-focusable={showEmptySlot ? "true" : "false"}
+                data-kb-focusable={
+                  kbCarrying && showEmptySlot ? "true" : "false"
+                }
                 role="button"
                 aria-hidden={!showEmptySlot}
                 aria-label={`Tableau column ${colIndex + 1} empty slot`}
@@ -78,7 +84,6 @@ function Tableau({
                       card={tc.card}
                       faceDown={tc.faceDown}
                       playable={playable.tableau[colIndex][tcIndex]}
-                      disableInternalDrag
                       className="card--ghost"
                       style={{ visibility: "hidden" }}
                     />
@@ -91,6 +96,9 @@ function Tableau({
                     card={tc.card}
                     faceDown={tc.faceDown}
                     playable={playable.tableau[colIndex][tcIndex]}
+                    data-kb-focusable={
+                      playable.tableau[colIndex][tcIndex] ? "true" : "false"
+                    }
                     style={{ zIndex: tcIndex + 1 }}
                     onActivate={() =>
                       tryAutoFoundation({
@@ -101,7 +109,6 @@ function Tableau({
                     onPointerDownCard={(e) =>
                       handleTableauPointerDown(e, colIndex, tcIndex)
                     }
-                    disableInternalDrag
                   />
                 );
               })}

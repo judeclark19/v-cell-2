@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  createContext
+} from "react";
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
 import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
@@ -53,6 +60,46 @@ export function throwConfetti() {
   });
 }
 
+export type BoardKbAttrsContextValue = {
+  kbCarrying: boolean;
+  isPlayableCardId: (cardId: string) => boolean;
+  getKbAttrsForEl: (
+    el: HTMLElement
+  ) => { focusable: boolean; dropTarget: boolean } | null;
+};
+
+export const BoardKbAttrsContext =
+  createContext<BoardKbAttrsContextValue | null>(null);
+
+function useFlipSequencer() {
+  const flipCompleteResolverRef = useRef<((runId: number) => void) | null>(
+    null
+  );
+
+  const waitForFlipComplete = useCallback((): Promise<void> => {
+    return new Promise((resolve) => {
+      // Failsafe so we never hang if transitionend doesn’t fire.
+      const timeoutId = window.setTimeout(() => {
+        flipCompleteResolverRef.current = null;
+        resolve();
+      }, 1000);
+
+      flipCompleteResolverRef.current = () => {
+        window.clearTimeout(timeoutId);
+        flipCompleteResolverRef.current = null;
+        resolve();
+      };
+    });
+  }, []);
+
+  const onFlipComplete = useCallback((runId: number) => {
+    // Resolve the most recent waiter (if any).
+    flipCompleteResolverRef.current?.(runId);
+  }, []);
+
+  return { waitForFlipComplete, onFlipComplete };
+}
+
 function Board() {
   const {
     state,
@@ -77,6 +124,46 @@ function Board() {
   const playable = useMemo(() => getPlayableMask(state), [state]);
 
   const legalMoves = useMemo(() => getLegalMoves(state), [state]);
+
+  const playableCardIdSet = useMemo(() => {
+    const ids = new Set<string>();
+
+    // Tableau
+    for (let col = 0; col < state.tableau.length; col++) {
+      const pile = state.tableau[col];
+      const playableCol = playable.tableau[col] ?? [];
+      for (let i = 0; i < pile.length; i++) {
+        if (playableCol[i]) ids.add(pile[i].card.id);
+      }
+    }
+
+    // Free cells
+    for (let i = 0; i < state.freeCells.length; i++) {
+      const c = state.freeCells[i];
+      if (c && playable.freeCells[i]) ids.add(c.id);
+    }
+
+    // Foundations (top card)
+    for (let i = 0; i < state.foundations.length; i++) {
+      const pile = state.foundations[i];
+      const top = pile.cards[pile.cards.length - 1];
+      if (top && playable.foundations[i]) ids.add(top.id);
+    }
+
+    return ids;
+  }, [
+    state.tableau,
+    state.freeCells,
+    state.foundations,
+    playable.tableau,
+    playable.freeCells,
+    playable.foundations
+  ]);
+
+  const isPlayableCardId = useCallback(
+    (cardId: string) => playableCardIdSet.has(cardId),
+    [playableCardIdSet]
+  );
 
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
 
@@ -116,30 +203,7 @@ function Board() {
     wasWinModalOpenRef.current = isOpen;
   }, [shouldShowWinModal]);
 
-  const flipCompleteResolverRef = useRef<((runId: number) => void) | null>(
-    null
-  );
-
-  const waitForFlipComplete = useCallback((): Promise<void> => {
-    return new Promise((resolve) => {
-      // Failsafe so we never hang if transitionend doesn’t fire.
-      const timeoutId = window.setTimeout(() => {
-        flipCompleteResolverRef.current = null;
-        resolve();
-      }, 1000);
-
-      flipCompleteResolverRef.current = () => {
-        window.clearTimeout(timeoutId);
-        flipCompleteResolverRef.current = null;
-        resolve();
-      };
-    });
-  }, []);
-
-  const onFlipComplete = useCallback((runId: number) => {
-    // Resolve the most recent waiter (if any).
-    flipCompleteResolverRef.current?.(runId);
-  }, []);
+  const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
 
   const {
     tableauColRefs,
@@ -154,7 +218,8 @@ function Board() {
     buildPileRefFromEl,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-    getNodeMeta
+    getNodeMeta,
+    getKbAttrsForEl
   } = useBoardDomMapping({
     tableauColRefs,
     freeCellRefs,
@@ -184,11 +249,40 @@ function Board() {
 
   const prevCardRectsRef = useRef<Map<string, DOMRect>>(new Map());
   // If a pointer drag just committed a move, skip FLIP for the next render.
-  const suppressFlipOnceRef = useRef(false);
+  const [suppressFlipOnce, setSuppressFlipOnce] = useState(false);
+
+  const consumeSuppressFlipOnce = useCallback(() => {
+    if (suppressFlipOnce) {
+      setSuppressFlipOnce(false);
+      return true;
+    }
+    return false;
+  }, [suppressFlipOnce]);
+
+  // --- Move orchestrator (policy only) ---
+  const commitMoveFromKeyboard = useCallback(
+    (move: Parameters<typeof dispatchMove>[0]) => {
+      // Keyboard moves should animate via FLIP (do NOT set suppressFlipOnceRef here).
+      dispatchMove(move);
+    },
+    [dispatchMove]
+  );
+
+  const commitMoveFromPointerDrop = useCallback(
+    (...args: Parameters<typeof onDrop>) => {
+      const didCommit = onDrop(...args);
+      // Pointer drag already provided its own visual motion via the drag overlay.
+      // Skip FLIP once so we don't double-animate.
+      if (didCommit) setSuppressFlipOnce(true);
+      return didCommit;
+    },
+    [onDrop]
+  );
+  // --- end move orchestrator ---
 
   const newDealNoFlip = useCallback(() => {
     // New deal should not animate card movement.
-    suppressFlipOnceRef.current = true;
+    setSuppressFlipOnce(true);
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
@@ -199,7 +293,7 @@ function Board() {
 
   const restartNoFlip = useCallback(() => {
     // Restarting should not animate card movement.
-    suppressFlipOnceRef.current = true;
+    setSuppressFlipOnce(true);
     prevCardRectsRef.current = new Map();
     setDismissedWinSeed(null);
     setDevForceWinModal(false);
@@ -219,11 +313,7 @@ function Board() {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
-    onDrop: (...args: Parameters<typeof onDrop>) => {
-      const didCommit = onDrop(...args);
-      if (didCommit) suppressFlipOnceRef.current = true;
-      return didCommit;
-    }
+    onDrop: commitMoveFromPointerDrop
   });
 
   const foundationsRow = buildFoundationsRow(state);
@@ -259,7 +349,7 @@ function Board() {
     kbCarrying,
     setKbCarrying,
     legalMoves,
-    dispatchMove,
+    dispatchMove: commitMoveFromKeyboard,
     undo,
     canUndo,
     newDeal: newDealNoFlip,
@@ -274,6 +364,33 @@ function Board() {
     isInputSuppressed: isAnyModalOpen
   });
 
+  const getKbAttrsForElement = useCallback(
+    (el: HTMLElement) => {
+      return getKbAttrsForEl(el, {
+        kbCarrying,
+        isPlayableCardId
+        // isLegalDropTargetEl: (el) => ... (wire later)
+      });
+    },
+    [getKbAttrsForEl, kbCarrying, isPlayableCardId]
+  );
+
+  const kbAttrsContextValue = useMemo<BoardKbAttrsContextValue>(
+    () => ({
+      kbCarrying,
+      isPlayableCardId,
+      getKbAttrsForEl: getKbAttrsForElement
+    }),
+    [kbCarrying, isPlayableCardId, getKbAttrsForElement]
+  );
+
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>(".tableau-col");
+    if (!el) return;
+
+    console.log("KB attrs for tableau-col:", getKbAttrsForElement(el));
+  }, [getKbAttrsForElement]);
+
   // --- FLIP animation for instant (non-drag) moves ---
   useBoardFlipAnimation({
     boardRef,
@@ -282,7 +399,7 @@ function Board() {
     kbCarrying,
     drag,
     getNodeMeta,
-    suppressFlipOnceRef,
+    consumeSuppressFlipOnce,
     onFlipComplete,
     prevCardRectsRef
   });
@@ -328,184 +445,185 @@ function Board() {
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
         key={seedReady ? state.seed : "loading"}
       >
-        <div
-          className="board"
-          aria-label="Game board"
-          ref={boardRef}
-          tabIndex={isInputSuppressed ? -1 : 0}
-          onKeyDown={(e) => {
-            if (isInputSuppressed) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-            onBoardKeyDown(e);
-          }}
-          onPointerDownCapture={(e) => {
-            if (isInputSuppressed) return;
-            const root = boardRef.current;
-            if (!root) return;
+        <BoardKbAttrsContext.Provider value={kbAttrsContextValue}>
+          <div
+            className="board"
+            aria-label="Game board"
+            ref={boardRef}
+            tabIndex={isInputSuppressed ? -1 : 0}
+            onKeyDown={(e) => {
+              if (isInputSuppressed) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              onBoardKeyDown(e);
+            }}
+            onPointerDownCapture={(e) => {
+              if (isInputSuppressed) return;
+              const root = boardRef.current;
+              if (!root) return;
 
-            const target = e.target as HTMLElement | null;
-            if (!target) {
-              focusFirstPlayable();
-              return;
-            }
+              const target = e.target as HTMLElement | null;
+              if (!target) {
+                focusFirstPlayable();
+                return;
+              }
 
-            // Prefer focusing the nearest element that could be in the focusables list.
-            const candidate =
-              (target.closest(
-                "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
-              ) as HTMLElement | null) || target;
+              // Prefer focusing the nearest element that could be in the focusables list.
+              const candidate =
+                (target.closest(
+                  "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
+                ) as HTMLElement | null) || target;
 
-            const focused = focusElIfFocusable(candidate);
-            if (!focused) {
-              // Clicking in empty space should still "enter" keyboard mode.
-              focusFirstPlayable();
-            }
-          }}
-          onFocusCapture={() => {
-            if (isInputSuppressed) return;
-            hadBoardFocusRef.current = true;
-            onBoardFocusCapture();
-          }}
-          onBlurCapture={(e) => {
-            const root = boardRef.current;
-            // If focus is leaving the board entirely, clear the flag.
-            if (root && !root.contains(e.relatedTarget as Node | null)) {
-              hadBoardFocusRef.current = false;
-              setKbCarrying(false);
-              clearKbCarryVisuals();
-            }
-          }}
-          onFocus={(e) => {
-            const els = focusablesRef.current;
-            const target = e.target as HTMLElement;
-            const idx = els.indexOf(target);
-            if (idx >= 0) {
-              setActiveFocusIndex(idx);
-              lastFocusPointRef.current = getCenter(target);
+              const focused = focusElIfFocusable(candidate);
+              if (!focused) {
+                // Clicking in empty space should still "enter" keyboard mode.
+                focusFirstPlayable();
+              }
+            }}
+            onFocusCapture={() => {
+              if (isInputSuppressed) return;
+              hadBoardFocusRef.current = true;
+              onBoardFocusCapture();
+            }}
+            onBlurCapture={(e) => {
+              const root = boardRef.current;
+              // If focus is leaving the board entirely, clear the flag.
+              if (root && !root.contains(e.relatedTarget as Node | null)) {
+                hadBoardFocusRef.current = false;
+                setKbCarrying(false);
+                clearKbCarryVisuals();
+              }
+            }}
+            onFocus={(e) => {
+              const els = focusablesRef.current;
+              const target = e.target as HTMLElement;
+              const idx = els.indexOf(target);
+              if (idx >= 0) {
+                setActiveFocusIndex(idx);
+                lastFocusPointRef.current = getCenter(target);
 
-              if (kbCarrying) {
-                if (target !== kbCarriedElRef.current) {
-                  setKeyboardDropTarget(target);
-                } else {
-                  setKeyboardDropTarget(null);
+                if (kbCarrying) {
+                  if (target !== kbCarriedElRef.current) {
+                    setKeyboardDropTarget(target);
+                  } else {
+                    setKeyboardDropTarget(null);
+                  }
                 }
               }
-            }
-          }}
-        >
-          {seedReady ? (
-            <>
-              {/* Foundations on top */}
-              <Foundations
-                hasStarted={hasStarted}
-                timeElapsedMs={timeElapsedMs}
-                foundationsRow={foundationsRow}
-                foundations={state.foundations}
-                drag={drag}
-                playableFoundations={playable.foundations}
-                allowFoundationPullback={allowFoundationPullback}
-                showTimer={showTimer}
-                setFoundationRef={setFoundationRef}
-                handleFoundationPointerDown={handleFoundationPointerDown}
-                onPause={() => setPaused(true)}
-                isWon={isWon}
-                isAbandoned={false}
-              />
-
-              {/* Tableau in the middle */}
-              <Tableau
-                state={state}
-                playable={playable}
-                drag={drag}
-                handleTableauPointerDown={handleTableauPointerDown}
-                tryAutoFoundation={tryAutoFoundation}
-                setTableauColRef={setTableauColRef}
-                isWon={isWon}
-              />
-
-              {/* Drag overlay layer */}
-              {(drag.active || drag.pending) && drag.stack.length > 0 && (
-                <div
-                  className={`drag-layer ${
-                    drag.isReturning ? "is-returning" : ""
-                  }`}
-                  onTransitionEnd={() => {
-                    if (drag.isReturning) finalizeDrag();
-                  }}
-                  style={{
-                    left: 0,
-                    top: 0,
-                    transform: `translate3d(${drag.baseLeft + drag.x}px, ${
-                      drag.baseTop + drag.y
-                    }px, 0)`
-                  }}
-                  aria-hidden="true"
-                >
-                  <div className="drag-layer__stack tableau-col">
-                    {drag.stack.map((tc, i) => (
-                      <Card
-                        key={tc.card.id}
-                        card={tc.card}
-                        faceDown={tc.faceDown}
-                        playable
-                        disableInternalDrag
-                        // Ensure the stack keeps its normal spacing
-                        style={{ zIndex: i + 1 }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Free cells on bottom */}
-              <FreeCells
-                freeCellsRow={freeCellsRow}
-                playableFreeCells={playable.freeCells}
-                tryAutoFoundation={tryAutoFoundation}
-                setFreeCellRef={setFreeCellRef}
-                drag={drag}
-                handleFreeCellPointerDown={handleFreeCellPointerDown}
-                showAcp={showAcp}
-                isAutoCompleting={isAutoCompleting}
-                runAutoComplete={runAutoComplete}
-                stopAutoComplete={stopAutoComplete}
-                seedReady={seedReady}
-                paused={paused}
-                shouldShowWinModal={shouldShowWinModal}
-              />
-            </>
-          ) : (
-            <div className="board-loading" aria-label="Loading deal" />
-          )}
-        </div>
-        {paused && (
-          <ModalOverlay
-            overlayAriaLabel="Game paused"
-            title="Paused"
-            buttonAriaLabel="Resume game"
-            onClose={() => setPaused(false)}
-            bodyText="Timer is paused. Gameplay is disabled until you resume."
-            primaryButtonLabel="Resume"
-          />
-        )}
-        {shouldShowWinModal && (
-          <ModalOverlay
-            overlayAriaLabel="Game won"
-            title="You won!"
-            buttonAriaLabel="Close win dialog"
-            onClose={() => {
-              if (isFullyCollected) setDismissedWinSeed(state.seed);
-              setDevForceWinModal(false);
             }}
-            bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
-            primaryButtonLabel="New Deal"
-            primaryButtonAction={newDealNoFlip}
-            secondaryButtonLabel="Close"
-          />
-        )}
+          >
+            {seedReady ? (
+              <>
+                {/* Foundations on top */}
+                <Foundations
+                  hasStarted={hasStarted}
+                  timeElapsedMs={timeElapsedMs}
+                  foundationsRow={foundationsRow}
+                  foundations={state.foundations}
+                  drag={drag}
+                  playableFoundations={playable.foundations}
+                  allowFoundationPullback={allowFoundationPullback}
+                  showTimer={showTimer}
+                  setFoundationRef={setFoundationRef}
+                  handleFoundationPointerDown={handleFoundationPointerDown}
+                  onPause={() => setPaused(true)}
+                  isWon={isWon}
+                  isAbandoned={false}
+                />
+
+                {/* Tableau in the middle */}
+                <Tableau
+                  state={state}
+                  playable={playable}
+                  drag={drag}
+                  handleTableauPointerDown={handleTableauPointerDown}
+                  tryAutoFoundation={tryAutoFoundation}
+                  setTableauColRef={setTableauColRef}
+                  isWon={isWon}
+                />
+
+                {/* Drag overlay layer */}
+                {(drag.active || drag.pending) && drag.stack.length > 0 && (
+                  <div
+                    className={`drag-layer ${
+                      drag.isReturning ? "is-returning" : ""
+                    }`}
+                    onTransitionEnd={() => {
+                      if (drag.isReturning) finalizeDrag();
+                    }}
+                    style={{
+                      left: 0,
+                      top: 0,
+                      transform: `translate3d(${drag.baseLeft + drag.x}px, ${
+                        drag.baseTop + drag.y
+                      }px, 0)`
+                    }}
+                    aria-hidden="true"
+                  >
+                    <div className="drag-layer__stack tableau-col">
+                      {drag.stack.map((tc, i) => (
+                        <Card
+                          key={tc.card.id}
+                          card={tc.card}
+                          faceDown={tc.faceDown}
+                          playable
+                          // Ensure the stack keeps its normal spacing
+                          style={{ zIndex: i + 1 }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Free cells on bottom */}
+                <FreeCells
+                  freeCellsRow={freeCellsRow}
+                  playableFreeCells={playable.freeCells}
+                  tryAutoFoundation={tryAutoFoundation}
+                  setFreeCellRef={setFreeCellRef}
+                  drag={drag}
+                  handleFreeCellPointerDown={handleFreeCellPointerDown}
+                  showAcp={showAcp}
+                  isAutoCompleting={isAutoCompleting}
+                  runAutoComplete={runAutoComplete}
+                  stopAutoComplete={stopAutoComplete}
+                  seedReady={seedReady}
+                  paused={paused}
+                  shouldShowWinModal={shouldShowWinModal}
+                />
+              </>
+            ) : (
+              <div className="board-loading" aria-label="Loading deal" />
+            )}
+          </div>
+          {paused && (
+            <ModalOverlay
+              overlayAriaLabel="Game paused"
+              title="Paused"
+              buttonAriaLabel="Resume game"
+              onClose={() => setPaused(false)}
+              bodyText="Timer is paused. Gameplay is disabled until you resume."
+              primaryButtonLabel="Resume"
+            />
+          )}
+          {shouldShowWinModal && (
+            <ModalOverlay
+              overlayAriaLabel="Game won"
+              title="You won!"
+              buttonAriaLabel="Close win dialog"
+              onClose={() => {
+                if (isFullyCollected) setDismissedWinSeed(state.seed);
+                setDevForceWinModal(false);
+              }}
+              bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
+              primaryButtonLabel="New Deal"
+              primaryButtonAction={newDealNoFlip}
+              secondaryButtonLabel="Close"
+            />
+          )}
+        </BoardKbAttrsContext.Provider>
       </div>
 
       <section className="control" aria-label="Game actions">

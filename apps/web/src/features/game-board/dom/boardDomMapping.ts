@@ -110,6 +110,25 @@ export function buildPileRefFromEl(args: {
 
 export type TableauCard = { card: Card; faceDown: boolean };
 
+export type KbAttrs = {
+  focusable: boolean;
+  dropTarget: boolean;
+};
+
+export function getKbAttrsForMeta(args: {
+  kbCarrying: boolean;
+  playable: boolean;
+  isEmptySlot: boolean;
+  isLegalDropTarget: boolean;
+}): KbAttrs {
+  const { kbCarrying, playable, isEmptySlot, isLegalDropTarget } = args;
+
+  const focusable = kbCarrying ? playable || isEmptySlot : playable;
+  const dropTarget = kbCarrying && isLegalDropTarget;
+
+  return { focusable, dropTarget };
+}
+
 export type KbDrag = {
   source: DragSource;
   stack: TableauCard[];
