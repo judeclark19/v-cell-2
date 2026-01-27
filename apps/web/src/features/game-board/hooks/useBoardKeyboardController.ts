@@ -122,6 +122,37 @@ export function useBoardKeyboardController({
     const activeEl = document.activeElement as HTMLElement | null;
     const focusOrCarriedEl = (kbCarrying && carriedEl) || activeEl;
 
+    const boardEl = boardRef.current;
+    const hasDeclaredDropTargets = Boolean(
+      boardEl?.querySelector('[data-kb-drop-target="true"]')
+    );
+
+    const getEffectiveDropFocusEl = () => {
+      return (
+        visuals.dropTargetElRef.current ||
+        (document.activeElement as HTMLElement | null)
+      );
+    };
+
+    const isDeclaredDropTarget = (el: HTMLElement | null) => {
+      if (!el) return false;
+      return Boolean(el.closest('[data-kb-drop-target="true"]'));
+    };
+
+    const maybeCommitKeyboardDrop = () => {
+      if (!hasDeclaredDropTargets) {
+        actions.tryCommitKeyboardDrop();
+        return;
+      }
+
+      const dropFocusEl = getEffectiveDropFocusEl();
+      if (!isDeclaredDropTarget(dropFocusEl)) {
+        return;
+      }
+
+      actions.tryCommitKeyboardDrop();
+    };
+
     // F: send to foundations
     if (e.key === "f" || e.key === "F") {
       e.preventDefault();
@@ -237,7 +268,7 @@ export function useBoardKeyboardController({
       e.preventDefault();
 
       if (kbCarrying) {
-        actions.tryCommitKeyboardDrop();
+        maybeCommitKeyboardDrop();
         visuals.clearKbCarryVisuals();
         setKbCarrying(false);
         return;
@@ -254,7 +285,7 @@ export function useBoardKeyboardController({
     // Enter commits while carrying.
     if (e.key === "Enter" && kbCarrying) {
       e.preventDefault();
-      actions.tryCommitKeyboardDrop();
+      maybeCommitKeyboardDrop();
       setKbCarrying(false);
       visuals.clearKbCarryVisuals();
       return;
@@ -267,6 +298,8 @@ export function useBoardKeyboardController({
     clearKbCarryVisuals: visuals.clearKbCarryVisuals,
     setKeyboardCarriedEl: visuals.setKeyboardCarriedEl,
     setKeyboardDropTarget: visuals.setKeyboardDropTargetEl,
-    onBoardKeyDown
+    onBoardKeyDown,
+
+    isLegalKeyboardDropTargetEl: actions.isLegalKeyboardDropTargetEl
   };
 }

@@ -321,6 +321,10 @@ function Board() {
 
   const [kbCarrying, setKbCarrying] = useState(false);
 
+  const isLegalKeyboardDropTargetElRef = useRef<
+    ((el: HTMLElement) => boolean) | null
+  >(null);
+
   const {
     boardRef,
     focusablesRef,
@@ -336,14 +340,17 @@ function Board() {
     state,
     playable,
     kbCarrying,
-    getNodeMeta
+    getNodeMeta,
+    isLegalDropTargetEl: (el) =>
+      isLegalKeyboardDropTargetElRef.current?.(el) ?? false
   });
 
   const {
     onBoardKeyDown,
     clearKbCarryVisuals,
     kbCarriedElRef,
-    setKeyboardDropTarget
+    setKeyboardDropTarget,
+    isLegalKeyboardDropTargetEl
   } = useBoardKeyboardController({
     boardRef,
     kbCarrying,
@@ -364,12 +371,17 @@ function Board() {
     isInputSuppressed: isAnyModalOpen
   });
 
+  useEffect(() => {
+    isLegalKeyboardDropTargetElRef.current = isLegalKeyboardDropTargetEl;
+  }, [isLegalKeyboardDropTargetEl]);
+
   const getKbAttrsForElement = useCallback(
     (el: HTMLElement) => {
       return getKbAttrsForEl(el, {
         kbCarrying,
-        isPlayableCardId
-        // isLegalDropTargetEl: (el) => ... (wire later)
+        isPlayableCardId,
+        isLegalDropTargetEl: (el) =>
+          isLegalKeyboardDropTargetElRef.current?.(el) ?? false
       });
     },
     [getKbAttrsForEl, kbCarrying, isPlayableCardId]
@@ -383,13 +395,6 @@ function Board() {
     }),
     [kbCarrying, isPlayableCardId, getKbAttrsForElement]
   );
-
-  useEffect(() => {
-    const el = document.querySelector<HTMLElement>(".tableau-col");
-    if (!el) return;
-
-    console.log("KB attrs for tableau-col:", getKbAttrsForElement(el));
-  }, [getKbAttrsForElement]);
 
   // --- FLIP animation for instant (non-drag) moves ---
   useBoardFlipAnimation({

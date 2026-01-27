@@ -119,6 +119,39 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
    */
   const lastKbMovedCardIdRef = useRef<string | null>(null);
 
+  const canCommitKeyboardDropForward = useCallback(
+    (carriedEl: HTMLElement | null, targetEl: HTMLElement | null): boolean => {
+      if (!carriedEl || !targetEl) return false;
+
+      const drag = buildKbDragFromEl(carriedEl);
+      const dropTarget = buildKbDropTargetFromEl(targetEl);
+
+      if (!drag || !dropTarget) return false;
+
+      // Use the same legality logic as mouse drops, but with a no-op dispatcher
+      // so this check has no gameplay side effects.
+      const noopDispatch: CommitArgs["dispatchMove"] = (() => {
+        /* no-op */
+      }) as CommitArgs["dispatchMove"];
+
+      return commitBoardDrop({
+        legalMoves,
+        dispatchMove: noopDispatch,
+        drag,
+        dropTarget
+      } as CommitArgs);
+    },
+    [buildKbDragFromEl, buildKbDropTargetFromEl, legalMoves]
+  );
+
+  const isLegalKeyboardDropTargetEl = useCallback(
+    (el: HTMLElement): boolean => {
+      const carried = getCarriedEl();
+      return canCommitKeyboardDropForward(carried, el);
+    },
+    [canCommitKeyboardDropForward, getCarriedEl]
+  );
+
   const tryCommitKeyboardDrop = useCallback(
     (
       carriedEl?: HTMLElement | null,
@@ -135,11 +168,11 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       if (!drag || !dropTarget) return false;
 
-      // Remember which card was moved (best effort)
-      const movedId = getCardIdFromEl(carried);
-      if (movedId) lastKbMovedCardIdRef.current = movedId;
+      // Delegate legality to the same logic as mouse drops.
+      // Guard with a no-op pass first so we can reuse this predicate elsewhere.
+      const isForwardLegal = canCommitKeyboardDropForward(carried, target);
+      if (!isForwardLegal) return false;
 
-      // Delegate the actual rule-checking + dispatch to the same logic as mouse drops
       const didForward = commitBoardDrop({
         legalMoves,
         dispatchMove,
@@ -183,7 +216,8 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       dispatchMove,
       getCarriedEl,
       getDropTargetEl,
-      legalMoves
+      legalMoves,
+      canCommitKeyboardDropForward
     ]
   );
 
@@ -309,6 +343,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
   return {
     lastKbMovedCardIdRef,
     tryCommitKeyboardDrop,
+    isLegalKeyboardDropTargetEl,
     handleAutoFoundation,
     handleAutoFreeCell,
     handleUndo,

@@ -1,7 +1,3 @@
-// NOTE TO SELF
-// currently trying to get focus to stay on free cell if you F from a free cell
-// check undo scrolly tableau situation (may have been solved by relocating the acp)
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type BoardNavNodeMeta = {
@@ -17,13 +13,15 @@ type UseBoardKeyboardNavArgs = {
   playable: unknown;
   kbCarrying: boolean;
   getNodeMeta: (el: HTMLElement) => BoardNavNodeMeta | null;
+  isLegalDropTargetEl?: (el: HTMLElement) => boolean;
 };
 
 export function useBoardKeyboardNav({
   state,
   playable,
   kbCarrying,
-  getNodeMeta
+  getNodeMeta,
+  isLegalDropTargetEl
 }: UseBoardKeyboardNavArgs) {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const focusablesRef = useRef<HTMLElement[]>([]);
@@ -50,19 +48,29 @@ export function useBoardKeyboardNav({
     const root = boardRef.current;
     if (!root) return;
 
-    // Keyboard focusables:
-    // - playable cards (".card.is-playable")
-    // - while carrying (Space-toggle), also allow explicit empty slots opted in via
-    //   data-kb-focusable="true" (e.g., empty drop targets)
-    const selector = kbCarrying
-      ? '.card.is-playable, [data-kb-focusable="true"]'
-      : ".card.is-playable";
+    // Keep declared drop targets in sync with the current focusable list.
+    // Always clear first; we'll re-stamp below while carrying.
+    root
+      .querySelectorAll<HTMLElement>('[data-kb-drop-target="true"]')
+      .forEach((el) => el.removeAttribute("data-kb-drop-target"));
+
+    // Keyboard focusables are declared by the render layer.
+    // This hook treats `data-kb-focusable="true"` as the single source of truth.
+    const selector = '[data-kb-focusable="true"]';
 
     const els = Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
       (el) => !el.hasAttribute("disabled") && !el.getAttribute("aria-disabled")
     );
 
     focusablesRef.current = els;
+
+    if (kbCarrying && isLegalDropTargetEl) {
+      els.forEach((el) => {
+        if (isLegalDropTargetEl(el)) {
+          el.setAttribute("data-kb-drop-target", "true");
+        }
+      });
+    }
 
     // Clamp active index to the new list.
     // Schedule the state update to avoid sync setState inside effects.
@@ -71,7 +79,7 @@ export function useBoardKeyboardNav({
     if (nextIndex !== activeFocusIndex) {
       requestAnimationFrame(() => setActiveFocusIndex(nextIndex));
     }
-  }, [kbCarrying, activeFocusIndex]);
+  }, [activeFocusIndex, kbCarrying, isLegalDropTargetEl]);
 
   const focusByIndex = useCallback((idx: number) => {
     const els = focusablesRef.current;
