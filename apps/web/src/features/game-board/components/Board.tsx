@@ -26,6 +26,7 @@ import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 import ModalOverlay from "@/components/ModalOverlay";
 import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
 import { useWinEffects } from "@/features/game-board/effects/winEffects";
+import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
 
 function formatElapsed(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "0:00";
@@ -75,6 +76,7 @@ function Board() {
     undosRemaining,
     newDeal,
     restart,
+    replaySeed,
     seedReady,
     timeElapsedMs,
     hasStarted,
@@ -87,11 +89,20 @@ function Board() {
 
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
 
+  const commitMoveFromPointerDropRef = useRef<
+    ((...args: Parameters<typeof onDrop>) => boolean) | null
+  >(null);
+
+  const commitMoveFromPointerDropProxy = useCallback(
+    (...args: Parameters<typeof onDrop>) => {
+      return commitMoveFromPointerDropRef.current?.(...args) ?? false;
+    },
+    []
+  );
+
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
-  const [showAcpOverride, setShowAcpOverride] = useState(false);
-  const showAcp = isWon || showAcpOverride;
   // Tracks which deal's win modal has been dismissed.
   // When the seed changes (new deal), the modal can appear again.
   const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
@@ -105,6 +116,8 @@ function Board() {
   }, [state.foundations]);
 
   const isFullyCollected = foundationCount === 52;
+
+  const showAcp = isWon && !isFullyCollected;
 
   const shouldShowWinModal =
     isFullyCollected && dismissedWinSeed !== state.seed;
@@ -163,28 +176,6 @@ function Board() {
     [buildPileRefFromEl, tryAutoFreeCell]
   );
 
-  const suppressFlipOnceNextRef = useRef<(() => void) | null>(null);
-
-  // --- Move orchestrator (policy only) ---
-  const commitMoveFromKeyboard = useCallback(
-    (move: Parameters<typeof dispatchMove>[0]) => {
-      // Keyboard moves should animate via FLIP (do NOT set suppressFlipOnceRef here).
-      dispatchMove(move);
-    },
-    [dispatchMove]
-  );
-  const commitMoveFromPointerDrop = useCallback(
-    (...args: Parameters<typeof onDrop>) => {
-      const didCommit = onDrop(...args);
-      if (didCommit) {
-        suppressFlipOnceNextRef.current?.();
-      }
-      return didCommit;
-    },
-    [onDrop]
-  );
-  // --- end move orchestrator ---
-
   const {
     drag,
     finalizeDrag,
@@ -196,7 +187,7 @@ function Board() {
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
-    onDrop: commitMoveFromPointerDrop
+    onDrop: commitMoveFromPointerDropProxy
   });
 
   const {
@@ -226,23 +217,29 @@ function Board() {
     newDeal,
     restart,
     stopAutoCompleteRef,
-    setDismissedWinSeed,
-    setShowAcpOverride
+    setDismissedWinSeed
   });
 
-  const newDealNoFlipWithCelebration = useCallback(() => {
-    setCelebratedWinSeed(null);
-    newDealNoFlip();
-  }, [newDealNoFlip]);
-
-  const restartNoFlipWithCelebration = useCallback(() => {
-    setCelebratedWinSeed(null);
-    restartNoFlip();
-  }, [restartNoFlip]);
+  const {
+    commitMoveFromKeyboard,
+    commitMoveFromPointerDrop,
+    newDealWithCelebration,
+    restartWithCelebration
+  } = useBoardMovePolicy({
+    onDrop,
+    dispatchMove,
+    suppressFlipOnceNext,
+    clearCelebration: () => setCelebratedWinSeed(null),
+    newDealNoFlip,
+    restartNoFlip,
+    isWon,
+    seed: state.seed,
+    replaceSeed: replaySeed
+  });
 
   useEffect(() => {
-    suppressFlipOnceNextRef.current = suppressFlipOnceNext;
-  }, [suppressFlipOnceNext]);
+    commitMoveFromPointerDropRef.current = commitMoveFromPointerDrop;
+  }, [commitMoveFromPointerDrop]);
 
   const foundationsRow = buildFoundationsRow(state);
   const freeCellsRow = buildFreeCellsRow(state);
@@ -299,8 +296,8 @@ function Board() {
     dispatchMove: commitMoveFromKeyboard,
     undo,
     canUndo,
-    newDeal: newDealNoFlipWithCelebration,
-    restart: restartNoFlipWithCelebration,
+    newDeal: newDealWithCelebration,
+    restart: restartWithCelebration,
     paused,
     setPaused,
     tryAutoFoundationFromEl,
@@ -518,7 +515,7 @@ function Board() {
               }}
               bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
               primaryButtonLabel="New Deal"
-              primaryButtonAction={newDealNoFlipWithCelebration}
+              primaryButtonAction={newDealWithCelebration}
               secondaryButtonLabel="Close"
             />
           )}
@@ -530,14 +527,14 @@ function Board() {
           <button
             type="button"
             className="btn btn--primary"
-            onClick={newDealNoFlipWithCelebration}
+            onClick={newDealWithCelebration}
           >
             New deal
           </button>
           <button
             type="button"
             className="btn btn--secondary"
-            onClick={restartNoFlipWithCelebration}
+            onClick={restartWithCelebration}
           >
             Restart deal
           </button>
@@ -550,24 +547,6 @@ function Board() {
             {undoLimit === "unlimited" || undoLimit === 0
               ? "Undo"
               : `Undo (${undosRemaining})`}
-          </button>
-          {/* <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={() => {
-              if (isAutoCompleting) stopAutoComplete();
-              else runAutoComplete();
-            }}
-            disabled={!seedReady || paused || shouldShowWinModal}
-          >
-            {isAutoCompleting ? "Stop" : "Autocomplete"}
-          </button> */}
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={() => setShowAcpOverride((v) => !v)}
-          >
-            toggle acp
           </button>
         </div>
 

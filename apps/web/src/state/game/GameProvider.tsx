@@ -12,15 +12,13 @@ import {
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 
-// NOTE: We'll fully lock the engine contract later. For now we can still keep things
-// flexible while staying type-safe by deriving types from the engine functions.
-
 type GameContextValue = {
   state: GameState;
   isWon: boolean;
   dispatchMove: (move: Move) => void;
   restart: () => void;
   newDeal: () => void;
+  replaySeed: (seed: string) => void;
   undo: () => void;
   canUndo: boolean;
   undoLimit: UndoLimit;
@@ -175,6 +173,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [allowFoundationPullback, undoLimit]
   );
 
+  const [checkpoint, setCheckpoint] = useState<{
+    at: number;
+    state: GameState;
+  } | null>(null);
+
+  type StartSessionMode =
+    | { kind: "new" }
+    | { kind: "seed"; seed: string }
+    | { kind: "seed+id"; seed: string; gameId: string };
+
+  const startSession = useCallback(
+    (mode: StartSessionMode) => {
+      const nextSeed = mode.kind === "new" ? makeNewSeed() : mode.seed;
+
+      const nextGameId =
+        mode.kind === "seed+id" ? mode.gameId : makeNewGameId();
+
+      setSeed(nextSeed);
+      setGameId(nextGameId);
+
+      // New session.
+      setHistory({ present: createGame(nextSeed, rules), past: [] });
+      setTimeElapsedMs(0);
+      setHasStarted(false);
+      setStartedAtMs(null);
+      setEndedAtMs(null);
+      setIsAbandoned(false);
+      setPendingNewDeal(false);
+      setUndosUsed(0);
+      setMoveCount(0);
+      setMoves([]);
+      setCursor(0);
+      cursorRef.current = 0;
+      setCheckpoint(null);
+    },
+    [rules]
+  );
+
   // ---------------------------------------------------------------------------
   // History / engine state
   // ---------------------------------------------------------------------------
@@ -219,11 +255,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursorRef.current = cursor;
   }, [cursor]);
 
-  const [checkpoint, setCheckpoint] = useState<{
-    at: number;
-    state: GameState;
-  } | null>(null);
-
   // ---------------------------------------------------------------------------
   // Client-only seed init (avoids hydration mismatches)
   // ---------------------------------------------------------------------------
@@ -233,28 +264,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (didInitRandomSeedRef.current) return;
     didInitRandomSeedRef.current = true;
 
-    const newSeed = makeNewSeed();
-    const newGameId = makeNewGameId();
-    setSeed(newSeed);
-    setGameId(newGameId);
-
-    // New session on mount.
-    setHistory({ present: createGame(newSeed, rules), past: [] });
-    setTimeElapsedMs(0);
-    setHasStarted(false);
-    setStartedAtMs(null);
-    setEndedAtMs(null);
-    setIsAbandoned(false);
-    setPendingNewDeal(false);
-    setUndosUsed(0);
-    setMoveCount(0);
-    setMoves([]);
-    setCursor(0);
-    cursorRef.current = 0;
-    setCheckpoint(null);
+    startSession({ kind: "new" });
     setSeedReady(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startSession]);
 
   // ---------------------------------------------------------------------------
   // Rule changes => start a NEW game (reseed)
@@ -268,24 +280,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const newSeed = makeNewSeed();
-    const newGameId = makeNewGameId();
-    setSeed(newSeed);
-    setGameId(newGameId);
-
-    setHistory({ present: createGame(newSeed, rules), past: [] });
-    setTimeElapsedMs(0);
-    setHasStarted(false);
-    setStartedAtMs(null);
-    setEndedAtMs(null);
-    setIsAbandoned(false);
-    setPendingNewDeal(false);
-    setUndosUsed(0);
-    setMoveCount(0);
-    setMoves([]);
-    setCursor(0);
-    cursorRef.current = 0;
-    setCheckpoint(null);
+    startSession({ kind: "new" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowFoundationPullback, undoLimit]);
 
@@ -305,25 +300,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     (undoLimit === "unlimited" || undosRemaining > 0);
 
   const startNewDealSession = useCallback(() => {
-    const newSeed = makeNewSeed();
-    const newGameId = makeNewGameId();
-    setSeed(newSeed);
-    setGameId(newGameId);
-
-    setHistory({ present: createGame(newSeed, rules), past: [] });
-    setTimeElapsedMs(0);
-    setHasStarted(false);
-    setStartedAtMs(null);
-    setEndedAtMs(null);
-    setIsAbandoned(false);
-    setPendingNewDeal(false);
-    setUndosUsed(0);
-    setMoveCount(0);
-    setMoves([]);
-    setCursor(0);
-    cursorRef.current = 0;
-    setCheckpoint(null);
-  }, [rules]);
+    startSession({ kind: "new" });
+  }, [startSession]);
 
   // Stamp end time once when the game is finished (won or abandoned) and archive a result.
   useEffect(() => {
@@ -530,6 +508,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     startNewDealSession();
   };
 
+  const replaySeed = useCallback(
+    (nextSeed: string) => {
+      startSession({ kind: "seed", seed: nextSeed });
+    },
+    [startSession]
+  );
   const undo = () => {
     // Once the game is won, undo is disabled.
     if (isWon) return;
@@ -672,6 +656,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     dispatchMove,
     restart,
     newDeal,
+    replaySeed,
     undo,
     canUndo,
     undoLimit,

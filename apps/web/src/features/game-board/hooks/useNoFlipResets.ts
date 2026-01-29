@@ -18,17 +18,13 @@ export type UseNoFlipResetsArgs = {
 
   /** Clear dismissed win state on reset */
   setDismissedWinSeed: (seed: string | null) => void;
-
-  /** Dev-only ACP override flag */
-  setShowAcpOverride: (v: boolean) => void;
 };
 
 export function useNoFlipResets({
   newDeal,
   restart,
   stopAutoCompleteRef,
-  setDismissedWinSeed,
-  setShowAcpOverride
+  setDismissedWinSeed
 }: UseNoFlipResetsArgs) {
   /**
    * Previous card rects used by FLIP.
@@ -66,10 +62,9 @@ export function useNoFlipResets({
     stopAutoCompleteRef.current?.();
 
     setDismissedWinSeed(null);
-    setShowAcpOverride(false);
 
     newDeal();
-  }, [newDeal, stopAutoCompleteRef, setDismissedWinSeed, setShowAcpOverride]);
+  }, [newDeal, stopAutoCompleteRef, setDismissedWinSeed]);
 
   /**
    * Restart the current deal without animating card movement.
@@ -81,10 +76,9 @@ export function useNoFlipResets({
     stopAutoCompleteRef.current?.();
 
     setDismissedWinSeed(null);
-    setShowAcpOverride(false);
 
     restart();
-  }, [restart, stopAutoCompleteRef, setDismissedWinSeed, setShowAcpOverride]);
+  }, [restart, stopAutoCompleteRef, setDismissedWinSeed]);
 
   return {
     prevCardRectsRef,
