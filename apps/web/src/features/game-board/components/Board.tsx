@@ -10,6 +10,8 @@ import Card from "./Card";
 import "../styles/board.css";
 import { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoardFlipAnimation";
+import { useFlipSequencer } from "@/features/game-board/animations/useFlipSequencer";
+import { useNoFlipResets } from "@/features/game-board/hooks/useNoFlipResets";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -22,7 +24,8 @@ import { useBoardKeyboardController } from "../hooks/useBoardKeyboardController"
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 import ModalOverlay from "@/components/ModalOverlay";
-import { useFoundationDrainAutoComplete } from "../hooks/useFoundationDrainAutoComplete";
+import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
+import { useWinEffects } from "@/features/game-board/effects/winEffects";
 
 function formatElapsed(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "0:00";
@@ -57,35 +60,6 @@ export function throwConfetti() {
   });
 }
 
-function useFlipSequencer() {
-  const flipCompleteResolverRef = useRef<((runId: number) => void) | null>(
-    null
-  );
-
-  const waitForFlipComplete = useCallback((): Promise<void> => {
-    return new Promise((resolve) => {
-      // Failsafe so we never hang if transitionend doesn’t fire.
-      const timeoutId = window.setTimeout(() => {
-        flipCompleteResolverRef.current = null;
-        resolve();
-      }, 1000);
-
-      flipCompleteResolverRef.current = () => {
-        window.clearTimeout(timeoutId);
-        flipCompleteResolverRef.current = null;
-        resolve();
-      };
-    });
-  }, []);
-
-  const onFlipComplete = useCallback((runId: number) => {
-    // Resolve the most recent waiter (if any).
-    flipCompleteResolverRef.current?.(runId);
-  }, []);
-
-  return { waitForFlipComplete, onFlipComplete };
-}
-
 function Board() {
   const {
     state,
@@ -118,11 +92,13 @@ function Board() {
 
   const [showAcpOverride, setShowAcpOverride] = useState(false);
   const showAcp = isWon || showAcpOverride;
-  const stopAutoCompleteRef = useRef<(() => void) | null>(null);
   // Tracks which deal's win modal has been dismissed.
   // When the seed changes (new deal), the modal can appear again.
   const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
-  const [devForceWinModal, setDevForceWinModal] = useState(false);
+  // Tracks which deal's win celebration has already fired (confetti should be once per deal).
+  const [celebratedWinSeed, setCelebratedWinSeed] = useState<string | null>(
+    null
+  );
 
   const foundationCount = useMemo(() => {
     return state.foundations.reduce((sum, pile) => sum + pile.cards.length, 0);
@@ -130,26 +106,10 @@ function Board() {
 
   const isFullyCollected = foundationCount === 52;
 
-  const shouldShowWinModal = isFullyCollected
-    ? dismissedWinSeed !== state.seed
-    : devForceWinModal;
+  const shouldShowWinModal =
+    isFullyCollected && dismissedWinSeed !== state.seed;
 
   const isAnyModalOpen = paused || shouldShowWinModal;
-
-  const wasWinModalOpenRef = useRef(false);
-
-  useEffect(() => {
-    const isOpen = shouldShowWinModal;
-    const wasOpen = wasWinModalOpenRef.current;
-
-    if (isOpen && !wasOpen) {
-      throwConfetti();
-    }
-
-    wasWinModalOpenRef.current = isOpen;
-  }, [shouldShowWinModal]);
-
-  const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
 
   const {
     tableauColRefs,
@@ -184,6 +144,16 @@ function Board() {
     [buildPileRefFromEl, tryAutoFoundation]
   );
 
+  const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
+
+  useWinEffects({
+    shouldShowWinModal,
+    winKey: isFullyCollected ? state.seed : null,
+    isDismissed: (key) => celebratedWinSeed === key,
+    fireConfetti: throwConfetti,
+    onCelebrated: (key) => setCelebratedWinSeed(key)
+  });
+
   const tryAutoFreeCellFromEl = useCallback(
     (el: HTMLElement) => {
       const from = buildPileRefFromEl(el);
@@ -193,17 +163,7 @@ function Board() {
     [buildPileRefFromEl, tryAutoFreeCell]
   );
 
-  const prevCardRectsRef = useRef<Map<string, DOMRect>>(new Map());
-  // If a pointer drag just committed a move, skip FLIP for the next render.
-  const [suppressFlipOnce, setSuppressFlipOnce] = useState(false);
-
-  const consumeSuppressFlipOnce = useCallback(() => {
-    if (suppressFlipOnce) {
-      setSuppressFlipOnce(false);
-      return true;
-    }
-    return false;
-  }, [suppressFlipOnce]);
+  const suppressFlipOnceNextRef = useRef<(() => void) | null>(null);
 
   // --- Move orchestrator (policy only) ---
   const commitMoveFromKeyboard = useCallback(
@@ -213,40 +173,17 @@ function Board() {
     },
     [dispatchMove]
   );
-
   const commitMoveFromPointerDrop = useCallback(
     (...args: Parameters<typeof onDrop>) => {
       const didCommit = onDrop(...args);
-      // Pointer drag already provided its own visual motion via the drag overlay.
-      // Skip FLIP once so we don't double-animate.
-      if (didCommit) setSuppressFlipOnce(true);
+      if (didCommit) {
+        suppressFlipOnceNextRef.current?.();
+      }
       return didCommit;
     },
     [onDrop]
   );
   // --- end move orchestrator ---
-
-  const newDealNoFlip = useCallback(() => {
-    // New deal should not animate card movement.
-    setSuppressFlipOnce(true);
-    prevCardRectsRef.current = new Map();
-    setDismissedWinSeed(null);
-    setDevForceWinModal(false);
-    stopAutoCompleteRef.current?.();
-    setShowAcpOverride(false);
-    newDeal();
-  }, [newDeal, setDismissedWinSeed, setDevForceWinModal, setShowAcpOverride]);
-
-  const restartNoFlip = useCallback(() => {
-    // Restarting should not animate card movement.
-    setSuppressFlipOnce(true);
-    prevCardRectsRef.current = new Map();
-    setDismissedWinSeed(null);
-    setDevForceWinModal(false);
-    stopAutoCompleteRef.current?.();
-    setShowAcpOverride(false);
-    restart();
-  }, [restart, setDismissedWinSeed, setDevForceWinModal, setShowAcpOverride]);
 
   const {
     drag,
@@ -261,6 +198,51 @@ function Board() {
     getFoundations: () => foundationRefs.current,
     onDrop: commitMoveFromPointerDrop
   });
+
+  const {
+    isAutoCompleting,
+    runAutoComplete,
+    stopAutoComplete,
+    stopAutoCompleteRef
+  } = useBoardAutoComplete({
+    seedReady,
+    paused,
+    isAnyModalOpen,
+    shouldShowWinModal,
+    drag: { active: drag.active, pending: drag.pending },
+    freeCellRefs,
+    tableauColRefs,
+    tryAutoFoundationFromEl,
+    waitForFlipComplete
+  });
+
+  const {
+    prevCardRectsRef,
+    consumeSuppressFlipOnce,
+    suppressFlipOnceNext,
+    newDealNoFlip,
+    restartNoFlip
+  } = useNoFlipResets({
+    newDeal,
+    restart,
+    stopAutoCompleteRef,
+    setDismissedWinSeed,
+    setShowAcpOverride
+  });
+
+  const newDealNoFlipWithCelebration = useCallback(() => {
+    setCelebratedWinSeed(null);
+    newDealNoFlip();
+  }, [newDealNoFlip]);
+
+  const restartNoFlipWithCelebration = useCallback(() => {
+    setCelebratedWinSeed(null);
+    restartNoFlip();
+  }, [restartNoFlip]);
+
+  useEffect(() => {
+    suppressFlipOnceNextRef.current = suppressFlipOnceNext;
+  }, [suppressFlipOnceNext]);
 
   const foundationsRow = buildFoundationsRow(state);
   const freeCellsRow = buildFreeCellsRow(state);
@@ -317,8 +299,8 @@ function Board() {
     dispatchMove: commitMoveFromKeyboard,
     undo,
     canUndo,
-    newDeal: newDealNoFlip,
-    restart: restartNoFlip,
+    newDeal: newDealNoFlipWithCelebration,
+    restart: restartNoFlipWithCelebration,
     paused,
     setPaused,
     tryAutoFoundationFromEl,
@@ -347,23 +329,6 @@ function Board() {
   });
   // --- end FLIP animation ---
 
-  const { isAutoCompleting, runAutoComplete, stopAutoComplete } =
-    useFoundationDrainAutoComplete({
-      seedReady,
-      paused,
-      isAnyModalOpen,
-      shouldShowWinModal,
-      drag: { active: drag.active, pending: drag.pending },
-      freeCellRefs,
-      tableauColRefs,
-      tryAutoFoundationFromEl,
-      waitForFlipComplete
-    });
-
-  useEffect(() => {
-    stopAutoCompleteRef.current = stopAutoComplete;
-  }, [stopAutoComplete]);
-
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   return (
@@ -374,13 +339,6 @@ function Board() {
         onClick={throwConfetti}
       >
         Throw Confetti
-      </button>
-      <button
-        type="button"
-        className="btn btn--secondary"
-        onClick={() => setDevForceWinModal(true)}
-      >
-        Dev: Show win modal
       </button>
 
       <div
@@ -557,11 +515,10 @@ function Board() {
               buttonAriaLabel="Close win dialog"
               onClose={() => {
                 if (isFullyCollected) setDismissedWinSeed(state.seed);
-                setDevForceWinModal(false);
               }}
               bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
               primaryButtonLabel="New Deal"
-              primaryButtonAction={newDealNoFlip}
+              primaryButtonAction={newDealNoFlipWithCelebration}
               secondaryButtonLabel="Close"
             />
           )}
@@ -573,14 +530,14 @@ function Board() {
           <button
             type="button"
             className="btn btn--primary"
-            onClick={newDealNoFlip}
+            onClick={newDealNoFlipWithCelebration}
           >
             New deal
           </button>
           <button
             type="button"
             className="btn btn--secondary"
-            onClick={restartNoFlip}
+            onClick={restartNoFlipWithCelebration}
           >
             Restart deal
           </button>
