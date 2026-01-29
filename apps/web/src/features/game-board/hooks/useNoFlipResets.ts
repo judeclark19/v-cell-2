@@ -1,3 +1,4 @@
+import { clear } from "console";
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -17,14 +18,14 @@ export type UseNoFlipResetsArgs = {
   stopAutoCompleteRef: React.MutableRefObject<(() => void) | null>;
 
   /** Clear dismissed win state on reset */
-  setDismissedWinSeed: (seed: string | null) => void;
+  clearDismissedWinSeed: () => void;
 };
 
 export function useNoFlipResets({
   newDeal,
   restart,
   stopAutoCompleteRef,
-  setDismissedWinSeed
+  clearDismissedWinSeed
 }: UseNoFlipResetsArgs) {
   /**
    * Previous card rects used by FLIP.
@@ -61,10 +62,10 @@ export function useNoFlipResets({
 
     stopAutoCompleteRef.current?.();
 
-    setDismissedWinSeed(null);
+    clearDismissedWinSeed();
 
     newDeal();
-  }, [newDeal, stopAutoCompleteRef, setDismissedWinSeed]);
+  }, [newDeal, stopAutoCompleteRef, clearDismissedWinSeed]);
 
   /**
    * Restart the current deal without animating card movement.
@@ -75,10 +76,10 @@ export function useNoFlipResets({
 
     stopAutoCompleteRef.current?.();
 
-    setDismissedWinSeed(null);
+    clearDismissedWinSeed();
 
     restart();
-  }, [restart, stopAutoCompleteRef, setDismissedWinSeed]);
+  }, [restart, stopAutoCompleteRef, clearDismissedWinSeed]);
 
   return {
     prevCardRectsRef,

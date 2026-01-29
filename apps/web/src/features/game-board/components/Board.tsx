@@ -25,8 +25,8 @@ import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 import ModalOverlay from "@/components/ModalOverlay";
 import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
-import { useWinEffects } from "@/features/game-board/effects/winEffects";
 import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
+import { useWinState } from "@/features/game-board/hooks/useWinState";
 
 function formatElapsed(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "0:00";
@@ -103,14 +103,6 @@ function Board() {
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
 
-  // Tracks which deal's win modal has been dismissed.
-  // When the seed changes (new deal), the modal can appear again.
-  const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
-  // Tracks which deal's win celebration has already fired (confetti should be once per deal).
-  const [celebratedWinSeed, setCelebratedWinSeed] = useState<string | null>(
-    null
-  );
-
   const foundationCount = useMemo(() => {
     return state.foundations.reduce((sum, pile) => sum + pile.cards.length, 0);
   }, [state.foundations]);
@@ -119,10 +111,19 @@ function Board() {
 
   const showAcp = isWon && !isFullyCollected;
 
-  const shouldShowWinModal =
-    isFullyCollected && dismissedWinSeed !== state.seed;
-
-  const isAnyModalOpen = paused || shouldShowWinModal;
+  const {
+    shouldShowWinModal,
+    isAnyModalOpen,
+    dismissWinModal,
+    clearCelebration,
+    clearDismissal
+  } = useWinState({
+    seed: state.seed,
+    // win modal/confetti are tied to full collection, not your isWon condition
+    isWon: isFullyCollected,
+    isAnyModalOpenBase: paused,
+    fireConfetti: throwConfetti
+  });
 
   const {
     tableauColRefs,
@@ -158,14 +159,6 @@ function Board() {
   );
 
   const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
-
-  useWinEffects({
-    shouldShowWinModal,
-    winKey: isFullyCollected ? state.seed : null,
-    isDismissed: (key) => celebratedWinSeed === key,
-    fireConfetti: throwConfetti,
-    onCelebrated: (key) => setCelebratedWinSeed(key)
-  });
 
   const tryAutoFreeCellFromEl = useCallback(
     (el: HTMLElement) => {
@@ -217,7 +210,7 @@ function Board() {
     newDeal,
     restart,
     stopAutoCompleteRef,
-    setDismissedWinSeed
+    clearDismissedWinSeed: clearDismissal
   });
 
   const {
@@ -229,7 +222,7 @@ function Board() {
     onDrop,
     dispatchMove,
     suppressFlipOnceNext,
-    clearCelebration: () => setCelebratedWinSeed(null),
+    clearCelebration,
     newDealNoFlip,
     restartNoFlip,
     isWon,
@@ -510,9 +503,7 @@ function Board() {
               overlayAriaLabel="Game won"
               title="You won!"
               buttonAriaLabel="Close win dialog"
-              onClose={() => {
-                if (isFullyCollected) setDismissedWinSeed(state.seed);
-              }}
+              onClose={dismissWinModal}
               bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
               primaryButtonLabel="New Deal"
               primaryButtonAction={newDealWithCelebration}
