@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { formatElapsed } from "@/features/game-board/utils/formatElapsed";
+import { useCallback, useEffect, useRef } from "react";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardKeyboardSystem } from "@/features/game-board/keyboard/useBoardKeyboardSystem";
-import { getLegalMoves, getPlayableMask } from "@vcell/engine";
 import { useGame } from "@/state/game/GameProvider";
 import "../styles/board.css";
 import { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoardFlipAnimation";
+import { useBoardDerived } from "@/features/game-board/hooks/useBoardDerived";
 import { useFlipSequencer } from "@/features/game-board/animations/useFlipSequencer";
 import { useNoFlipResets } from "@/features/game-board/hooks/useNoFlipResets";
 import Tableau from "./Tableau";
@@ -47,9 +46,7 @@ function Board() {
     moveCount
   } = useGame();
 
-  const playable = useMemo(() => getPlayableMask(state), [state]);
-
-  const legalMoves = useMemo(() => getLegalMoves(state), [state]);
+  const { playable, legalMoves, isFullyCollected } = useBoardDerived(state);
 
   const onDrop = useBoardDrop({ legalMoves, dispatchMove });
 
@@ -66,12 +63,6 @@ function Board() {
 
   const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
   const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
-
-  const foundationCount = useMemo(() => {
-    return state.foundations.reduce((sum, pile) => sum + pile.cards.length, 0);
-  }, [state.foundations]);
-
-  const isFullyCollected = foundationCount === 52;
 
   const {
     shouldShowWinModal,
