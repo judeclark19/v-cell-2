@@ -18,7 +18,7 @@ import { useAutoFoundation } from "../hooks/useAutoFoundation";
 import { useAutoFreeCell } from "../hooks/useAutoFreeCell";
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
-import ModalOverlay from "@/components/ModalOverlay";
+import BoardModals from "./BoardModals";
 import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
 import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
@@ -334,28 +334,15 @@ function Board() {
               <div className="board-loading" aria-label="Loading deal" />
             )}
           </div>
-          {paused && (
-            <ModalOverlay
-              overlayAriaLabel="Game paused"
-              title="Paused"
-              buttonAriaLabel="Resume game"
-              onClose={() => setPaused(false)}
-              bodyText="Timer is paused. Gameplay is disabled until you resume."
-              primaryButtonLabel="Resume"
-            />
-          )}
-          {shouldShowWinModal && (
-            <ModalOverlay
-              overlayAriaLabel="Game won"
-              title="You won!"
-              buttonAriaLabel="Close win dialog"
-              onClose={dismissWinModal}
-              bodyText={`Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`}
-              primaryButtonLabel="New Deal"
-              primaryButtonAction={newDealWithCelebration}
-              secondaryButtonLabel="Close"
-            />
-          )}
+          <BoardModals
+            paused={paused}
+            onResume={() => setPaused(false)}
+            shouldShowWinModal={shouldShowWinModal}
+            onDismissWinModal={dismissWinModal}
+            moveCount={moveCount}
+            timeElapsedMs={timeElapsedMs}
+            onNewDeal={newDealWithCelebration}
+          />
         </BoardKbAttrsContext.Provider>
       </div>
 
