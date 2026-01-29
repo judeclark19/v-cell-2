@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { throwConfetti } from "@/features/game-board/effects/winConfetti";
 
 export type UseWinEffectsArgs = {
   /** Whether the win modal is currently visible */
@@ -9,9 +10,6 @@ export type UseWinEffectsArgs = {
 
   /** Return true if this win has already been dismissed/celebrated */
   isDismissed: (winKey: string) => boolean;
-
-  /** Fire the win celebration (Board supplies the actual confetti impl) */
-  fireConfetti: () => void;
 
   /** Mark this win as celebrated so it doesn’t re-fire */
   onCelebrated: (winKey: string) => void;
@@ -26,7 +24,6 @@ export function useWinEffects({
   shouldShowWinModal,
   winKey,
   isDismissed,
-  fireConfetti,
   onCelebrated
 }: UseWinEffectsArgs) {
   useEffect(() => {
@@ -34,7 +31,7 @@ export function useWinEffects({
     if (!winKey) return;
     if (isDismissed(winKey)) return;
 
-    fireConfetti();
+    throwConfetti();
     onCelebrated(winKey);
-  }, [shouldShowWinModal, winKey, isDismissed, fireConfetti, onCelebrated]);
+  }, [shouldShowWinModal, winKey, isDismissed, onCelebrated]);
 }

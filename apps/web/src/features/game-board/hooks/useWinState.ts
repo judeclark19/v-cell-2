@@ -8,11 +8,11 @@ export type UseWinStateArgs = {
   /** True when the game is won (all cards collected to foundations). */
   isWon: boolean;
 
+  /** True when all 52 cards are in foundations. */
+  isFullyCollected: boolean;
+
   /** Base modal-open state from other modals (pause/settings/etc). */
   isAnyModalOpenBase: boolean;
-
-  /** Confetti/effects trigger. Keep this in Board and pass it in. */
-  fireConfetti: () => void;
 };
 
 export type UseWinStateResult = {
@@ -50,8 +50,8 @@ export type UseWinStateResult = {
 export function useWinState({
   seed,
   isWon,
-  isAnyModalOpenBase,
-  fireConfetti
+  isFullyCollected,
+  isAnyModalOpenBase
 }: UseWinStateArgs): UseWinStateResult {
   const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
   const [celebratedWinSeed, setCelebratedWinSeed] = useState<string | null>(
@@ -66,9 +66,9 @@ export function useWinState({
   }, [isWon, showAcpOverride]);
 
   const shouldShowWinModal = useMemo(() => {
-    if (!isWon) return false;
+    if (!isFullyCollected) return false;
     return dismissedWinSeed !== seed;
-  }, [isWon, dismissedWinSeed, seed]);
+  }, [isFullyCollected, dismissedWinSeed, seed]);
 
   const dismissWinModal = useCallback(() => {
     setDismissedWinSeed(seed);
@@ -85,9 +85,8 @@ export function useWinState({
   // Confetti should fire once per won seed, independent of whether the user dismissed the modal.
   useWinEffects({
     shouldShowWinModal,
-    winKey: isWon ? seed : null,
+    winKey: isFullyCollected ? seed : null,
     isDismissed: (key) => celebratedWinSeed === key,
-    fireConfetti,
     onCelebrated: (key) => setCelebratedWinSeed(key)
   });
 

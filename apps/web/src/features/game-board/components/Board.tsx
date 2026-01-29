@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { formatElapsed } from "@/features/game-board/utils/formatElapsed";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardKeyboardSystem } from "@/features/game-board/keyboard/useBoardKeyboardSystem";
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
-import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
-import Card from "./Card";
 import "../styles/board.css";
 import { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoardFlipAnimation";
@@ -23,39 +22,7 @@ import ModalOverlay from "@/components/ModalOverlay";
 import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
 import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
-
-function formatElapsed(ms: number): string {
-  if (!Number.isFinite(ms) || ms < 0) return "0:00";
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
-
-export function throwConfetti() {
-  const confetti = new JSConfetti();
-
-  const cardEl = document.querySelector<HTMLElement>(".card");
-  const cardWidth = cardEl?.getBoundingClientRect().width;
-
-  // Derive emoji size from card width (fallback to 24)
-  const rawEmojiSize = cardWidth ? cardWidth * 0.3 : 24;
-
-  // Clamp to a sensible range
-  const emojiSize = Math.max(16, Math.min(40, Math.round(rawEmojiSize)));
-
-  // custom confetti
-  confetti.addConfetti({
-    emojis: ["🎰", "🃏", "❤️", "♠️", "♣️", "♦️"],
-    emojiSize,
-    confettiNumber: 200
-  });
-
-  // plus standard confetti
-  confetti.addConfetti({
-    confettiNumber: 200
-  });
-}
+import DragLayer from "./DragLayer";
 
 function Board() {
   const {
@@ -105,20 +72,18 @@ function Board() {
 
   const isFullyCollected = foundationCount === 52;
 
-  const showAcp = isWon && !isFullyCollected;
-
   const {
     shouldShowWinModal,
     isAnyModalOpen,
     dismissWinModal,
     clearCelebration,
-    clearDismissal
+    clearDismissal,
+    showAcp
   } = useWinState({
     seed: state.seed,
-    // win modal/confetti are tied to full collection, not your isWon condition
-    isWon: isFullyCollected,
-    isAnyModalOpenBase: paused,
-    fireConfetti: throwConfetti
+    isWon,
+    isFullyCollected,
+    isAnyModalOpenBase: paused
   });
 
   const {
@@ -291,14 +256,6 @@ function Board() {
 
   return (
     <>
-      <button
-        type="button"
-        className="btn btn--secondary"
-        onClick={throwConfetti}
-      >
-        Throw Confetti
-      </button>
-
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
         key={seedReady ? state.seed : "loading"}
@@ -353,37 +310,7 @@ function Board() {
                 />
 
                 {/* Drag overlay layer */}
-                {(drag.active || drag.pending) && drag.stack.length > 0 && (
-                  <div
-                    className={`drag-layer ${
-                      drag.isReturning ? "is-returning" : ""
-                    }`}
-                    onTransitionEnd={() => {
-                      if (drag.isReturning) finalizeDrag();
-                    }}
-                    style={{
-                      left: 0,
-                      top: 0,
-                      transform: `translate3d(${drag.baseLeft + drag.x}px, ${
-                        drag.baseTop + drag.y
-                      }px, 0)`
-                    }}
-                    aria-hidden="true"
-                  >
-                    <div className="drag-layer__stack tableau-col">
-                      {drag.stack.map((tc, i) => (
-                        <Card
-                          key={tc.card.id}
-                          card={tc.card}
-                          faceDown={tc.faceDown}
-                          playable
-                          // Ensure the stack keeps its normal spacing
-                          style={{ zIndex: i + 1 }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <DragLayer drag={drag} finalizeDrag={finalizeDrag} />
 
                 {/* Free cells on bottom */}
                 <FreeCells
