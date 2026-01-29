@@ -1,4 +1,3 @@
-import { clear } from "console";
 import { useCallback, useRef, useState } from "react";
 
 /**

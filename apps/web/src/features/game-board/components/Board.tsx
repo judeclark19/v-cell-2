@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  BoardKbAttrsContext,
-  useBoardKbAttrs
-} from "@/features/game-board/keyboard/boardKbAttrs";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
+import { useBoardKeyboardSystem } from "@/features/game-board/keyboard/useBoardKeyboardSystem";
 import { getLegalMoves, getPlayableMask } from "@vcell/engine";
 import JSConfetti from "js-confetti";
 import { useGame } from "@/state/game/GameProvider";
@@ -19,8 +17,6 @@ import { useBoardDomRegistry } from "../dom/boardDomRegistry";
 import { useBoardDrop } from "../hooks/useBoardDrop";
 import { useAutoFoundation } from "../hooks/useAutoFoundation";
 import { useAutoFreeCell } from "../hooks/useAutoFreeCell";
-import { useBoardKeyboardNav } from "../hooks/useBoardKeyboardNav";
-import { useBoardKeyboardController } from "../hooks/useBoardKeyboardController";
 import { useBoardDomMapping } from "../hooks/useBoardDomMapping";
 import { buildFoundationsRow, buildFreeCellsRow } from "../dom/boardRows";
 import ModalOverlay from "@/components/ModalOverlay";
@@ -230,80 +226,54 @@ function Board() {
     replaceSeed: replaySeed
   });
 
+  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
+
+  const isLegalDropTargetEl = useCallback((el: HTMLElement) => {
+    return el.getAttribute("data-kb-drop-target") === "true";
+  }, []);
+
+  const {
+    boardRef,
+    kbAttrsContextValue,
+    onBoardKeyDown,
+    onBoardFocusCapture,
+    onBoardBlurCapture,
+    onBoardFocus,
+    onBoardPointerDownCapture,
+    kbCarrying
+  } = useBoardKeyboardSystem({
+    isInputSuppressed,
+
+    state,
+    playable,
+    legalMoves,
+
+    getNodeMeta,
+    getKbAttrsForElCore: getKbAttrsForEl,
+    isLegalDropTargetEl,
+
+    buildKbDragFromEl,
+    buildKbDropTargetFromEl,
+
+    tryAutoFoundationFromEl,
+    tryAutoFreeCellFromEl,
+
+    dispatchMove: commitMoveFromKeyboard,
+    undo,
+    canUndo,
+    paused,
+    setPaused,
+
+    newDeal: newDealWithCelebration,
+    restart: restartWithCelebration
+  });
+
   useEffect(() => {
     commitMoveFromPointerDropRef.current = commitMoveFromPointerDrop;
   }, [commitMoveFromPointerDrop]);
 
   const foundationsRow = buildFoundationsRow(state);
   const freeCellsRow = buildFreeCellsRow(state);
-
-  const [kbCarrying, setKbCarrying] = useState(false);
-
-  const isLegalKeyboardDropTargetElRef = useRef<
-    ((el: HTMLElement) => boolean) | null
-  >(null);
-
-  const isLegalDropTargetEl = useCallback(
-    (el: HTMLElement) => isLegalKeyboardDropTargetElRef.current?.(el) ?? false,
-    []
-  );
-
-  const { kbAttrsContextValue } = useBoardKbAttrs({
-    kbCarrying,
-    state,
-    playable,
-    getKbAttrsForElCore: getKbAttrsForEl,
-    isLegalDropTargetEl
-  });
-
-  const {
-    boardRef,
-    focusablesRef,
-    setActiveFocusIndex,
-    hadBoardFocusRef,
-    lastFocusPointRef,
-    getCenter,
-    findNextByDirection,
-    onBoardFocusCapture,
-    focusFirstPlayable,
-    focusElIfFocusable
-  } = useBoardKeyboardNav({
-    state,
-    playable,
-    kbCarrying,
-    getNodeMeta,
-    isLegalDropTargetEl
-  });
-
-  const {
-    onBoardKeyDown,
-    clearKbCarryVisuals,
-    kbCarriedElRef,
-    setKeyboardDropTarget,
-    isLegalKeyboardDropTargetEl
-  } = useBoardKeyboardController({
-    boardRef,
-    kbCarrying,
-    setKbCarrying,
-    legalMoves,
-    dispatchMove: commitMoveFromKeyboard,
-    undo,
-    canUndo,
-    newDeal: newDealWithCelebration,
-    restart: restartWithCelebration,
-    paused,
-    setPaused,
-    tryAutoFoundationFromEl,
-    tryAutoFreeCellFromEl,
-    findNextByDirection,
-    buildKbDragFromEl,
-    buildKbDropTargetFromEl,
-    isInputSuppressed: isAnyModalOpen
-  });
-
-  useEffect(() => {
-    isLegalKeyboardDropTargetElRef.current = isLegalKeyboardDropTargetEl;
-  }, [isLegalKeyboardDropTargetEl]);
 
   // --- FLIP animation for instant (non-drag) moves ---
   useBoardFlipAnimation({
@@ -318,8 +288,6 @@ function Board() {
     prevCardRectsRef
   });
   // --- end FLIP animation ---
-
-  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   return (
     <>
@@ -349,60 +317,10 @@ function Board() {
               }
               onBoardKeyDown(e);
             }}
-            onPointerDownCapture={(e) => {
-              if (isInputSuppressed) return;
-              const root = boardRef.current;
-              if (!root) return;
-
-              const target = e.target as HTMLElement | null;
-              if (!target) {
-                focusFirstPlayable();
-                return;
-              }
-
-              // Prefer focusing the nearest element that could be in the focusables list.
-              const candidate =
-                (target.closest(
-                  "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
-                ) as HTMLElement | null) || target;
-
-              const focused = focusElIfFocusable(candidate);
-              if (!focused) {
-                // Clicking in empty space should still "enter" keyboard mode.
-                focusFirstPlayable();
-              }
-            }}
-            onFocusCapture={() => {
-              if (isInputSuppressed) return;
-              hadBoardFocusRef.current = true;
-              onBoardFocusCapture();
-            }}
-            onBlurCapture={(e) => {
-              const root = boardRef.current;
-              // If focus is leaving the board entirely, clear the flag.
-              if (root && !root.contains(e.relatedTarget as Node | null)) {
-                hadBoardFocusRef.current = false;
-                setKbCarrying(false);
-                clearKbCarryVisuals();
-              }
-            }}
-            onFocus={(e) => {
-              const els = focusablesRef.current;
-              const target = e.target as HTMLElement;
-              const idx = els.indexOf(target);
-              if (idx >= 0) {
-                setActiveFocusIndex(idx);
-                lastFocusPointRef.current = getCenter(target);
-
-                if (kbCarrying) {
-                  if (target !== kbCarriedElRef.current) {
-                    setKeyboardDropTarget(target);
-                  } else {
-                    setKeyboardDropTarget(null);
-                  }
-                }
-              }
-            }}
+            onPointerDownCapture={onBoardPointerDownCapture}
+            onFocusCapture={onBoardFocusCapture}
+            onBlurCapture={onBoardBlurCapture}
+            onFocus={onBoardFocus}
           >
             {seedReady ? (
               <>
