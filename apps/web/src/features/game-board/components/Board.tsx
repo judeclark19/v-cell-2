@@ -23,6 +23,7 @@ import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoCo
 import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
 import DragLayer from "./DragLayer";
+import BoardControls from "./BoardControls";
 
 function Board() {
   const {
@@ -358,38 +359,15 @@ function Board() {
         </BoardKbAttrsContext.Provider>
       </div>
 
-      <section className="control" aria-label="Game actions">
-        <div className="row">
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={newDealWithCelebration}
-          >
-            New deal
-          </button>
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={restartWithCelebration}
-          >
-            Restart deal
-          </button>
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={undo}
-            disabled={!canUndo}
-          >
-            {undoLimit === "unlimited" || undoLimit === 0
-              ? "Undo"
-              : `Undo (${undosRemaining})`}
-          </button>
-        </div>
-
-        <p className="hint" style={{ textAlign: "center" }}>
-          Seed: {state?.seed ?? "(unknown)"}
-        </p>
-      </section>
+      <BoardControls
+        seed={state?.seed ?? "(unknown)"}
+        onNewDeal={newDealWithCelebration}
+        onRestart={restartWithCelebration}
+        onUndo={undo}
+        canUndo={canUndo}
+        undoLimit={undoLimit}
+        undosRemaining={undosRemaining}
+      />
     </>
   );
 }
