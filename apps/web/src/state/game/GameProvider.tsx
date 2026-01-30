@@ -10,9 +10,10 @@ import {
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
+import {  areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
+import { useGameActions } from "./hooks/useGameActions";
 
 type GameContextValue = {
   state: GameState;
@@ -68,11 +69,6 @@ type GameResult = {
   moves: Move[];
   cursor: number;
 };
-
-function undoLimitToCap(undoLimit: UndoLimit): number {
-  if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
-  return undoLimit;
-}
 
 export function useGame() {
   const ctx = useContext(GameContext);
@@ -223,167 +219,46 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-  const dispatchMove = (move: Move) => {
-    // First move starts the timer clock.
-    setHasStarted(true);
-    setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
+  const { dispatchMove, restart, newDeal, undo } = useGameActions({
+    state,
+    history,
+    setHistory,
 
-    // If the game isn't finished yet, a move means we're actively playing (not abandoned).
-    // Post-win cosmetic moves should NOT clear `endedAtMs`.
-    if (!isWon) {
-      setEndedAtMs(null);
-      setIsAbandoned(false);
-    }
+    seed,
+    gameId,
+    rules,
+    undoLimit,
 
-    // Score-keeping: only count moves up to the win.
-    if (!isWon) {
-      setMoveCount((n) => n + 1);
-      const baseCursor = cursorRef.current;
+    isWon,
+    isAbandoned,
+    hasStarted,
+    endedAtMs,
 
-      setMoves((prev) => {
-        const truncated = prev.slice(0, baseCursor);
-        return [...truncated, move];
-      });
+    setHasStarted,
+    setStartedAtMs,
+    setEndedAtMs,
+    setIsAbandoned,
 
-      const nextCursor = baseCursor + 1;
-      cursorRef.current = nextCursor;
-      setCursor(nextCursor);
-    }
+    undosUsed,
+    setUndosUsed,
+    moveCount,
+    setMoveCount,
 
-    setHistory((h) => {
-      const next = applyMove(h.present, move);
+    moves,
+    setMoves,
+    cursor,
+    setCursor,
+    cursorRef,
 
-      // If this move produces a win, stamp `endedAtMs` exactly once.
-      if (!isWon && areAllCardsUnlocked(next)) {
-        const ended = Date.now();
-        setEndedAtMs((prev) => (prev == null ? ended : prev));
+    setCheckpoint,
 
-        setCompletedGames((prev) => {
-          if (prev.some((g) => g.gameId === gameId)) return prev;
-          return [
-            ...prev,
-            {
-              gameId,
-              seed,
-              rules: next.rules, // or state.rules if you prefer; next is fine here
-              status: "won",
-              startedAtMs,
-              endedAtMs: ended,
-              timeElapsedMs,
-              moveCount,
-              undosUsed,
-              moves,
-              cursor
-            }
-          ];
-        });
-      }
+    setCompletedGames,
 
-      // After a win, allow cosmetic moves but do not mutate undo history.
-      if (isWon) {
-        return { present: next, past: h.past };
-      }
+    timeElapsedMs,
+    startedAtMs,
 
-      const cap = undoLimitToCap(undoLimit);
-      const nextPast = [...h.past, h.present];
-
-      if (Number.isFinite(cap) && nextPast.length > cap) {
-        // Keep the most recent `cap` states.
-        nextPast.splice(0, nextPast.length - cap);
-      }
-
-      if (cursorRef.current > 0 && cursorRef.current % 20 === 0) {
-        setCheckpoint({ at: cursorRef.current, state: next });
-      }
-
-      return {
-        present: next,
-        past: nextPast
-      };
-    });
-  };
-
-  // Restart should reset the deal back to its original position and clear history,
-  // but it should NOT affect the timer.
-  const restart = () => {
-    setHistory({ present: createGame(seed, rules), past: [] });
-    setUndosUsed(0);
-    setMoveCount(0);
-    setMoves([]);
-    setCursor(0);
-    cursorRef.current = 0;
-    setCheckpoint(null);
-    setEndedAtMs(null);
-    setIsAbandoned(false);
-  };
-
-  const newDeal = () => {
-    // If a game is in progress, abandon it first so it gets archived.
-    const isFinished = isWon || isAbandoned || endedAtMs != null;
-
-    if (hasStarted && !isFinished) {
-      const ended = Date.now();
-
-      setIsAbandoned(true);
-      setEndedAtMs((prev) => (prev == null ? ended : prev));
-
-      setCompletedGames((prev) => {
-        if (prev.some((g) => g.gameId === gameId)) return prev;
-        return [
-          ...prev,
-          {
-            gameId,
-            seed,
-            rules: state.rules,
-            status: "abandoned",
-            startedAtMs,
-            endedAtMs: ended,
-            timeElapsedMs,
-            moveCount,
-            undosUsed,
-            moves,
-            cursor
-          }
-        ];
-      });
-
-      // Now actually start the new deal immediately.
-      startNewDealSession();
-      return;
-    }
-
-    // Otherwise just start immediately.
-    startNewDealSession();
-  };
-
-  const undo = () => {
-    // Once the game is won, undo is disabled.
-    if (isWon) return;
-
-    // Nothing to undo.
-    if (history.past.length === 0) return;
-
-    // Enforce undo limit.
-    if (undoLimit !== "unlimited" && undosUsed >= undoLimit) return;
-
-    // Count a successful undo exactly once (outside the history updater).
-    setUndosUsed((n) => n + 1);
-    setMoveCount((n) => Math.max(0, n - 1));
-    setCursor((c) => {
-      const next = Math.max(0, c - 1);
-      cursorRef.current = next;
-      return next;
-    });
-
-    setHistory((h) => {
-      if (h.past.length === 0) return h;
-      const prev = h.past[h.past.length - 1];
-      return {
-        present: prev,
-        past: h.past.slice(0, -1)
-      };
-    });
-  };
+    startNewDealSession
+  });
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
