@@ -1,25 +1,7 @@
 import { useCallback } from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
-
-export type HistoryState = {
-  present: GameState;
-  past: GameState[];
-};
-
-type GameResult = {
-  gameId: string;
-  seed: string;
-  rules: GameState["rules"];
-  status: "won" | "abandoned";
-  startedAtMs: number | null;
-  endedAtMs: number;
-  timeElapsedMs: number;
-  moveCount: number;
-  undosUsed: number;
-  moves: Move[];
-  cursor: number;
-};
+import { GameResult, HistoryState } from "../GameProvider";
 
 function undoLimitToCap(undoLimit: UndoLimit): number {
   if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;

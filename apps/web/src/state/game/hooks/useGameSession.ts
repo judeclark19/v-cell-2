@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
-
-type HistoryState = {
-  present: GameState;
-  past: GameState[];
-};
+import { HistoryState } from "../GameProvider";
 
 type StartSessionMode =
   | { kind: "new" }

@@ -10,10 +10,11 @@ import {
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import {  areAllCardsUnlocked, createGame } from "@vcell/engine";
+import { areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
+import { useGameSettings } from "./hooks/useGameSettings";
 
 type GameContextValue = {
   state: GameState;
@@ -45,17 +46,14 @@ type GameContextValue = {
   completedGames: GameResult[];
 };
 
-type HistoryState = {
+export type HistoryState = {
   present: GameState;
   past: GameState[];
 };
 
-const SHOW_TIMER_KEY = "vcell:showTimer";
-const UNDO_LIMIT_KEY = "vcell:undoLimit";
-
 const GameContext = createContext<GameContextValue | null>(null);
 
-type GameResult = {
+export type GameResult = {
   gameId: string;
   seed: string;
   rules: GameState["rules"];
@@ -88,31 +86,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
-  const [showTimer, setShowTimer] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    const raw = window.localStorage.getItem(SHOW_TIMER_KEY);
-    if (raw == null) return true;
-    return raw === "true";
-  });
-
-  const [undoLimit, setUndoLimit] = useState<UndoLimit>(() => {
-    // SSR-safe default to avoid hydration mismatch.
-    if (typeof window === "undefined") return "unlimited";
-    const raw = window.localStorage.getItem(UNDO_LIMIT_KEY);
-    if (raw == null) return "unlimited";
-    if (raw === "unlimited") return "unlimited";
-    const n = Number(raw);
-    if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
-    return "unlimited";
-  });
-
-  useEffect(() => {
-    window.localStorage.setItem(SHOW_TIMER_KEY, String(showTimer));
-  }, [showTimer]);
-
-  useEffect(() => {
-    window.localStorage.setItem(UNDO_LIMIT_KEY, String(undoLimit));
-  }, [undoLimit]);
+  const { showTimer, setShowTimer, undoLimit, setUndoLimit } =
+    useGameSettings();
 
   const rules = useMemo<Rules>(
     () => ({
