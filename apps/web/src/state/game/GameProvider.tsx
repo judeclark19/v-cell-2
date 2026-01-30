@@ -9,6 +9,7 @@ import {
   useRef,
   useState
 } from "react";
+import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
@@ -200,10 +201,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [isAbandoned, setIsAbandoned] = useState<boolean>(false);
   const [paused, setPaused] = useState<boolean>(false);
 
-  // Timer refs
-  const intervalIdRef = useRef<number | null>(null);
-  const lastTickAtRef = useRef<number | null>(null);
-
   // ---------------------------------------------------------------------------
   // Undo analytics
   // ---------------------------------------------------------------------------
@@ -323,68 +320,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Timer loop
   // ---------------------------------------------------------------------------
-  useEffect(() => {
-    function clearTimerInterval() {
-      if (intervalIdRef.current !== null) {
-        clearInterval(intervalIdRef.current);
-        intervalIdRef.current = null;
-      }
-      lastTickAtRef.current = null;
-    }
-
-    function startTimerInterval() {
-      if (intervalIdRef.current !== null) return;
-      lastTickAtRef.current = performance.now();
-      intervalIdRef.current = window.setInterval(() => {
-        const now = performance.now();
-        const lastTickAt = lastTickAtRef.current;
-        const deltaMs = lastTickAt == null ? 0 : now - lastTickAt;
-
-        if (lastTickAt != null) {
-          setTimeElapsedMs((prev) => prev + deltaMs);
-        }
-
-        lastTickAtRef.current = now;
-      }, 250);
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === "hidden") {
-        clearTimerInterval();
-      } else if (
-        document.visibilityState === "visible" &&
-        !paused &&
-        !isFinished &&
-        seedReady &&
-        hasStarted
-      ) {
-        startTimerInterval();
-      }
-    }
-
-    const isFinished = isWon || isAbandoned;
-
-    if (
-      !paused &&
-      !isFinished &&
-      seedReady &&
-      hasStarted &&
-      document.visibilityState === "visible"
-    ) {
-      startTimerInterval();
-    }
-
-    if (isFinished) {
-      clearTimerInterval();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      clearTimerInterval();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [paused, seedReady, hasStarted, isWon, isAbandoned]);
+  useGameTimer({
+    paused,
+    seedReady,
+    hasStarted,
+    isWon,
+    isAbandoned,
+    setTimeElapsedMs
+  });
 
   // ---------------------------------------------------------------------------
   // Actions
