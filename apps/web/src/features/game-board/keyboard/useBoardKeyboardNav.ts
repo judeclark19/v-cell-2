@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-
-type BoardNavNodeMeta = {
-  region: "tableau" | "freecell" | "foundation";
-  col: number;
-  row: 0 | 1 | 2;
-  tableauCol?: number;
-  tableauIndex?: number;
-};
+import { BoardNodeMeta } from "../hooks/useBoardDomMapping";
 
 type UseBoardKeyboardNavArgs = {
   state: unknown;
   playable: unknown;
   kbCarrying: boolean;
-  getNodeMeta: (el: HTMLElement) => BoardNavNodeMeta | null;
+  getNodeMeta: (el: HTMLElement) => BoardNodeMeta | null;
   isLegalDropTargetEl?: (el: HTMLElement) => boolean;
 };
 

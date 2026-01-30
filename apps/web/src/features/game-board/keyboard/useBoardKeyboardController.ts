@@ -9,7 +9,7 @@ import type { DragSource } from "@/features/game-board/animations/useCardDrag";
 import type { DropTarget } from "@/features/game-board/animations/useCardDrag";
 
 type DragLike = {
-  source: DragSource;
+  source: DragSource | null;
   stack: Array<{ card: EngineCard; faceDown: boolean }>;
 };
 
@@ -49,6 +49,14 @@ type UseBoardKeyboardControllerArgs = {
 
   /** Map a focused DOM element -> a board drop target. */
   buildKbDropTargetFromEl: (el: HTMLElement) => DropTarget | null;
+
+  /** Starts a visual-only keyboard flight animation for a committed keyboard move. */
+  startKbFlight: (args: {
+    fromEl: HTMLElement;
+    toEl: HTMLElement;
+    kbDrag: DragLike;
+    dropTarget: NonNullable<DropTarget>;
+  }) => void;
 };
 
 export function useBoardKeyboardController({
@@ -68,7 +76,8 @@ export function useBoardKeyboardController({
   tryAutoFreeCellFromEl,
   findNextByDirection,
   buildKbDragFromEl,
-  buildKbDropTargetFromEl
+  buildKbDropTargetFromEl,
+  startKbFlight
 }: UseBoardKeyboardControllerArgs) {
   const visuals = useKbCarryVisuals({ boardRef });
 
@@ -86,6 +95,7 @@ export function useBoardKeyboardController({
     tryAutoFreeCellFromEl,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
+    startKbFlight,
     getCarriedEl: () => visuals.carriedElRef.current,
     getDropTargetEl: () =>
       visuals.dropTargetElRef.current ||
@@ -300,6 +310,7 @@ export function useBoardKeyboardController({
     setKeyboardDropTarget: visuals.setKeyboardDropTargetEl,
     onBoardKeyDown,
 
-    isLegalKeyboardDropTargetEl: actions.isLegalKeyboardDropTargetEl
+    isLegalKeyboardDropTargetEl: actions.isLegalKeyboardDropTargetEl,
+    pendingKbDropFocusSourceRef: actions.pendingKbDropFocusSourceRef
   };
 }

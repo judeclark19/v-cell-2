@@ -11,6 +11,9 @@ type DragLayerProps = {
     baseTop: number;
     x: number;
     y: number;
+    kbFlight?: {
+      active: boolean;
+    };
   };
   finalizeDrag: () => void;
 };
@@ -20,9 +23,11 @@ export default function DragLayer({ drag, finalizeDrag }: DragLayerProps) {
 
   return (
     <div
-      className={`drag-layer ${drag.isReturning ? "is-returning" : ""}`}
+      className={`drag-layer ${drag.isReturning ? "is-returning" : ""} ${
+        drag.kbFlight?.active ? "is-kb-flight" : ""
+      }`}
       onTransitionEnd={() => {
-        if (drag.isReturning) finalizeDrag();
+        if (drag.isReturning || drag.kbFlight?.active) finalizeDrag();
       }}
       style={{
         left: 0,

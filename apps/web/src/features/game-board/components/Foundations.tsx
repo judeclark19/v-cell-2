@@ -3,20 +3,12 @@ import { useContext } from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
+import { DragState } from "../animations/useCardDrag";
 
 type FoundationsProps = {
   foundationsRow: Array<EngineCard | null | undefined>;
   foundations?: Array<{ cards: EngineCard[] }>;
-  drag?: {
-    active: boolean;
-    pending: boolean;
-    isReturning: boolean;
-    source:
-      | { type: "foundation"; index: number }
-      | { type: "freecell"; index: number }
-      | { type: "tableau"; colIndex: number; startIndex: number }
-      | null;
-  };
+  drag?: DragState<{ card: EngineCard }>;
   playableFoundations: boolean[];
   allowFoundationPullback: boolean;
   showTimer: boolean;
@@ -49,6 +41,7 @@ function Foundations({
 }: FoundationsProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
+  const kbFlight = drag?.kbFlight;
 
   const formatElapsed = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -115,6 +108,18 @@ function Foundations({
 
               const isEmptySlot = !effectiveCard;
 
+              const hideForKbFlightDest =
+                !!kbFlight &&
+                kbFlight.active &&
+                kbFlight.dropTarget?.type === "foundation" &&
+                kbFlight.dropTarget.index === foundationIndex &&
+                !!effectiveCard &&
+                kbFlight.cardIds.includes(effectiveCard.id);
+
+              const cardStyle = hideForKbFlightDest
+                ? ({ visibility: "hidden" } as const)
+                : undefined;
+
               return (
                 <div
                   key={i}
@@ -168,6 +173,7 @@ function Foundations({
                                       foundationIndex
                                     )
                             }
+                            style={cardStyle}
                           />
                         </>
                       );

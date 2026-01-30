@@ -123,6 +123,7 @@ export function useBoardController(params: UseBoardControllerParams) {
   const {
     drag,
     finalizeDrag,
+    startKbFlight,
     handleTableauPointerDown,
     handleFreeCellPointerDown,
     handleFoundationPointerDown
@@ -133,6 +134,14 @@ export function useBoardController(params: UseBoardControllerParams) {
     getFoundations: () => foundationRefs.current,
     onDrop: commitMoveFromPointerDropProxy
   });
+
+  // Keyboard "flight" animation entrypoint. We will thread this into the keyboard system next.
+  const startKbFlightFromKeyboard = useCallback(
+    (args: Parameters<typeof startKbFlight>[0]) => {
+      startKbFlight(args);
+    },
+    [startKbFlight]
+  );
 
   const {
     isAutoCompleting,
@@ -220,7 +229,16 @@ export function useBoardController(params: UseBoardControllerParams) {
     setPaused,
 
     newDeal: newDealWithCelebration,
-    restart: restartWithCelebration
+    restart: restartWithCelebration,
+    startKbFlight: ({ fromEl, toEl, kbDrag, dropTarget }) => {
+      startKbFlightFromKeyboard({
+        fromEl,
+        toEl,
+        stack: kbDrag.stack,
+        source: kbDrag.source,
+        dropTarget
+      });
+    }
   });
 
   useEffect(() => {

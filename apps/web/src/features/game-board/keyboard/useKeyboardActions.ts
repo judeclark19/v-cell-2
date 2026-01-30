@@ -3,6 +3,12 @@ import { useCallback, useRef } from "react";
 import { commitBoardDrop } from "@/features/game-board/hooks/useBoardDrop";
 import { getCardIdFromEl } from "@/features/game-board/dom/domMappingCore";
 import { findFocusableCardElById } from "@/features/game-board/keyboard/keyboardFocusUtils";
+
+import type { Card as EngineCard } from "@vcell/engine";
+import type {
+  DragSource,
+  DropTarget
+} from "@/features/game-board/animations/useCardDrag";
 /**
  * The goal of this hook is to own *actions* (effects on the game),
  * independent of keyboard navigation routing and independent of DOM class mutations.
@@ -11,6 +17,11 @@ import { findFocusableCardElById } from "@/features/game-board/keyboard/keyboard
 // ---- Small runtime helpers (typed without `any`) ----
 
 type UnknownRecord = Record<string, unknown>;
+
+type KbDragLike = {
+  source: DragSource | null;
+  stack: Array<{ card: EngineCard; faceDown: boolean }>;
+};
 
 function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === "object" && v !== null;
@@ -40,6 +51,63 @@ function getMoveTo(move: unknown): UnknownRecord | null {
   if (!isRecord(move)) return null;
   const to = getRecord(move.to);
   return to;
+}
+
+function getNum(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function getMoveToIndex(move: unknown): number | null {
+  const to = getMoveTo(move);
+  if (!to) return null;
+  const idx = getNum(to.index);
+  return idx;
+}
+
+function dropTargetsEqual(a: DropTarget | null, b: DropTarget | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.type !== b.type) return false;
+
+  switch (a.type) {
+    case "foundation":
+    case "freecell":
+      return a.index === (b as typeof a).index;
+    case "tableau": {
+      const bb = b as typeof a;
+      return a.colIndex === bb.colIndex;
+    }
+    default:
+      return false;
+  }
+}
+
+function findDropTargetEl(
+  root: HTMLElement | null,
+  desired: DropTarget,
+  build: (el: HTMLElement) => DropTarget | null
+): HTMLElement | null {
+  if (!root) return null;
+  const els = Array.from(
+    root.querySelectorAll<HTMLElement>("[data-kb-drop-target='true']")
+  );
+  for (const el of els) {
+    const dt = build(el);
+    if (dropTargetsEqual(dt, desired)) return el;
+  }
+  return null;
+}
+
+function findTableauTailAnchorEl(
+  root: HTMLElement | null,
+  colIndex: number
+): HTMLElement | null {
+  if (!root) return null;
+  return (
+    root.querySelector<HTMLElement>(
+      `[data-tableau-tail-anchor='true'][data-tableau-col='${colIndex}']`
+    ) ?? null
+  );
 }
 
 function isMoveToPileType(
@@ -84,8 +152,16 @@ export type UseKeyboardActionsArgs = {
   tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
 
   /** DOM → drag/drop for keyboard */
-  buildKbDragFromEl: (el: HTMLElement) => CommitArgs["drag"] | null;
-  buildKbDropTargetFromEl: (el: HTMLElement) => CommitArgs["dropTarget"] | null;
+  buildKbDragFromEl: (el: HTMLElement) => KbDragLike | null;
+  buildKbDropTargetFromEl: (el: HTMLElement) => DropTarget | null;
+
+  /** Start a visual-only keyboard "flight" animation for a committed keyboard move. */
+  startKbFlight: (args: {
+    fromEl: HTMLElement;
+    toEl: HTMLElement;
+    kbDrag: KbDragLike;
+    dropTarget: NonNullable<DropTarget>;
+  }) => void;
 
   /** Board root for post-undo focus restore */
   boardRef: React.RefObject<HTMLElement | null>;
@@ -105,6 +181,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
     tryAutoFreeCellFromEl,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
+    startKbFlight,
     boardRef,
     getCarriedEl,
     getDropTargetEl
@@ -118,6 +195,12 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
    * - undo tries to restore focus to that id
    */
   const lastKbMovedCardIdRef = useRef<string | null>(null);
+
+  /**
+   * Used by `useBoardKeyboardSystem` to restore focus after kb drop.
+   * We capture the drag source (especially tableau col/startIndex) at commit time.
+   */
+  const pendingKbDropFocusSourceRef = useRef<DragSource | null>(null);
 
   const canCommitKeyboardDropForward = useCallback(
     (carriedEl: HTMLElement | null, targetEl: HTMLElement | null): boolean => {
@@ -173,6 +256,23 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       const isForwardLegal = canCommitKeyboardDropForward(carried, target);
       if (!isForwardLegal) return false;
 
+      const forwardMovedId = getCardIdFromEl(carried);
+      if (forwardMovedId) lastKbMovedCardIdRef.current = forwardMovedId;
+      pendingKbDropFocusSourceRef.current = drag.source;
+
+      const flightToEl =
+        dropTarget.type === "tableau"
+          ? (findTableauTailAnchorEl(boardRef.current, dropTarget.colIndex) ??
+            target)
+          : target;
+
+      startKbFlight({
+        fromEl: carried,
+        toEl: flightToEl,
+        kbDrag: drag,
+        dropTarget
+      });
+
       const didForward = commitBoardDrop({
         legalMoves,
         dispatchMove,
@@ -202,6 +302,22 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       const reverseMovedId = getCardIdFromEl(target);
       if (reverseMovedId) lastKbMovedCardIdRef.current = reverseMovedId;
+      pendingKbDropFocusSourceRef.current = reverseDrag.source;
+
+      const reverseFlightToEl =
+        reverseDropTarget.type === "tableau"
+          ? (findTableauTailAnchorEl(
+              boardRef.current,
+              reverseDropTarget.colIndex
+            ) ?? carried)
+          : carried;
+
+      startKbFlight({
+        fromEl: target,
+        toEl: reverseFlightToEl,
+        kbDrag: reverseDrag,
+        dropTarget: reverseDropTarget
+      });
 
       return commitBoardDrop({
         legalMoves,
@@ -217,7 +333,9 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       getCarriedEl,
       getDropTargetEl,
       legalMoves,
-      canCommitKeyboardDropForward
+      canCommitKeyboardDropForward,
+      startKbFlight,
+      boardRef
     ]
   );
 
@@ -240,6 +358,32 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
         );
         if (match) {
           lastKbMovedCardIdRef.current = cardId;
+
+          // Attempt a visual kb flight for auto-move when we can resolve the destination element.
+          const toIndex = getMoveToIndex(match);
+          const toType = getMoveTo(match)
+            ? getStr(getMoveTo(match)?.type)
+            : null;
+
+          if (toType === "foundation" && toIndex != null) {
+            const desired: DropTarget = { type: "foundation", index: toIndex };
+            const root = boardRef.current;
+            const toEl = findDropTargetEl(
+              root,
+              desired,
+              buildKbDropTargetFromEl
+            );
+            const kbDrag = buildKbDragFromEl(el);
+            if (toEl && kbDrag) {
+              startKbFlight({
+                fromEl: el,
+                toEl,
+                kbDrag,
+                dropTarget: desired
+              });
+            }
+          }
+
           dispatchMove(match);
           return true;
         }
@@ -252,7 +396,15 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       }
       return did;
     },
-    [dispatchMove, legalMoves, tryAutoFoundationFromEl]
+    [
+      dispatchMove,
+      legalMoves,
+      tryAutoFoundationFromEl,
+      boardRef,
+      buildKbDropTargetFromEl,
+      buildKbDragFromEl,
+      startKbFlight
+    ]
   );
 
   /**
@@ -271,6 +423,32 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
         );
         if (match) {
           lastKbMovedCardIdRef.current = cardId;
+
+          // Attempt a visual kb flight for auto-move when we can resolve the destination element.
+          const toIndex = getMoveToIndex(match);
+          const toType = getMoveTo(match)
+            ? getStr(getMoveTo(match)?.type)
+            : null;
+
+          if (toType === "freecell" && toIndex != null) {
+            const desired: DropTarget = { type: "freecell", index: toIndex };
+            const root = boardRef.current;
+            const toEl = findDropTargetEl(
+              root,
+              desired,
+              buildKbDropTargetFromEl
+            );
+            const kbDrag = buildKbDragFromEl(el);
+            if (toEl && kbDrag) {
+              startKbFlight({
+                fromEl: el,
+                toEl,
+                kbDrag,
+                dropTarget: desired
+              });
+            }
+          }
+
           dispatchMove(match);
           return true;
         }
@@ -283,7 +461,15 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       }
       return did;
     },
-    [dispatchMove, legalMoves, tryAutoFreeCellFromEl]
+    [
+      dispatchMove,
+      legalMoves,
+      tryAutoFreeCellFromEl,
+      boardRef,
+      buildKbDropTargetFromEl,
+      buildKbDragFromEl,
+      startKbFlight
+    ]
   );
 
   /**
@@ -342,6 +528,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
   return {
     lastKbMovedCardIdRef,
+    pendingKbDropFocusSourceRef,
     tryCommitKeyboardDrop,
     isLegalKeyboardDropTargetEl,
     handleAutoFoundation,

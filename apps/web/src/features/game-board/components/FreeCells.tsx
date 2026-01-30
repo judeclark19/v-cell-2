@@ -41,6 +41,7 @@ function FreeCells({
 }: FreeCellsProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
+  const kbFlight = drag.kbFlight;
   return (
     <div className="board-bottom" aria-label="Free cells">
       <div
@@ -80,30 +81,47 @@ function FreeCells({
               <Card card={null} className="pile-slot" />
 
               {/* If a card exists, render it on top of the slot */}
-              {card && (
-                <Card
-                  card={card}
-                  playable={playableFreeCells[i - 1]} // -1 accounts for spacer
-                  data-kb-focusable={
-                    playableFreeCells[i - 1] ? "true" : "false"
-                  }
-                  className="pile-card"
-                  onActivate={() =>
-                    tryAutoFoundation({
-                      type: "freecell",
-                      index: (i - 1) as FreeCellIndex
-                    })
-                  }
-                  onPointerDownCard={(e) => handleFreeCellPointerDown(e, i - 1)}
-                  style={
+              {card &&
+                (() => {
+                  const freeCellIndex = i - 1;
+
+                  const hideForPointerDrag =
                     drag.active &&
                     drag.source?.type === "freecell" &&
-                    drag.source.index === i - 1
-                      ? { visibility: "hidden" }
-                      : undefined
-                  }
-                />
-              )}
+                    drag.source.index === freeCellIndex;
+
+                  const hideForKbFlightDest =
+                    kbFlight.active &&
+                    kbFlight.dropTarget?.type === "freecell" &&
+                    kbFlight.dropTarget.index === freeCellIndex &&
+                    kbFlight.cardIds.includes(card.id);
+
+                  const style =
+                    hideForPointerDrag || hideForKbFlightDest
+                      ? ({ visibility: "hidden" } as const)
+                      : undefined;
+
+                  return (
+                    <Card
+                      card={card}
+                      playable={playableFreeCells[i - 1]} // -1 accounts for spacer
+                      data-kb-focusable={
+                        playableFreeCells[i - 1] ? "true" : "false"
+                      }
+                      className="pile-card"
+                      onActivate={() =>
+                        tryAutoFoundation({
+                          type: "freecell",
+                          index: (i - 1) as FreeCellIndex
+                        })
+                      }
+                      onPointerDownCard={(e) =>
+                        handleFreeCellPointerDown(e, i - 1)
+                      }
+                      style={style}
+                    />
+                  );
+                })()}
             </div>
           )
         )}

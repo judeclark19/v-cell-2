@@ -28,18 +28,26 @@ function Tableau({
   tryAutoFoundation,
   setTableauColRef
 }: TableauProps) {
-  const tableauSource = drag.source?.type === "tableau" ? drag.source : null;
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
+  const kbFlight = drag.kbFlight;
 
   return (
     <div className="tableau-scroll" aria-label="Tableau">
       <div className="tableau" aria-label="Tableau grid">
         {state.tableau.map((col, colIndex) => {
+          const tableauSource =
+            drag.source?.type === "tableau" ? drag.source : null;
+
           const isDraggedFromThisCol =
             drag.active &&
             tableauSource != null &&
             tableauSource.colIndex === colIndex;
+
+          const isKbFlightDestCol =
+            kbFlight.active &&
+            kbFlight.dropTarget?.type === "tableau" &&
+            kbFlight.dropTarget.colIndex === colIndex;
 
           const isDraggingEntireColumn =
             isDraggedFromThisCol &&
@@ -90,6 +98,22 @@ function Tableau({
                   );
                 }
 
+                const isSuppressedByKbFlight =
+                  isKbFlightDestCol && kbFlight.cardIds.includes(tc.card.id);
+
+                if (isSuppressedByKbFlight) {
+                  return (
+                    <Card
+                      key={tc.card.id}
+                      card={tc.card}
+                      faceDown={tc.faceDown}
+                      playable={playable.tableau[colIndex][tcIndex]}
+                      className="card--ghost"
+                      style={{ visibility: "hidden" }}
+                    />
+                  );
+                }
+
                 return (
                   <Card
                     key={tc.card.id}
@@ -112,6 +136,27 @@ function Tableau({
                   />
                 );
               })}
+              {/*
+                Hidden tail anchor used for kb flight destination.
+                This extra card participates in the normal tableau stacking layout, so its
+                DOMRect represents the correct end-of-column landing position (with overlap).
+              */}
+              {col.length > 0 &&
+                (() => {
+                  const tail = col[col.length - 1];
+                  return (
+                    <Card
+                      key={`tail-anchor-${colIndex}-${tail.card.id}`}
+                      card={tail.card}
+                      faceDown={tail.faceDown}
+                      playable={false}
+                      className="card--ghost"
+                      data-tableau-tail-anchor="true"
+                      data-tableau-col={String(colIndex)}
+                      style={{ visibility: "hidden" }}
+                    />
+                  );
+                })()}
             </div>
           );
         })}

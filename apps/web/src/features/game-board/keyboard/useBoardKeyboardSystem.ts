@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { type BoardKbAttrsContextValue, useBoardKbAttrs } from "./boardKbAttrs";
 import { useBoardKeyboardNav } from "./useBoardKeyboardNav";
@@ -7,6 +7,8 @@ import { useBoardKeyboardController } from "./useBoardKeyboardController";
 type NavArgs = Parameters<typeof useBoardKeyboardNav>[0];
 type CtrlArgs = Parameters<typeof useBoardKeyboardController>[0];
 type KbAttrsArgs = Parameters<typeof useBoardKbAttrs>[0];
+type KbDrag = NonNullable<ReturnType<CtrlArgs["buildKbDragFromEl"]>>;
+type KbDropTarget = ReturnType<CtrlArgs["buildKbDropTargetFromEl"]>;
 
 export type UseBoardKeyboardSystemArgs = {
   isInputSuppressed: boolean;
@@ -37,6 +39,14 @@ export type UseBoardKeyboardSystemArgs = {
 
   // controller data
   legalMoves: CtrlArgs["legalMoves"];
+
+  /** Starts a visual-only keyboard "flight" animation for a committed keyboard move. */
+  startKbFlight: (args: {
+    fromEl: HTMLElement;
+    toEl: HTMLElement;
+    kbDrag: KbDrag;
+    dropTarget: NonNullable<KbDropTarget>;
+  }) => void;
 };
 
 export type UseBoardKeyboardSystemResult = {
@@ -81,9 +91,11 @@ export function useBoardKeyboardSystem({
   setPaused,
   newDeal,
   restart,
-  legalMoves
+  legalMoves,
+  startKbFlight
 }: UseBoardKeyboardSystemArgs): UseBoardKeyboardSystemResult {
   const [kbCarrying, setKbCarrying] = useState(false);
+  const lastRestoredFocusStampRef = useRef(0);
 
   // --- navigation (focus math + roving tabindex) ---
   const {
@@ -110,7 +122,8 @@ export function useBoardKeyboardSystem({
     onBoardKeyDown: onControllerKeyDown,
     clearKbCarryVisuals,
     kbCarriedElRef,
-    setKeyboardDropTarget
+    setKeyboardDropTarget,
+    pendingKbDropFocusSourceRef
   } = useBoardKeyboardController({
     boardRef,
     isInputSuppressed,
@@ -128,7 +141,8 @@ export function useBoardKeyboardSystem({
     tryAutoFreeCellFromEl,
     findNextByDirection,
     buildKbDragFromEl,
-    buildKbDropTargetFromEl
+    buildKbDropTargetFromEl,
+    startKbFlight
   });
 
   // --- kb attrs (tabIndex, aria, data-kb-*) ---
@@ -226,6 +240,68 @@ export function useBoardKeyboardSystem({
     // Forward the event into nav's focus capture handler.
     onNavFocusCapture();
   }, [isInputSuppressed, hadBoardFocusRef, onNavFocusCapture]);
+
+  useEffect(() => {
+    const source = pendingKbDropFocusSourceRef.current;
+    if (!source) return;
+
+    // Only restore for tableau sources (your requested behavior).
+    if (source.type !== "tableau") {
+      pendingKbDropFocusSourceRef.current = null;
+      return;
+    }
+
+    // Prevent double-restores on rapid rerenders.
+    const stamp = Date.now();
+    if (stamp === lastRestoredFocusStampRef.current) return;
+    lastRestoredFocusStampRef.current = stamp;
+
+    // We wait a couple frames so the move + any kb flight settles in the DOM.
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const els = focusablesRef.current;
+        const desiredTcIndex = source.startIndex - 1;
+
+        const findFocusable = (predicate: (el: HTMLElement) => boolean) => {
+          for (const el of els) {
+            if (predicate(el)) return el;
+          }
+          return null;
+        };
+
+        const elToFocus =
+          desiredTcIndex >= 0
+            ? findFocusable((el) => {
+                const meta = getNodeMeta(el);
+                return (
+                  meta?.region === "tableau" &&
+                  meta.tableauCol === source.colIndex &&
+                  meta.tableauIndex === desiredTcIndex
+                );
+              })
+            : findFocusable((el) => {
+                const meta = getNodeMeta(el);
+                return (
+                  meta?.region === "tableau" &&
+                  meta.tableauCol === source.colIndex &&
+                  meta.tableauIndex === -1
+                );
+              });
+
+        if (elToFocus) {
+          focusElIfFocusable(elToFocus);
+        }
+
+        // Consume the request (one-shot).
+        pendingKbDropFocusSourceRef.current = null;
+      });
+    });
+  }, [
+    getNodeMeta,
+    focusElIfFocusable,
+    focusablesRef,
+    pendingKbDropFocusSourceRef
+  ]);
 
   return {
     boardRef,

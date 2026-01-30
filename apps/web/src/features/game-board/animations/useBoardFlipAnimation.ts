@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BoardNodeMeta } from "../hooks/useBoardDomMapping";
 
 /**
  * Extracted FLIP animation logic from Board.tsx.
@@ -14,10 +15,6 @@ import * as React from "react";
  * - Card DOM nodes include `.card[data-card-id="..."]`
  * - `getNodeMeta(el)` returns `{ region: "foundation" | "freecell" | ... } | null`
  */
-
-export type BoardNodeMeta = {
-  region: "tableau" | "freecell" | "foundation";
-};
 
 export type UseBoardFlipAnimationArgs = {
   boardRef: React.RefObject<HTMLElement | null>;

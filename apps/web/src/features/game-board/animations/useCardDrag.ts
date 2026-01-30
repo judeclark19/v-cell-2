@@ -33,6 +33,13 @@ export type DragState<TCardItem> = {
   height: number;
   stack: Array<TCardItem>;
   source: DragSource | null;
+  kbFlight: {
+    active: boolean;
+    /** Card ids in the flying stack. Used by board regions to suppress destination duplicates. */
+    cardIds: string[];
+    /** Target pile for suppression. */
+    dropTarget: DropTarget;
+  };
 };
 
 export type DropTarget =
@@ -90,7 +97,8 @@ export function useCardDrag<
     width: 0,
     height: 0,
     stack: [],
-    source: null
+    source: null,
+    kbFlight: { active: false, cardIds: [], dropTarget: null }
   });
 
   const dragRef = useRef(drag);
@@ -139,7 +147,8 @@ export function useCardDrag<
       width: 0,
       height: 0,
       stack: [],
-      source: null
+      source: null,
+      kbFlight: { active: false, cardIds: [], dropTarget: null }
     });
   };
 
@@ -162,7 +171,8 @@ export function useCardDrag<
       width: 0,
       height: 0,
       stack: [],
-      source: null
+      source: null,
+      kbFlight: { active: false, cardIds: [], dropTarget: null }
     });
   };
 
@@ -341,7 +351,8 @@ export function useCardDrag<
       width: rect.width,
       height: rect.height,
       stack,
-      source: { type: "tableau", colIndex, startIndex: tcIndex }
+      source: { type: "tableau", colIndex, startIndex: tcIndex },
+      kbFlight: { active: false, cardIds: [], dropTarget: null }
     });
   };
 
@@ -383,7 +394,8 @@ export function useCardDrag<
       width: rect.width,
       height: rect.height,
       stack,
-      source: { type: "freecell", index }
+      source: { type: "freecell", index },
+      kbFlight: { active: false, cardIds: [], dropTarget: null }
     });
   };
 
@@ -429,7 +441,58 @@ export function useCardDrag<
       width: rect.width,
       height: rect.height,
       stack,
-      source: { type: "foundation", index }
+      source: { type: "foundation", index },
+      kbFlight: { active: false, cardIds: [], dropTarget: null }
+    });
+  };
+
+  const startKbFlight = (args: {
+    fromEl: HTMLElement;
+    toEl: HTMLElement;
+    stack: Array<TableauItem>;
+    source: DragSource | null;
+    dropTarget: DropTarget;
+  }) => {
+    const { fromEl, toEl, stack, source, dropTarget } = args;
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect = toEl.getBoundingClientRect();
+
+    // Start a visual-only drag at the source location.
+    // We set `isReturning: true` so DragLayer transition-end can finalize it.
+    setDrag({
+      active: true,
+      isReturning: true,
+      pending: false,
+      pointerId: null,
+      captureEl: null,
+      x: 0,
+      y: 0,
+      startX: 0,
+      startY: 0,
+      baseLeft: fromRect.left,
+      baseTop: fromRect.top,
+      width: fromRect.width,
+      height: fromRect.height,
+      stack,
+      source,
+      kbFlight: {
+        active: true,
+        cardIds: stack.map((tc) => String((tc as unknown as CardLike).card.id)),
+        dropTarget
+      }
+    });
+
+    // Animate to the destination on the next frame so CSS transition can run.
+    window.requestAnimationFrame(() => {
+      const cur = dragRef.current;
+      if (!cur.active) return;
+      if (!cur.kbFlight.active) return;
+
+      const dx = toRect.left - fromRect.left;
+      const dy = toRect.top - fromRect.top;
+
+      setDrag({ ...cur, x: dx, y: dy });
     });
   };
 
@@ -440,6 +503,7 @@ export function useCardDrag<
     finalizeDrag,
     handleTableauPointerDown,
     handleFreeCellPointerDown,
-    handleFoundationPointerDown
+    handleFoundationPointerDown,
+    startKbFlight
   };
 }
