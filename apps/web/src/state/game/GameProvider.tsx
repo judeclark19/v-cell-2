@@ -10,11 +10,12 @@ import {
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import { areAllCardsUnlocked, createGame } from "@vcell/engine";
+import { createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
+import { useGameDerivedState } from "./hooks/useGameDerivedState";
 
 type GameContextValue = {
   state: GameState;
@@ -167,17 +168,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
-  const isWon = useMemo(() => areAllCardsUnlocked(state), [state]);
-
-  const undosRemaining = useMemo(() => {
-    if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
-    return Math.max(0, undoLimit - undosUsed);
-  }, [undoLimit, undosUsed]);
-
-  const canUndo =
-    !isWon &&
-    history.past.length > 0 &&
-    (undoLimit === "unlimited" || undosRemaining > 0);
+  const { isWon, undosRemaining, canUndo } = useGameDerivedState({
+    state,
+    pastLength: history.past.length,
+    undoLimit,
+    undosUsed
+  });
 
   // ---------------------------------------------------------------------------
   // Timer loop
