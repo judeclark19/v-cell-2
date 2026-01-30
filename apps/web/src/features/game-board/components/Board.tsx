@@ -1,7 +1,7 @@
+import "../styles/board.css";
+import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-import { useGame } from "@/state/game/GameProvider";
-import "../styles/board.css";
 
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
