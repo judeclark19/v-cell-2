@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -13,6 +12,7 @@ import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
+import { useGameSession } from "./hooks/useGameSession";
 
 type GameContextValue = {
   state: GameState;
@@ -74,14 +74,6 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
   return undoLimit;
 }
 
-function makeNewSeed(): string {
-  return crypto.randomUUID();
-}
-
-function makeNewGameId(): string {
-  return crypto.randomUUID();
-}
-
 export function useGame() {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error("useGame must be used within <GameProvider />");
@@ -92,10 +84,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Seed + rules
   // ---------------------------------------------------------------------------
-  // Seed is initialized to a deterministic placeholder to avoid hydration mismatches.
-  const [seed, setSeed] = useState<string>("seed-init");
-  const [gameId, setGameId] = useState<string>("game-init");
-  const [seedReady, setSeedReady] = useState<boolean>(false);
+  // Seed and gameId state are now owned by useGameSession.
 
   const [allowFoundationPullback, setAllowFoundationPullback] =
     useState<boolean>(true);
@@ -143,44 +132,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     state: GameState;
   } | null>(null);
 
-  type StartSessionMode =
-    | { kind: "new" }
-    | { kind: "seed"; seed: string }
-    | { kind: "seed+id"; seed: string; gameId: string };
-
-  const startSession = useCallback(
-    (mode: StartSessionMode) => {
-      const nextSeed = mode.kind === "new" ? makeNewSeed() : mode.seed;
-
-      const nextGameId =
-        mode.kind === "seed+id" ? mode.gameId : makeNewGameId();
-
-      setSeed(nextSeed);
-      setGameId(nextGameId);
-
-      // New session.
-      setHistory({ present: createGame(nextSeed, rules), past: [] });
-      setTimeElapsedMs(0);
-      setHasStarted(false);
-      setStartedAtMs(null);
-      setEndedAtMs(null);
-      setIsAbandoned(false);
-      setPendingNewDeal(false);
-      setUndosUsed(0);
-      setMoveCount(0);
-      setMoves([]);
-      setCursor(0);
-      cursorRef.current = 0;
-      setCheckpoint(null);
-    },
-    [rules]
-  );
-
   // ---------------------------------------------------------------------------
   // History / engine state
   // ---------------------------------------------------------------------------
   const [history, setHistory] = useState<HistoryState>(() => ({
-    present: createGame(seed, rules),
+    present: createGame("seed-init", rules),
     past: []
   }));
   const state = history.present;
@@ -189,7 +145,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Completed games archive (in-memory, Phase A)
   // ---------------------------------------------------------------------------
   const [completedGames, setCompletedGames] = useState<GameResult[]>([]);
-  const [pendingNewDeal, setPendingNewDeal] = useState<boolean>(false);
 
   // ---------------------------------------------------------------------------
   // Run state (timer + pause)
@@ -217,33 +172,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [cursor]);
 
   // ---------------------------------------------------------------------------
-  // Client-only seed init (avoids hydration mismatches)
+  // Session (seed/gameId/seedReady + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const didInitRandomSeedRef = useRef(false);
-
-  useEffect(() => {
-    if (didInitRandomSeedRef.current) return;
-    didInitRandomSeedRef.current = true;
-
-    startSession({ kind: "new" });
-    setSeedReady(true);
-  }, [startSession]);
-
-  // ---------------------------------------------------------------------------
-  // Rule changes => start a NEW game (reseed)
-  // ---------------------------------------------------------------------------
-  const didApplyRulesEffectOnceRef = useRef(false);
-
-  useEffect(() => {
-    // Skip initial mount; otherwise we can clobber the client-only random seed init.
-    if (!didApplyRulesEffectOnceRef.current) {
-      didApplyRulesEffectOnceRef.current = true;
-      return;
-    }
-
-    startSession({ kind: "new" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowFoundationPullback, undoLimit]);
+  const { seed, gameId, seedReady, startNewDealSession, replaySeed } =
+    useGameSession({
+      rules,
+      allowFoundationPullback,
+      undoLimit,
+      setHistory,
+      setTimeElapsedMs,
+      setHasStarted,
+      setStartedAtMs,
+      setEndedAtMs,
+      setIsAbandoned,
+      setUndosUsed,
+      setMoveCount,
+      setMoves,
+      setCursor,
+      cursorRef,
+      setCheckpoint
+    });
 
   // ---------------------------------------------------------------------------
   // Derived state
@@ -259,63 +207,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     !isWon &&
     history.past.length > 0 &&
     (undoLimit === "unlimited" || undosRemaining > 0);
-
-  const startNewDealSession = useCallback(() => {
-    startSession({ kind: "new" });
-  }, [startSession]);
-
-  // Stamp end time once when the game is finished (won or abandoned) and archive a result.
-  useEffect(() => {
-    const finished = isWon || isAbandoned;
-    if (!finished) return;
-
-    // Only finalize once per game.
-    if (endedAtMs != null) return;
-
-    const ended = Date.now();
-    setEndedAtMs(ended);
-
-    const status: GameResult["status"] = isWon ? "won" : "abandoned";
-
-    setCompletedGames((prev) => {
-      if (prev.some((g) => g.gameId === gameId)) return prev;
-      return [
-        ...prev,
-        {
-          gameId,
-          seed,
-          rules: state.rules,
-          status,
-          startedAtMs,
-          endedAtMs: ended,
-          timeElapsedMs,
-          moveCount,
-          undosUsed,
-          moves,
-          cursor
-        }
-      ];
-    });
-
-    if (pendingNewDeal) {
-      startNewDealSession();
-    }
-  }, [
-    isWon,
-    isAbandoned,
-    endedAtMs,
-    gameId,
-    seed,
-    state.rules,
-    startedAtMs,
-    timeElapsedMs,
-    moveCount,
-    undosUsed,
-    moves,
-    cursor,
-    pendingNewDeal,
-    startNewDealSession
-  ]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
@@ -362,6 +253,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setHistory((h) => {
       const next = applyMove(h.present, move);
 
+      // If this move produces a win, stamp `endedAtMs` exactly once.
+      if (!isWon && areAllCardsUnlocked(next)) {
+        const ended = Date.now();
+        setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+        setCompletedGames((prev) => {
+          if (prev.some((g) => g.gameId === gameId)) return prev;
+          return [
+            ...prev,
+            {
+              gameId,
+              seed,
+              rules: next.rules, // or state.rules if you prefer; next is fine here
+              status: "won",
+              startedAtMs,
+              endedAtMs: ended,
+              timeElapsedMs,
+              moveCount,
+              undosUsed,
+              moves,
+              cursor
+            }
+          ];
+        });
+      }
+
       // After a win, allow cosmetic moves but do not mutate undo history.
       if (isWon) {
         return { present: next, past: h.past };
@@ -398,7 +315,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCheckpoint(null);
     setEndedAtMs(null);
     setIsAbandoned(false);
-    setPendingNewDeal(false);
   };
 
   const newDeal = () => {
@@ -406,8 +322,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const isFinished = isWon || isAbandoned || endedAtMs != null;
 
     if (hasStarted && !isFinished) {
-      setPendingNewDeal(true);
+      const ended = Date.now();
+
       setIsAbandoned(true);
+      setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+      setCompletedGames((prev) => {
+        if (prev.some((g) => g.gameId === gameId)) return prev;
+        return [
+          ...prev,
+          {
+            gameId,
+            seed,
+            rules: state.rules,
+            status: "abandoned",
+            startedAtMs,
+            endedAtMs: ended,
+            timeElapsedMs,
+            moveCount,
+            undosUsed,
+            moves,
+            cursor
+          }
+        ];
+      });
+
+      // Now actually start the new deal immediately.
+      startNewDealSession();
       return;
     }
 
@@ -415,12 +356,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     startNewDealSession();
   };
 
-  const replaySeed = useCallback(
-    (nextSeed: string) => {
-      startSession({ kind: "seed", seed: nextSeed });
-    },
-    [startSession]
-  );
   const undo = () => {
     // Once the game is won, undo is disabled.
     if (isWon) return;

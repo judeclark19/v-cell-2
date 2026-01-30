@@ -44,7 +44,7 @@ export type UseBoardFlipAnimationArgs = {
   onFlipComplete?: (runId: number) => void;
 
   // Optional: supply your own rect store if you want to persist it elsewhere
-  prevCardRectsRef?: React.MutableRefObject<Map<string, DOMRect>>;
+  prevCardRectsRef?: React.RefObject<Map<string, DOMRect>>;
 };
 
 export function useBoardFlipAnimation({
@@ -70,7 +70,7 @@ export function useBoardFlipAnimation({
         get current() {
           return prevRects;
         }
-      }) as React.MutableRefObject<Map<string, DOMRect>>,
+      }) as React.RefObject<Map<string, DOMRect>>,
     [prevRects]
   );
 

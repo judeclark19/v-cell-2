@@ -30,9 +30,9 @@ export type BoardNodeMeta =
   | { region: "foundation"; col: number; row: 0; index: number };
 
 export interface UseBoardDomMappingArgs {
-  tableauColRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
-  freeCellRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
-  foundationRefs: React.MutableRefObject<Array<HTMLDivElement | null>>;
+  tableauColRefs: React.RefObject<Array<HTMLDivElement | null>>;
+  freeCellRefs: React.RefObject<Array<HTMLDivElement | null>>;
+  foundationRefs: React.RefObject<Array<HTMLDivElement | null>>;
 
   // Engine state slices needed for DOM→engine mapping.
   tableau: TableauCard[][];

@@ -19,10 +19,10 @@ export type UseFoundationDrainAutoCompleteArgs = {
   drag: { active: boolean; pending: boolean };
 
   /** Free cell container refs (used as sources for foundation moves). */
-  freeCellRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  freeCellRefs: React.RefObject<(HTMLDivElement | null)[]>;
 
   /** Tableau column refs (used to find top cards as sources for foundation moves). */
-  tableauColRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  tableauColRefs: React.RefObject<(HTMLDivElement | null)[]>;
 
   /** Attempts to send the card associated with `el` to foundations. Returns true if it dispatched a move. */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;

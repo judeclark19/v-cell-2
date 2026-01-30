@@ -14,7 +14,7 @@ export type UseNoFlipResetsArgs = {
   restart: () => void;
 
   /** Ref that can stop an in-progress auto-complete sequence */
-  stopAutoCompleteRef: React.MutableRefObject<(() => void) | null>;
+  stopAutoCompleteRef: React.RefObject<(() => void) | null>;
 
   /** Clear dismissed win state on reset */
   clearDismissedWinSeed: () => void;
