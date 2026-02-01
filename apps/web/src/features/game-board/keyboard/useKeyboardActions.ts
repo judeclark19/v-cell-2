@@ -60,6 +60,24 @@ function findTableauTailAnchorEl(
   );
 }
 
+function findTableauTailCardEl(
+  root: HTMLElement | null,
+  colIndex: number
+): HTMLElement | null {
+  if (!root) return null;
+
+  const anchor = findTableauTailAnchorEl(root, colIndex);
+  if (!anchor) return null;
+
+  // In your DOM, the tail anchor may be the card itself OR a wrapper.
+  // Prefer a descendant card element if present, otherwise fall back to the anchor.
+  return (
+    anchor.querySelector<HTMLElement>("[data-card-id]") ??
+    anchor.closest<HTMLElement>("[data-card-id]") ??
+    anchor
+  );
+}
+
 const isMoveToPileType = (m: SingleMove, pileType: PileType): boolean =>
   m.to.type === pileType;
 
@@ -280,121 +298,138 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
   );
 
   /**
-   * Deterministic “send to foundation”.
+   * Deterministic “send to foundation or free cell”.
    *
    * Strategy:
-   * 1) If there is a legal move for this card to a foundation, dispatch the first match.
+   * 1) If there is a legal move for this card to a foundation/free cell, dispatch the first match.
    * 2) Otherwise, fall back to the existing DOM helper (which may do its own lookup).
    */
-  const handleAutoFoundation = useCallback(
-    (el: HTMLElement): boolean => {
-      const cardId = getCardIdFromEl(el);
 
-      if (cardId) {
-        const kbDrag = buildKbDragFromEl(el);
-        const source = kbDrag?.source;
-
-        const moves = legalMoves;
-        const match: SingleMove | undefined = source
-          ? moves.find(
-              (m): m is SingleMove =>
-                isSingleMove(m) &&
-                isMoveToPileType(m, "foundation") &&
-                moveFromMatchesDragSource(m, source)
-            )
-          : undefined;
-
-        if (match) {
-          lastKbMovedCardIdRef.current = cardId;
-
-          // Attempt a visual kb flight for auto-move when we can resolve the destination element.
-          const toIndex = getMoveToIndex(match);
-          if (toIndex != null) {
-            const desired: DropTarget = { type: "foundation", index: toIndex };
-            const toEl = getFoundationDropEl(toIndex);
-            if (toEl && kbDrag) {
-              startKbFlight({ fromEl: el, toEl, kbDrag, dropTarget: desired });
-            }
-          }
-
-          dispatchMove(match);
-          return true;
-        }
-      }
-
-      const did = tryAutoFoundationFromEl(el);
-      if (did) {
-        const movedId = cardId ?? getCardIdFromEl(el);
-        if (movedId) lastKbMovedCardIdRef.current = movedId;
-      }
-      return did;
-    },
-    [
-      dispatchMove,
+  function autoToPile(
+    el: HTMLElement,
+    opts: {
+      pileType: PileType;
+      getDropEl: (index: number) => HTMLElement | null;
+      tryAutoFromEl: (el: HTMLElement) => boolean;
+      legalMoves: CommitArgs["legalMoves"];
+      dispatchMove: CommitArgs["dispatchMove"];
+      boardRef: React.RefObject<HTMLElement | null>;
+      buildKbDragFromEl: (el: HTMLElement) => KbDragLike | null;
+      startKbFlight: UseKeyboardActionsArgs["startKbFlight"];
+      lastKbMovedCardIdRef: React.MutableRefObject<string | null>;
+    }
+  ): boolean {
+    const {
+      pileType,
+      getDropEl,
+      tryAutoFromEl,
       legalMoves,
-      tryAutoFoundationFromEl,
-
+      dispatchMove,
+      boardRef,
       buildKbDragFromEl,
       startKbFlight,
+      lastKbMovedCardIdRef
+    } = opts;
+
+    const cardId = getCardIdFromEl(el);
+
+    if (cardId) {
+      const kbDrag = buildKbDragFromEl(el);
+      const source = kbDrag?.source;
+
+      const match: SingleMove | undefined = source
+        ? legalMoves.find(
+            (m): m is SingleMove =>
+              isSingleMove(m) &&
+              isMoveToPileType(m, pileType) &&
+              moveFromMatchesDragSource(m, source)
+          )
+        : undefined;
+
+      if (match) {
+        const root = boardRef.current;
+
+        const fromElForFlight =
+          source?.type === "tableau"
+            ? (findTableauTailCardEl(root, source.colIndex) ?? el)
+            : el;
+
+        const movedIdForFlight = getCardIdFromEl(fromElForFlight);
+        lastKbMovedCardIdRef.current = movedIdForFlight ?? cardId;
+
+        const kbDragForFlight = buildKbDragFromEl(fromElForFlight);
+        const toIndex = getMoveToIndex(match);
+
+        if (toIndex != null && kbDragForFlight) {
+          const toEl = getDropEl(toIndex);
+          if (toEl) {
+            startKbFlight({
+              fromEl: fromElForFlight,
+              toEl,
+              kbDrag: kbDragForFlight,
+              dropTarget: { type: pileType, index: toIndex }
+            });
+          }
+        }
+
+        dispatchMove(match);
+        return true;
+      }
+    }
+
+    const did = tryAutoFromEl(el);
+    if (did) {
+      const movedId = cardId ?? getCardIdFromEl(el);
+      if (movedId) lastKbMovedCardIdRef.current = movedId;
+    }
+
+    return did;
+  }
+
+  const handleAutoFoundation = useCallback(
+    (el: HTMLElement) =>
+      autoToPile(el, {
+        pileType: "foundation",
+        getDropEl: getFoundationDropEl,
+        tryAutoFromEl: tryAutoFoundationFromEl,
+        legalMoves,
+        dispatchMove,
+        boardRef,
+        buildKbDragFromEl,
+        startKbFlight,
+        lastKbMovedCardIdRef
+      }),
+    [
+      legalMoves,
+      dispatchMove,
+      boardRef,
+      buildKbDragFromEl,
+      startKbFlight,
+      tryAutoFoundationFromEl,
       getFoundationDropEl
     ]
   );
 
-  /**
-   * Deterministic “send to free cell”.
-   *
-   * Strategy mirrors foundation.
-   */
   const handleAutoFreeCell = useCallback(
-    (el: HTMLElement): boolean => {
-      const cardId = getCardIdFromEl(el);
-
-      if (cardId) {
-        const kbDrag = buildKbDragFromEl(el);
-        const source = kbDrag?.source;
-
-        const moves = legalMoves;
-        const match: SingleMove | undefined = source
-          ? moves.find(
-              (m): m is SingleMove =>
-                isSingleMove(m) &&
-                isMoveToPileType(m, "freecell") &&
-                moveFromMatchesDragSource(m, source)
-            )
-          : undefined;
-
-        if (match) {
-          lastKbMovedCardIdRef.current = cardId;
-
-          // Attempt a visual kb flight for auto-move when we can resolve the destination element.
-          const toIndex = getMoveToIndex(match);
-          if (toIndex != null) {
-            const desired: DropTarget = { type: "freecell", index: toIndex };
-            const toEl = getFreeCellDropEl(toIndex);
-            if (toEl && kbDrag) {
-              startKbFlight({ fromEl: el, toEl, kbDrag, dropTarget: desired });
-            }
-          }
-
-          dispatchMove(match);
-          return true;
-        }
-      }
-
-      const did = tryAutoFreeCellFromEl(el);
-      if (did) {
-        const movedId = cardId ?? getCardIdFromEl(el);
-        if (movedId) lastKbMovedCardIdRef.current = movedId;
-      }
-      return did;
-    },
+    (el: HTMLElement) =>
+      autoToPile(el, {
+        pileType: "freecell",
+        getDropEl: getFreeCellDropEl,
+        tryAutoFromEl: tryAutoFreeCellFromEl,
+        legalMoves,
+        dispatchMove,
+        boardRef,
+        buildKbDragFromEl,
+        startKbFlight,
+        lastKbMovedCardIdRef
+      }),
     [
-      dispatchMove,
       legalMoves,
-      tryAutoFreeCellFromEl,
-
+      dispatchMove,
+      boardRef,
       buildKbDragFromEl,
       startKbFlight,
+      tryAutoFreeCellFromEl,
       getFreeCellDropEl
     ]
   );

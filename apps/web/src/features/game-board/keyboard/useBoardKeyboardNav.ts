@@ -195,6 +195,80 @@ export function useBoardKeyboardNav<TState, TPlayable>({
       let bestIdx = -1;
       let bestScore = Number.POSITIVE_INFINITY;
 
+      // Special case: when pressing DOWN from the bottom of a tableau column,
+      // prefer entering the free-cells row rather than jumping to a longer neighboring column.
+      if (dir === "down" && fromMeta?.region === "tableau") {
+        // Try to identify the tableau position of the current focus.
+        const fromPos = fromMeta as Extract<
+          BoardNodeMeta,
+          { region: "tableau" }
+        >;
+
+        const fromCol = fromPos.tableauCol;
+        const fromRow = fromPos.tableauIndex;
+
+        if (typeof fromCol === "number" && typeof fromRow === "number") {
+          // If we're on the empty slot/container (-1), treat it as the bottom of the column.
+          const effectiveFromRow =
+            fromRow === -1 ? Number.POSITIVE_INFINITY : fromRow;
+
+          // 1) First, try to move down within the same tableau column.
+          let bestSameColIdx = -1;
+          let bestSameColRow = Number.POSITIVE_INFINITY;
+
+          for (let i = 0; i < els.length; i++) {
+            const el = els[i];
+            if (el === fromEl) continue;
+
+            const meta = getNodeMeta(el);
+            if (!meta || meta.region !== "tableau") continue;
+
+            const pos = meta as Extract<BoardNodeMeta, { region: "tableau" }>;
+
+            const col = pos.tableauCol;
+            const row = pos.tableauIndex;
+
+            if (col !== fromCol) continue;
+            if (row <= effectiveFromRow) continue;
+
+            if (row < bestSameColRow) {
+              bestSameColRow = row;
+              bestSameColIdx = i;
+            }
+          }
+
+          if (bestSameColIdx >= 0) {
+            setActiveFocusIndex(bestSameColIdx);
+            requestAnimationFrame(() => focusByIndex(bestSameColIdx));
+            return;
+          }
+
+          // 2) No lower focusable in this column. Jump to the nearest free cell by x-alignment.
+          let bestFreeCellIdx = -1;
+          let bestDx = Number.POSITIVE_INFINITY;
+
+          for (let i = 0; i < els.length; i++) {
+            const el = els[i];
+            const meta = getNodeMeta(el);
+            if (!meta || meta.region !== "freecell") continue;
+
+            const c = getCenter(el);
+            const dx = Math.abs(c.x - from.x);
+
+            if (dx < bestDx) {
+              bestDx = dx;
+              bestFreeCellIdx = i;
+            }
+          }
+
+          if (bestFreeCellIdx >= 0) {
+            setActiveFocusIndex(bestFreeCellIdx);
+            requestAnimationFrame(() => focusByIndex(bestFreeCellIdx));
+            return;
+          }
+        }
+      }
+
       // Rule: Left/Right should stay within the same board region as the current focus.
       // This prevents tableau navigation from “sniping” into foundations/freecells based on geometry.
       // Up/Down may leave the region when appropriate.
