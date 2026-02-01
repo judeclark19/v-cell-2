@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BoardNodeMeta } from "../hooks/useBoardDomMapping";
 
-type UseBoardKeyboardNavArgs = {
-  state: unknown;
-  playable: unknown;
+type UseBoardKeyboardNavArgs<TState, TPlayable> = {
+  state: TState;
+  playable: TPlayable;
   kbCarrying: boolean;
   getNodeMeta: (el: HTMLElement) => BoardNodeMeta | null;
   isLegalDropTargetEl?: (el: HTMLElement) => boolean;
 };
 
-export function useBoardKeyboardNav({
+export function useBoardKeyboardNav<TState, TPlayable>({
   state,
   playable,
   kbCarrying,
   getNodeMeta,
   isLegalDropTargetEl
-}: UseBoardKeyboardNavArgs) {
+}: UseBoardKeyboardNavArgs<TState, TPlayable>) {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const focusablesRef = useRef<HTMLElement[]>([]);
   const [activeFocusIndex, setActiveFocusIndex] = useState(0);

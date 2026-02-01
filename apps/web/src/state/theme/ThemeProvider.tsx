@@ -21,7 +21,7 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function isTheme(v: unknown): v is Theme {
+function isTheme(v: string | null): v is Theme {
   return v === "poker" || v === "times-light" || v === "times-dark";
 }
 
@@ -108,11 +108,10 @@ type LegacyMediaQueryList = MediaQueryList & {
 function hasLegacyMqlListeners(
   mql: MediaQueryList
 ): mql is LegacyMediaQueryList {
+  const maybe = mql as Partial<LegacyMediaQueryList>;
   return (
-    typeof (mql as unknown as { addListener?: unknown }).addListener ===
-      "function" &&
-    typeof (mql as unknown as { removeListener?: unknown }).removeListener ===
-      "function"
+    typeof maybe.addListener === "function" &&
+    typeof maybe.removeListener === "function"
   );
 }
 

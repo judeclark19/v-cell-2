@@ -1,9 +1,11 @@
 import { Move } from "@vcell/engine";
 import { useCallback, useEffect, useRef } from "react";
 
-export type UseBoardMovePolicyArgs<TDropArgs extends unknown[]> = {
+export type UseBoardMovePolicyArgs<
+  TOnDrop extends (...args: never[]) => boolean
+> = {
   /** Lower-level drop commit function (from useBoardDrop) */
-  onDrop: (...args: TDropArgs) => boolean;
+  onDrop: TOnDrop;
 
   /** Dispatch a move directly (keyboard-driven). */
   dispatchMove: (move: Move) => void;
@@ -30,12 +32,14 @@ export type UseBoardMovePolicyArgs<TDropArgs extends unknown[]> = {
   replaceSeed?: (seed: string) => void;
 };
 
-export type UseBoardMovePolicyResult<TDropArgs extends unknown[]> = {
+export type UseBoardMovePolicyResult<
+  TOnDrop extends (...args: never[]) => boolean
+> = {
   /** Commit a keyboard-driven move. Does NOT suppress FLIP. */
   commitMoveFromKeyboard: (move: Move) => void;
 
   /** Commit a pointer-drag drop. Suppresses FLIP once when it commits. */
-  commitMoveFromPointerDrop: (...args: TDropArgs) => boolean;
+  commitMoveFromPointerDrop: (...args: Parameters<TOnDrop>) => boolean;
 
   /** New deal (always new seed) with celebration reset. */
   newDealWithCelebration: () => void;
@@ -55,7 +59,9 @@ export type UseBoardMovePolicyResult<TDropArgs extends unknown[]> = {
  * - FLIP suppression plumbing
  * - celebration reset wrappers
  */
-export function useBoardMovePolicy<TDropArgs extends unknown[]>({
+export function useBoardMovePolicy<
+  TOnDrop extends (...args: never[]) => boolean
+>({
   onDrop,
   dispatchMove,
   suppressFlipOnceNext,
@@ -65,7 +71,7 @@ export function useBoardMovePolicy<TDropArgs extends unknown[]>({
   isWon,
   seed,
   replaceSeed
-}: UseBoardMovePolicyArgs<TDropArgs>): UseBoardMovePolicyResult<TDropArgs> {
+}: UseBoardMovePolicyArgs<TOnDrop>): UseBoardMovePolicyResult<TOnDrop> {
   const suppressFlipOnceNextRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -80,7 +86,7 @@ export function useBoardMovePolicy<TDropArgs extends unknown[]>({
   );
 
   const commitMoveFromPointerDrop = useCallback(
-    (...args: TDropArgs) => {
+    (...args: Parameters<TOnDrop>) => {
       const didCommit = onDrop(...args);
       // Pointer drag already provided its own visual motion via the drag overlay.
       // Skip FLIP once so we don't double-animate.

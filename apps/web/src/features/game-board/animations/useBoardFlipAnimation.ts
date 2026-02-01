@@ -16,11 +16,11 @@ import { BoardNodeMeta } from "../hooks/useBoardDomMapping";
  * - `getNodeMeta(el)` returns `{ region: "foundation" | "freecell" | ... } | null`
  */
 
-export type UseBoardFlipAnimationArgs = {
+export type UseBoardFlipAnimationArgs<TState> = {
   boardRef: React.RefObject<HTMLElement | null>;
 
   // The board state object (used only as a dependency trigger, same as Board.tsx)
-  state: unknown;
+  state: TState;
 
   // Seed gate used in Board.tsx; prevents weird initial flashes
   seedReady: boolean;
@@ -44,7 +44,7 @@ export type UseBoardFlipAnimationArgs = {
   prevCardRectsRef?: React.RefObject<Map<string, DOMRect>>;
 };
 
-export function useBoardFlipAnimation({
+export function useBoardFlipAnimation<TState>({
   boardRef,
   state,
   seedReady,
@@ -54,7 +54,7 @@ export function useBoardFlipAnimation({
   consumeSuppressFlipOnce,
   onFlipComplete,
   prevCardRectsRef
-}: UseBoardFlipAnimationArgs) {
+}: UseBoardFlipAnimationArgs<TState>) {
   const [prevRects, setPrevRects] = React.useState<Map<string, DOMRect>>(() => {
     // Use an external ref only as an initial seed; do not mutate it (immutability lint).
     return prevCardRectsRef?.current ?? new Map();

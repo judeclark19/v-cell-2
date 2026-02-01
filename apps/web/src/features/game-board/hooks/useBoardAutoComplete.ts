@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { MutableRefObject } from "react";
+import type { RefObject } from "react";
 import { useFoundationDrainAutoComplete } from "@/features/game-board/hooks/useFoundationDrainAutoComplete";
 
 export type UseBoardAutoCompleteArgs = {
@@ -22,8 +22,8 @@ export type UseBoardAutoCompleteArgs = {
   };
 
   /** Refs to board regions needed by the underlying auto-complete hook */
-  freeCellRefs: MutableRefObject<(HTMLDivElement | null)[]>;
-  tableauColRefs: MutableRefObject<(HTMLDivElement | null)[]>;
+  freeCellRefs: RefObject<(HTMLDivElement | null)[]>;
+  tableauColRefs: RefObject<(HTMLDivElement | null)[]>;
 
   /** Attempts to auto-move from a given element into foundations */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;

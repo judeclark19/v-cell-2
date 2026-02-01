@@ -21,7 +21,7 @@ type OnDropArgs<TCardItem> = {
 
 type TableauStackMove = Extract<Move, { kind: "tableauStack" }>;
 
-type HasKind = { kind?: unknown };
+type HasKind = { kind?: string };
 
 function isTableauStackMove(m: Move): m is TableauStackMove {
   return (m as HasKind).kind === "tableauStack";

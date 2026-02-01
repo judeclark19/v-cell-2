@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-type CardLike = { card: { id: string | number }; faceDown: boolean };
-
 export type DragSource =
   | {
       type: "tableau";
@@ -66,10 +64,11 @@ type UseCardDragOptions<TCardItem> = {
  * Board remains the orchestrator; this hook is the drag engine.
  */
 export function useCardDrag<
+  TCard extends { id: string | number },
   TState extends {
-    tableau: Array<Array<CardLike>>;
-    freeCells: Array<{ id: string | number } | null>;
-    foundations: Array<{ cards: Array<{ id: string | number }> }>;
+    tableau: Array<Array<{ card: TCard; faceDown: boolean }>>;
+    freeCells: Array<TCard | null>;
+    foundations: Array<{ cards: Array<TCard> }>;
   },
   TPlayable extends {
     tableau: Array<Array<boolean>>;
@@ -374,10 +373,7 @@ export function useCardDrag<
     el.setPointerCapture(e.pointerId);
 
     // Free cell drags are always a single card.
-    // Cast to TableauItem-like shape so the overlay renderer can reuse Card.
-    const stack = [
-      { card: card as unknown as TableauItem["card"], faceDown: false }
-    ] as Array<TableauItem>;
+    const stack: Array<TableauItem> = [{ card, faceDown: false }];
 
     setDrag({
       active: false,
@@ -422,9 +418,7 @@ export function useCardDrag<
     el.setPointerCapture(e.pointerId);
 
     // Foundation drags are always a single card.
-    const stack = [
-      { card: card as unknown as TableauItem["card"], faceDown: false }
-    ] as Array<TableauItem>;
+    const stack: Array<TableauItem> = [{ card, faceDown: false }];
 
     setDrag({
       active: false,
@@ -478,7 +472,7 @@ export function useCardDrag<
       source,
       kbFlight: {
         active: true,
-        cardIds: stack.map((tc) => String((tc as unknown as CardLike).card.id)),
+        cardIds: stack.map((tc) => String(tc.card.id)),
         dropTarget
       }
     });
