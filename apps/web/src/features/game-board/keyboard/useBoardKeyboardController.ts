@@ -57,6 +57,9 @@ type UseBoardKeyboardControllerArgs = {
     kbDrag: DragLike;
     dropTarget: NonNullable<DropTarget>;
   }) => void;
+
+  getFoundationDropEl: (index: number) => HTMLElement | null;
+  getFreeCellDropEl: (index: number) => HTMLElement | null;
 };
 
 export function useBoardKeyboardController({
@@ -77,7 +80,9 @@ export function useBoardKeyboardController({
   findNextByDirection,
   buildKbDragFromEl,
   buildKbDropTargetFromEl,
-  startKbFlight
+  startKbFlight,
+  getFoundationDropEl,
+  getFreeCellDropEl
 }: UseBoardKeyboardControllerArgs) {
   const visuals = useKbCarryVisuals({ boardRef });
 
@@ -99,7 +104,9 @@ export function useBoardKeyboardController({
     getCarriedEl: () => visuals.carriedElRef.current,
     getDropTargetEl: () =>
       visuals.dropTargetElRef.current ||
-      (document.activeElement as HTMLElement | null)
+      (document.activeElement as HTMLElement | null),
+    getFoundationDropEl,
+    getFreeCellDropEl
   });
 
   const onBoardKeyDown = (e: KeyboardEvent) => {

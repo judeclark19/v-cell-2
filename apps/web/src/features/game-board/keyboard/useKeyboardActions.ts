@@ -16,87 +16,37 @@ import type {
 
 // ---- Small runtime helpers (typed without `any`) ----
 
-type UnknownRecord = Record<string, unknown>;
-
 type KbDragLike = {
   source: DragSource | null;
   stack: Array<{ card: EngineCard; faceDown: boolean }>;
 };
 
-function isRecord(v: unknown): v is UnknownRecord {
-  return typeof v === "object" && v !== null;
-}
+const isSingleMove = (m: Move): m is SingleMove => m.kind === "single";
 
-function getStr(v: unknown): string | null {
-  return typeof v === "string" ? v : null;
-}
+const moveFromMatchesDragSource = (
+  m: SingleMove,
+  source: DragSource
+): boolean => {
+  if (m.from.type !== source.type) return false;
 
-function getRecord(v: unknown): UnknownRecord | null {
-  return isRecord(v) ? v : null;
-}
-
-function getMoveCardId(move: unknown): string | null {
-  if (!isRecord(move)) return null;
-  // We’ve used { cardId } in several places.
-  const direct = getStr(move.cardId);
-  if (direct) return direct;
-
-  // Some move shapes use { card: { id } }
-  const card = getRecord(move.card);
-  const nested = card ? getStr(card.id) : null;
-  return nested;
-}
-
-function getMoveTo(move: unknown): UnknownRecord | null {
-  if (!isRecord(move)) return null;
-  const to = getRecord(move.to);
-  return to;
-}
-
-function getNum(v: unknown): number | null {
-  return typeof v === "number" && Number.isFinite(v) ? v : null;
-}
-
-function getMoveToIndex(move: unknown): number | null {
-  const to = getMoveTo(move);
-  if (!to) return null;
-  const idx = getNum(to.index);
-  return idx;
-}
-
-function dropTargetsEqual(a: DropTarget | null, b: DropTarget | null): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  if (a.type !== b.type) return false;
-
-  switch (a.type) {
+  switch (source.type) {
     case "foundation":
     case "freecell":
-      return a.index === (b as typeof a).index;
-    case "tableau": {
-      const bb = b as typeof a;
-      return a.colIndex === bb.colIndex;
-    }
+      return m.from.index === source.index;
+
+    case "tableau":
+      // engine uses `from.index` for tableau column index
+      return m.from.index === source.colIndex;
+
     default:
       return false;
   }
-}
+};
 
-function findDropTargetEl(
-  root: HTMLElement | null,
-  desired: DropTarget,
-  build: (el: HTMLElement) => DropTarget | null
-): HTMLElement | null {
-  if (!root) return null;
-  const els = Array.from(
-    root.querySelectorAll<HTMLElement>("[data-kb-drop-target='true']")
-  );
-  for (const el of els) {
-    const dt = build(el);
-    if (dropTargetsEqual(dt, desired)) return el;
-  }
+const getMoveToIndex = (m: SingleMove): number | null => {
+  if (m.to.type === "foundation" || m.to.type === "freecell") return m.to.index;
   return null;
-}
+};
 
 function findTableauTailAnchorEl(
   root: HTMLElement | null,
@@ -110,29 +60,15 @@ function findTableauTailAnchorEl(
   );
 }
 
-function isMoveToPileType(
-  move: unknown,
-  pileType: "foundation" | "freecell"
-): boolean {
-  const to = getMoveTo(move);
-  if (!to) return false;
-  return getStr(to.type) === pileType;
-}
-
-function getDragSourceType(drag: unknown): string | null {
-  if (!isRecord(drag)) return null;
-  const source = getRecord(drag.source);
-  return source ? getStr(source.type) : null;
-}
-
-function getDropTargetType(dropTarget: unknown): string | null {
-  if (!isRecord(dropTarget)) return null;
-  return getStr(dropTarget.type);
-}
+const isMoveToPileType = (m: SingleMove, pileType: PileType): boolean =>
+  m.to.type === pileType;
 
 // ---- Types derived from commitBoardDrop so we stay aligned with the real signature ----
 
 type CommitArgs = Parameters<typeof commitBoardDrop>[0];
+type Move = CommitArgs["legalMoves"][number];
+type SingleMove = Extract<Move, { kind: "single" }>;
+type PileType = "foundation" | "freecell";
 
 export type UseKeyboardActionsArgs = {
   legalMoves: CommitArgs["legalMoves"];
@@ -169,6 +105,10 @@ export type UseKeyboardActionsArgs = {
   /** Read the current keyboard-carry DOM nodes from the visuals hook */
   getCarriedEl: () => HTMLElement | null;
   getDropTargetEl: () => HTMLElement | null;
+
+  /** Resolve destination elements without DOM querying */
+  getFoundationDropEl: (index: number) => HTMLElement | null;
+  getFreeCellDropEl: (index: number) => HTMLElement | null;
 };
 
 export function useKeyboardActions(args: UseKeyboardActionsArgs) {
@@ -184,7 +124,9 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
     startKbFlight,
     boardRef,
     getCarriedEl,
-    getDropTargetEl
+    getDropTargetEl,
+    getFoundationDropEl,
+    getFreeCellDropEl
   } = args;
 
   /**
@@ -284,21 +226,19 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       // Keyboard leniency: if this was tableau -> tableau and forward failed,
       // try the reversed interpretation (target -> carried).
-      const dragSourceType = getDragSourceType(drag);
-      const dropType = getDropTargetType(dropTarget);
-
-      if (dragSourceType !== "tableau" || dropType !== "tableau") return false;
+      if (drag.source?.type !== "tableau" || dropTarget.type !== "tableau")
+        return false;
 
       const reverseDrag = buildKbDragFromEl(target);
       const reverseDropTarget = buildKbDropTargetFromEl(carried);
 
       if (!reverseDrag || !reverseDropTarget) return false;
-
-      const reverseDragSourceType = getDragSourceType(reverseDrag);
-      const reverseDropType = getDropTargetType(reverseDropTarget);
-
-      if (reverseDragSourceType !== "tableau" || reverseDropType !== "tableau")
+      if (
+        reverseDrag.source?.type !== "tableau" ||
+        reverseDropTarget.type !== "tableau"
+      ) {
         return false;
+      }
 
       const reverseMovedId = getCardIdFromEl(target);
       if (reverseMovedId) lastKbMovedCardIdRef.current = reverseMovedId;
@@ -351,36 +291,29 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       const cardId = getCardIdFromEl(el);
 
       if (cardId) {
+        const kbDrag = buildKbDragFromEl(el);
+        const source = kbDrag?.source;
+
         const moves = legalMoves;
-        const match = moves.find(
-          (m) =>
-            getMoveCardId(m) === cardId && isMoveToPileType(m, "foundation")
-        );
+        const match: SingleMove | undefined = source
+          ? moves.find(
+              (m): m is SingleMove =>
+                isSingleMove(m) &&
+                isMoveToPileType(m, "foundation") &&
+                moveFromMatchesDragSource(m, source)
+            )
+          : undefined;
+
         if (match) {
           lastKbMovedCardIdRef.current = cardId;
 
           // Attempt a visual kb flight for auto-move when we can resolve the destination element.
           const toIndex = getMoveToIndex(match);
-          const toType = getMoveTo(match)
-            ? getStr(getMoveTo(match)?.type)
-            : null;
-
-          if (toType === "foundation" && toIndex != null) {
+          if (toIndex != null) {
             const desired: DropTarget = { type: "foundation", index: toIndex };
-            const root = boardRef.current;
-            const toEl = findDropTargetEl(
-              root,
-              desired,
-              buildKbDropTargetFromEl
-            );
-            const kbDrag = buildKbDragFromEl(el);
+            const toEl = getFoundationDropEl(toIndex);
             if (toEl && kbDrag) {
-              startKbFlight({
-                fromEl: el,
-                toEl,
-                kbDrag,
-                dropTarget: desired
-              });
+              startKbFlight({ fromEl: el, toEl, kbDrag, dropTarget: desired });
             }
           }
 
@@ -400,10 +333,10 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       dispatchMove,
       legalMoves,
       tryAutoFoundationFromEl,
-      boardRef,
-      buildKbDropTargetFromEl,
+
       buildKbDragFromEl,
-      startKbFlight
+      startKbFlight,
+      getFoundationDropEl
     ]
   );
 
@@ -417,35 +350,29 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       const cardId = getCardIdFromEl(el);
 
       if (cardId) {
+        const kbDrag = buildKbDragFromEl(el);
+        const source = kbDrag?.source;
+
         const moves = legalMoves;
-        const match = moves.find(
-          (m) => getMoveCardId(m) === cardId && isMoveToPileType(m, "freecell")
-        );
+        const match: SingleMove | undefined = source
+          ? moves.find(
+              (m): m is SingleMove =>
+                isSingleMove(m) &&
+                isMoveToPileType(m, "freecell") &&
+                moveFromMatchesDragSource(m, source)
+            )
+          : undefined;
+
         if (match) {
           lastKbMovedCardIdRef.current = cardId;
 
           // Attempt a visual kb flight for auto-move when we can resolve the destination element.
           const toIndex = getMoveToIndex(match);
-          const toType = getMoveTo(match)
-            ? getStr(getMoveTo(match)?.type)
-            : null;
-
-          if (toType === "freecell" && toIndex != null) {
+          if (toIndex != null) {
             const desired: DropTarget = { type: "freecell", index: toIndex };
-            const root = boardRef.current;
-            const toEl = findDropTargetEl(
-              root,
-              desired,
-              buildKbDropTargetFromEl
-            );
-            const kbDrag = buildKbDragFromEl(el);
+            const toEl = getFreeCellDropEl(toIndex);
             if (toEl && kbDrag) {
-              startKbFlight({
-                fromEl: el,
-                toEl,
-                kbDrag,
-                dropTarget: desired
-              });
+              startKbFlight({ fromEl: el, toEl, kbDrag, dropTarget: desired });
             }
           }
 
@@ -465,10 +392,10 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       dispatchMove,
       legalMoves,
       tryAutoFreeCellFromEl,
-      boardRef,
-      buildKbDropTargetFromEl,
+
       buildKbDragFromEl,
-      startKbFlight
+      startKbFlight,
+      getFreeCellDropEl
     ]
   );
 

@@ -196,6 +196,16 @@ export function useBoardController(params: UseBoardControllerParams) {
     return el.getAttribute("data-kb-drop-target") === "true";
   }, []);
 
+  const getFoundationDropEl = useCallback(
+    (index: number) => foundationRefs.current[index] ?? null,
+    [foundationRefs]
+  );
+
+  const getFreeCellDropEl = useCallback(
+    (index: number) => freeCellRefs.current[index] ?? null,
+    [freeCellRefs]
+  );
+
   const {
     boardRef,
     kbAttrsContextValue,
@@ -238,7 +248,9 @@ export function useBoardController(params: UseBoardControllerParams) {
         source: kbDrag.source,
         dropTarget
       });
-    }
+    },
+    getFoundationDropEl,
+    getFreeCellDropEl
   });
 
   useEffect(() => {

@@ -47,6 +47,9 @@ export type UseBoardKeyboardSystemArgs = {
     kbDrag: KbDrag;
     dropTarget: NonNullable<KbDropTarget>;
   }) => void;
+
+  getFoundationDropEl: (index: number) => HTMLElement | null;
+  getFreeCellDropEl: (index: number) => HTMLElement | null;
 };
 
 export type UseBoardKeyboardSystemResult = {
@@ -92,7 +95,9 @@ export function useBoardKeyboardSystem({
   newDeal,
   restart,
   legalMoves,
-  startKbFlight
+  startKbFlight,
+  getFoundationDropEl,
+  getFreeCellDropEl
 }: UseBoardKeyboardSystemArgs): UseBoardKeyboardSystemResult {
   const [kbCarrying, setKbCarrying] = useState(false);
   const lastRestoredFocusStampRef = useRef(0);
@@ -142,7 +147,9 @@ export function useBoardKeyboardSystem({
     findNextByDirection,
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-    startKbFlight
+    startKbFlight,
+    getFoundationDropEl,
+    getFreeCellDropEl
   });
 
   // --- kb attrs (tabIndex, aria, data-kb-*) ---
