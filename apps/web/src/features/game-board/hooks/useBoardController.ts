@@ -100,15 +100,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     foundations: state.foundations
   });
 
-  const tryAutoFoundationFromEl = useCallback(
-    (el: HTMLElement) => {
-      const from = buildPileRefFromEl(el);
-      if (!from) return false;
-      return tryAutoFoundation(from);
-    },
-    [buildPileRefFromEl, tryAutoFoundation]
-  );
-
   const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
 
   const tryAutoFreeCellFromEl = useCallback(
@@ -141,6 +132,63 @@ export function useBoardController(params: UseBoardControllerParams) {
       startKbFlight(args);
     },
     [startKbFlight]
+  );
+
+  const getFoundationDropEl = useCallback(
+    (index: number) => foundationRefs.current[index] ?? null,
+    [foundationRefs]
+  );
+
+  /**
+   * Element-based auto-foundation with flight animation.
+   * Used by double-click / activation flows and by keyboard system.
+   */
+  const tryAutoFoundationFromEl = useCallback(
+    (el: HTMLElement) => {
+      const from = buildPileRefFromEl(el);
+      if (!from) return false;
+
+      // Deterministic single move from this pile to a foundation.
+      const match = legalMoves.find(
+        (m) =>
+          m.kind === "single" &&
+          m.from.type === from.type &&
+          m.from.index === from.index &&
+          m.to.type === "foundation"
+      );
+
+      if (!match) {
+        // Fall back to existing behavior (still moves, just no flight).
+        return tryAutoFoundation(from);
+      }
+
+      const toIndex = match.to.index;
+      const toEl = getFoundationDropEl(toIndex);
+      const kbDrag = buildKbDragFromEl(el);
+
+      if (toEl && kbDrag?.source) {
+        startKbFlightFromKeyboard({
+          fromEl: el,
+          toEl,
+          stack: kbDrag.stack,
+          source: kbDrag.source,
+          dropTarget: { type: "foundation", index: toIndex }
+        });
+      }
+
+      // Commit the move.
+      dispatchMove(match);
+      return true;
+    },
+    [
+      buildPileRefFromEl,
+      legalMoves,
+      getFoundationDropEl,
+      buildKbDragFromEl,
+      startKbFlightFromKeyboard,
+      dispatchMove,
+      tryAutoFoundation
+    ]
   );
 
   const {
@@ -196,11 +244,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     return el.getAttribute("data-kb-drop-target") === "true";
   }, []);
 
-  const getFoundationDropEl = useCallback(
-    (index: number) => foundationRefs.current[index] ?? null,
-    [foundationRefs]
-  );
-
   const getFreeCellDropEl = useCallback(
     (index: number) => freeCellRefs.current[index] ?? null,
     [freeCellRefs]
@@ -228,7 +271,6 @@ export function useBoardController(params: UseBoardControllerParams) {
 
     buildKbDragFromEl,
     buildKbDropTargetFromEl,
-
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
 
@@ -241,6 +283,14 @@ export function useBoardController(params: UseBoardControllerParams) {
     newDeal: newDealWithCelebration,
     restart: restartWithCelebration,
     startKbFlight: ({ fromEl, toEl, kbDrag, dropTarget }) => {
+      console.log("[useBoardController] startKbFlight (keyboard)", {
+        fromElCardIdAttr: fromEl.getAttribute("data-card-id"),
+        toElTag: toEl.tagName,
+        dropTarget,
+        stackLen: kbDrag.stack.length,
+        source: kbDrag.source
+      });
+
       startKbFlightFromKeyboard({
         fromEl,
         toEl,
@@ -274,117 +324,6 @@ export function useBoardController(params: UseBoardControllerParams) {
   });
   // --- end FLIP animation ---
 
-  // return useMemo(
-  //   () => ({
-  //     // from useGame
-  //     state,
-  //     isWon,
-  //     showTimer,
-  //     paused,
-  //     setPaused,
-  //     allowFoundationPullback,
-  //     undo,
-  //     canUndo,
-  //     undoLimit,
-  //     undosRemaining,
-  //     seedReady,
-  //     timeElapsedMs,
-  //     hasStarted,
-  //     moveCount,
-
-  //     // derived/wiring
-  //     playable,
-  //     legalMoves,
-
-  //     foundationsRow,
-  //     freeCellsRow,
-
-  //     tryAutoFoundation,
-
-  //     drag,
-  //     finalizeDrag,
-  //     handleTableauPointerDown,
-  //     handleFreeCellPointerDown,
-  //     handleFoundationPointerDown,
-
-  //     setTableauColRef,
-  //     setFreeCellRef,
-  //     setFoundationRef,
-
-  //     // autocomplete/win state
-  //     shouldShowWinModal,
-  //     isAnyModalOpen,
-  //     dismissWinModal,
-  //     showAcp,
-
-  //     isAutoCompleting,
-  //     runAutoComplete,
-  //     stopAutoComplete,
-
-  //     // move policy actions
-  //     newDealWithCelebration,
-  //     restartWithCelebration,
-
-  //     // keyboard plumbing
-  //     isInputSuppressed,
-  //     boardRef,
-  //     kbAttrsContextValue,
-  //     onBoardKeyDown,
-  //     onBoardFocusCapture,
-  //     onBoardBlurCapture,
-  //     onBoardFocus,
-  //     onBoardPointerDownCapture,
-  //     kbCarrying
-  //   }),
-  //   [
-  //     state,
-  //     isWon,
-  //     showTimer,
-  //     paused,
-  //     setPaused,
-  //     allowFoundationPullback,
-  //     undo,
-  //     canUndo,
-  //     undoLimit,
-  //     undosRemaining,
-  //     seedReady,
-  //     timeElapsedMs,
-  //     hasStarted,
-  //     moveCount,
-  //     playable,
-  //     legalMoves,
-  //     foundationsRow,
-  //     freeCellsRow,
-  //     tryAutoFoundation,
-  //     drag,
-  //     finalizeDrag,
-  //     handleTableauPointerDown,
-  //     handleFreeCellPointerDown,
-  //     handleFoundationPointerDown,
-  //     setTableauColRef,
-  //     setFreeCellRef,
-  //     setFoundationRef,
-  //     shouldShowWinModal,
-  //     isAnyModalOpen,
-  //     dismissWinModal,
-  //     showAcp,
-  //     isAutoCompleting,
-  //     runAutoComplete,
-  //     stopAutoComplete,
-  //     newDealWithCelebration,
-  //     restartWithCelebration,
-  //     isInputSuppressed,
-  //     boardRef,
-  //     kbAttrsContextValue,
-  //     onBoardKeyDown,
-  //     onBoardFocusCapture,
-  //     onBoardBlurCapture,
-  //     onBoardFocus,
-  //     onBoardPointerDownCapture,
-  //     kbCarrying
-  //   ]
-  // );
-
   return {
     // from useGame
     state,
@@ -406,7 +345,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     legalMoves,
     foundationsRow,
     freeCellsRow,
-    tryAutoFoundation,
+    tryAutoFoundationFromEl,
     drag,
     finalizeDrag,
     handleTableauPointerDown,

@@ -1,15 +1,14 @@
-import type { Card as EngineCard, PileRef } from "@vcell/engine";
+import type { Card as EngineCard } from "@vcell/engine";
 import { useContext } from "react";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 
-type FreeCellIndex = 0 | 1 | 2 | 3 | 4;
-
 type FreeCellsProps = {
   freeCellsRow: Array<EngineCard | null | undefined>;
   playableFreeCells: boolean[];
-  tryAutoFoundation: (from: PileRef) => void;
+  /** Element-based auto-foundation (enables flight animation). Prefer this when provided. */
+  tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
   setFreeCellRef: (index: number, el: HTMLDivElement | null) => void;
   drag: ReturnType<typeof useCardDrag>["drag"];
   handleFreeCellPointerDown: ReturnType<
@@ -27,7 +26,7 @@ type FreeCellsProps = {
 function FreeCells({
   freeCellsRow,
   playableFreeCells,
-  tryAutoFoundation,
+  tryAutoFoundationFromEl,
   setFreeCellRef,
   drag,
   handleFreeCellPointerDown,
@@ -109,12 +108,7 @@ function FreeCells({
                         playableFreeCells[i - 1] ? "true" : "false"
                       }
                       className="pile-card"
-                      onActivate={() =>
-                        tryAutoFoundation({
-                          type: "freecell",
-                          index: (i - 1) as FreeCellIndex
-                        })
-                      }
+                      onActivate={(el) => tryAutoFoundationFromEl(el)}
                       onPointerDownCard={(e) =>
                         handleFreeCellPointerDown(e, i - 1)
                       }

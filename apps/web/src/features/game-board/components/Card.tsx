@@ -38,7 +38,7 @@ type CardProps = {
   emptyLabel?: string;
   className?: string;
   style?: React.CSSProperties;
-  onActivate?: () => void;
+  onActivate?: (el: HTMLElement) => void;
   onPointerDownCard?: (e: React.PointerEvent<HTMLDivElement>) => void;
 } & Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -94,12 +94,33 @@ function Card({
       style={style}
       aria-label={`Card ${card.id}${faceDown ? ", face down" : ""}`}
       tabIndex={-1}
-      onDoubleClick={() => canActivate && onActivate?.()}
+      onDoubleClick={(e) => {
+        console.log("[Card] dblclick", {
+          canActivate,
+          hasOnActivate: Boolean(onActivate),
+          cardId: card?.id,
+          targetTag: (e.currentTarget as HTMLElement).tagName,
+          targetCardIdAttr: (e.currentTarget as HTMLElement).getAttribute(
+            "data-card-id"
+          )
+        });
+
+        if (!canActivate) return;
+        onActivate?.(e.currentTarget);
+      }}
       onKeyDown={(e) => {
         if (!canActivate) return;
         if (e.key === "Enter") {
+          console.log("[Card] activate via Enter", {
+            cardId: card?.id,
+            targetTag: (e.currentTarget as HTMLElement).tagName,
+            targetCardIdAttr: (e.currentTarget as HTMLElement).getAttribute(
+              "data-card-id"
+            )
+          });
+
           e.preventDefault();
-          onActivate?.();
+          onActivate?.(e.currentTarget);
         }
       }}
       onPointerDown={onPointerDown}

@@ -15,7 +15,8 @@ type TableauProps = {
   handleTableauPointerDown: ReturnType<
     typeof useCardDrag
   >["handleTableauPointerDown"];
-  tryAutoFoundation: (from: PileRef) => void;
+  /** Element-based auto-foundation (enables flight animation). Prefer this when provided. */
+  tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
   isWon: boolean;
 };
@@ -25,7 +26,7 @@ function Tableau({
   playable,
   drag,
   handleTableauPointerDown,
-  tryAutoFoundation,
+  tryAutoFoundationFromEl,
   setTableauColRef
 }: TableauProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
@@ -124,12 +125,7 @@ function Tableau({
                       playable.tableau[colIndex][tcIndex] ? "true" : "false"
                     }
                     style={{ zIndex: tcIndex + 1 }}
-                    onActivate={() =>
-                      tryAutoFoundation({
-                        type: "tableau",
-                        index: colIndex as TableauIndex
-                      })
-                    }
+                    onActivate={(el) => tryAutoFoundationFromEl(el)}
                     onPointerDownCard={(e) =>
                       handleTableauPointerDown(e, colIndex, tcIndex)
                     }

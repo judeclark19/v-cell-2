@@ -316,7 +316,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       boardRef: React.RefObject<HTMLElement | null>;
       buildKbDragFromEl: (el: HTMLElement) => KbDragLike | null;
       startKbFlight: UseKeyboardActionsArgs["startKbFlight"];
-      lastKbMovedCardIdRef: React.MutableRefObject<string | null>;
+      lastKbMovedCardIdRef: React.RefObject<string | null>;
     }
   ): boolean {
     const {
@@ -331,11 +331,25 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       lastKbMovedCardIdRef
     } = opts;
 
+    console.log("[useKeyboardActions] autoToPile called", {
+      pileType: opts.pileType,
+      elTag: el.tagName,
+      elCardIdAttr: el.getAttribute("data-card-id")
+    });
+
     const cardId = getCardIdFromEl(el);
 
     if (cardId) {
       const kbDrag = buildKbDragFromEl(el);
       const source = kbDrag?.source;
+
+      console.log("[useKeyboardActions] autoToPile kbDrag", {
+        pileType,
+        cardId,
+        hasKbDrag: Boolean(kbDrag),
+        sourceType: source?.type ?? null,
+        source
+      });
 
       const match: SingleMove | undefined = source
         ? legalMoves.find(
@@ -362,6 +376,16 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
         if (toIndex != null && kbDragForFlight) {
           const toEl = getDropEl(toIndex);
+
+          console.log("[useKeyboardActions] autoToPile flight", {
+            pileType,
+            toIndex,
+            hasToEl: Boolean(toEl),
+            fromElCardId: getCardIdFromEl(fromElForFlight),
+            fromElAttr: fromElForFlight.getAttribute("data-card-id"),
+            hasKbDragForFlight: Boolean(kbDragForFlight)
+          });
+
           if (toEl) {
             startKbFlight({
               fromEl: fromElForFlight,

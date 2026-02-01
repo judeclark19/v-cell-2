@@ -65,7 +65,7 @@ function Board() {
                   playable={vm.playable}
                   drag={vm.drag}
                   handleTableauPointerDown={vm.handleTableauPointerDown}
-                  tryAutoFoundation={vm.tryAutoFoundation}
+                  tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
                   setTableauColRef={vm.setTableauColRef}
                   isWon={vm.isWon}
                 />
@@ -77,7 +77,9 @@ function Board() {
                 <FreeCells
                   freeCellsRow={vm.freeCellsRow}
                   playableFreeCells={vm.playable.freeCells}
-                  tryAutoFoundation={vm.tryAutoFoundation}
+                  tryAutoFoundationFromEl={
+                    vm.tryAutoFoundationFromEl
+                  }
                   setFreeCellRef={vm.setFreeCellRef}
                   drag={vm.drag}
                   handleFreeCellPointerDown={vm.handleFreeCellPointerDown}
