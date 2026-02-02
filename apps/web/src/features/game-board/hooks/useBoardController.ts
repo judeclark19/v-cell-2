@@ -201,7 +201,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     paused,
     isAnyModalOpen,
     shouldShowWinModal,
-    drag: { active: drag.active, pending: drag.pending },
+    drag: { pointerId: drag.pointerId, pending: drag.pending },
     freeCellRefs,
     tableauColRefs,
     tryAutoFoundationFromEl,

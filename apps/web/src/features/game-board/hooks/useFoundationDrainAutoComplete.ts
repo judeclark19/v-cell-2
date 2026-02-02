@@ -16,7 +16,7 @@ export type UseFoundationDrainAutoCompleteArgs = {
   shouldShowWinModal: boolean;
 
   /** Drag state (used to stop the runner while drag is active/pending). */
-  drag: { active: boolean; pending: boolean };
+  drag: { pointerId: number | null; pending: boolean };
 
   /** Free cell container refs (used as sources for foundation moves). */
   freeCellRefs: React.RefObject<(HTMLDivElement | null)[]>;
@@ -119,7 +119,7 @@ export function useFoundationDrainAutoComplete(
     if (pausedRef.current) return;
     if (isAnyModalOpenRef.current) return;
     if (shouldShowWinModalRef.current) return;
-    if (dragRef.current.active || dragRef.current.pending) return;
+    if (dragRef.current.pointerId != null) return;
 
     isAutoCompletingRef.current = true;
     setIsAutoCompleting(true);
@@ -133,7 +133,9 @@ export function useFoundationDrainAutoComplete(
         if (pausedRef.current) break;
         if (isAnyModalOpenRef.current) break;
         if (shouldShowWinModalRef.current) break;
-        if (dragRef.current.active || dragRef.current.pending) break;
+        if (dragRef.current.pointerId != null) {
+          break;
+        }
 
         const { freeCellSources, tableauSources } = getSources();
 
