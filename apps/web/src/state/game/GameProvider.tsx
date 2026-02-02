@@ -29,6 +29,8 @@ type GameContextValue = {
   undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
+  faceDownCount: Rules["faceDownCount"];
+  setFaceDownCount: (next: Rules["faceDownCount"]) => void;
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
   paused: boolean;
@@ -87,16 +89,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
-  const { showTimer, setShowTimer, undoLimit, setUndoLimit } =
-    useGameSettings();
+  const {
+    showTimer,
+    setShowTimer,
+    undoLimit,
+    setUndoLimit,
+    faceDownCount,
+    setFaceDownCount
+  } = useGameSettings();
 
   const rules = useMemo<Rules>(
     () => ({
       allowFoundationPullback,
-      faceDownCount: 7,
+      faceDownCount,
       undoLimit
     }),
-    [allowFoundationPullback, undoLimit]
+    [allowFoundationPullback, faceDownCount, undoLimit]
   );
 
   const [checkpoint, setCheckpoint] = useState<{
@@ -151,6 +159,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       rules,
       allowFoundationPullback,
       undoLimit,
+      faceDownCount,
       setHistory,
       setTimeElapsedMs,
       setHasStarted,
@@ -267,6 +276,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undoLimit,
     setUndoLimit,
     undosRemaining,
+    faceDownCount,
+    setFaceDownCount,
     showTimer,
     setShowTimer,
     paused,

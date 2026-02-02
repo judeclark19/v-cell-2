@@ -14,7 +14,9 @@ export default function SettingsPage() {
     allowFoundationPullback,
     setAllowFoundationPullback,
     undoLimit,
-    setUndoLimit
+    setUndoLimit,
+    faceDownCount,
+    setFaceDownCount
   } = useGame();
   const { theme, setTheme } = useTheme();
 
@@ -23,6 +25,12 @@ export default function SettingsPage() {
     const n = Number(value);
     if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
     return "unlimited";
+  };
+
+  const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
+    const n = Number(value);
+    if (n === 0 || n === 7 || n === 14 || n === 21) return n;
+    return 7;
   };
 
   return (
@@ -46,14 +54,16 @@ export default function SettingsPage() {
             Face-down cards at deal
             <select
               className="control"
-              disabled
-              defaultValue="7"
               id="face-down-cards"
+              value={String(faceDownCount)}
+              onChange={(e) =>
+                setFaceDownCount(parseFaceDownCount(e.target.value))
+              }
             >
               <option value="0">0 (all face-up)</option>
               <option value="7">7 (classic)</option>
-              <option value="14">14</option>
-              <option value="21">21</option>
+              <option value="14">14 (2 rows)</option>
+              <option value="21">21 (3 rows)</option>
             </select>
             <small className="hint">
               Engine rule: V-shape layering. Auto-flip when a face-down card

@@ -22,6 +22,7 @@ export type UseGameSessionParams = {
   // Use these as deps for the "rule changes => reseed" effect.
   allowFoundationPullback: boolean;
   undoLimit: Rules["undoLimit"];
+  faceDownCount: Rules["faceDownCount"];
 
   // State setters owned by GameProvider
   setHistory: React.Dispatch<React.SetStateAction<HistoryState>>;
@@ -60,6 +61,7 @@ export function useGameSession({
   rules,
   allowFoundationPullback,
   undoLimit,
+  faceDownCount,
 
   setHistory,
   setTimeElapsedMs,
@@ -146,7 +148,7 @@ export function useGameSession({
 
     startSession({ kind: "new" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowFoundationPullback, undoLimit]);
+  }, [allowFoundationPullback, undoLimit, faceDownCount]);
 
   const startNewDealSession = useCallback(() => {
     startSession({ kind: "new" });
