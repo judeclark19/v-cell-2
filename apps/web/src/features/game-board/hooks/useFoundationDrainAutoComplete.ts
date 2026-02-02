@@ -16,7 +16,11 @@ export type UseFoundationDrainAutoCompleteArgs = {
   shouldShowWinModal: boolean;
 
   /** Drag state (used to stop the runner while drag is active/pending). */
-  drag: { pointerId: number | null; pending: boolean };
+  drag: {
+    pointerId: number | null;
+    pending: boolean;
+    kbFlight: { active: boolean };
+  };
 
   /** Free cell container refs (used as sources for foundation moves). */
   freeCellRefs: React.RefObject<(HTMLDivElement | null)[]>;
@@ -112,6 +116,27 @@ export function useFoundationDrainAutoComplete(
     return { freeCellSources, tableauSources };
   }, [freeCellRefs, tableauColRefs]);
 
+  const waitForFlightComplete = useCallback(async () => {
+    // Wait until any kb-flight clears.
+    // Note: kb-flight is represented by `drag.kbFlight.active` while `pointerId` remains null.
+    const raf = () =>
+      new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    // Wait until any pending kb-flight clears.
+    // Note: `drag.pending` is treated as “a flight/animation is in progress”.
+    let safety = 0;
+    while (
+      dragRef.current.pointerId == null &&
+      dragRef.current.kbFlight.active &&
+      isAutoCompletingRef.current
+    ) {
+      // Safety cap (~2 seconds at 60fps) to avoid infinite loops if pending is never cleared.
+      safety += 1;
+      if (safety > 120) break;
+      await raf();
+    }
+  }, [dragRef]);
+
   const runAutoComplete = useCallback(async () => {
     // Don’t start if we’re already running or if UI/game state blocks it.
     if (isAutoCompletingRef.current) return;
@@ -171,6 +196,10 @@ export function useFoundationDrainAutoComplete(
 
         // Wait for FLIP to finish (or its failsafe) before attempting the next move.
         await waitForFlipComplete();
+
+        // Also wait for any kb-flight animation to finish so moves don't visually collapse into one.
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        await waitForFlightComplete();
       }
     } finally {
       isAutoCompletingRef.current = false;
@@ -186,7 +215,8 @@ export function useFoundationDrainAutoComplete(
     seedReadyRef,
     shouldShowWinModalRef,
     tryAutoFoundationFromElRef,
-    waitForFlipComplete
+    waitForFlipComplete,
+    waitForFlightComplete
   ]);
 
   return {

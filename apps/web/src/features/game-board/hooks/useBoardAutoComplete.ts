@@ -16,7 +16,11 @@ export type UseBoardAutoCompleteArgs = {
   shouldShowWinModal: boolean;
 
   /** Drag state (used to suppress auto-complete during pointer interactions) */
-  drag: { pointerId: number | null; pending: boolean };
+  drag: {
+    pointerId: number | null;
+    pending: boolean;
+    kbFlight: { active: boolean };
+  };
 
   /** Refs to board regions needed by the underlying auto-complete hook */
   freeCellRefs: RefObject<(HTMLDivElement | null)[]>;

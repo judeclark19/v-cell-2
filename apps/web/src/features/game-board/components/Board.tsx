@@ -68,6 +68,7 @@ function Board() {
                   tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
                   setTableauColRef={vm.setTableauColRef}
                   isWon={vm.isWon}
+                  tryAutoFreeCellFromEl={vm.tryAutoFreeCellFromEl}
                 />
 
                 {/* Drag overlay layer */}
@@ -77,9 +78,7 @@ function Board() {
                 <FreeCells
                   freeCellsRow={vm.freeCellsRow}
                   playableFreeCells={vm.playable.freeCells}
-                  tryAutoFoundationFromEl={
-                    vm.tryAutoFoundationFromEl
-                  }
+                  tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
                   setFreeCellRef={vm.setFreeCellRef}
                   drag={vm.drag}
                   handleFreeCellPointerDown={vm.handleFreeCellPointerDown}

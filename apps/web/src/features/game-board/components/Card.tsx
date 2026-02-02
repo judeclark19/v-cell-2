@@ -39,6 +39,7 @@ type CardProps = {
   className?: string;
   style?: React.CSSProperties;
   onActivate?: (el: HTMLElement) => void;
+  onAutoFreeCell?: (el: HTMLElement) => void;
   onPointerDownCard?: (e: React.PointerEvent<HTMLDivElement>) => void;
 } & Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -54,6 +55,7 @@ function Card({
   style,
   onActivate,
   onPointerDownCard,
+  onAutoFreeCell,
   ...divProps
 }: CardProps) {
   const isEmpty = !card;
@@ -95,33 +97,21 @@ function Card({
       aria-label={`Card ${card.id}${faceDown ? ", face down" : ""}`}
       tabIndex={-1}
       onDoubleClick={(e) => {
-        console.log("[Card] dblclick", {
-          canActivate,
-          hasOnActivate: Boolean(onActivate),
-          cardId: card?.id,
-          targetTag: (e.currentTarget as HTMLElement).tagName,
-          targetCardIdAttr: (e.currentTarget as HTMLElement).getAttribute(
-            "data-card-id"
-          )
-        });
-
         if (!canActivate) return;
         onActivate?.(e.currentTarget);
       }}
       onKeyDown={(e) => {
         if (!canActivate) return;
         if (e.key === "Enter") {
-          console.log("[Card] activate via Enter", {
-            cardId: card?.id,
-            targetTag: (e.currentTarget as HTMLElement).tagName,
-            targetCardIdAttr: (e.currentTarget as HTMLElement).getAttribute(
-              "data-card-id"
-            )
-          });
-
           e.preventDefault();
           onActivate?.(e.currentTarget);
         }
+      }}
+      onContextMenu={(e) => {
+        // Right-click: auto-move to a free cell (if caller provides handler).
+        if (!card || faceDown || !onAutoFreeCell) return;
+        e.preventDefault();
+        onAutoFreeCell(e.currentTarget);
       }}
       onPointerDown={onPointerDown}
     >

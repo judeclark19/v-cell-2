@@ -174,6 +174,9 @@ export function useBoardController(params: UseBoardControllerParams) {
           source: kbDrag.source,
           dropTarget: { type: "foundation", index: toIndex }
         });
+
+        dispatchMove(match);
+        return true;
       }
 
       // Commit the move.
@@ -201,7 +204,11 @@ export function useBoardController(params: UseBoardControllerParams) {
     paused,
     isAnyModalOpen,
     shouldShowWinModal,
-    drag: { pointerId: drag.pointerId, pending: drag.pending },
+    drag: {
+      pointerId: drag.pointerId,
+      pending: drag.pending,
+      kbFlight: drag.kbFlight
+    },
     freeCellRefs,
     tableauColRefs,
     tryAutoFoundationFromEl,
@@ -283,14 +290,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     newDeal: newDealWithCelebration,
     restart: restartWithCelebration,
     startKbFlight: ({ fromEl, toEl, kbDrag, dropTarget }) => {
-      console.log("[useBoardController] startKbFlight (keyboard)", {
-        fromElCardIdAttr: fromEl.getAttribute("data-card-id"),
-        toElTag: toEl.tagName,
-        dropTarget,
-        stackLen: kbDrag.stack.length,
-        source: kbDrag.source
-      });
-
       startKbFlightFromKeyboard({
         fromEl,
         toEl,
@@ -346,6 +345,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     foundationsRow,
     freeCellsRow,
     tryAutoFoundationFromEl,
+    tryAutoFreeCellFromEl,
     drag,
     finalizeDrag,
     handleTableauPointerDown,

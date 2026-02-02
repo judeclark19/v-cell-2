@@ -62,8 +62,8 @@ export function useWinState({
   const [showAcpOverride, setShowAcpOverride] = useState(false);
 
   const showAcp = useMemo(() => {
-    return isWon || showAcpOverride;
-  }, [isWon, showAcpOverride]);
+    return (isWon && !isFullyCollected) || showAcpOverride;
+  }, [isWon, isFullyCollected, showAcpOverride]);
 
   const shouldShowWinModal = useMemo(() => {
     if (!isFullyCollected) return false;

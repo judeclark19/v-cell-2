@@ -1,4 +1,4 @@
-import type { Card as EngineCard, PileRef, TableauIndex } from "@vcell/engine";
+import type { Card as EngineCard } from "@vcell/engine";
 import { useContext } from "react";
 import Card from "./Card";
 import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
@@ -17,6 +17,7 @@ type TableauProps = {
   >["handleTableauPointerDown"];
   /** Element-based auto-foundation (enables flight animation). Prefer this when provided. */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
+  tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
   isWon: boolean;
 };
@@ -27,6 +28,7 @@ function Tableau({
   drag,
   handleTableauPointerDown,
   tryAutoFoundationFromEl,
+  tryAutoFreeCellFromEl,
   setTableauColRef
 }: TableauProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
@@ -129,6 +131,7 @@ function Tableau({
                     onPointerDownCard={(e) =>
                       handleTableauPointerDown(e, colIndex, tcIndex)
                     }
+                    onAutoFreeCell={(el) => tryAutoFreeCellFromEl(el)}
                   />
                 );
               })}
