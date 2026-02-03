@@ -40,6 +40,21 @@ Core architectural goal: **separate the game engine (rules + state)** from the *
 
 Board logic is organized under `apps/web/src/features/game-board/...` so `apps/web/app` stays focused on routing/layout.
 
+### 2.3 Persistence (Web)
+
+V2 uses a **tiered persistence** approach:
+
+- **localStorage**: small, human-readable settings and lightweight session flags
+  - examples: theme, undoLimit, allowFoundationPullback, faceDownCount, timer visibility
+- **IndexedDB**: larger and/or structured data
+  - examples: completed game history, per-game metadata, optional move logs, offline stats queue
+
+Guidelines:
+
+- Prefer localStorage for < 10KB totals and values that must be readable without migrations.
+- Prefer IndexedDB for lists/arrays, history, and anything that could grow over time.
+- All persisted data should be **versioned** and written behind a small adapter layer.
+
 ---
 
 ## 3. Routes (Web)
@@ -235,6 +250,11 @@ Timer rules (confirmed):
 - does reset on new deal
 - timer visibility is cosmetic preference
 
+Persistence notes:
+
+- store `startedAtMs` / `endedAtMs` / `accumulatedMs` in the session layer so refresh resumes correctly
+- never persist derived UI flags (e.g. transient animation state)
+
 Pause:
 
 - pause should disable board interactions (keyboard/drag)
@@ -255,6 +275,10 @@ UI is responsible for:
 - enforcing limits
 - focus restoration after undo (prefer moved card)
 
+Persistence notes:
+
+- Undo history should remain in-memory for performance; optionally persist only **completed game summaries**.
+
 ---
 
 ## 12. Themes
@@ -274,17 +298,52 @@ Semantic token:
 
 ## 13. Session / Auth / Stats (Direction)
 
+### 13.1 Session Modes
+
 MVP session model:
 
 - `sessionMode: "unset" | "guest" | "user"` persisted locally
 - guests can play and view page shells
 - `/stats` shows prompt for guests rather than redirecting
 
+### 13.2 Data We Persist
+
+Small preferences (localStorage):
+
+- `theme`, `showTimer`
+- gameplay settings: `undoLimit`, `allowFoundationPullback`, `faceDownCount`
+
+Session + history (IndexedDB):
+
+- `currentSession` (optional): last active `gameId`, seed, rules, and minimal timer fields
+- `completedGames[]`: results with `seed`, `startedAtMs`, `endedAtMs`, moveCount, status
+- optional `moveLog` (future): only if we decide to support replay or analytics
+
+### 13.3 IndexedDB Schema (Draft)
+
+Database: `vcell`
+
+- store `meta` (key/value)
+  - keys: `schemaVersion`, `lastMigrationAt`
+- store `completedGames`
+  - keyPath: `gameId`
+  - indexes: `endedAtMs`, `status`, `seed`
+- store `statsQueue` (planned)
+  - keyPath: `id`
+  - fields: `type`, `payload`, `createdAtMs`, `attemptCount`
+
+### 13.4 Offline-first Direction
+
 Planned:
 
 - offline-first stats queue
 - sync for logged-in users
 - leaderboards later (requires privacy policy decisions)
+
+Constraints:
+
+- engine remains pure; only the web app reads/writes storage
+- all persisted records must be forward-migratable
 
 ---
 
@@ -318,6 +377,8 @@ Plan:
 
 ## 16. Next Work Areas
 
+- persistence adapter: define localStorage + IndexedDB wrappers + schema version
+- stats page MVP: read from IndexedDB `completedGames` and show aggregates for guest
 - pause toggle wired to keyboard `P` and UI button, ensuring interactions disable only when paused
 - complete keyboard spec checklist + verify all focus/target behaviors
 - autoplay/auto-complete button gating: show once tableau unlocked

@@ -1,6 +1,13 @@
 # V-Cell V2
 
-V-Cell V2 is a modern rebuild of the V-Cell solitaire game, with a focus on correctness, feel, and extensibility. The core engine is implemented as a pure, deterministic, and UI-agnostic TypeScript package, enabling robust testing and separation from the web UI.
+V-Cell V2 is a modern rebuild of the V-Cell solitaire game, focused on correctness, feel, and long-term extensibility.
+
+The project is split cleanly into:
+
+- a **pure, deterministic TypeScript engine** (rules, legality, move generation)
+- a **Next.js web app** (rendering, input, animation, persistence)
+
+The engine is UI-agnostic and fully testable in isolation. All interaction semantics, animation, and persistence live in the web layer.
 
 ## Install (Monorepo)
 
@@ -34,12 +41,10 @@ npm run check
 
 ## Monorepo Layout
 
-- `packages/engine` — Pure TypeScript game engine (no UI, no DOM)
-- `apps/web` — Next.js web app (UI)
-- Route plan (web): / (entry), /login, /game (play), /settings (preferences), /stats (history; guests see a login prompt; leaderboards later)
-- UI work-in-progress: foundations, tableau, and free cells are fully rendering in a shared 7-column rhythm using extracted presentational components (`Foundations`, `Tableau`, `FreeCells`). Single cards and valid stacks can be dragged between tableau, free cells, and foundations. Foundation pullback is a configurable rule: when disabled, the engine generates no pullback moves and the UI prevents pickup with a not-allowed cursor. Legality is enforced exclusively by the engine. Board orchestration has been refactored so that `Board.tsx` focuses on layout and wiring only, while drag/drop resolution, move commitment, and auto-foundation behavior live in extracted hooks. Win detection is engine-driven ("all tableau cards unlocked") and surfaced via `GameProvider`, with UI components responsible only for side effects (alerts, animations). Remaining work is primarily visual and interaction polish, not rules or legality. Full keyboard play is supported: Tab/Shift+Tab enter and exit the board, arrow keys navigate spatially, Space toggles carry mode, Enter commits drops, F auto-sends to foundations, and C auto-sends to free cells. Visual focus, carry, and target states are fully theme-aware and respect reduced-motion preferences.
-- We’ve also begun laying groundwork for Undo by planning a move-history stack at the GameProvider level. The engine remains pure and stateless; move history and undo enforcement live entirely in the web UI.
-- `todo.md` and `v_cell_rebuild_plan.md` — living project checklist + decisions (kept in sync)
+- `packages/engine` — Pure TypeScript game engine (no UI, no DOM, fully deterministic)
+- `apps/web` — Next.js web app (UI, input, animation, persistence)
+- `v_cell_rebuild_plan.md` — Living architecture + design decisions (source of truth)
+- `todo.md` — Short-term task tracking
 
 ## Running Engine Tests
 
@@ -60,6 +65,21 @@ npm run dev
 ```
 
 Note: current gameplay is fully functional via mouse and keyboard. Outstanding work is focused on UI polish (autocomplete affordances, win-state presentation, and final animation tuning), not on core rules or legality.
+
+## Persistence (Current State)
+
+Persistence is handled entirely in the web app.
+
+- **localStorage**
+  - small user preferences (theme, gameplay settings, UI flags)
+  - session mode (guest vs user)
+
+- **IndexedDB (planned / partially implemented)**
+  - completed game history
+  - per-game metadata (seed, duration, result)
+  - future stats sync queue
+
+All persisted data is versioned and written behind adapter-style helpers so the engine remains pure.
 
 ## Current Web Routes
 
@@ -233,13 +253,14 @@ The UI may temporarily diverge visually (e.g. hiding a dragged foundation card),
 
 ## Project Status
 
-Core gameplay is feature-complete and rules-correct.
+- Core gameplay is feature-complete and rules-correct
+- Mouse and full-keyboard play are implemented and polished
+- Auto-complete and animation systems are in place
 
-Remaining work is focused on:
+Current focus is shifting toward:
 
-- Auto-complete affordances and polish
-- Final visual tuning and animations
-- Stats persistence and profiles
-- Leaderboards (future phase)
+- persistence and stats (IndexedDB-backed history)
+- backend-facing abstractions (session, stats queue)
+- long-term support for auth and leaderboards
 
-See todo.md and v_cell_rebuild_plan.md for up-to-date task tracking and design decisions.
+See `v_cell_rebuild_plan.md` for the authoritative roadmap.
