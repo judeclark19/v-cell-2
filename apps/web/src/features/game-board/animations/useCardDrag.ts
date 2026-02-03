@@ -37,6 +37,8 @@ export type DragState<TCardItem> = {
     cardIds: string[];
     /** Target pile for suppression. */
     dropTarget: DropTarget;
+    /** Optional override for kb-flight transition duration (ms). */
+    durationMs?: number;
   };
 };
 
@@ -446,8 +448,9 @@ export function useCardDrag<
     stack: Array<TableauItem>;
     source: DragSource | null;
     dropTarget: DropTarget;
+    durationMs?: number;
   }) => {
-    const { fromEl, toEl, stack, source, dropTarget } = args;
+    const { fromEl, toEl, stack, source, dropTarget, durationMs } = args;
 
     const fromRect = fromEl.getBoundingClientRect();
     const toRect = toEl.getBoundingClientRect();
@@ -473,7 +476,8 @@ export function useCardDrag<
       kbFlight: {
         active: true,
         cardIds: stack.map((tc) => String(tc.card.id)),
-        dropTarget
+        dropTarget,
+        durationMs
       }
     });
 

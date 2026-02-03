@@ -13,6 +13,7 @@ type DragLayerProps = {
     y: number;
     kbFlight?: {
       active: boolean;
+      durationMs?: number;
     };
   };
   finalizeDrag: () => void;
@@ -34,7 +35,11 @@ export default function DragLayer({ drag, finalizeDrag }: DragLayerProps) {
         top: 0,
         transform: `translate3d(${drag.baseLeft + drag.x}px, ${
           drag.baseTop + drag.y
-        }px, 0)`
+        }px, 0)`,
+        transitionDuration:
+          drag.kbFlight?.active && drag.kbFlight.durationMs != null
+            ? `${drag.kbFlight.durationMs}ms`
+            : undefined
       }}
       aria-hidden="true"
     >

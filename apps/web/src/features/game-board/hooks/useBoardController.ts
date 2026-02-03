@@ -102,6 +102,8 @@ export function useBoardController(params: UseBoardControllerParams) {
 
   const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
 
+  const ACP_FLIGHT_DURATION_MS = 80;
+
   const tryAutoFreeCellFromEl = useCallback(
     (el: HTMLElement) => {
       const from = buildPileRefFromEl(el);
@@ -143,8 +145,8 @@ export function useBoardController(params: UseBoardControllerParams) {
    * Element-based auto-foundation with flight animation.
    * Used by double-click / activation flows and by keyboard system.
    */
-  const tryAutoFoundationFromEl = useCallback(
-    (el: HTMLElement) => {
+  const tryAutoFoundationFromElImpl = useCallback(
+    (el: HTMLElement, durationMs?: number) => {
       const from = buildPileRefFromEl(el);
       if (!from) return false;
 
@@ -172,7 +174,8 @@ export function useBoardController(params: UseBoardControllerParams) {
           toEl,
           stack: kbDrag.stack,
           source: kbDrag.source,
-          dropTarget: { type: "foundation", index: toIndex }
+          dropTarget: { type: "foundation", index: toIndex },
+          durationMs
         });
 
         dispatchMove(match);
@@ -194,6 +197,17 @@ export function useBoardController(params: UseBoardControllerParams) {
     ]
   );
 
+  const tryAutoFoundationFromEl = useCallback(
+    (el: HTMLElement) => tryAutoFoundationFromElImpl(el),
+    [tryAutoFoundationFromElImpl]
+  );
+
+  const tryAutoFoundationFromElFast = useCallback(
+    (el: HTMLElement) =>
+      tryAutoFoundationFromElImpl(el, ACP_FLIGHT_DURATION_MS),
+    [tryAutoFoundationFromElImpl]
+  );
+
   const {
     isAutoCompleting,
     runAutoComplete,
@@ -211,7 +225,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     },
     freeCellRefs,
     tableauColRefs,
-    tryAutoFoundationFromEl,
+    tryAutoFoundationFromEl: tryAutoFoundationFromElFast,
     waitForFlipComplete
   });
 
