@@ -16,6 +16,10 @@ import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
 import { useGameDerivedState } from "./hooks/useGameDerivedState";
+import {
+  getAllCompletedGames,
+  upsertCompletedGame
+} from "../../persistence/completedGamesStore";
 
 type GameContextValue = {
   state: GameState;
@@ -125,6 +129,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Completed games archive (in-memory, Phase A)
   // ---------------------------------------------------------------------------
   const [completedGames, setCompletedGames] = useState<GameResult[]>([]);
+  const completedGamesHydratedRef = useRef<boolean>(false);
+  const persistedCompletedGameIdsRef = useRef<Set<string>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Run state (timer + pause)
@@ -173,6 +179,60 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       cursorRef,
       setCheckpoint
     });
+
+  // ---------------------------------------------------------------------------
+  // Persistence: hydrate completed games (IndexedDB)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const persisted = await getAllCompletedGames();
+        if (cancelled) return;
+
+        // Hydrate once per provider lifetime.
+        completedGamesHydratedRef.current = true;
+        persistedCompletedGameIdsRef.current = new Set(
+          persisted.map((g) => g.gameId)
+        );
+
+        setCompletedGames(persisted);
+      } catch (err) {
+        // If IndexedDB is unavailable (private mode / blocked), continue with in-memory only.
+        completedGamesHydratedRef.current = true;
+
+        console.error("Failed to hydrate completed games from IndexedDB", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Persistence: append newly completed games (IndexedDB)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    // Don’t persist until after initial hydration attempt finishes.
+    if (!completedGamesHydratedRef.current) return;
+
+    const persistedIds = persistedCompletedGameIdsRef.current;
+    const pending = completedGames.filter((g) => !persistedIds.has(g.gameId));
+    if (pending.length === 0) return;
+
+    (async () => {
+      for (const g of pending) {
+        try {
+          await upsertCompletedGame(g);
+          persistedIds.add(g.gameId);
+        } catch {
+          // Ignore write failures; game still exists in-memory.
+        }
+      }
+    })();
+  }, [completedGames]);
 
   // ---------------------------------------------------------------------------
   // Derived state
