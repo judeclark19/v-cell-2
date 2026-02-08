@@ -147,6 +147,22 @@
   }
 }
 
+/* Allow empty slots to be highlighted as drop targets, too */
+.card-slot.is-kb-drop-target {
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--kb-highlight) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--card-slot-bg) 88%,
+    var(--kb-highlight) 12%
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--kb-highlight) 55%,
+    var(--card-slot-border)
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* State styling: playable vs locked       */
 /* -------------------------------------------------------------------------- */
@@ -234,48 +250,26 @@
 /* -------------------------------------------------------------------------- */
 
 /* We define kb highlight “recipes” via vars on the card, then apply them once. */
-.card.is-kb-carried {
-  --kb-ring-outer: 0 0 0 4px
-    color-mix(in srgb, var(--kb-highlight) 60%, transparent);
-  --kb-ring-inner: 0 0 0 2px
-    color-mix(in srgb, var(--kb-highlight) 95%, transparent);
-  --kb-bg: color-mix(
+/* Always show drop-target highlight (pointer capture during drag may prevent :hover/:focus) */
+.card.is-kb-drop-target .card-face--front {
+  background-color: color-mix(
     in srgb,
-    var(--card-front-bg) 90%,
-    var(--kb-highlight) 10%
+    var(--card-front-bg) 84%,
+    var(--kb-highlight) 16%
   );
-  --kb-shadow: var(--card-shadow-hover);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kb-highlight) 55%, transparent),
+    inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover);
 }
 
-.card.is-kb-carried-stack {
-  --kb-ring-outer: 0 0 0 2px
-    color-mix(in srgb, var(--kb-highlight) 18%, transparent);
-  --kb-ring-inner: none;
-  --kb-bg: color-mix(in srgb, var(--card-front-bg) 94%, var(--kb-highlight) 6%);
-  --kb-shadow: var(--card-shadow);
-}
-
-.card.is-kb-drop-target {
-  --kb-ring-outer: 0 0 0 3px
-    color-mix(in srgb, var(--kb-highlight) 55%, transparent);
-  --kb-ring-inner: none;
-  --kb-bg: color-mix(
+/* Carried cards get a subtle tint (no ring) so the target stands out */
+.card.is-kb-carried .card-face--front,
+.card.is-kb-carried-stack .card-face--front {
+  background-color: color-mix(
     in srgb,
-    var(--card-front-bg) 88%,
-    var(--kb-highlight) 12%
+    var(--card-front-bg) 92%,
+    var(--kb-highlight) 8%
   );
-  --kb-shadow: var(--card-shadow-hover);
-}
-
-/* Apply kb visuals (base). This is placed AFTER playable styles, so ties win. */
-.card:is(.is-kb-carried, .is-kb-carried-stack, .is-kb-drop-target):is(
-    :hover,
-    :focus
-  )
-  .card-face--front {
-  box-shadow: var(--kb-ring-outer), var(--kb-ring-inner),
-    inset 0 1px 0 var(--card-front-inset), var(--kb-shadow);
-  background-color: var(--kb-bg, var(--card-front-bg));
+  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
 }
 
 /* Slightly de-emphasize carried cards so the target stands out. */
@@ -286,17 +280,6 @@
 /* For additional cards in a carried stack: even subtler. */
 .card.is-kb-carried-stack {
   opacity: 0.75;
-}
-
-/* Win over `.is-playable:hover` and `.is-playable:focus-visible` (higher specificity). */
-.card:is(.is-kb-carried, .is-kb-carried-stack, .is-kb-drop-target):is(
-    :hover,
-    :focus
-  )
-  .card-face--front {
-  box-shadow: var(--kb-ring-outer), var(--kb-ring-inner),
-    inset 0 1px 0 var(--card-front-inset), var(--kb-shadow);
-  background-color: var(--kb-bg, var(--card-front-bg));
 }
 
 /* -------------------------------------------------------------------------- */

@@ -103,6 +103,14 @@ export function useCardDrag<
   });
 
   const dragRef = useRef(drag);
+  const lastHoverTargetRef = useRef<Element | null>(null);
+
+  const clearHoverTarget = () => {
+    const prev = lastHoverTargetRef.current;
+    if (prev) prev.classList.remove("is-kb-drop-target");
+    lastHoverTargetRef.current = null;
+  };
+
   useEffect(() => {
     dragRef.current = drag;
   }, [drag]);
@@ -132,6 +140,7 @@ export function useCardDrag<
   const endDrag = () => {
     const cur = dragRef.current;
     if (!cur.active && !cur.pending) return;
+    clearHoverTarget();
     releaseCapture(cur);
     setDrag({
       active: false,
@@ -156,6 +165,7 @@ export function useCardDrag<
   const finalizeDrag = () => {
     const cur = dragRef.current;
     if (!cur.active && !cur.pending) return;
+    clearHoverTarget();
     releaseCapture(cur);
     setDrag({
       active: false,
@@ -191,6 +201,21 @@ export function useCardDrag<
       x: e.clientX - cur.startX,
       y: e.clientY - cur.startY
     };
+
+    // Normalize pointer hover to meaningful drop zones (.is-playable or .card-slot)
+    const rawEl = document.elementFromPoint(e.clientX, e.clientY);
+
+    // Normalize to meaningful drop zones only (.is-playable or .card-slot)
+    const zone =
+      rawEl?.closest(".is-playable") ?? rawEl?.closest(".card-slot") ?? null;
+
+    // Only log when the normalized zone actually changes
+    if (zone !== lastHoverTargetRef.current) {
+      const prev = lastHoverTargetRef.current;
+      if (prev) prev.classList.remove("is-kb-drop-target");
+      if (zone) zone.classList.add("is-kb-drop-target");
+      lastHoverTargetRef.current = zone;
+    }
 
     // While pending, only start the drag after crossing a small movement threshold.
     if (cur.pending && !cur.active) {
@@ -298,6 +323,7 @@ export function useCardDrag<
     window.addEventListener("pointerup", onGlobalPointerUp);
     window.addEventListener("pointercancel", onGlobalPointerUp);
     return () => {
+      clearHoverTarget();
       window.removeEventListener("pointermove", onGlobalPointerMove);
       window.removeEventListener("pointerup", onGlobalPointerUp);
       window.removeEventListener("pointercancel", onGlobalPointerUp);
