@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { DragState, DropTarget } from "./useCardDrag";
+import type { DragState, DropTarget } from "./dragTypes";
 
 type DropHover = {
   clear: () => void;

@@ -7,6 +7,7 @@ import { DragState } from "../animations/dragTypes";
 
 type FoundationProps = {
   i: number;
+  foundationIndex: number;
   card: EngineCard | null;
   foundations?: Array<{ cards: EngineCard[] }>;
   drag?: DragState<{ card: EngineCard }>;
@@ -23,6 +24,7 @@ type FoundationProps = {
 
 function Foundation({
   i,
+  foundationIndex,
   card,
   foundations,
   drag,
@@ -33,8 +35,6 @@ function Foundation({
   setFoundationRef,
   handleFoundationPointerDown
 }: FoundationProps) {
-  const foundationIndex = i - 3;
-
   const isDraggingFromThisFoundation =
     !!drag &&
     (drag.active || drag.pending || drag.isReturning) &&
@@ -120,7 +120,7 @@ function Foundation({
 }
 
 type FoundationsProps = {
-  foundationsRow: Array<EngineCard | null | undefined>;
+  foundationCards: Array<EngineCard | null>;
   foundations?: Array<{ cards: EngineCard[] }>;
   drag?: DragState<{ card: EngineCard }>;
   playableFoundations: boolean[];
@@ -139,7 +139,7 @@ type FoundationsProps = {
 };
 
 function Foundations({
-  foundationsRow,
+  foundationCards,
   foundations,
   drag,
   playableFoundations,
@@ -169,48 +169,36 @@ function Foundations({
   return (
     <div className="board-top" aria-label="Foundations">
       <div className="pile-row" aria-label="Foundations">
-        {foundationsRow.map((card, i) => {
-          if (i === 0) {
-            return (
-              <div
-                key={i}
-                className="timer-cell"
-                aria-hidden={showTimer ? "false" : "true"}
-              >
-                <div className={`timer${!hasStarted ? " muted" : ""}`}>
-                  {showTimer ? formatElapsed(timeElapsedMs) : ""}
-                </div>
-                <button
-                  className="btn btn--primary"
-                  aria-label="Pause timer"
-                  type="button"
-                  onClick={onPause}
-                  disabled={!hasStarted || isWon || isAbandoned}
-                >
-                  ⏸︎
-                </button>
-              </div>
-            );
-          }
-
-          if (card !== undefined && card !== null) {
-            return (
-              <Foundation
-                key={card.id}
-                i={i}
-                card={card ?? null}
-                foundations={foundations}
-                drag={drag}
-                playableFoundations={playableFoundations}
-                allowFoundationPullback={allowFoundationPullback}
-                kbCarrying={kbCarrying}
-                kbFlight={kbFlight}
-                setFoundationRef={setFoundationRef}
-                handleFoundationPointerDown={handleFoundationPointerDown}
-              />
-            );
-          }
-        })}
+        <div className="timer-cell" aria-hidden={showTimer ? "false" : "true"}>
+          <div className={`timer${!hasStarted ? " muted" : ""}`}>
+            {showTimer ? formatElapsed(timeElapsedMs) : ""}
+          </div>
+          <button
+            className="btn btn--primary"
+            aria-label="Pause timer"
+            type="button"
+            onClick={onPause}
+            disabled={!hasStarted || isWon || isAbandoned}
+          >
+            ⏸︎
+          </button>
+        </div>
+        {foundationCards.map((card, foundationIndex) => (
+          <Foundation
+            key={`foundation-${foundationIndex}`}
+            i={foundationIndex}
+            foundationIndex={foundationIndex}
+            card={card}
+            foundations={foundations}
+            drag={drag}
+            playableFoundations={playableFoundations}
+            allowFoundationPullback={allowFoundationPullback}
+            kbCarrying={kbCarrying}
+            kbFlight={kbFlight}
+            setFoundationRef={setFoundationRef}
+            handleFoundationPointerDown={handleFoundationPointerDown}
+          />
+        ))}
       </div>
     </div>
   );

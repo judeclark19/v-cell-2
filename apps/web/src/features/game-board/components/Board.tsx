@@ -46,7 +46,7 @@ function Board() {
                 <Foundations
                   hasStarted={vm.hasStarted}
                   timeElapsedMs={vm.timeElapsedMs}
-                  foundationsRow={vm.foundationsRow}
+                  foundationCards={vm.foundationCards}
                   foundations={vm.state.foundations}
                   drag={vm.drag}
                   playableFoundations={vm.playable.foundations}

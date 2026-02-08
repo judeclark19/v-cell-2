@@ -9,7 +9,7 @@ import type {
 import type {
   DragSource,
   DropTarget
-} from "@/features/game-board/animations/useCardDrag";
+} from "@/features/game-board/animations/dragTypes";
 
 function toBoundedIndex<T extends number>(n: number, len: number): T | null {
   return Number.isInteger(n) && n >= 0 && n < len ? (n as T) : null;

@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 
 import type { Card, PileRef } from "@vcell/engine";
-import type { DropTarget } from "@/features/game-board/animations/useCardDrag";
+import type { DropTarget } from "@/features/game-board/animations/dragTypes";
 
 import {
   buildKbDragFromEl as buildKbDragFromDom,

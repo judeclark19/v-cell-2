@@ -4,10 +4,7 @@ import { useCardDrag } from "@/features/game-board/animations/useCardDrag";
 import { useBoardFlipAnimation } from "@/features/game-board/animations/useBoardFlipAnimation";
 import { useFlipSequencer } from "@/features/game-board/animations/useFlipSequencer";
 import { useBoardDomRegistry } from "@/features/game-board/dom/boardDomRegistry";
-import {
-  buildFoundationsRow,
-  buildFreeCellsRow
-} from "@/features/game-board/dom/boardRows";
+import { buildFreeCellsRow } from "@/features/game-board/dom/boardRows";
 import { useBoardKeyboardSystem } from "@/features/game-board/keyboard/useBoardKeyboardSystem";
 import { useAutoFoundation } from "@/features/game-board/hooks/useAutoFoundation";
 import { useAutoFreeCell } from "@/features/game-board/hooks/useAutoFreeCell";
@@ -385,7 +382,9 @@ export function useBoardController(params: UseBoardControllerParams) {
     commitMoveFromPointerDropRef.current = commitMoveFromPointerDrop;
   }, [commitMoveFromPointerDrop]);
 
-  const foundationsRow = buildFoundationsRow(state);
+  const foundationCards = state.foundations.map(
+    (pile) => pile.cards[pile.cards.length - 1] ?? null
+  );
   const freeCellsRow = buildFreeCellsRow(state);
 
   // --- FLIP animation for instant (non-drag) moves ---
@@ -421,7 +420,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     // derived/wiring
     playable,
     legalMoves,
-    foundationsRow,
+    foundationCards,
     freeCellsRow,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,

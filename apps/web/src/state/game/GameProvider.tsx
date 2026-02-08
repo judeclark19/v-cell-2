@@ -20,6 +20,11 @@ import {
   getAllCompletedGames,
   upsertCompletedGame
 } from "../../persistence/completedGamesStore";
+import {
+  getInProgressGame,
+  upsertInProgressGame,
+  deleteInProgressGame
+} from "../../persistence/inProgressGamesStore";
 
 type GameContextValue = {
   state: GameState;
@@ -235,6 +240,50 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [completedGames]);
 
   // ---------------------------------------------------------------------------
+  // Persistence for in-progress games (IndexedDB)
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!seedReady) return;
+    inProgressHydratedRef.current = false;
+
+    (async () => {
+      try {
+        const saved = await getInProgressGame(gameId);
+        if (cancelled) return;
+        inProgressHydratedRef.current = true;
+        if (!saved) return;
+
+        // Restore snapshot + meta
+        setHistory(saved.history);
+        setTimeElapsedMs(saved.timeElapsedMs);
+        setHasStarted(saved.hasStarted);
+        setStartedAtMs(saved.startedAtMs);
+        setEndedAtMs(saved.endedAtMs);
+        setIsAbandoned(saved.isAbandoned);
+        setPaused(saved.paused);
+        setMoveCount(saved.moveCount);
+        setUndosUsed(saved.undosUsed);
+
+        // Optional: restore move log/cursor if you also persist it later
+        // setMoves(saved.moves); setCursor(saved.cursor);
+      } catch (err) {
+        inProgressHydratedRef.current = true;
+        console.error("Failed to hydrate in-progress game", err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [seedReady, gameId]);
+
+  const persistTimerRef = useRef<number | null>(null);
+  const inProgressHydratedRef = useRef<boolean>(false);
+
+  // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
   const { isWon, undosRemaining, canUndo } = useGameDerivedState({
@@ -243,6 +292,74 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undoLimit,
     undosUsed
   });
+
+  useEffect(() => {
+    if (!seedReady) return;
+    if (!inProgressHydratedRef.current) return;
+
+    if (isWon || isAbandoned) {
+      // If it ever becomes completed/abandoned, don't keep an in-progress snapshot around.
+      deleteInProgressGame(gameId).catch(() => {});
+      return;
+    }
+
+    // Only treat a game as “in progress” after the first move.
+    if (!hasStarted) {
+      // If we have a pristine deal (e.g., just refreshed / just dealt), ensure no record exists.
+      deleteInProgressGame(gameId).catch(() => {});
+      return;
+    }
+
+    // Throttle writes (otherwise you’ll write on every render/move burst).
+    if (persistTimerRef.current != null) {
+      window.clearTimeout(persistTimerRef.current);
+    }
+
+    persistTimerRef.current = window.setTimeout(() => {
+      persistTimerRef.current = null;
+
+      upsertInProgressGame({
+        gameId,
+        seed,
+        rules,
+        kind: "freeplay",
+        history,
+        timeElapsedMs,
+        hasStarted,
+        startedAtMs,
+        endedAtMs,
+        isAbandoned,
+        paused,
+        moveCount,
+        undosUsed,
+        updatedAtMs: Date.now()
+      }).catch(() => {
+        // ignore; user can still play in-memory
+      });
+    }, 300);
+
+    return () => {
+      if (persistTimerRef.current != null) {
+        window.clearTimeout(persistTimerRef.current);
+        persistTimerRef.current = null;
+      }
+    };
+  }, [
+    seedReady,
+    gameId,
+    seed,
+    rules,
+    history,
+    timeElapsedMs,
+    hasStarted,
+    startedAtMs,
+    endedAtMs,
+    isAbandoned,
+    paused,
+    moveCount,
+    undosUsed,
+    isWon
+  ]);
 
   // ---------------------------------------------------------------------------
   // Timer loop

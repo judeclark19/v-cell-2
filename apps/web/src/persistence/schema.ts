@@ -5,10 +5,11 @@
  */
 
 export const VCELL_DB_NAME = "vcell";
-export const VCELL_DB_VERSION = 1;
+export const VCELL_DB_VERSION = 3;
 
 export const STORES = {
-  COMPLETED_GAMES: "completedGames"
+  COMPLETED_GAMES: "completedGames",
+  IN_PROGRESS_GAMES: "in_progress_games"
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
@@ -28,6 +29,10 @@ export function openVCellDb(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result;
+
+      if (!db.objectStoreNames.contains(STORES.IN_PROGRESS_GAMES)) {
+        db.createObjectStore(STORES.IN_PROGRESS_GAMES, { keyPath: "gameId" });
+      }
 
       // completedGames: durable history for stats.
       if (!db.objectStoreNames.contains(STORES.COMPLETED_GAMES)) {

@@ -8,7 +8,7 @@ import type { Card as EngineCard } from "@vcell/engine";
 import type {
   DragSource,
   DropTarget
-} from "@/features/game-board/animations/useCardDrag";
+} from "@/features/game-board/animations/dragTypes";
 /**
  * The goal of this hook is to own *actions* (effects on the game),
  * independent of keyboard navigation routing and independent of DOM class mutations.
