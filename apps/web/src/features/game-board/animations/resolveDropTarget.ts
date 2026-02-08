@@ -61,3 +61,21 @@ export function resolveDropTargetFromPoint({
 
   return null;
 }
+
+/**
+ * Convenience adapter: closes over the pile element getters and returns a resolver function.
+ * Useful for wiring into hooks without repeating the same object literal everywhere.
+ */
+export function resolveDropTarget(
+  getters: Pick<
+    ResolveDropTargetArgs,
+    "getTableauCols" | "getFreeCells" | "getFoundations"
+  >
+) {
+  return (clientX: number, clientY: number) =>
+    resolveDropTargetFromPoint({
+      clientX,
+      clientY,
+      ...getters
+    });
+}

@@ -102,7 +102,7 @@ export function useBoardController(params: UseBoardControllerParams) {
 
   const { waitForFlipComplete, onFlipComplete } = useFlipSequencer();
 
-  const ACP_FLIGHT_DURATION_MS = 80;
+  const ACP_FLIGHT_DURATION_MS = 50;
 
   const tryAutoFreeCellFromEl = useCallback(
     (el: HTMLElement) => {
