@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
 import { HistoryState } from "../GameProvider";
+import { getMostRecentInProgressGame } from "@/persistence/inProgressGamesStore";
 
 type StartSessionMode =
   | { kind: "new" }
@@ -122,7 +123,7 @@ export function useGameSession({
   );
 
   // ---------------------------------------------------------------------------
-  // Client-only seed init (avoids hydration mismatches)
+  // Client-only bootstrap (resume most recent in-progress game if present)
   // ---------------------------------------------------------------------------
   const didInitRandomSeedRef = useRef(false);
 
@@ -130,8 +131,39 @@ export function useGameSession({
     if (didInitRandomSeedRef.current) return;
     didInitRandomSeedRef.current = true;
 
-    startSession({ kind: "new" });
-    setSeedReady(true);
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const mostRecent = await getMostRecentInProgressGame();
+        if (cancelled) return;
+
+        if (mostRecent) {
+          startSession({
+            kind: "seed+id",
+            seed: mostRecent.seed,
+            gameId: mostRecent.gameId
+          });
+        } else {
+          startSession({ kind: "new" });
+        }
+
+        setSeedReady(true);
+      } catch (err) {
+        console.error(
+          "Failed to bootstrap session from in-progress games",
+          err
+        );
+
+        if (cancelled) return;
+        startSession({ kind: "new" });
+        setSeedReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [startSession]);
 
   // ---------------------------------------------------------------------------

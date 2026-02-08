@@ -171,7 +171,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     // Avoid noisy logs if somehow nothing changed.
     if (prev && changed.length === 0) return;
 
-    const snap = gameSnapshotRef.current;
+    // const snap = gameSnapshotRef.current;
 
     // console.groupCollapsed(
     //   `[Game] changed: ${changed.join(", ")} (seed=${snap.seed})`

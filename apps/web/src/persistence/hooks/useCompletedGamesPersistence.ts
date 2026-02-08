@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameResult } from "../GameProvider";
+import type { GameResult } from "../../state/game/GameProvider";
 import {
   getAllCompletedGames,
   upsertCompletedGame
-} from "@/persistence/completedGamesStore";
+} from "../completedGamesStore";
+import { deleteInProgressGame } from "../inProgressGamesStore";
 
 type Params = {
   completedGames: GameResult[];
@@ -62,6 +63,9 @@ export function useCompletedGamesPersistence({
         try {
           await upsertCompletedGame(g);
           persistedIds.add(g.gameId);
+
+          // Once a game is persisted as completed, it should no longer be “in progress”.
+          await deleteInProgressGame(g.gameId).catch(() => {});
         } catch {
           // Ignore write failures; game still exists in-memory.
         }

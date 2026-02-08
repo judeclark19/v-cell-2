@@ -16,8 +16,8 @@ import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
 import { useGameDerivedState } from "./hooks/useGameDerivedState";
-import { useCompletedGamesPersistence } from "./hooks/useCompletedGamesPersistence";
-import { useInProgressGamePersistence } from "./hooks/useInProgressGamePersistence";
+import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
+import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
 
 type GameContextValue = {
   state: GameState;

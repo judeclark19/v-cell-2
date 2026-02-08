@@ -93,3 +93,16 @@ export async function deleteInProgressGame(gameId: string): Promise<void> {
       reject(req.error ?? new Error("Failed to delete in-progress game"));
   });
 }
+
+export async function getMostRecentInProgressGame(): Promise<InProgressGame | null> {
+  const all = await getAllInProgressGames();
+  if (all.length === 0) return null;
+
+  // Pick most recently updated
+  let best = all[0]!;
+  for (let i = 1; i < all.length; i++) {
+    const cur = all[i]!;
+    if (cur.updatedAtMs > best.updatedAtMs) best = cur;
+  }
+  return best;
+}

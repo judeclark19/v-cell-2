@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameState, Rules } from "@vcell/engine";
-import type { HistoryState } from "../GameProvider";
+import type { Rules } from "@vcell/engine";
+import type { HistoryState } from "../../state/game/GameProvider";
 import {
   getInProgressGame,
   upsertInProgressGame,
   deleteInProgressGame
-} from "../../../persistence/inProgressGamesStore";
+} from "../inProgressGamesStore";
 
 type Params = {
   // identity
