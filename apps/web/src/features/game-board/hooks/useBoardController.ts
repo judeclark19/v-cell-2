@@ -261,6 +261,71 @@ export function useBoardController(params: UseBoardControllerParams) {
 
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
+  // Double-tap detection for touch/pen (iOS doesn't reliably emit dblclick).
+  const lastTapRef = useRef<{
+    t: number;
+    x: number;
+    y: number;
+    cardId: string;
+  } | null>(null);
+
+  const onCardPointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      // Only implement double-tap for touch/pen; mouse already uses dblclick.
+      if (e.pointerType === "mouse") return;
+
+      if (isInputSuppressed) return;
+      if (drag.active || drag.kbFlight.active) return;
+
+      const el = e.currentTarget as HTMLElement;
+      const cardId = el.getAttribute("data-card-id") ?? "";
+      if (!cardId) return;
+
+      const now = performance.now();
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const processTap = () => {
+        const last = lastTapRef.current;
+
+        // Tunables: keep tight so we don't accidentally trigger when scrolling.
+        const MAX_DT_MS = 300;
+        const MAX_DIST_PX = 12;
+
+        if (last) {
+          const dt = now - last.t;
+          const dist = Math.hypot(x - last.x, y - last.y);
+          const sameCard = last.cardId === cardId;
+
+          if (dt <= MAX_DT_MS && dist <= MAX_DIST_PX && sameCard) {
+            lastTapRef.current = null;
+            // Treat as activation: try to auto-move to foundation (same as dblclick flow).
+            tryAutoFoundationFromEl(el);
+            return;
+          }
+        }
+
+        lastTapRef.current = { t: now, x, y, cardId };
+      };
+
+      // If a drag is still marked pending, defer tap processing so the global pointerup
+      // listener can clear drag.pending first.
+      if (drag.pending) {
+        queueMicrotask(processTap);
+        return;
+      }
+
+      processTap();
+    },
+    [
+      drag.active,
+      drag.kbFlight.active,
+      drag.pending,
+      isInputSuppressed,
+      tryAutoFoundationFromEl
+    ]
+  );
+
   const isLegalDropTargetEl = useCallback((el: HTMLElement) => {
     return el.getAttribute("data-kb-drop-target") === "true";
   }, []);
@@ -388,6 +453,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     onBoardBlurCapture,
     onBoardFocus,
     onBoardPointerDownCapture,
-    kbCarrying
+    kbCarrying,
+    onCardPointerUp
   };
 }

@@ -69,6 +69,7 @@ function Board() {
                   setTableauColRef={vm.setTableauColRef}
                   isWon={vm.isWon}
                   tryAutoFreeCellFromEl={vm.tryAutoFreeCellFromEl}
+                  onCardPointerUp={vm.onCardPointerUp}
                 />
 
                 {/* Drag overlay layer */}
@@ -89,6 +90,7 @@ function Board() {
                   seedReady={vm.seedReady}
                   paused={vm.paused}
                   shouldShowWinModal={vm.shouldShowWinModal}
+                  onCardPointerUp={vm.onCardPointerUp}
                 />
               </>
             ) : (

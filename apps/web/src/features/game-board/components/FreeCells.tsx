@@ -21,6 +21,7 @@ type FreeCellsProps = {
   seedReady: boolean;
   paused: boolean;
   shouldShowWinModal: boolean;
+  onCardPointerUp?: (e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 function FreeCells({
@@ -36,7 +37,8 @@ function FreeCells({
   stopAutoComplete,
   seedReady,
   paused,
-  shouldShowWinModal
+  shouldShowWinModal,
+  onCardPointerUp
 }: FreeCellsProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
@@ -112,6 +114,7 @@ function FreeCells({
                       onPointerDownCard={(e) =>
                         handleFreeCellPointerDown(e, i - 1)
                       }
+                      onPointerUp={onCardPointerUp}
                       style={style}
                     />
                   );

@@ -20,6 +20,7 @@ type TableauProps = {
   tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
   isWon: boolean;
+  onCardPointerUp: (e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
 function Tableau({
@@ -29,7 +30,8 @@ function Tableau({
   handleTableauPointerDown,
   tryAutoFoundationFromEl,
   tryAutoFreeCellFromEl,
-  setTableauColRef
+  setTableauColRef,
+  onCardPointerUp
 }: TableauProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
@@ -131,6 +133,7 @@ function Tableau({
                     onPointerDownCard={(e) =>
                       handleTableauPointerDown(e, colIndex, tcIndex)
                     }
+                    onPointerUp={onCardPointerUp}
                     onAutoFreeCell={(el) => tryAutoFreeCellFromEl(el)}
                   />
                 );

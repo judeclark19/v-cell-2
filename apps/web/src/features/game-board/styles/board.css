@@ -170,11 +170,17 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 8px;
+  grid-column: span 3;
 
   .timer {
     text-align: center;
     font-size: 24px;
+
+  }
+  button {
+    width: 50%;
   }
 
   .timer.muted {
