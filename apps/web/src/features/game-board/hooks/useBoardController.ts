@@ -115,7 +115,7 @@ export function useBoardController(params: UseBoardControllerParams) {
 
   const {
     drag,
-    finalizeDrag,
+    resetDrag,
     startKbFlight,
     handleTableauPointerDown,
     handleFreeCellPointerDown,
@@ -361,7 +361,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
     drag,
-    finalizeDrag,
+    resetDrag,
     handleTableauPointerDown,
     handleFreeCellPointerDown,
     handleFoundationPointerDown,

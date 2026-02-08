@@ -72,7 +72,7 @@ function Board() {
                 />
 
                 {/* Drag overlay layer */}
-                <DragLayer drag={vm.drag} finalizeDrag={vm.finalizeDrag} />
+                <DragLayer drag={vm.drag} resetDrag={vm.resetDrag} />
 
                 {/* Free cells on bottom */}
                 <FreeCells

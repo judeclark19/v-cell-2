@@ -16,10 +16,10 @@ type DragLayerProps = {
       durationMs?: number;
     };
   };
-  finalizeDrag: () => void;
+  resetDrag: () => void;
 };
 
-export default function DragLayer({ drag, finalizeDrag }: DragLayerProps) {
+export default function DragLayer({ drag, resetDrag }: DragLayerProps) {
   if (!(drag.active || drag.pending) || drag.stack.length === 0) return null;
 
   return (
@@ -28,7 +28,7 @@ export default function DragLayer({ drag, finalizeDrag }: DragLayerProps) {
         drag.kbFlight?.active ? "is-kb-flight" : ""
       }`}
       onTransitionEnd={() => {
-        if (drag.isReturning || drag.kbFlight?.active) finalizeDrag();
+        if (drag.isReturning || drag.kbFlight?.active) resetDrag();
       }}
       style={{
         left: 0,
