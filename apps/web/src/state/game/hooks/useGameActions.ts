@@ -42,7 +42,8 @@ export type UseGameActionsParams = {
   setMoves: React.Dispatch<React.SetStateAction<Move[]>>;
   cursor: number;
   setCursor: React.Dispatch<React.SetStateAction<number>>;
-  cursorRef: React.MutableRefObject<number>;
+  cursorRef: React.RefObject<number>;
+  movesRef: React.RefObject<Move[]>;
 
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
@@ -94,14 +95,12 @@ export function useGameActions({
 
   undosUsed,
   setUndosUsed,
-  moveCount,
   setMoveCount,
 
-  moves,
   setMoves,
-  cursor,
   setCursor,
   cursorRef,
+  movesRef,
 
   setCheckpoint,
 
@@ -123,17 +122,13 @@ export function useGameActions({
       if (!isWon) {
         setEndedAtMs(null);
         setIsAbandoned(false);
-      }
-
-      // Score-keeping: only count moves up to the win.
-      if (!isWon) {
         setMoveCount((n) => n + 1);
         const baseCursor = cursorRef.current;
 
-        setMoves((prev) => {
-          const truncated = prev.slice(0, baseCursor);
-          return [...truncated, move];
-        });
+        const truncated = movesRef.current.slice(0, baseCursor);
+        const nextMoves = [...truncated, move];
+        movesRef.current = nextMoves;
+        setMoves(nextMoves);
 
         const nextCursor = baseCursor + 1;
         cursorRef.current = nextCursor;
@@ -148,6 +143,9 @@ export function useGameActions({
           const ended = Date.now();
           setEndedAtMs((prev) => (prev == null ? ended : prev));
 
+          const archivedCursor = cursorRef.current;
+          const archivedMoves = movesRef.current;
+
           setCompletedGames((prev) => {
             if (prev.some((g) => g.gameId === gameId)) return prev;
             return [
@@ -160,10 +158,10 @@ export function useGameActions({
                 startedAtMs,
                 endedAtMs: ended,
                 timeElapsedMs,
-                moveCount,
+                moveCount: archivedCursor,
                 undosUsed,
-                moves,
-                cursor
+                moves: archivedMoves,
+                cursor: archivedCursor
               }
             ];
           });
@@ -208,12 +206,11 @@ export function useGameActions({
       setCompletedGames,
       startedAtMs,
       timeElapsedMs,
-      moveCount,
+
       undosUsed,
-      moves,
-      cursor,
       undoLimit,
-      setCheckpoint
+      setCheckpoint,
+      movesRef
     ]
   );
 
@@ -224,6 +221,7 @@ export function useGameActions({
     setUndosUsed(0);
     setMoveCount(0);
     setMoves([]);
+    movesRef.current = [];
     setCursor(0);
     cursorRef.current = 0;
     setCheckpoint(null);
@@ -240,7 +238,8 @@ export function useGameActions({
     cursorRef,
     setCheckpoint,
     setEndedAtMs,
-    setIsAbandoned
+    setIsAbandoned,
+    movesRef
   ]);
 
   const newDeal = useCallback(() => {
@@ -252,6 +251,9 @@ export function useGameActions({
 
       setIsAbandoned(true);
       setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+      const archivedCursor = cursorRef.current;
+      const archivedMoves = movesRef.current;
 
       setCompletedGames((prev) => {
         if (prev.some((g) => g.gameId === gameId)) return prev;
@@ -265,10 +267,10 @@ export function useGameActions({
             startedAtMs,
             endedAtMs: ended,
             timeElapsedMs,
-            moveCount,
+            moveCount: archivedCursor,
             undosUsed,
-            moves,
-            cursor
+            moves: archivedMoves,
+            cursor: archivedCursor
           }
         ];
       });
@@ -293,11 +295,11 @@ export function useGameActions({
     state.rules,
     startedAtMs,
     timeElapsedMs,
-    moveCount,
     undosUsed,
-    moves,
-    cursor,
-    startNewDealSession
+
+    cursorRef,
+    startNewDealSession,
+    movesRef
   ]);
 
   const undo = useCallback(() => {
@@ -316,6 +318,7 @@ export function useGameActions({
     setCursor((c) => {
       const next = Math.max(0, c - 1);
       cursorRef.current = next;
+      movesRef.current = movesRef.current.slice(0, next);
       return next;
     });
 
@@ -336,7 +339,8 @@ export function useGameActions({
     setMoveCount,
     setCursor,
     cursorRef,
-    setHistory
+    setHistory,
+    movesRef
   ]);
 
   return { dispatchMove, restart, newDeal, undo };

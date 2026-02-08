@@ -162,6 +162,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursorRef.current = cursor;
   }, [cursor]);
 
+  const movesRef = useRef<Move[]>(moves);
+
+  useEffect(() => {
+    movesRef.current = moves;
+  }, [moves]);
+
   // ---------------------------------------------------------------------------
   // Session (seed/gameId/seedReady + init/reseed choreography)
   // ---------------------------------------------------------------------------
@@ -252,6 +258,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const saved = await getInProgressGame(gameId);
+        console.log("[in-progress hydrate] done", { gameId, found: !!saved });
         if (cancelled) return;
         inProgressHydratedRef.current = true;
         if (!saved) return;
@@ -333,8 +340,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         moveCount,
         undosUsed,
         updatedAtMs: Date.now()
-      }).catch(() => {
+      }).catch((err) => {
         // ignore; user can still play in-memory
+        console.error("[in-progress persist] write failed", err);
       });
     }, 300);
 
@@ -406,6 +414,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursor,
     setCursor,
     cursorRef,
+    movesRef,
 
     setCheckpoint,
 

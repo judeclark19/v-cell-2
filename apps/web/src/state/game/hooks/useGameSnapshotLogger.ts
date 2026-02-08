@@ -173,12 +173,12 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
 
     const snap = gameSnapshotRef.current;
 
-    console.groupCollapsed(
-      `[Game] changed: ${changed.join(", ")} (seed=${snap.seed})`
-    );
-    console.log("changedKeys", changed);
-    console.log("game", snap);
-    console.groupEnd();
+    // console.groupCollapsed(
+    //   `[Game] changed: ${changed.join(", ")} (seed=${snap.seed})`
+    // );
+    // console.log("changedKeys", changed);
+    // console.log("game", snap);
+    // console.groupEnd();
 
     prevLogSnapshotRef.current = logSnapshot;
   }, [logSnapshot]);
