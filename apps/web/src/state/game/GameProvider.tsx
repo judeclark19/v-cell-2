@@ -365,6 +365,66 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isWon
   ]);
 
+  // Also persist once per second while a game is in progress (between moves).
+  useEffect(() => {
+    if (!seedReady) return;
+    if (!inProgressHydratedRef.current) return;
+
+    // Only tick while an active game is in progress.
+    if (isWon || isAbandoned) return;
+    if (!hasStarted) return;
+    if (paused) return;
+
+    const id = window.setInterval(() => {
+      // Re-check the gate inside the callback (defensive).
+      if (!inProgressHydratedRef.current) return;
+
+      console.log("[in-progress persist] writing snapshot (1s)", {
+        gameId,
+        moveCount,
+        undosUsed,
+        timeElapsedMs: timeElapsedMsRef.current
+      });
+
+      upsertInProgressGame({
+        gameId,
+        seed,
+        rules,
+        kind: "freeplay",
+        history,
+        timeElapsedMs: timeElapsedMsRef.current,
+        hasStarted,
+        startedAtMs,
+        endedAtMs,
+        isAbandoned,
+        paused,
+        moveCount,
+        undosUsed,
+        updatedAtMs: Date.now()
+      }).catch((err) => {
+        console.error("[in-progress persist] write failed (1s)", err);
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [
+    seedReady,
+    gameId,
+    seed,
+    rules,
+    history,
+    hasStarted,
+    startedAtMs,
+    endedAtMs,
+    isAbandoned,
+    paused,
+    moveCount,
+    undosUsed,
+    isWon
+  ]);
+
   // ---------------------------------------------------------------------------
   // Timer loop
   // ---------------------------------------------------------------------------
