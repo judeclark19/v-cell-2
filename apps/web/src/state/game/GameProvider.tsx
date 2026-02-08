@@ -141,6 +141,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Run state (timer + pause)
   // ---------------------------------------------------------------------------
   const [timeElapsedMs, setTimeElapsedMs] = useState<number>(0);
+  const timeElapsedMsRef = useRef<number>(0);
+  useEffect(() => {
+    timeElapsedMsRef.current = timeElapsedMs;
+  }, [timeElapsedMs]);
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
   const [endedAtMs, setEndedAtMs] = useState<number | null>(null);
@@ -167,6 +171,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     movesRef.current = moves;
   }, [moves]);
+
+  // ---------------------------------------------------------------------------
+  // Persistence for in-progress games (IndexedDB)
+  // ---------------------------------------------------------------------------
+  const inProgressHydratedRef = useRef<boolean>(false);
 
   // ---------------------------------------------------------------------------
   // Session (seed/gameId/seedReady + init/reseed choreography)
@@ -287,9 +296,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     };
   }, [seedReady, gameId]);
 
-  const persistTimerRef = useRef<number | null>(null);
-  const inProgressHydratedRef = useRef<boolean>(false);
-
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
@@ -317,48 +323,38 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Throttle writes (otherwise you’ll write on every render/move burst).
-    if (persistTimerRef.current != null) {
-      window.clearTimeout(persistTimerRef.current);
-    }
+    console.log("[in-progress persist] writing snapshot (per-move)", {
+      gameId,
+      moveCount,
+      undosUsed,
+      timeElapsedMs: timeElapsedMsRef.current
+    });
 
-    persistTimerRef.current = window.setTimeout(() => {
-      persistTimerRef.current = null;
-
-      upsertInProgressGame({
-        gameId,
-        seed,
-        rules,
-        kind: "freeplay",
-        history,
-        timeElapsedMs,
-        hasStarted,
-        startedAtMs,
-        endedAtMs,
-        isAbandoned,
-        paused,
-        moveCount,
-        undosUsed,
-        updatedAtMs: Date.now()
-      }).catch((err) => {
-        // ignore; user can still play in-memory
-        console.error("[in-progress persist] write failed", err);
-      });
-    }, 300);
-
-    return () => {
-      if (persistTimerRef.current != null) {
-        window.clearTimeout(persistTimerRef.current);
-        persistTimerRef.current = null;
-      }
-    };
+    // Fire-and-forget: we don't want to block UI on IndexedDB.
+    upsertInProgressGame({
+      gameId,
+      seed,
+      rules,
+      kind: "freeplay",
+      history,
+      timeElapsedMs: timeElapsedMsRef.current,
+      hasStarted,
+      startedAtMs,
+      endedAtMs,
+      isAbandoned,
+      paused,
+      moveCount,
+      undosUsed,
+      updatedAtMs: Date.now()
+    }).catch((err) => {
+      console.error("[in-progress persist] write failed", err);
+    });
   }, [
     seedReady,
     gameId,
     seed,
     rules,
     history,
-    timeElapsedMs,
     hasStarted,
     startedAtMs,
     endedAtMs,

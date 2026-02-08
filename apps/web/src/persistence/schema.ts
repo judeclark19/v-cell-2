@@ -5,11 +5,11 @@
  */
 
 export const VCELL_DB_NAME = "vcell";
-export const VCELL_DB_VERSION = 57;
+export const VCELL_DB_VERSION = 61;
 
 export const STORES = {
   COMPLETED_GAMES: "completedGames",
-  IN_PROGRESS_GAMES: "in_progress_games"
+  IN_PROGRESS_GAMES: "inProgressGames"
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
