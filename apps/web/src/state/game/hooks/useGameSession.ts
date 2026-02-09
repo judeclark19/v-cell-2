@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
 import { HistoryState } from "../GameProvider";
-import { getMostRecentInProgressGame } from "@/persistence/inProgressGamesStore";
+import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
+import { getOrCreateDeviceId } from "@/persistence/schema";
 
 type StartSessionMode =
   | { kind: "new" }
@@ -60,10 +61,6 @@ export type UseGameSessionResult = {
  */
 export function useGameSession({
   rules,
-  allowFoundationPullback,
-  undoLimit,
-  faceDownCount,
-
   setHistory,
   setTimeElapsedMs,
   setHasStarted,
@@ -135,33 +132,24 @@ export function useGameSession({
 
   useEffect(() => {
     if (didInitRandomSeedRef.current) return;
-    console.log("[boot] starting bootstrap");
     didInitRandomSeedRef.current = true;
 
     let cancelled = false;
 
     (async () => {
       try {
-        const mostRecent = await getMostRecentInProgressGame();
-        console.log(
-          "[boot] mostRecent",
-          mostRecent
-            ? { gameId: mostRecent.gameId, updatedAtMs: mostRecent.updatedAtMs }
-            : null
-        );
+        const deviceId = getOrCreateDeviceId();
+        const saved = await getInProgressGameForDevice(deviceId);
+
         if (cancelled) return;
 
-        if (mostRecent) {
-          console.log("[boot] startSession resume", {
-            gameId: mostRecent!.gameId
-          });
+        if (saved) {
           startSessionRef.current({
             kind: "seed+id",
-            seed: mostRecent.seed,
-            gameId: mostRecent.gameId
+            seed: saved.seed,
+            gameId: saved.gameId
           });
         } else {
-          console.log("[boot] startSession new");
           startSessionRef.current({ kind: "new" });
         }
 
@@ -173,7 +161,6 @@ export function useGameSession({
         );
 
         if (cancelled) return;
-        console.log("[boot] startSession new");
         startSessionRef.current({ kind: "new" });
         setSeedReady(true);
       }
@@ -185,13 +172,11 @@ export function useGameSession({
   }, []);
 
   const startNewDealSession = useCallback(() => {
-    console.log("[boot] startSession new");
     startSession({ kind: "new" });
   }, [startSession]);
 
   const replaySeed = useCallback(
     (nextSeed: string) => {
-      console.log("[boot] startSession resume", { seed: nextSeed });
       startSession({ kind: "seed", seed: nextSeed });
     },
     [startSession]

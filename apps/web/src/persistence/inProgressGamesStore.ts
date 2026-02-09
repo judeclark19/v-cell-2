@@ -1,9 +1,10 @@
 import type { HistoryState } from "../state/game/GameProvider";
-import { openVCellDb, STORES } from "./schema";
+import { getOrCreateDeviceId, openVCellDb, STORES } from "./schema";
 import type { GameState } from "@vcell/engine";
 
 export type InProgressGame = {
   gameId: string;
+  deviceId: string; // for analytics, not a security boundary
   seed: string;
   rules: GameState["rules"];
   kind?: "freeplay" | "daily" | string;
@@ -45,8 +46,8 @@ export async function getAllInProgressGames(): Promise<InProgressGame[]> {
   });
 }
 
-export async function getInProgressGame(
-  gameId: string
+export async function getInProgressGameForDevice(
+  deviceId: string
 ): Promise<InProgressGame | null> {
   if (typeof window === "undefined") return null;
   const db = await openVCellDb();
@@ -54,7 +55,7 @@ export async function getInProgressGame(
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.IN_PROGRESS_GAMES, "readonly");
     const store = tx.objectStore(STORES.IN_PROGRESS_GAMES);
-    const req = store.get(gameId);
+    const req = store.get(deviceId);
 
     req.onsuccess = () => resolve((req.result as InProgressGame) ?? null);
     req.onerror = () =>
@@ -79,14 +80,16 @@ export async function upsertInProgressGame(
   });
 }
 
-export async function deleteInProgressGame(gameId: string): Promise<void> {
+export async function deleteInProgressGameForDevice(
+  deviceId: string
+): Promise<void> {
   if (typeof window === "undefined") return;
   const db = await openVCellDb();
 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.IN_PROGRESS_GAMES, "readwrite");
     const store = tx.objectStore(STORES.IN_PROGRESS_GAMES);
-    const req = store.delete(gameId);
+    const req = store.delete(deviceId);
 
     req.onsuccess = () => resolve();
     req.onerror = () =>
@@ -94,15 +97,7 @@ export async function deleteInProgressGame(gameId: string): Promise<void> {
   });
 }
 
-export async function getMostRecentInProgressGame(): Promise<InProgressGame | null> {
-  const all = await getAllInProgressGames();
-  if (all.length === 0) return null;
-
-  // Pick most recently updated
-  let best = all[0]!;
-  for (let i = 1; i < all.length; i++) {
-    const cur = all[i]!;
-    if (cur.updatedAtMs > best.updatedAtMs) best = cur;
-  }
-  return best;
+export async function getInProgressGameForThisDevice(): Promise<InProgressGame | null> {
+  const deviceId = getOrCreateDeviceId();
+  return getInProgressGameForDevice(deviceId);
 }

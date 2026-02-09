@@ -6,7 +6,8 @@ import {
   getAllCompletedGames,
   upsertCompletedGame
 } from "../completedGamesStore";
-import { deleteInProgressGame } from "../inProgressGamesStore";
+import { deleteInProgressGameForDevice } from "../inProgressGamesStore";
+import { getOrCreateDeviceId } from "../schema";
 
 type Params = {
   completedGames: GameResult[];
@@ -64,8 +65,10 @@ export function useCompletedGamesPersistence({
           await upsertCompletedGame(g);
           persistedIds.add(g.gameId);
 
+          const deviceId = getOrCreateDeviceId();
+
           // Once a game is persisted as completed, it should no longer be “in progress”.
-          await deleteInProgressGame(g.gameId).catch(() => {});
+          await deleteInProgressGameForDevice(deviceId).catch(() => {});
         } catch {
           // Ignore write failures; game still exists in-memory.
         }

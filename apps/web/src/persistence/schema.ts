@@ -5,7 +5,7 @@
  */
 
 export const VCELL_DB_NAME = "vcell";
-export const VCELL_DB_VERSION = 61;
+export const VCELL_DB_VERSION = 64;
 
 export const STORES = {
   COMPLETED_GAMES: "completedGames",
@@ -13,6 +13,18 @@ export const STORES = {
 } as const;
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
+
+const DEVICE_ID_KEY = "vcell.deviceId";
+
+export function getOrCreateDeviceId(): string {
+  if (typeof window === "undefined") return "server";
+  const existing = window.localStorage.getItem(DEVICE_ID_KEY);
+  if (existing) return existing;
+
+  const next = crypto.randomUUID();
+  window.localStorage.setItem(DEVICE_ID_KEY, next);
+  return next;
+}
 
 /**
  * Open the IndexedDB database (creating/upgrading stores as needed).
@@ -31,7 +43,7 @@ export function openVCellDb(): Promise<IDBDatabase> {
       const db = request.result;
 
       if (!db.objectStoreNames.contains(STORES.IN_PROGRESS_GAMES)) {
-        db.createObjectStore(STORES.IN_PROGRESS_GAMES, { keyPath: "gameId" });
+        db.createObjectStore(STORES.IN_PROGRESS_GAMES, { keyPath: "deviceId" });
       }
 
       // completedGames: durable history for stats.

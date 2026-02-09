@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 import type { Rules } from "@vcell/engine";
 import type { HistoryState } from "../../state/game/GameProvider";
 import {
-  getInProgressGame,
+  getInProgressGameForDevice,
   upsertInProgressGame,
-  deleteInProgressGame
+  deleteInProgressGameForDevice
 } from "../inProgressGamesStore";
+import { getOrCreateDeviceId } from "../schema";
 
 type Params = {
   // identity
@@ -80,8 +81,8 @@ export function useInProgressGamePersistence({
 
     (async () => {
       try {
-        const saved = await getInProgressGame(gameId);
-        console.log("[in-progress hydrate] done", { gameId, found: !!saved });
+        const deviceId = getOrCreateDeviceId();
+        const saved = await getInProgressGameForDevice(deviceId);
         if (cancelled) return;
 
         inProgressHydratedRef.current = true;
@@ -130,13 +131,15 @@ export function useInProgressGamePersistence({
     if (!seedReady) return;
     if (!inProgressHydratedRef.current) return;
 
+    const deviceId = getOrCreateDeviceId();
+
     if (isWon || isAbandoned) {
-      deleteInProgressGame(gameId).catch(() => {});
+      deleteInProgressGameForDevice(deviceId);
       return;
     }
 
     if (!hasStarted) {
-      deleteInProgressGame(gameId).catch(() => {});
+      deleteInProgressGameForDevice(deviceId);
       return;
     }
 
@@ -149,6 +152,7 @@ export function useInProgressGamePersistence({
 
     upsertInProgressGame({
       gameId,
+      deviceId,
       seed,
       rules,
       kind: "freeplay",
@@ -193,18 +197,21 @@ export function useInProgressGamePersistence({
     if (!hasStarted) return;
     if (paused) return;
 
+    const deviceId = getOrCreateDeviceId();
+
     const id = window.setInterval(() => {
       if (!inProgressHydratedRef.current) return;
 
-      console.log("[in-progress persist] writing snapshot (1s)", {
-        gameId,
-        moveCount,
-        undosUsed,
-        timeElapsedMs: timeElapsedMsRef.current
-      });
+      // console.log("[in-progress persist] writing snapshot (1s)", {
+      //   gameId,
+      //   moveCount,
+      //   undosUsed,
+      //   timeElapsedMs: timeElapsedMsRef.current
+      // });
 
       upsertInProgressGame({
         gameId,
+        deviceId,
         seed,
         rules,
         kind: "freeplay",

@@ -2,6 +2,8 @@ import { useCallback } from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { GameResult, HistoryState } from "../GameProvider";
+import { getOrCreateDeviceId } from "@/persistence/schema";
+import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 
 function undoLimitToCap(undoLimit: UndoLimit): number {
   if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
@@ -246,6 +248,12 @@ export function useGameActions({
     // If a game is in progress, abandon it first so it gets archived.
     const isFinished = isWon || isAbandoned || endedAtMs != null;
 
+    const deal = () => {
+      const deviceId = getOrCreateDeviceId();
+      deleteInProgressGameForDevice(deviceId).catch(() => {});
+      startNewDealSession();
+    };
+
     if (hasStarted && !isFinished) {
       const ended = Date.now();
 
@@ -276,12 +284,12 @@ export function useGameActions({
       });
 
       // Now actually start the new deal immediately.
-      startNewDealSession();
+      deal();
       return;
     }
 
     // Otherwise just start immediately.
-    startNewDealSession();
+    deal();
   }, [
     isWon,
     isAbandoned,
