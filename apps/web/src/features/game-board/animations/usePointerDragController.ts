@@ -86,12 +86,25 @@ export function usePointerDragController<TCardItem>(args: {
     if (!cur.active && !cur.pending) return;
     if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
 
-    // If we never actually started dragging (click / dblclick), just end cleanly.
     if (cur.pending && !cur.active) {
+      const cardId =
+        (cur.captureEl as HTMLElement | null)?.getAttribute("data-card-id") ??
+        null;
+
       resetDrag();
+
+      requestAnimationFrame(() => {
+        const el = cardId
+          ? (document.querySelector(
+              `[data-card-id="${cardId}"][data-kb-focusable="true"]`
+            ) as HTMLElement | null)
+          : null;
+
+        el?.focus({ preventScroll: true });
+      });
+
       return;
     }
-
     const dropTarget = resolveDropTarget(e.clientX, e.clientY);
 
     const didCommitMove =
