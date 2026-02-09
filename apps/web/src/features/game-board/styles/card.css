@@ -219,8 +219,8 @@
   box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover);
 }
 
-.card.is-playable:focus .card-face--front,
-.card.is-playable:focus-visible .card-face--front {
+.card.is-playable:not(.is-kb-drop-target):focus .card-face--front,
+.card.is-playable:not(.is-kb-drop-target):focus-visible .card-face--front {
   background-color: color-mix(
     in srgb,
     var(--card-front-bg) 86%,
@@ -264,12 +264,16 @@
 /* Carried cards get a subtle tint (no ring) so the target stands out */
 .card.is-kb-carried .card-face--front,
 .card.is-kb-carried-stack .card-face--front {
-  background-color: color-mix(
+ background-color: color-mix(
     in srgb,
-    var(--card-front-bg) 92%,
-    var(--kb-highlight) 8%
+    var(--card-front-bg) 86%,
+    var(--accent) 14%
   );
-  box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow);
+  box-shadow:
+    var(--focus-ring-strong),
+    inset 0 1px 0 var(--card-front-inset),
+    var(--card-shadow-hover);
+
 }
 
 /* Slightly de-emphasize carried cards so the target stands out. */
