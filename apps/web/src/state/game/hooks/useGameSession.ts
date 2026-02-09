@@ -122,6 +122,12 @@ export function useGameSession({
     ]
   );
 
+  const startSessionRef = useRef(startSession);
+
+  useEffect(() => {
+    startSessionRef.current = startSession;
+  }, [startSession]);
+
   // ---------------------------------------------------------------------------
   // Client-only bootstrap (resume most recent in-progress game if present)
   // ---------------------------------------------------------------------------
@@ -129,6 +135,7 @@ export function useGameSession({
 
   useEffect(() => {
     if (didInitRandomSeedRef.current) return;
+    console.log("[boot] starting bootstrap");
     didInitRandomSeedRef.current = true;
 
     let cancelled = false;
@@ -136,16 +143,26 @@ export function useGameSession({
     (async () => {
       try {
         const mostRecent = await getMostRecentInProgressGame();
+        console.log(
+          "[boot] mostRecent",
+          mostRecent
+            ? { gameId: mostRecent.gameId, updatedAtMs: mostRecent.updatedAtMs }
+            : null
+        );
         if (cancelled) return;
 
         if (mostRecent) {
-          startSession({
+          console.log("[boot] startSession resume", {
+            gameId: mostRecent!.gameId
+          });
+          startSessionRef.current({
             kind: "seed+id",
             seed: mostRecent.seed,
             gameId: mostRecent.gameId
           });
         } else {
-          startSession({ kind: "new" });
+          console.log("[boot] startSession new");
+          startSessionRef.current({ kind: "new" });
         }
 
         setSeedReady(true);
@@ -156,7 +173,8 @@ export function useGameSession({
         );
 
         if (cancelled) return;
-        startSession({ kind: "new" });
+        console.log("[boot] startSession new");
+        startSessionRef.current({ kind: "new" });
         setSeedReady(true);
       }
     })();
@@ -164,30 +182,16 @@ export function useGameSession({
     return () => {
       cancelled = true;
     };
-  }, [startSession]);
-
-  // ---------------------------------------------------------------------------
-  // Rule changes => start a NEW game (reseed)
-  // ---------------------------------------------------------------------------
-  const didApplyRulesEffectOnceRef = useRef(false);
-
-  useEffect(() => {
-    // Skip initial mount; otherwise we can clobber the client-only random seed init.
-    if (!didApplyRulesEffectOnceRef.current) {
-      didApplyRulesEffectOnceRef.current = true;
-      return;
-    }
-
-    startSession({ kind: "new" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allowFoundationPullback, undoLimit, faceDownCount]);
+  }, []);
 
   const startNewDealSession = useCallback(() => {
+    console.log("[boot] startSession new");
     startSession({ kind: "new" });
   }, [startSession]);
 
   const replaySeed = useCallback(
     (nextSeed: string) => {
+      console.log("[boot] startSession resume", { seed: nextSeed });
       startSession({ kind: "seed", seed: nextSeed });
     },
     [startSession]

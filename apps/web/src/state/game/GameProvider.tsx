@@ -165,6 +165,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     movesRef.current = moves;
   }, [moves]);
 
+  const didApplyRuleChangeOnceRef = useRef(false);
+
   // ---------------------------------------------------------------------------
   // Session (seed/gameId/seedReady + init/reseed choreography)
   // ---------------------------------------------------------------------------
@@ -282,6 +284,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     startNewDealSession
   });
+
+  const newDealRef = useRef(newDeal);
+
+  useEffect(() => {
+    newDealRef.current = newDeal;
+  }, [newDeal]);
+
+  // ---------------------------------------------------------------------------
+  // Rule changes => abandon + archive current game, then start a new deal
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!seedReady) return;
+
+    // Skip initial mount (otherwise we'd immediately newDeal after boot).
+    if (!didApplyRuleChangeOnceRef.current) {
+      didApplyRuleChangeOnceRef.current = true;
+      return;
+    }
+
+    // This will archive the current game if it has started, then start a new session.
+    newDealRef.current();
+  }, [seedReady, allowFoundationPullback, undoLimit, faceDownCount]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
