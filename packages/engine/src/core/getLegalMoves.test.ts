@@ -13,20 +13,20 @@ function card(suit: Suit, rank: Rank): Card {
     suit === "spades"
       ? "S"
       : suit === "hearts"
-      ? "H"
-      : suit === "clubs"
-      ? "C"
-      : "D";
+        ? "H"
+        : suit === "clubs"
+          ? "C"
+          : "D";
   const rankId =
     rank === 1
       ? "A"
       : rank === 11
-      ? "J"
-      : rank === 12
-      ? "Q"
-      : rank === 13
-      ? "K"
-      : String(rank);
+        ? "J"
+        : rank === 12
+          ? "Q"
+          : rank === 13
+            ? "K"
+            : String(rank);
 
   return {
     id: `${rankId}${suitId}`,
@@ -151,6 +151,26 @@ describe("getLegalMoves (single-card rules)", () => {
     );
 
     expect(moves).toHaveLength(4);
+  });
+
+  it("allows moving a free cell card to another EMPTY free cell", () => {
+    const s = emptyState({
+      freeCells: [card("spades", 9), null, null, null, null]
+    });
+
+    const moves = getLegalMoves(s);
+
+    // should allow moving from freecell[0] to any other empty freecell
+    expect(
+      moves.some(
+        (m) =>
+          m.kind === "single" &&
+          m.from.type === "freecell" &&
+          m.from.index === 0 &&
+          m.to.type === "freecell" &&
+          m.to.index !== 0
+      )
+    ).toBe(true);
   });
 
   it("when pullback enabled, allows top foundation card to move to an empty freecell", () => {

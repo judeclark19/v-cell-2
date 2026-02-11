@@ -184,6 +184,25 @@ export function commitBoardDrop<TCardItem>({
       return true;
     }
 
+    // freecell -> freecell
+    if (source.type === "freecell") {
+      const fromIndex = source.index;
+      if (fromIndex === toIndex) return false;
+
+      const move = legalMoves.find(
+        (m): m is Extract<Move, { kind: "single" }> =>
+          m.kind === "single" &&
+          m.from.type === "freecell" &&
+          m.to.type === "freecell" &&
+          m.from.index === fromIndex &&
+          m.to.index === toIndex
+      );
+
+      if (!move) return false;
+      dispatchMove(move);
+      return true;
+    }
+
     return false;
   }
 

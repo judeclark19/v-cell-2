@@ -161,6 +161,13 @@ export function getLegalMoves(state: GameState): Move[] {
   for (const { index, card } of occupiedFreeCells(state)) {
     const from: PileRef = { type: "freecell", index };
 
+    // to other freecells (empty only)
+    for (const fc of emptyFreeCells(state)) {
+      // (fc will never equal `index` because `index` is occupied, but keep it defensive)
+      if (fc === index) continue;
+      pushSingle(from, { type: "freecell", index: fc });
+    }
+
     // to foundations
     for (let f = 0 as FoundationIndex; f < 4; f = (f + 1) as FoundationIndex) {
       if (canPlaceOnFoundation(card, state.foundations[f])) {
