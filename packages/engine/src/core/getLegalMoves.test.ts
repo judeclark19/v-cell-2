@@ -197,6 +197,30 @@ describe("getLegalMoves (single-card rules)", () => {
     ).toBe(true);
   });
 
+  it("when pullback enabled, allows Ace to move from one foundation slot to an EMPTY foundation slot (dynamic suit assignment)", () => {
+    const s = emptyState({
+      rules: { ...baseRules, allowFoundationPullback: true },
+      foundations: [
+        { suit: "spades", cards: [card("spades", 1)] },
+        { suit: null, cards: [] },
+        { suit: null, cards: [] },
+        { suit: null, cards: [] }
+      ]
+    });
+
+    const moves = getLegalMoves(s);
+    expect(
+      moves.some(
+        (m) =>
+          m.kind === "single" &&
+          m.from.type === "foundation" &&
+          m.from.index === 0 &&
+          m.to.type === "foundation" &&
+          m.to.index === 1
+      )
+    ).toBe(true);
+  });
+
   it("when pullback disabled, does NOT allow foundation -> freecell moves", () => {
     const s = emptyState({
       rules: { ...baseRules, allowFoundationPullback: false },

@@ -312,13 +312,6 @@ export function applyMove(state: GameState, move: Move): GameState {
   const s = cloneState(state);
 
   if (move.kind === "single") {
-    // Prevent foundation-to-foundation transfers via pullback (not a supported rule).
-    if (move.from.type === "foundation" && move.to.type === "foundation") {
-      throw new EngineError(
-        "ILLEGAL_MOVE",
-        "Invalid move: foundation-to-foundation is not allowed"
-      );
-    }
     const card = removeSingleFrom(move.from, s);
     placeSingleTo(move.to, card, s);
 
@@ -369,8 +362,8 @@ export function applyMove(state: GameState, move: Move): GameState {
   const targetTopCard = targetIsEmpty
     ? null
     : toCol[toCol.length - 1].faceDown
-    ? null
-    : toCol[toCol.length - 1].card;
+      ? null
+      : toCol[toCol.length - 1].card;
 
   if (!targetIsEmpty && targetTopCard === null) {
     throw new EngineError(

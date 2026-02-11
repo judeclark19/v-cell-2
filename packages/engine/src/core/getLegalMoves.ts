@@ -200,6 +200,18 @@ export function getLegalMoves(state: GameState): Move[] {
         pushSingle(from, { type: "freecell", index: fc });
       }
 
+      // to foundations (e.g. Ace to an empty slot with suit === null)
+      for (
+        let toF = 0 as FoundationIndex;
+        toF < 4;
+        toF = (toF + 1) as FoundationIndex
+      ) {
+        if (toF === f) continue;
+        if (canPlaceOnFoundation(card, state.foundations[toF])) {
+          pushSingle(from, { type: "foundation", index: toF });
+        }
+      }
+
       // to tableau
       for (let t = 0 as TableauIndex; t < 7; t = (t + 1) as TableauIndex) {
         const isEmpty = state.tableau[t].length === 0;

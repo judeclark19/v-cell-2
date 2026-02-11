@@ -206,7 +206,7 @@ export function commitBoardDrop<TCardItem>({
     return false;
   }
 
-  // tableau/freecell -> foundation (single only)
+  // tableau/freecell/foundation -> foundation (single only)
   if (dropTarget.type === "foundation") {
     if (drag.stack.length !== 1) return false;
     const toIndex = dropTarget.index;
@@ -233,6 +233,24 @@ export function commitBoardDrop<TCardItem>({
         (m): m is Extract<Move, { kind: "single" }> =>
           m.kind === "single" &&
           m.from.type === "freecell" &&
+          m.to.type === "foundation" &&
+          m.from.index === fromIndex &&
+          m.to.index === toIndex
+      );
+
+      if (!move) return false;
+      dispatchMove(move);
+      return true;
+    }
+
+    if (source.type === "foundation") {
+      const fromIndex = source.index;
+      if (fromIndex === toIndex) return false;
+
+      const move = legalMoves.find(
+        (m): m is Extract<Move, { kind: "single" }> =>
+          m.kind === "single" &&
+          m.from.type === "foundation" &&
           m.to.type === "foundation" &&
           m.from.index === fromIndex &&
           m.to.index === toIndex
