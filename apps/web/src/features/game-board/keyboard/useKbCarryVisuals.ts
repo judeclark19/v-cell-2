@@ -23,7 +23,7 @@ export function useKbCarryVisuals(args: {
 
   // Class names (centralized here so they don't get duplicated across hooks)
   const CARRYING_CLASS = "is-kb-carried";
-  const DROP_TARGET_CLASS = "is-kb-drop-target";
+  const DROP_TARGET_CLASS = "is-drop-target";
 
   const clearKbCarryVisuals = useCallback(() => {
     const root = boardRef.current;

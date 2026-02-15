@@ -66,7 +66,7 @@ export function useCardDrag<
   const dropHover = useDropTargetHover({
     enabled: drag.active || drag.pending,
     selectors: [".is-playable", ".card-slot"],
-    className: "is-kb-drop-target"
+    className: "is-drop-target"
   });
 
   useEffect(() => {

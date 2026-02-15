@@ -15,7 +15,7 @@ type UseDropTargetHoverArgs = {
   selectors: string[];
   /**
    * Class applied to the current hovered zone.
-   * Example: "is-kb-drop-target"
+   * Example: "is-drop-target"
    */
   className: string;
   /**
