@@ -1,111 +1,91 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState
-} from "react";
+import React, { createContext, useContext, useMemo } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebaseClient";
+import { useAuthSession } from "@/lib/useAuthSession";
 
-export type SessionMode = "unset" | "guest" | "user";
+export type SessionMode = "guest" | "user";
 
 export type SessionState = {
   mode: SessionMode;
-  // When we later add auth, uid becomes meaningful.
   uid: string | null;
 };
 
 export type RequireUserResult =
   | { ok: true }
-  | { ok: false; reason: "not_logged_in" };
+  | { ok: false; reason: "not_logged_in" | "auth_not_ready" };
 
 export type SessionContextValue = {
   session: SessionState;
-  setGuest: () => void;
-  // Temporary: "log in" is just setting mode=user. Later it will come from real auth.
-  setUser: (uid?: string) => void;
-  logout: () => void;
 
-  // Convenience helpers for route gating / UI gating
+  // Backwards-compatible API (guest is default, user requires real login)
+  setGuest: () => void;
+  setUser: () => void;
+  logout: () => Promise<void>;
+
+  // Convenience flags
   isGuest: boolean;
   isUser: boolean;
-  isUnset: boolean;
   hydrated: boolean;
 
-  // For guarding pages that require login
+  // Raw auth state (when not logged in, uid is null)
+  authReady: boolean;
+  isAnonymous: boolean;
+  uid: string | null;
+
+  // Route guards
   requireUser: () => RequireUserResult;
 };
-
-const STORAGE_KEY = "vcell.session.v1";
-
-function safeParse(json: string | null): SessionState | null {
-  if (!json) return null;
-  try {
-    const raw = JSON.parse(json) as Partial<SessionState>;
-    const mode = raw.mode;
-    if (mode !== "unset" && mode !== "guest" && mode !== "user") return null;
-    const uid = typeof raw.uid === "string" ? raw.uid : null;
-    return { mode, uid };
-  } catch {
-    return null;
-  }
-}
-
-const DEFAULT_SESSION: SessionState = { mode: "unset", uid: null };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function useSession() {
   const ctx = useContext(SessionContext);
-  if (!ctx)
+  if (!ctx) {
     throw new Error("useSession must be used within <SessionProvider />");
+  }
   return ctx;
 }
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  // Initialize from localStorage synchronously (client-only component)
-  const [session, setSession] = useState<SessionState>(() => {
-    if (typeof window === "undefined") {
-      return DEFAULT_SESSION;
-    }
-    const restored = safeParse(window.localStorage.getItem(STORAGE_KEY));
-    return restored ?? DEFAULT_SESSION;
-  });
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    // We intentionally sync React state from an external system (localStorage) after mount.
-    // This prevents server/client markup mismatches while still restoring the session ASAP.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHydrated(true);
-
-    const restored = safeParse(window.localStorage.getItem(STORAGE_KEY));
-    if (restored) {
-      setSession(restored);
-    }
-  }, []);
-
-  // Persist on change (after hydration)
-  useEffect(() => {
-    if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  }, [hydrated, session]);
-
-  const setGuest = () => setSession({ mode: "guest", uid: null });
-
-  const setUser = (uid?: string) =>
-    setSession({ mode: "user", uid: uid ?? "dev-user-001" });
-
-  const logout = () => setSession({ mode: "unset", uid: null });
+  // Important: We do NOT auto-create anonymous users.
+  // Guests play locally (IndexedDB) with no Firebase UID.
+  const { uid, isAnonymous, ready: authReady } = useAuthSession();
 
   const value = useMemo<SessionContextValue>(() => {
-    const isUnset = session.mode === "unset";
-    const isGuest = session.mode === "guest";
-    const isUser = session.mode === "user";
+    const hydrated = authReady;
 
-    const requireUser = (): RequireUserResult =>
-      isUser ? { ok: true } : { ok: false, reason: "not_logged_in" };
+    // Only a real, non-anonymous Firebase user counts as "user".
+    const isUser = Boolean(uid) && !isAnonymous;
+    const mode: SessionMode = isUser ? "user" : "guest";
+
+    // In guest mode, uid is intentionally null.
+    const session: SessionState = { mode, uid: isUser ? uid : null };
+
+    const isGuest = !isUser;
+
+    const requireUser = (): RequireUserResult => {
+      if (!authReady) return { ok: false, reason: "auth_not_ready" };
+      return isUser ? { ok: true } : { ok: false, reason: "not_logged_in" };
+    };
+
+    const setGuest = () => {
+      // No-op by design. Guest is the default when not logged in.
+    };
+
+    const setUser = () => {
+      // Not implemented yet.
+      // Later: trigger Google/email login.
+      console.warn(
+        "setUser() not implemented. Add real provider login to switch from guest to user."
+      );
+    };
+
+    const logout = async () => {
+      // If logged in, sign out. Guests already have no auth session.
+      await signOut(auth);
+    };
 
     return {
       session,
@@ -114,11 +94,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       logout,
       isGuest,
       isUser,
-      isUnset,
       hydrated,
+      authReady,
+      isAnonymous,
+      uid: session.uid,
       requireUser
     };
-  }, [session, hydrated]);
+  }, [uid, isAnonymous, authReady]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

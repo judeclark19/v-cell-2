@@ -22,7 +22,7 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 ];
 
 export function NavBar() {
-  const { isUser, logout, hydrated } = useSession();
+  const { uid, logout, hydrated } = useSession();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -38,12 +38,7 @@ export function NavBar() {
     router.push("/login");
   };
 
-  // Stable initial render to avoid SSR/CSR mismatch.
-  const AuthControl = !hydrated ? (
-    <Link className="navbar__link" href="/login" onClick={closeMenu}>
-      Log in
-    </Link>
-  ) : isUser ? (
+  const AuthControl = !hydrated ? null : uid ? (
     <button className="navbar__button" onClick={handleLogout} type="button">
       Log out
     </button>

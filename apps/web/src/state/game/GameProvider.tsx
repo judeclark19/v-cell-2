@@ -18,7 +18,7 @@ import { useGameSettings } from "./hooks/useGameSettings";
 import { useGameDerivedState } from "./hooks/useGameDerivedState";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
 import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
-import { PersistedGame } from "@/persistence/types";
+import type { PersistedGame } from "@/persistence/types";
 
 type GameContextValue = {
   state: GameState;

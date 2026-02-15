@@ -13,15 +13,9 @@ export default function LoginPage() {
   const rawNext = searchParams.get("next");
   const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/game";
 
-  const { setGuest, setUser, isUser, isGuest, logout } = useSession();
+  const { isUser, logout, hydrated, uid, isAnonymous } = useSession();
 
-  const continueAsGuest = () => {
-    setGuest();
-    router.push(nextPath);
-  };
-
-  const loginDev = () => {
-    setUser("dev");
+  const continuePath = () => {
     router.push(nextPath);
   };
 
@@ -29,36 +23,43 @@ export default function LoginPage() {
     <div>
       <h1 style={{ marginBottom: 8 }}>Log in</h1>
       <p style={{ marginBottom: 16 }}>
-        Guests can play and change settings. Logging in unlocks stats +
-        leaderboard and will eventually sync across devices.
+        Continue as a guest to play locally on this device. Log in to unlock
+        stats, leaderboard, and sync across devices.
       </p>
       <p style={{ marginBottom: 16, opacity: 0.8 }}>
         After you choose an option, we’ll send you back to{" "}
         <code>{nextPath}</code>.
       </p>
 
-      {(isUser || isGuest) && (
+      {hydrated && uid && (
         <p style={{ marginBottom: 16 }}>
           Current session:{" "}
-          <strong>{isUser ? "Logged in (dev)" : "Guest"}</strong>
+          <strong>
+            {isUser ? "Logged in" : isAnonymous ? "Guest" : "User"}
+          </strong>
+          <span style={{ opacity: 0.7 }}> (uid: {uid.slice(0, 8)}…)</span>
         </p>
       )}
 
-      {isUser ? (
-        <button onClick={logout} style={{ padding: "10px 14px" }}>
-          Log out (dev)
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <button onClick={continuePath} style={{ padding: "10px 14px" }}>
+          Continue as Guest
         </button>
-      ) : (
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button onClick={continueAsGuest} style={{ padding: "10px 14px" }}>
-            Continue as guest
-          </button>
 
-          <button onClick={loginDev} style={{ padding: "10px 14px" }}>
-            Log in (dev)
+        <button
+          disabled
+          title="Login to sync coming soon"
+          style={{ padding: "10px 14px", opacity: 0.5, cursor: "not-allowed" }}
+        >
+          Log in to Sync (coming soon)
+        </button>
+
+        {isUser && (
+          <button onClick={logout} style={{ padding: "10px 14px" }}>
+            Log out
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       <p style={{ marginTop: 16 }}>
         <Link href="/">Back to home</Link>
@@ -67,7 +68,7 @@ export default function LoginPage() {
       <hr style={{ margin: "20px 0", opacity: 0.3 }} />
 
       <p style={{ opacity: 0.8, margin: 0 }}>
-        Later: replace “Log in (dev)” with Google + Email/Password.
+        Next: implement Google + Email/Password to upgrade from guest to user.
       </p>
     </div>
   );
