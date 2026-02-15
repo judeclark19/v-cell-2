@@ -1,35 +1,7 @@
-import type { HistoryState } from "../state/game/GameProvider";
 import { getOrCreateDeviceId, openVCellDb, STORES } from "./schema";
-import type { GameState } from "@vcell/engine";
+import type { PersistedGame } from "./types";
 
-export type InProgressGame = {
-  gameId: string;
-  deviceId: string; // for analytics, not a security boundary
-  seed: string;
-  rules: GameState["rules"];
-  kind?: "freeplay" | "daily" | string;
-
-  // Full snapshot
-  history: HistoryState;
-
-  // Minimal meta needed to resume UI accurately
-  timeElapsedMs: number;
-  hasStarted: boolean;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
-  isAbandoned: boolean;
-  paused: boolean;
-
-  // Analytics / UX
-  moveCount: number;
-  undosUsed: number;
-
-  // For “continue most recent”
-  updatedAtMs: number;
-
-  // Optional: keep last completed pointer
-  lastCompletedGameId?: string;
-};
+export type InProgressGame = PersistedGame;
 
 export async function getAllInProgressGames(): Promise<InProgressGame[]> {
   if (typeof window === "undefined") return [];

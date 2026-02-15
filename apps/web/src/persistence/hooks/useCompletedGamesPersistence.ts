@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { GameResult } from "../../state/game/GameProvider";
 import {
   getAllCompletedGames,
   upsertCompletedGame
 } from "../completedGamesStore";
 import { deleteInProgressGameForDevice } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
+import { PersistedGame } from "../types";
 
 type Params = {
-  completedGames: GameResult[];
-  setCompletedGames: React.Dispatch<React.SetStateAction<GameResult[]>>;
+  completedGames: PersistedGame[];
+  setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
 };
 
 export function useCompletedGamesPersistence({

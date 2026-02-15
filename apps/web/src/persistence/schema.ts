@@ -5,7 +5,7 @@
  */
 
 export const VCELL_DB_NAME = "vcell";
-export const VCELL_DB_VERSION = 64;
+export const VCELL_DB_VERSION = 65;
 
 export const STORES = {
   COMPLETED_GAMES: "completedGames",

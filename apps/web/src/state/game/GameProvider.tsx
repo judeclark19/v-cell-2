@@ -18,6 +18,7 @@ import { useGameSettings } from "./hooks/useGameSettings";
 import { useGameDerivedState } from "./hooks/useGameDerivedState";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
 import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
+import { PersistedGame } from "@/persistence/types";
 
 type GameContextValue = {
   state: GameState;
@@ -48,7 +49,7 @@ type GameContextValue = {
   setIsAbandoned: (next: boolean) => void;
   moveCount: number;
   gameId: string;
-  completedGames: GameResult[];
+  completedGames: PersistedGame[];
 };
 
 export type HistoryState = {
@@ -57,21 +58,6 @@ export type HistoryState = {
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
-
-export type GameResult = {
-  gameId: string;
-  seed: string;
-  rules: GameState["rules"];
-  status: "won" | "abandoned";
-  startedAtMs: number | null;
-  endedAtMs: number;
-  timeElapsedMs: number;
-  moveCount: number;
-  undosUsed: number;
-  // Keep the move log so we can replay/debug later; can be trimmed when we persist.
-  moves: Move[];
-  cursor: number;
-};
 
 export function useGame() {
   const ctx = useContext(GameContext);
@@ -123,7 +109,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }));
   const state = history.present;
 
-  const [completedGames, setCompletedGames] = useState<GameResult[]>([]);
+  const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
 
   useCompletedGamesPersistence({
     completedGames,
@@ -205,19 +191,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     seed,
     rules,
-
-    history,
+    isAbandoned,
+    moves,
+    cursor,
     timeElapsedMsRef,
     hasStarted,
     startedAtMs,
     endedAtMs,
-    isAbandoned,
     paused,
     moveCount,
     undosUsed,
     isWon,
 
-    setHistory,
+    setMoves,
+    setCursor,
     setTimeElapsedMs,
     setHasStarted,
     setStartedAtMs,

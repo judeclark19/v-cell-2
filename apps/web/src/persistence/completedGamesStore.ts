@@ -1,7 +1,7 @@
 // apps/web/src/persistence/completedGamesStore.ts
 
-import type { GameResult } from "../state/game/GameProvider";
 import { openVCellDb, STORES } from "./schema";
+import type { PersistedGame } from "./types";
 
 /**
  * Read all completed games from IndexedDB.
@@ -9,20 +9,20 @@ import { openVCellDb, STORES } from "./schema";
  * NOTE: This is a simple MVP read path. If the list grows large,
  * switch to cursor-based paging + sorting by `endedAtMs`.
  */
-export async function getAllCompletedGames(): Promise<GameResult[]> {
+export async function getAllCompletedGames(): Promise<PersistedGame[]> {
   // SSR-safe: on the server, just return empty.
   if (typeof window === "undefined") return [];
 
   const db = await openVCellDb();
 
-  return new Promise<GameResult[]>((resolve, reject) => {
+  return new Promise<PersistedGame[]>((resolve, reject) => {
     const tx = db.transaction(STORES.COMPLETED_GAMES, "readonly");
     const store = tx.objectStore(STORES.COMPLETED_GAMES);
     const request = store.getAll();
 
     request.onsuccess = () => {
       // IDB returns `any[]`; we trust our own writes and cast to the domain type.
-      resolve(request.result as GameResult[]);
+      resolve(request.result as PersistedGame[]);
     };
 
     request.onerror = () =>
@@ -35,7 +35,7 @@ export async function getAllCompletedGames(): Promise<GameResult[]> {
  *
  * Uses `put` so retries are idempotent by `gameId`.
  */
-export async function upsertCompletedGame(game: GameResult): Promise<void> {
+export async function upsertCompletedGame(game: PersistedGame): Promise<void> {
   if (typeof window === "undefined") return;
 
   const db = await openVCellDb();
@@ -57,7 +57,7 @@ export async function upsertCompletedGame(game: GameResult): Promise<void> {
  * Replace all completed games (useful for one-time hydration or resets).
  */
 export async function replaceCompletedGames(
-  games: GameResult[]
+  games: PersistedGame[]
 ): Promise<void> {
   if (typeof window === "undefined") return;
 

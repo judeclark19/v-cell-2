@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Rules } from "@vcell/engine";
-import type { HistoryState } from "../../state/game/GameProvider";
+import type { Move, Rules } from "@vcell/engine";
 import {
   getInProgressGameForDevice,
   upsertInProgressGame,
@@ -18,7 +17,8 @@ type Params = {
   rules: Rules;
 
   // snapshot + meta
-  history: HistoryState;
+  moves: Move[];
+  cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
   hasStarted: boolean;
   startedAtMs: number | null;
@@ -30,7 +30,8 @@ type Params = {
   isWon: boolean;
 
   // setters for hydration
-  setHistory: React.Dispatch<React.SetStateAction<HistoryState>>;
+  setMoves: React.Dispatch<React.SetStateAction<Move[]>>;
+  setCursor: React.Dispatch<React.SetStateAction<number>>;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
   setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
@@ -47,7 +48,8 @@ export function useInProgressGamePersistence({
   seed,
   rules,
 
-  history,
+  moves,
+  cursor,
   timeElapsedMsRef,
   hasStarted,
   startedAtMs,
@@ -58,7 +60,8 @@ export function useInProgressGamePersistence({
   undosUsed,
   isWon,
 
-  setHistory,
+  setMoves,
+  setCursor,
   setTimeElapsedMs,
   setHasStarted,
   setStartedAtMs,
@@ -89,12 +92,13 @@ export function useInProgressGamePersistence({
         if (!saved) return;
 
         // Restore snapshot + meta
-        setHistory(saved.history);
+        setMoves(saved.moves);
+        setCursor(saved.cursor);
         setTimeElapsedMs(saved.timeElapsedMs);
         setHasStarted(saved.hasStarted);
         setStartedAtMs(saved.startedAtMs);
         setEndedAtMs(saved.endedAtMs);
-        setIsAbandoned(saved.isAbandoned);
+        setIsAbandoned(saved.status === "abandoned");
         setPaused(saved.paused);
         setMoveCount(saved.moveCount);
         setUndosUsed(saved.undosUsed);
@@ -113,7 +117,6 @@ export function useInProgressGamePersistence({
   }, [
     seedReady,
     gameId,
-    setHistory,
     setTimeElapsedMs,
     setHasStarted,
     setStartedAtMs,
@@ -121,7 +124,9 @@ export function useInProgressGamePersistence({
     setIsAbandoned,
     setPaused,
     setMoveCount,
-    setUndosUsed
+    setUndosUsed,
+    setMoves,
+    setCursor
   ]);
 
   // ---------------------------------------------------------------------------
@@ -156,12 +161,13 @@ export function useInProgressGamePersistence({
       seed,
       rules,
       kind: "freeplay",
-      history,
+      moves,
+      cursor,
+      status: "in_progress",
       timeElapsedMs: timeElapsedMsRef.current ?? 0,
       hasStarted,
       startedAtMs,
       endedAtMs,
-      isAbandoned,
       paused,
       moveCount,
       undosUsed,
@@ -174,7 +180,8 @@ export function useInProgressGamePersistence({
     gameId,
     seed,
     rules,
-    history,
+    moves,
+    cursor,
     hasStarted,
     startedAtMs,
     endedAtMs,
@@ -215,12 +222,13 @@ export function useInProgressGamePersistence({
         seed,
         rules,
         kind: "freeplay",
-        history,
+        moves,
+        cursor,
+        status: "in_progress",
         timeElapsedMs: timeElapsedMsRef.current ?? 0,
         hasStarted,
         startedAtMs,
         endedAtMs,
-        isAbandoned,
         paused,
         moveCount,
         undosUsed,
@@ -238,7 +246,8 @@ export function useInProgressGamePersistence({
     gameId,
     seed,
     rules,
-    history,
+    moves,
+    cursor,
     hasStarted,
     startedAtMs,
     endedAtMs,

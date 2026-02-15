@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
-import { GameResult, HistoryState } from "../GameProvider";
+import { HistoryState } from "../GameProvider";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
+import type { PersistedGame } from "@/persistence/types";
 
 function undoLimitToCap(undoLimit: UndoLimit): number {
   if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
@@ -52,7 +53,7 @@ export type UseGameActionsParams = {
   >;
 
   // Completed games archive (Phase A)
-  setCompletedGames: React.Dispatch<React.SetStateAction<GameResult[]>>;
+  setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
 
   // Timing values captured in archive
   timeElapsedMs: number;
@@ -154,16 +155,25 @@ export function useGameActions({
               ...prev,
               {
                 gameId,
+                deviceId: getOrCreateDeviceId(),
                 seed,
                 rules: next.rules,
+                kind: "freeplay",
+
                 status: "won",
+
                 startedAtMs,
                 endedAtMs: ended,
                 timeElapsedMs,
+                hasStarted: true,
+                paused: false,
+
                 moveCount: archivedCursor,
                 undosUsed,
                 moves: archivedMoves,
-                cursor: archivedCursor
+                cursor: archivedCursor,
+
+                updatedAtMs: Date.now()
               }
             ];
           });
@@ -269,16 +279,25 @@ export function useGameActions({
           ...prev,
           {
             gameId,
+            deviceId: getOrCreateDeviceId(),
             seed,
             rules: state.rules,
+            kind: "freeplay",
+
             status: "abandoned",
+
             startedAtMs,
             endedAtMs: ended,
             timeElapsedMs,
+            hasStarted: true,
+            paused: false,
+
             moveCount: archivedCursor,
             undosUsed,
             moves: archivedMoves,
-            cursor: archivedCursor
+            cursor: archivedCursor,
+
+            updatedAtMs: Date.now()
           }
         ];
       });
