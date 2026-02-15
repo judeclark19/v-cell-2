@@ -7,19 +7,24 @@ import {
 } from "../completedGamesStore";
 import { deleteInProgressGameForDevice } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
-import { PersistedGame } from "../types";
+import type { PersistedGame } from "../types";
+import { db } from "@/lib/firebaseClient";
+import { doc, setDoc } from "firebase/firestore";
 
 type Params = {
+  uid: string | null;
   completedGames: PersistedGame[];
   setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
 };
 
 export function useCompletedGamesPersistence({
+  uid,
   completedGames,
   setCompletedGames
 }: Params) {
   const completedGamesHydratedRef = useRef<boolean>(false);
   const persistedCompletedGameIdsRef = useRef<Set<string>>(new Set());
+  const firestoreCompletedSyncedIdsRef = useRef<Set<string>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Hydrate completed games (IndexedDB)
@@ -65,6 +70,15 @@ export function useCompletedGamesPersistence({
           await upsertCompletedGame(g);
           persistedIds.add(g.gameId);
 
+          if (uid) {
+            // Optional: attach for debugging; path is the real ownership.
+            const payload = { ...g, userId: uid };
+
+            await setDoc(doc(db, "users", uid, "games", g.gameId), payload, {
+              merge: true
+            });
+          }
+
           const deviceId = getOrCreateDeviceId();
 
           // Once a game is persisted as completed, it should no longer be “in progress”.
@@ -74,5 +88,31 @@ export function useCompletedGamesPersistence({
         }
       }
     })();
-  }, [completedGames]);
+  }, [uid, completedGames]);
+
+  // ---------------------------------------------------------------------------
+  // Sync new completed games to Firestore
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!uid) return;
+    if (!completedGamesHydratedRef.current) return;
+
+    const synced = firestoreCompletedSyncedIdsRef.current;
+
+    (async () => {
+      for (const g of completedGames) {
+        if (synced.has(g.gameId)) continue;
+        try {
+          await setDoc(
+            doc(db, "users", uid, "games", g.gameId),
+            { ...g, userId: uid },
+            { merge: true }
+          );
+          synced.add(g.gameId);
+        } catch {
+          // ignore; try later
+        }
+      }
+    })();
+  }, [uid, completedGames]);
 }

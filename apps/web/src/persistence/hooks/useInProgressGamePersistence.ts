@@ -9,8 +9,12 @@ import {
 } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 
+import { db } from "@/lib/firebaseClient";
+import { doc, setDoc, deleteDoc } from "firebase/firestore";
+
 type Params = {
   // identity
+  uid: string | null;
   seedReady: boolean;
   gameId: string;
   seed: string;
@@ -43,6 +47,7 @@ type Params = {
 };
 
 export function useInProgressGamePersistence({
+  uid,
   seedReady,
   gameId,
   seed,
@@ -92,8 +97,8 @@ export function useInProgressGamePersistence({
         if (!saved) return;
 
         // Restore snapshot + meta
-        setMoves(saved.moves);
-        setCursor(saved.cursor);
+        setMoves(saved.moves ?? []);
+        setCursor(saved.cursor ?? 0);
         setTimeElapsedMs(saved.timeElapsedMs);
         setHasStarted(saved.hasStarted);
         setStartedAtMs(saved.startedAtMs);
@@ -102,9 +107,6 @@ export function useInProgressGamePersistence({
         setPaused(saved.paused);
         setMoveCount(saved.moveCount);
         setUndosUsed(saved.undosUsed);
-
-        // Optional: restore move log/cursor if you also persist it later
-        // setMoves(saved.moves); setCursor(saved.cursor);
       } catch (err) {
         inProgressHydratedRef.current = true;
         console.error("Failed to hydrate in-progress game", err);
@@ -148,6 +150,10 @@ export function useInProgressGamePersistence({
       return;
     }
 
+    if (uid) {
+      deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
+    }
+
     console.log("[in-progress persist] writing snapshot (per-move)", {
       gameId,
       moveCount,
@@ -155,15 +161,15 @@ export function useInProgressGamePersistence({
       timeElapsedMs: timeElapsedMsRef.current
     });
 
-    upsertInProgressGame({
+    const payload = {
       gameId,
       deviceId,
       seed,
       rules,
-      kind: "freeplay",
+      kind: "freeplay" as const,
       moves,
       cursor,
-      status: "in_progress",
+      status: "in_progress" as const,
       timeElapsedMs: timeElapsedMsRef.current ?? 0,
       hasStarted,
       startedAtMs,
@@ -171,11 +177,21 @@ export function useInProgressGamePersistence({
       paused,
       moveCount,
       undosUsed,
-      updatedAtMs: Date.now()
-    }).catch((err) => {
+      updatedAtMs: Date.now(),
+      ...(uid ? { userId: uid } : {})
+    };
+
+    upsertInProgressGame(payload).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
+
+    if (uid) {
+      setDoc(doc(db, "users", uid, "games", gameId), payload, {
+        merge: true
+      }).catch(() => {});
+    }
   }, [
+    uid,
     seedReady,
     gameId,
     seed,

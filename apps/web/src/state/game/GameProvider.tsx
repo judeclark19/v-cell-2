@@ -19,6 +19,7 @@ import { useGameDerivedState } from "./hooks/useGameDerivedState";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
 import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
 import type { PersistedGame } from "@/persistence/types";
+import { useSession } from "@/state/session/SessionProvider";
 
 type GameContextValue = {
   state: GameState;
@@ -110,8 +111,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const state = history.present;
 
   const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
-
+  const { uid } = useSession();
   useCompletedGamesPersistence({
+    uid,
     completedGames,
     setCompletedGames
   });
@@ -187,6 +189,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   });
 
   useInProgressGamePersistence({
+    uid,
     seedReady,
     gameId,
     seed,
