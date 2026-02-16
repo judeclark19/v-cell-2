@@ -1,9 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebaseClient";
 import { useAuthSession } from "@/lib/useAuthSession";
+import { signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export type SessionMode = "guest" | "user";
 
@@ -35,6 +35,8 @@ export type SessionContextValue = {
 
   // Route guards
   requireUser: () => RequireUserResult;
+
+  loginWithGoogle: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -85,6 +87,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       await signOut(auth);
     };
 
+    const loginWithGoogle = async () => {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    };
+
     return {
       session,
       setGuest,
@@ -95,7 +102,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       hydrated,
       authReady,
       uid: session.uid,
-      requireUser
+      requireUser,
+      loginWithGoogle
     };
   }, [uid, authReady]);
 

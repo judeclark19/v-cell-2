@@ -248,7 +248,8 @@ export function useInProgressGamePersistence({
         paused,
         moveCount,
         undosUsed,
-        updatedAtMs: Date.now()
+        updatedAtMs: Date.now(),
+        ...(uid ? { userId: uid } : {})
       }).catch((err) => {
         console.error("[in-progress persist] write failed (1s)", err);
       });
@@ -260,6 +261,7 @@ export function useInProgressGamePersistence({
   }, [
     seedReady,
     gameId,
+    uid,
     seed,
     rules,
     moves,

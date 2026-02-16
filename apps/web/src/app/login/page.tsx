@@ -13,10 +13,15 @@ export default function LoginPage() {
   const rawNext = searchParams.get("next");
   const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/game";
 
-  const { isUser, logout, hydrated, uid } = useSession();
+  const { isUser, logout, hydrated, uid, loginWithGoogle } = useSession();
 
   const continuePath = () => {
     router.push(nextPath);
+  };
+
+  const loginAndContinue = async () => {
+    await loginWithGoogle();
+    continuePath();
   };
 
   return (
@@ -39,16 +44,21 @@ export default function LoginPage() {
       )}
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button onClick={continuePath} style={{ padding: "10px 14px" }}>
-          Continue as Guest
+        <button
+          title="Log in and continue"
+          onClick={loginAndContinue}
+          type="button"
+          className="btn btn--primary"
+        >
+          Log in or sign up with Google
         </button>
 
         <button
-          disabled
-          title="Login to sync coming soon"
-          style={{ padding: "10px 14px", opacity: 0.5, cursor: "not-allowed" }}
+          onClick={continuePath}
+          type="button"
+          className="btn btn--secondary"
         >
-          Log in to Sync (coming soon)
+          Continue as Guest
         </button>
 
         {isUser && (
@@ -57,16 +67,6 @@ export default function LoginPage() {
           </button>
         )}
       </div>
-
-      <p style={{ marginTop: 16 }}>
-        <Link href="/">Back to home</Link>
-      </p>
-
-      <hr style={{ margin: "20px 0", opacity: 0.3 }} />
-
-      <p style={{ opacity: 0.8, margin: 0 }}>
-        Next: implement Google + Email/Password to upgrade from guest to user.
-      </p>
     </div>
   );
 }
