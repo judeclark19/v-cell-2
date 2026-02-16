@@ -13,7 +13,7 @@ export default function LoginPage() {
   const rawNext = searchParams.get("next");
   const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/game";
 
-  const { isUser, logout, hydrated, uid, isAnonymous } = useSession();
+  const { isUser, logout, hydrated, uid } = useSession();
 
   const continuePath = () => {
     router.push(nextPath);
@@ -33,10 +33,7 @@ export default function LoginPage() {
 
       {hydrated && uid && (
         <p style={{ marginBottom: 16 }}>
-          Current session:{" "}
-          <strong>
-            {isUser ? "Logged in" : isAnonymous ? "Guest" : "User"}
-          </strong>
+          Current session: <strong>{isUser ? "User" : "Guest"}</strong>
           <span style={{ opacity: 0.7 }}> (uid: {uid.slice(0, 8)}…)</span>
         </p>
       )}

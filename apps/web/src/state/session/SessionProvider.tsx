@@ -31,7 +31,6 @@ export type SessionContextValue = {
 
   // Raw auth state (when not logged in, uid is null)
   authReady: boolean;
-  isAnonymous: boolean;
   uid: string | null;
 
   // Route guards
@@ -51,13 +50,12 @@ export function useSession() {
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Important: We do NOT auto-create anonymous users.
   // Guests play locally (IndexedDB) with no Firebase UID.
-  const { uid, isAnonymous, ready: authReady } = useAuthSession();
+  const { uid, ready: authReady } = useAuthSession();
 
   const value = useMemo<SessionContextValue>(() => {
     const hydrated = authReady;
 
-    // Only a real, non-anonymous Firebase user counts as "user".
-    const isUser = Boolean(uid) && !isAnonymous;
+    const isUser = Boolean(uid);
     const mode: SessionMode = isUser ? "user" : "guest";
 
     // In guest mode, uid is intentionally null.
@@ -96,11 +94,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       isUser,
       hydrated,
       authReady,
-      isAnonymous,
       uid: session.uid,
       requireUser
     };
-  }, [uid, isAnonymous, authReady]);
+  }, [uid, authReady]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

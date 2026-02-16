@@ -42,7 +42,7 @@ export default function StatsPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h1>Stats Page</h1>
+      <h1>Stats for user (username)</h1>
       <p>Coming soon...</p>
     </div>
   );

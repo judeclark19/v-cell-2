@@ -7,7 +7,7 @@ export type PersistedGame = {
   // identity
   gameId: string;
   deviceId: string; // analytics / “one per device” key
-  userId?: string; // firebase uid (anonymous or upgraded account)
+  userId?: string; // if not playing as guest
   seed: string;
   rules: GameState["rules"];
   kind?: "freeplay" | "daily" | string;

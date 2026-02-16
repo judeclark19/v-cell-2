@@ -9,7 +9,6 @@ type AuthState = {
   ready: boolean;
   user: User | null;
   uid: string | null;
-  isAnonymous: boolean;
 };
 
 /**
@@ -26,8 +25,7 @@ export function useAuthSession(): AuthState {
   const [state, setState] = useState<AuthState>({
     ready: false,
     user: null,
-    uid: null,
-    isAnonymous: false
+    uid: null
   });
 
   useEffect(() => {
@@ -35,8 +33,7 @@ export function useAuthSession(): AuthState {
       setState({
         ready: true,
         user,
-        uid: user?.uid ?? null,
-        isAnonymous: user?.isAnonymous ?? false
+        uid: user?.uid ?? null
       });
     });
 
