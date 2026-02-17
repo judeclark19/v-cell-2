@@ -40,7 +40,7 @@ function Board() {
             onBlurCapture={vm.onBoardBlurCapture}
             onFocus={vm.onBoardFocus}
           >
-            {vm.seedReady ? (
+            {vm.seedReady && vm.historyReady ? (
               <>
                 {/* Foundations on top */}
                 <Foundations

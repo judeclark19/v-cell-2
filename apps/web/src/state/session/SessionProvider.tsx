@@ -1,9 +1,17 @@
 "use client";
 
-import React, { createContext, useContext, useMemo } from "react";
-import { auth } from "@/lib/firebaseClient";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
+import { auth, db } from "@/lib/firebaseClient";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  getInProgressGameForDevice,
+  upsertInProgressGame
+} from "@/persistence/inProgressGamesStore";
+import { clearCompletedGames } from "@/persistence/completedGamesStore";
+import { getOrCreateDeviceId } from "@/persistence/schema";
+import { useCloudGamesHydration } from "@/persistence/hooks/useCloudGamesHydration";
 
 export type SessionMode = "guest" | "user";
 
@@ -53,6 +61,83 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Important: We do NOT auto-create anonymous users.
   // Guests play locally (IndexedDB) with no Firebase UID.
   const { uid, ready: authReady } = useAuthSession();
+
+  useCloudGamesHydration(uid);
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (!uid) return;
+
+    (async () => {
+      try {
+        const userRef = doc(db, "users", uid);
+        const snap = await getDoc(userRef);
+        const isFirstSignup = !snap.exists();
+
+        // Ensure a user profile doc exists. Firestore collections appear when a doc is written.
+        // Keep it minimal for now; add username/profile fields later.
+        await setDoc(
+          userRef,
+          {
+            uid,
+            ...(isFirstSignup ? { createdAtMs: Date.now() } : {}),
+            lastLoginAtMs: Date.now(),
+            displayName: auth.currentUser?.displayName ?? null
+          },
+          { merge: true }
+        );
+
+        if (isFirstSignup) {
+          // Local first-login migration:
+          // - wipe local completed history (it will later come from the account)
+          // - stamp the current in-progress game with userId
+          await clearCompletedGames();
+
+          const deviceId = getOrCreateDeviceId();
+          const inProgress = await getInProgressGameForDevice(deviceId);
+          if (inProgress) {
+            await upsertInProgressGame({ ...inProgress, userId: uid });
+          }
+
+          // Mark that we ran the local first-login migration so any future
+          // Firestore -> IndexedDB hydration can choose an explicit strategy.
+          await setDoc(
+            userRef,
+            {
+              didLocalMigrationAtMs: Date.now(),
+              didLocalMigrationDeviceId: deviceId,
+              cloudHydrationStrategy: "cloud_wins_after_first_login"
+            },
+            { merge: true }
+          );
+
+          // Local marker for clients: allows us to skip initial cloud pull during this login.
+          // (Future hydration code can consult this and clear it once pull completes.)
+          try {
+            // Device-scoped marker: only this device should skip the initial cloud pull
+            // during the first-signup login that just performed local migration.
+            // Other devices should NOT skip cloud hydration.
+            localStorage.setItem(
+              `vcell:skipCloudPull:${uid}:${deviceId}`,
+              JSON.stringify({
+                ts: Date.now(),
+                reason: "first_signup_local_migration"
+              })
+            );
+          } catch {
+            // ignore (private mode / storage disabled)
+          }
+          try {
+            localStorage.removeItem(`vcell:skipCloudPull:${uid}`);
+          } catch {
+            // ignore
+          }
+        }
+      } catch (err) {
+        console.error("[session] failed to upsert user doc", err);
+      }
+    })();
+  }, [uid, authReady]);
 
   const value = useMemo<SessionContextValue>(() => {
     const hydrated = authReady;

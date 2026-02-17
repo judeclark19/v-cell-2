@@ -71,15 +71,6 @@ export function useCompletedGamesPersistence({
           await upsertCompletedGame(gameToPersist);
           persistedIds.add(g.gameId);
 
-          if (uid) {
-            // Optional: attach for debugging; path is the real ownership.
-            const payload = { ...g, userId: uid };
-
-            await setDoc(doc(db, "users", uid, "games", g.gameId), payload, {
-              merge: true
-            });
-          }
-
           const deviceId = getOrCreateDeviceId();
 
           // Once a game is persisted as completed, it should no longer be “in progress”.

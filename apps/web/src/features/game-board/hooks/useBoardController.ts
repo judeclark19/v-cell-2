@@ -36,6 +36,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     restart,
     replaySeed,
     seedReady,
+    historyReady,
     timeElapsedMs,
     hasStarted,
     moveCount
@@ -414,6 +415,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     undoLimit,
     undosRemaining,
     seedReady,
+    historyReady,
     timeElapsedMs,
     hasStarted,
     moveCount,

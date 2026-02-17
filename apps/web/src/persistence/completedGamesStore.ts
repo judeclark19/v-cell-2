@@ -87,3 +87,25 @@ export async function replaceCompletedGames(
     };
   });
 }
+
+/**
+ * Clear all completed games from IndexedDB.
+ *
+ * Used during first-login migration when local history should be reset.
+ */
+export async function clearCompletedGames(): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const db = await openVCellDb();
+
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORES.COMPLETED_GAMES, "readwrite");
+    const store = tx.objectStore(STORES.COMPLETED_GAMES);
+
+    const request = store.clear();
+
+    request.onsuccess = () => resolve();
+    request.onerror = () =>
+      reject(request.error ?? new Error("Failed to clear completed games"));
+  });
+}

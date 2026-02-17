@@ -11,6 +11,7 @@ import { getOrCreateDeviceId } from "../schema";
 
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
+import type { PersistedGame } from "../types";
 
 type Params = {
   // identity
@@ -19,6 +20,8 @@ type Params = {
   gameId: string;
   seed: string;
   rules: Rules;
+
+  onHydrated?: (saved: PersistedGame | null) => void;
 
   // snapshot + meta
   moves: Move[];
@@ -52,7 +55,7 @@ export function useInProgressGamePersistence({
   gameId,
   seed,
   rules,
-
+  onHydrated,
   moves,
   cursor,
   timeElapsedMsRef,
@@ -94,7 +97,10 @@ export function useInProgressGamePersistence({
         if (cancelled) return;
 
         inProgressHydratedRef.current = true;
-        if (!saved) return;
+        if (!saved) {
+          onHydrated?.(null);
+          return;
+        }
 
         // Restore snapshot + meta
         setMoves(saved.moves ?? []);
@@ -107,8 +113,10 @@ export function useInProgressGamePersistence({
         setPaused(saved.paused);
         setMoveCount(saved.moveCount);
         setUndosUsed(saved.undosUsed);
+        onHydrated?.(saved);
       } catch (err) {
         inProgressHydratedRef.current = true;
+        onHydrated?.(null);
         console.error("Failed to hydrate in-progress game", err);
       }
     })();
@@ -119,6 +127,7 @@ export function useInProgressGamePersistence({
   }, [
     seedReady,
     gameId,
+    onHydrated,
     setTimeElapsedMs,
     setHasStarted,
     setStartedAtMs,
@@ -142,16 +151,18 @@ export function useInProgressGamePersistence({
 
     if (isWon || isAbandoned) {
       deleteInProgressGameForDevice(deviceId);
+      if (uid) {
+        deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
+      }
       return;
     }
 
     if (!hasStarted) {
       deleteInProgressGameForDevice(deviceId);
+      if (uid) {
+        deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
+      }
       return;
-    }
-
-    if (uid) {
-      deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
     }
 
     console.log("[in-progress persist] writing snapshot (per-move)", {

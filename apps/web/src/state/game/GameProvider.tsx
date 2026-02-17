@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -10,7 +11,7 @@ import {
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import { createGame } from "@vcell/engine";
+import { applyMove, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
@@ -42,6 +43,7 @@ type GameContextValue = {
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
   seedReady: boolean;
+  historyReady: boolean;
   timeElapsedMs: number;
   startedAtMs: number | null;
   endedAtMs: number | null;
@@ -109,6 +111,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     past: []
   }));
   const state = history.present;
+
+  const [hydratedGameId, setHydratedGameId] = useState<string | null>(null);
 
   const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
   const { uid } = useSession();
@@ -178,6 +182,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setCheckpoint
     });
 
+  const historyReady = seedReady && hydratedGameId === gameId;
+
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
@@ -188,12 +194,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undosUsed
   });
 
+  const onInProgressHydrated = useCallback(
+    (saved: PersistedGame | null) => {
+      if (!saved) {
+        setHydratedGameId(gameId);
+        return;
+      }
+
+      // Rebuild history.present from persisted moves/cursor so the UI reflects
+      // the actual progressed game state after refresh.
+      const appliedMoves = (saved.moves ?? []).slice(0, saved.cursor ?? 0);
+
+      let present = createGame(saved.seed, rules);
+      const past: GameState[] = [];
+
+      for (const m of appliedMoves) {
+        // push current state into past (for undo), then apply the move
+        past.push(present);
+        present = applyMove(present, m);
+
+        // Respect undoLimit cap (keep the most recent states)
+        if (undoLimit !== "unlimited" && past.length > undoLimit) {
+          past.splice(0, past.length - undoLimit);
+        }
+      }
+
+      setHistory({ present, past });
+      setHydratedGameId(gameId);
+    },
+    [rules, undoLimit, gameId]
+  );
+
   useInProgressGamePersistence({
     uid,
     seedReady,
     gameId,
     seed,
     rules,
+    onHydrated: onInProgressHydrated,
     isAbandoned,
     moves,
     cursor,
@@ -342,6 +380,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     allowFoundationPullback,
     setAllowFoundationPullback,
     seedReady,
+    historyReady,
     timeElapsedMs,
     startedAtMs,
     endedAtMs,
