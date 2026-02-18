@@ -4,7 +4,7 @@ import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { DragState } from "../animations/dragTypes";
-import { formatElapsed } from "../utils/formatElapsed";
+import { formatElapsed } from "../../../ui/utils";
 
 type FoundationProps = {
   i: number;

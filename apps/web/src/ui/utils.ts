@@ -12,3 +12,8 @@ export const formatElapsed = (ms: number) => {
   // Show hours only if at least 1 hour has elapsed
   return hours > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`;
 };
+
+export const formatDate = (ms: number | null | undefined) => {
+  if (typeof ms !== "number" || !Number.isFinite(ms)) return "—";
+  return new Date(ms).toLocaleString();
+};

@@ -1,5 +1,5 @@
 import ModalOverlay from "@/components/ModalOverlay";
-import { formatElapsed } from "@/features/game-board/utils/formatElapsed";
+import { formatElapsed } from "@/ui/utils";
 
 type BoardModalsProps = {
   paused: boolean;
