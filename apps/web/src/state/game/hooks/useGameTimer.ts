@@ -59,6 +59,24 @@ export function useGameTimer({
         clearTimerInterval();
       } else if (
         document.visibilityState === "visible" &&
+        document.hasFocus() &&
+        !paused &&
+        !isFinished &&
+        seedReady &&
+        hasStarted
+      ) {
+        startTimerInterval();
+      }
+    }
+
+    function handleWindowBlur() {
+      clearTimerInterval();
+    }
+
+    function handleWindowFocus() {
+      if (
+        document.visibilityState === "visible" &&
+        document.hasFocus() &&
         !paused &&
         !isFinished &&
         seedReady &&
@@ -73,7 +91,8 @@ export function useGameTimer({
       !isFinished &&
       seedReady &&
       hasStarted &&
-      document.visibilityState === "visible"
+      document.visibilityState === "visible" &&
+      document.hasFocus()
     ) {
       startTimerInterval();
     }
@@ -83,10 +102,14 @@ export function useGameTimer({
     }
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       clearTimerInterval();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [paused, seedReady, hasStarted, isWon, isAbandoned, setTimeElapsedMs]);
 }
