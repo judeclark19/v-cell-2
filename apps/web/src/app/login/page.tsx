@@ -24,16 +24,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <h1 style={{ marginBottom: 8 }}>Log in</h1>
-      <p style={{ marginBottom: 16 }}>
-        Continue as a guest to play locally on this device. Log in to unlock
-        stats, leaderboard, and sync across devices.
-      </p>
-      <p style={{ marginBottom: 16, opacity: 0.8 }}>
-        After you choose an option, we’ll send you back to{" "}
-        <code>{nextPath}</code>.
-      </p>
+    <main>
+      <header>
+        <h1 style={{ marginBottom: 8 }}>Log in</h1>
+        <p style={{ marginBottom: 16 }}>
+          Continue as a guest to play locally on this device. Log in to unlock
+          stats, leaderboard, and sync across devices.
+        </p>
+        <p style={{ marginBottom: 16, opacity: 0.8 }}>
+          After you choose an option, we’ll send you back to{" "}
+          <code>{nextPath}</code>.
+        </p>
+      </header>
 
       {hydrated && uid && (
         <p style={{ marginBottom: 16 }}>
@@ -66,6 +68,6 @@ export default function LoginPage() {
           </button>
         )}
       </div>
-    </div>
+    </main>
   );
 }

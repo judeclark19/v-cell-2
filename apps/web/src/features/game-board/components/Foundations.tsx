@@ -4,6 +4,7 @@ import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { DragState } from "../animations/dragTypes";
+import { formatElapsed } from "../utils/formatElapsed";
 
 type FoundationProps = {
   i: number;
@@ -156,15 +157,6 @@ function Foundations({
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
   const kbFlight = drag?.kbFlight;
-
-  const formatElapsed = (ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    const mm = String(minutes).padStart(2, "0");
-    const ss = String(seconds).padStart(2, "0");
-    return `${mm}:${ss}`;
-  };
 
   return (
     <div className="board-top" aria-label="Foundations">

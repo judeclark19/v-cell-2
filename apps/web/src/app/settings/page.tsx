@@ -37,12 +37,12 @@ export default function SettingsPage() {
     <main>
       <header>
         <h1>Settings</h1>
-        <p>
-          This page is a scaffold: the controls below are placeholders so we can
-          agree on what needs to exist. We’ll wire these to session/profile +
-          engine rules next.
-        </p>
       </header>
+
+      <section>
+        <h2>Account</h2>
+        {/* handle display name */}
+      </section>
 
       <section>
         <h2>Gameplay</h2>

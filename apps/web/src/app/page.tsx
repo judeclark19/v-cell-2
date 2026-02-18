@@ -6,15 +6,15 @@ import { useSession } from "@/state/session/SessionProvider";
 
 export default function HomePage() {
   const router = useRouter();
-  const { isUser, isGuest, isUnset } = useSession();
+  const { isUser, isGuest } = useSession();
 
   useEffect(() => {
     if (isUser) {
       router.replace("/game");
-    } else if (isGuest || isUnset) {
+    } else {
       router.replace("/login");
     }
-  }, [isUser, isGuest, isUnset, router]);
+  }, [isUser, isGuest, router]);
 
   // Optional: tiny fallback while redirecting
   return <main style={{ padding: 24, opacity: 0.7 }}>Redirecting…</main>;

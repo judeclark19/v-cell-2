@@ -98,7 +98,7 @@ describe("applyMove", () => {
     expect(exposed.card.id).toBe("2S");
     expect(exposed.faceDown).toBe(false);
   });
-  it("disallows foundation-to-foundation moves (even with pullback enabled)", () => {
+  it("allows moving an Ace from one foundation to an empty foundation", () => {
     const s = emptyState({
       foundations: [
         { suit: "spades", cards: [AS] },
@@ -108,13 +108,17 @@ describe("applyMove", () => {
       ]
     });
 
-    expect(() =>
-      applyMove(s, {
-        kind: "single",
-        from: { type: "foundation", index: 0 },
-        to: { type: "foundation", index: 1 }
-      })
-    ).toThrow();
+    const next = applyMove(s, {
+      kind: "single",
+      from: { type: "foundation", index: 0 },
+      to: { type: "foundation", index: 1 }
+    });
+
+    expect(next.foundations[0].cards).toHaveLength(0);
+    expect(next.foundations[0].suit).toBeNull();
+
+    expect(next.foundations[1].suit).toBe("spades");
+    expect(next.foundations[1].cards.map((c) => c.id)).toEqual(["AS"]);
   });
 
   it("throws if a move is not legal per getLegalMoves (dev assert)", () => {

@@ -9,7 +9,7 @@
     border-color 120ms ease, opacity 120ms ease;
   font: inherit;
   line-height: 1;
-  cursor: pointer;
+  display: inline-flex;
 }
 
 .btn:active {
@@ -48,4 +48,12 @@
 .btn--ghost {
   background: var(--btn-ghost-bg);
   color: var(--btn-ghost-fg);
+}
+.btn--ghost:not(:disabled):hover {
+  background: color-mix(
+    in srgb,
+    var(--btn-ghost-bg) 80%,
+    var(--surface-hover)
+  );
+  border-color: color-mix(in srgb, var(--border) 70%, var(--accent));
 }
