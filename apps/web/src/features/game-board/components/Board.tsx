@@ -115,7 +115,6 @@ function Board() {
         onRestart={vm.restartWithCelebration}
         onUndo={vm.undo}
         canUndo={vm.canUndo}
-        undoLimit={vm.undoLimit}
         undosRemaining={vm.undosRemaining}
       />
     </>

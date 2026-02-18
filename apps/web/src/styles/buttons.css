@@ -9,7 +9,7 @@
     border-color 120ms ease, opacity 120ms ease;
   font: inherit;
   line-height: 1;
-  display: inline-flex;
+  /* display: inline-flex; */
 }
 
 .btn:active {

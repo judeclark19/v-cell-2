@@ -1,37 +1,14 @@
 "use client";
 
-// Settings is intentionally a UI skeleton for now.
-// We’re mapping the knobs we’ll need before wiring them to persistence or the engine.
-
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useGame } from "@/state/game/GameProvider";
-import { UndoLimit } from "@vcell/engine";
+import { useSession } from "@/state/session/SessionProvider";
 
 export default function SettingsPage() {
-  const {
-    showTimer,
-    setShowTimer,
-    allowFoundationPullback,
-    setAllowFoundationPullback,
-    undoLimit,
-    setUndoLimit,
-    faceDownCount,
-    setFaceDownCount
-  } = useGame();
+  const { showTimer, setShowTimer } = useGame();
   const { theme, setTheme } = useTheme();
 
-  const parseUndoLimit = (value: string): UndoLimit => {
-    if (value === "unlimited") return "unlimited";
-    const n = Number(value);
-    if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
-    return "unlimited";
-  };
-
-  const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
-    const n = Number(value);
-    if (n === 0 || n === 7 || n === 14 || n === 21) return n;
-    return 7;
-  };
+  const { isUser } = useSession();
 
   return (
     <main>
@@ -41,74 +18,11 @@ export default function SettingsPage() {
 
       <section>
         <h2>Account</h2>
-        {/* handle display name */}
-      </section>
-
-      <section>
-        <h2>Gameplay</h2>
-        <p className="hint" style={{ marginBottom: "1em" }}>
-          Changing any gameplay setting starts a new game.
-        </p>
-        <div className="grid">
-          <label className="field">
-            Face-down cards at deal
-            <select
-              className="control"
-              id="face-down-cards"
-              value={String(faceDownCount)}
-              onChange={(e) =>
-                setFaceDownCount(parseFaceDownCount(e.target.value))
-              }
-            >
-              <option value="0">0 (all face-up)</option>
-              <option value="7">7 (classic)</option>
-              <option value="14">14 (2 rows)</option>
-              <option value="21">21 (3 rows)</option>
-            </select>
-            <small className="hint">
-              Engine rule: V-shape layering. Auto-flip when a face-down card
-              becomes exposed.
-            </small>
-          </label>
-
-          <label className="field">
-            Undo limit
-            <select
-              className="control"
-              id="undo-limit"
-              value={String(undoLimit)}
-              onChange={(e) => setUndoLimit(parseUndoLimit(e.target.value))}
-            >
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="3">3</option>
-              <option value="5">5</option>
-              <option value="unlimited">Unlimited</option>
-            </select>
-            <small className="hint">
-              For MVP we can enforce in UI; later we can also record undos used
-              for stats.
-            </small>
-          </label>
-
-          <label className="field">
-            Foundation pullback
-            <select
-              className="control"
-              id="foundation-pullback"
-              value={allowFoundationPullback ? "on" : "off"}
-              onChange={(e) =>
-                setAllowFoundationPullback(e.target.value === "on")
-              }
-            >
-              <option value="on">On (easier)</option>
-              <option value="off">Off (harder)</option>
-            </select>
-            <small className="hint">
-              When enabled, top foundation card can move to tableau/freecell.
-            </small>
-          </label>
-        </div>
+        {isUser ? (
+          <p>DISPLAY NAME</p>
+        ) : (
+          <p className="hint">Log in to access account settings.</p>
+        )}
       </section>
 
       <section>

@@ -1,6 +1,6 @@
 export default function HowToPlayPage() {
   return (
-    <main className="max-width-container prose">
+    <main className="prose">
       <header>
         <h1>How to Play</h1>
       </header>
