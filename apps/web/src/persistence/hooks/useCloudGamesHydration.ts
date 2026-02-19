@@ -184,6 +184,12 @@ export function useCloudGamesHydration(uid: string | null) {
           }))
         });
 
+        // Ignore cache snapshots; only hydrate from server-confirmed data.
+        if (snap.metadata.fromCache) {
+          console.log("[cloud hydration] ignoring cache snapshot");
+          return;
+        }
+
         handleSnapshot(snap).catch((err) => {
           console.error("[cloud hydration] failed to apply snapshot", err);
         });
