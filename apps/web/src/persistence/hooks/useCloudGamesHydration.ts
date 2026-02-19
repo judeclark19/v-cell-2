@@ -141,7 +141,7 @@ export function useCloudGamesHydration(uid: string | null) {
             userId: uid
           } satisfies PersistedGame;
 
-          await upsertCompletedGame(payload);
+          await upsertCompletedGame(payload, "cloud hydration");
         }
       }
     };

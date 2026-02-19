@@ -68,13 +68,19 @@ export function useCompletedGamesPersistence({
       for (const g of pending) {
         try {
           const gameToPersist = uid ? { ...g, userId: uid } : g;
-          await upsertCompletedGame(gameToPersist);
+          await upsertCompletedGame(
+            gameToPersist,
+            "useCompletedGamesPersistence effect"
+          );
           persistedIds.add(g.gameId);
 
           const deviceId = getOrCreateDeviceId();
 
           // Once a game is persisted as completed, it should no longer be “in progress”.
-          await deleteInProgressGameForDevice(deviceId).catch(() => {});
+          await deleteInProgressGameForDevice(
+            deviceId,
+            "useCompletedGamesPersistence effect"
+          ).catch(() => {});
         } catch {
           // Ignore write failures; game still exists in-memory.
         }

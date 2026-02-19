@@ -209,7 +209,10 @@ export function useInProgressGamePersistence({
     const deviceId = getOrCreateDeviceId();
 
     if (isWon || isAbandoned) {
-      deleteInProgressGameForDevice(deviceId);
+      deleteInProgressGameForDevice(
+        deviceId,
+        "useInProgressGamePersistence effect"
+      );
       if (uid) {
         deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
       }
@@ -221,80 +224,8 @@ export function useInProgressGamePersistence({
       moveCount > 0 ||
       (moves?.length ?? 0) > 0 ||
       startedAtMs != null;
-    if (!looksStarted) {
-      // Transient resets can happen during login/session switches.
-      // If we *did* hydrate a saved record for this session, NEVER delete on a looksStarted=false window.
-      if (hasSavedRef.current) {
-        if (pendingDeleteTimerRef.current != null) {
-          window.clearTimeout(pendingDeleteTimerRef.current);
-          pendingDeleteTimerRef.current = null;
-        }
 
-        return;
-      }
-
-      // No saved record; a looksStarted=false game is truly empty, so we can clear after a short grace.
-      if (pendingDeleteTimerRef.current != null) {
-        return;
-      }
-
-      console.error(
-        "[in-progress persist] looksStarted=false -> scheduling delete (no saved)",
-        {
-          deviceId,
-          uid,
-          gameId,
-          hasStarted,
-          moveCount,
-          movesLen: moves?.length ?? 0,
-          startedAtMs,
-          paused,
-          isWon,
-          isAbandoned
-        }
-      );
-
-      pendingDeleteTimerRef.current = window.setTimeout(() => {
-        pendingDeleteTimerRef.current = null;
-
-        // If we got disarmed in the meantime, bail.
-        if (!inProgressHydratedRef.current) return;
-        if (hydratedSessionKeyRef.current !== sessionKey) return;
-
-        // If a saved record appeared later (e.g. async hydrate), do not delete.
-        if (hasSavedRef.current) {
-          return;
-        }
-
-        const stillLooksStarted =
-          hasStarted ||
-          moveCount > 0 ||
-          (moves?.length ?? 0) > 0 ||
-          startedAtMs != null;
-
-        console.error(
-          "[in-progress persist] looksStarted still false after grace -> DELETING",
-          {
-            deviceId,
-            uid,
-            gameId
-          }
-        );
-
-        deleteInProgressGameForDevice(deviceId);
-        if (uid) {
-          deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
-        }
-      }, 750);
-
-      return;
-    } else {
-      // If we became started again, cancel any pending delete.
-      if (pendingDeleteTimerRef.current != null) {
-        window.clearTimeout(pendingDeleteTimerRef.current);
-        pendingDeleteTimerRef.current = null;
-      }
-    }
+    if (!looksStarted) return;
 
     const payload = {
       gameId,
@@ -360,6 +291,7 @@ export function useInProgressGamePersistence({
       moveCount > 0 ||
       (moves?.length ?? 0) > 0 ||
       startedAtMs != null;
+    console.log("LOOKS STARTED?", looksStarted);
     if (!looksStarted) return;
     if (paused) return;
 

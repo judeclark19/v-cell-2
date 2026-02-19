@@ -35,8 +35,12 @@ export async function getAllCompletedGames(): Promise<PersistedGame[]> {
  *
  * Uses `put` so retries are idempotent by `gameId`.
  */
-export async function upsertCompletedGame(game: PersistedGame): Promise<void> {
+export async function upsertCompletedGame(
+  game: PersistedGame,
+  source: string
+): Promise<void> {
   if (typeof window === "undefined") return;
+  console.log("upserting completed game called by", source, game.gameId);
 
   const db = await openVCellDb();
 

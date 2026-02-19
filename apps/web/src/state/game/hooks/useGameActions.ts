@@ -264,7 +264,10 @@ export function useGameActions({
 
       const start = () => {
         const deviceId = getOrCreateDeviceId();
-        deleteInProgressGameForDevice(deviceId).catch(() => {});
+        deleteInProgressGameForDevice(
+          deviceId,
+          "useGameActions abandonIfNeededThenStart"
+        ).catch(() => {});
         startNext();
       };
 

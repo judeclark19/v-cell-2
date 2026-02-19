@@ -73,6 +73,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const userRef = doc(db, "users", uid);
         const snap = await getDoc(userRef);
         const isFirstSignup = !snap.exists();
+        console.log("logged in");
+        console.log(userRef);
 
         // Ensure a user profile doc exists. Firestore collections appear when a doc is written.
         // Keep it minimal for now; add username/profile fields later.
