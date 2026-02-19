@@ -116,6 +116,7 @@ function Board() {
         onUndo={vm.undo}
         canUndo={vm.canUndo}
         undosRemaining={vm.undosRemaining}
+        startBySeed={vm.startBySeed}
       />
     </>
   );

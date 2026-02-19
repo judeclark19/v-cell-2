@@ -61,12 +61,14 @@ export type UseGameActionsParams = {
 
   // Session transition
   startNewDealSession: () => void;
+  replaySeed: (seed: string) => void;
 };
 
 export type UseGameActionsResult = {
   dispatchMove: (move: Move) => void;
   restart: () => void;
   newDeal: () => void;
+  startBySeed: (seed: string) => void;
   undo: () => void;
 };
 
@@ -112,7 +114,8 @@ export function useGameActions({
   timeElapsedMs,
   startedAtMs,
 
-  startNewDealSession
+  startNewDealSession,
+  replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -254,80 +257,98 @@ export function useGameActions({
     movesRef
   ]);
 
+  const abandonIfNeededThenStart = useCallback(
+    (startNext: () => void) => {
+      // If a game is in progress, abandon it first so it gets archived.
+      const isFinished = isWon || isAbandoned || endedAtMs != null;
+
+      const start = () => {
+        const deviceId = getOrCreateDeviceId();
+        deleteInProgressGameForDevice(deviceId).catch(() => {});
+        startNext();
+      };
+
+      if (hasStarted && !isFinished) {
+        const ended = Date.now();
+
+        setIsAbandoned(true);
+        setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+        const archivedCursor = cursorRef.current;
+        const archivedMoves = movesRef.current;
+
+        setCompletedGames((prev) => {
+          if (prev.some((g) => g.gameId === gameId)) return prev;
+          return [
+            ...prev,
+            {
+              gameId,
+              deviceId: getOrCreateDeviceId(),
+              seed,
+              rules: state.rules,
+              kind: "freeplay",
+
+              status: "abandoned",
+
+              startedAtMs,
+              endedAtMs: ended,
+              timeElapsedMs,
+              hasStarted: true,
+              paused: false,
+
+              moveCount: archivedCursor,
+              undosUsed,
+              moves: archivedMoves,
+              cursor: archivedCursor,
+
+              updatedAtMs: Date.now()
+            }
+          ];
+        });
+
+        start();
+        return;
+      }
+
+      // Otherwise just start immediately.
+      start();
+    },
+    [
+      isWon,
+      isAbandoned,
+      endedAtMs,
+      hasStarted,
+      setIsAbandoned,
+      setEndedAtMs,
+      setCompletedGames,
+      gameId,
+      seed,
+      state.rules,
+      startedAtMs,
+      timeElapsedMs,
+      undosUsed,
+      cursorRef,
+      movesRef
+    ]
+  );
+
   const newDeal = useCallback(() => {
-    // If a game is in progress, abandon it first so it gets archived.
-    const isFinished = isWon || isAbandoned || endedAtMs != null;
-
-    const deal = () => {
-      const deviceId = getOrCreateDeviceId();
-      deleteInProgressGameForDevice(deviceId).catch(() => {});
+    abandonIfNeededThenStart(() => {
       startNewDealSession();
-    };
+    });
+  }, [abandonIfNeededThenStart, startNewDealSession]);
 
-    if (hasStarted && !isFinished) {
-      const ended = Date.now();
+  const startBySeed = useCallback(
+    (nextSeed: string) => {
+      const normalized = nextSeed.trim();
+      if (!normalized) return;
 
-      setIsAbandoned(true);
-      setEndedAtMs((prev) => (prev == null ? ended : prev));
-
-      const archivedCursor = cursorRef.current;
-      const archivedMoves = movesRef.current;
-
-      setCompletedGames((prev) => {
-        if (prev.some((g) => g.gameId === gameId)) return prev;
-        return [
-          ...prev,
-          {
-            gameId,
-            deviceId: getOrCreateDeviceId(),
-            seed,
-            rules: state.rules,
-            kind: "freeplay",
-
-            status: "abandoned",
-
-            startedAtMs,
-            endedAtMs: ended,
-            timeElapsedMs,
-            hasStarted: true,
-            paused: false,
-
-            moveCount: archivedCursor,
-            undosUsed,
-            moves: archivedMoves,
-            cursor: archivedCursor,
-
-            updatedAtMs: Date.now()
-          }
-        ];
+      abandonIfNeededThenStart(() => {
+        replaySeed(normalized);
       });
-
-      // Now actually start the new deal immediately.
-      deal();
-      return;
-    }
-
-    // Otherwise just start immediately.
-    deal();
-  }, [
-    isWon,
-    isAbandoned,
-    endedAtMs,
-    hasStarted,
-    setIsAbandoned,
-    setEndedAtMs,
-    setCompletedGames,
-    gameId,
-    seed,
-    state.rules,
-    startedAtMs,
-    timeElapsedMs,
-    undosUsed,
-
-    cursorRef,
-    startNewDealSession,
-    movesRef
-  ]);
+    },
+    [abandonIfNeededThenStart, replaySeed]
+  );
 
   const undo = useCallback(() => {
     // Once the game is won, undo is disabled.
@@ -370,5 +391,5 @@ export function useGameActions({
     movesRef
   ]);
 
-  return { dispatchMove, restart, newDeal, undo };
+  return { dispatchMove, restart, newDeal, startBySeed, undo };
 }

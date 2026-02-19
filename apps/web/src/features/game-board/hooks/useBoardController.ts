@@ -35,6 +35,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     newDeal,
     restart,
     replaySeed,
+    startBySeed,
     seedReady,
     historyReady,
     timeElapsedMs,
@@ -254,7 +255,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     restartNoFlip,
     isWon,
     seed: state.seed,
-    replaceSeed: replaySeed
+    replaySeed
   });
 
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
@@ -419,6 +420,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     timeElapsedMs,
     hasStarted,
     moveCount,
+    startBySeed,
     // derived/wiring
     playable,
     legalMoves,

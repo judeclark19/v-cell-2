@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useGame } from "@/state/game/GameProvider";
 import { UndoLimit } from "@vcell/engine";
+import SeedButton from "@/ui/SeedButton";
 
 type BoardControlsProps = {
   seed: string;
@@ -9,6 +10,7 @@ type BoardControlsProps = {
   onUndo: () => void;
   canUndo: boolean;
   undosRemaining: number;
+  startBySeed: (seed: string) => void;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -30,11 +32,10 @@ export default function BoardControls({
   onRestart,
   onUndo,
   canUndo,
-  undosRemaining
+  undosRemaining,
+  startBySeed
 }: BoardControlsProps) {
   const {
-    showTimer,
-    setShowTimer,
     allowFoundationPullback,
     setAllowFoundationPullback,
     undoLimit,
@@ -42,6 +43,7 @@ export default function BoardControls({
     faceDownCount,
     setFaceDownCount
   } = useGame();
+  console.log("BoardControls render", { seed, undoLimit, faceDownCount });
 
   const [seedInput, setSeedInput] = useState("");
 
@@ -71,7 +73,7 @@ export default function BoardControls({
         </div>
 
         <p className="hint" style={{ textAlign: "center" }}>
-          Current seed: {seed || "(unknown)"}
+          Current seed: {seed ? <SeedButton seed={seed} /> : "(unknown)"}
         </p>
       </section>
 
@@ -109,14 +111,17 @@ export default function BoardControls({
             <button
               type="button"
               className="btn btn--secondary"
-              disabled
-              title="Coming soon"
+              disabled={!seedInput.trim()}
+              onClick={() => {
+                startBySeed(seedInput);
+                setSeedInput("");
+              }}
             >
               Play seed
             </button>
           </div>
           <small className="hint">
-            Coming soon: start a new game from the provided seed.
+            Start a new game from the provided seed.
           </small>
         </label>
       </section>

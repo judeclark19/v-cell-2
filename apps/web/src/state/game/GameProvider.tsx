@@ -29,6 +29,7 @@ type GameContextValue = {
   restart: () => void;
   newDeal: () => void;
   replaySeed: (seed: string) => void;
+  startBySeed: (seed: string) => void;
   undo: () => void;
   canUndo: boolean;
   undoLimit: UndoLimit;
@@ -271,7 +272,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-  const { dispatchMove, restart, newDeal, undo } = useGameActions({
+  const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
     state,
     history,
     setHistory,
@@ -310,7 +311,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timeElapsedMs,
     startedAtMs,
 
-    startNewDealSession
+    startNewDealSession,
+    replaySeed
   });
 
   const newDealRef = useRef(newDeal);
@@ -366,6 +368,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     restart,
     newDeal,
     replaySeed,
+    startBySeed,
     undo,
     canUndo,
     undoLimit,

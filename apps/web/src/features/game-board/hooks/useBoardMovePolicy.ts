@@ -29,7 +29,7 @@ export type UseBoardMovePolicyArgs<
   seed: string;
 
   /** Optional: start a new session with the same seed (new gameId). */
-  replaceSeed?: (seed: string) => void;
+  replaySeed?: (seed: string) => void;
 };
 
 export type UseBoardMovePolicyResult<
@@ -44,10 +44,10 @@ export type UseBoardMovePolicyResult<
   /** New deal (always new seed) with celebration reset. */
   newDealWithCelebration: () => void;
 
-  /** Restart with celebration reset. If won and replaceSeed is provided, replay same seed with new gameId. */
+  /** Restart with celebration reset. If won and replaySeed is provided, replay same seed with new gameId. */
   restartWithCelebration: () => void;
 
-  /** Replay the current seed with a new gameId (only available when replaceSeed is provided). */
+  /** Replay the current seed with a new gameId (only available when replaySeed is provided). */
   replaySeedWithCelebration: () => void;
 };
 
@@ -70,7 +70,7 @@ export function useBoardMovePolicy<
   restartNoFlip,
   isWon,
   seed,
-  replaceSeed
+  replaySeed
 }: UseBoardMovePolicyArgs<TOnDrop>): UseBoardMovePolicyResult<TOnDrop> {
   const suppressFlipOnceNextRef = useRef<(() => void) | null>(null);
 
@@ -102,15 +102,15 @@ export function useBoardMovePolicy<
   }, [clearCelebration, newDealNoFlip]);
 
   const replaySeedWithCelebration = useCallback(() => {
-    if (!replaceSeed) return;
+    if (!replaySeed) return;
     clearCelebration();
-    replaceSeed(seed);
-  }, [clearCelebration, replaceSeed, seed]);
+    replaySeed(seed);
+  }, [clearCelebration, replaySeed, seed]);
 
   const restartWithCelebration = useCallback(() => {
     // After a win, "restart" means "replay this deal" (same seed, new gameId),
     // if the engine provides that action.
-    if (isWon && replaceSeed) {
+    if (isWon && replaySeed) {
       replaySeedWithCelebration();
       return;
     }
@@ -119,7 +119,7 @@ export function useBoardMovePolicy<
     restartNoFlip();
   }, [
     isWon,
-    replaceSeed,
+    replaySeed,
     replaySeedWithCelebration,
     clearCelebration,
     restartNoFlip
