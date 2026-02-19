@@ -43,7 +43,6 @@ export default function BoardControls({
     faceDownCount,
     setFaceDownCount
   } = useGame();
-  console.log("BoardControls render", { seed, undoLimit, faceDownCount });
 
   const [seedInput, setSeedInput] = useState("");
 

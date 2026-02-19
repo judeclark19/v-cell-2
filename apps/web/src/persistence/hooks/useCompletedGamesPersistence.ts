@@ -74,6 +74,14 @@ export function useCompletedGamesPersistence({
           const deviceId = getOrCreateDeviceId();
 
           // Once a game is persisted as completed, it should no longer be “in progress”.
+          console.warn(
+            "[completed persist] deleting in-progress because a completed game was persisted",
+            {
+              deviceId,
+              completedGameId: g.gameId,
+              completedStatus: g.status
+            }
+          );
           await deleteInProgressGameForDevice(deviceId).catch(() => {});
         } catch {
           // Ignore write failures; game still exists in-memory.
@@ -101,6 +109,11 @@ export function useCompletedGamesPersistence({
             { merge: true }
           );
           synced.add(g.gameId);
+          console.log("[completed sync] writing to firestore", {
+            uid,
+            count: completedGames.length,
+            ids: completedGames.map((g) => g.gameId).slice(0, 5)
+          });
         } catch {
           // ignore; try later
         }

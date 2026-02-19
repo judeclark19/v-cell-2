@@ -150,6 +150,15 @@ export function useInProgressGamePersistence({
     const deviceId = getOrCreateDeviceId();
 
     if (isWon || isAbandoned) {
+      console.warn(
+        "[in-progress persist] deleting in-progress (won/abandoned)",
+        {
+          deviceId,
+          gameId,
+          isWon,
+          isAbandoned
+        }
+      );
       deleteInProgressGameForDevice(deviceId);
       if (uid) {
         deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
@@ -157,7 +166,20 @@ export function useInProgressGamePersistence({
       return;
     }
 
-    if (!hasStarted) {
+    console.log("[in-progress persist] started flags", {
+      hasStarted,
+      moveCount,
+      movesLen: moves?.length ?? 0,
+      startedAtMs
+    });
+
+    const looksStarted =
+      hasStarted ||
+      moveCount > 0 ||
+      (moves?.length ?? 0) > 0 ||
+      startedAtMs != null;
+
+    if (!looksStarted) {
       deleteInProgressGameForDevice(deviceId);
       if (uid) {
         deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
@@ -182,7 +204,7 @@ export function useInProgressGamePersistence({
       cursor,
       status: "in_progress" as const,
       timeElapsedMs: timeElapsedMsRef.current ?? 0,
-      hasStarted,
+      hasStarted: looksStarted,
       startedAtMs,
       endedAtMs,
       paused,
@@ -228,7 +250,12 @@ export function useInProgressGamePersistence({
     if (!inProgressHydratedRef.current) return;
 
     if (isWon || isAbandoned) return;
-    if (!hasStarted) return;
+    const looksStarted =
+      hasStarted ||
+      moveCount > 0 ||
+      (moves?.length ?? 0) > 0 ||
+      startedAtMs != null;
+    if (!looksStarted) return;
     if (paused) return;
 
     const deviceId = getOrCreateDeviceId();
@@ -243,6 +270,8 @@ export function useInProgressGamePersistence({
       //   timeElapsedMs: timeElapsedMsRef.current
       // });
 
+      if (!looksStarted) return;
+
       upsertInProgressGame({
         gameId,
         deviceId,
@@ -253,7 +282,7 @@ export function useInProgressGamePersistence({
         cursor,
         status: "in_progress",
         timeElapsedMs: timeElapsedMsRef.current ?? 0,
-        hasStarted,
+        hasStarted: looksStarted,
         startedAtMs,
         endedAtMs,
         paused,

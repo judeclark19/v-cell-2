@@ -56,6 +56,8 @@ export async function deleteInProgressGameForDevice(
   deviceId: string
 ): Promise<void> {
   if (typeof window === "undefined") return;
+  console.warn("[IDXDB] deleteInProgressGameForDevice called", { deviceId });
+  console.trace("[IDXDB] deleteInProgressGameForDevice stack");
   const db = await openVCellDb();
 
   return new Promise((resolve, reject) => {

@@ -22,6 +22,23 @@ import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgr
 import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
+import { db } from "@/lib/firebaseClient";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+  doc,
+  setDoc
+} from "firebase/firestore";
+import {
+  getInProgressGameForDevice,
+  upsertInProgressGame
+} from "@/persistence/inProgressGamesStore";
+import { getOrCreateDeviceId } from "@/persistence/schema";
+
 type GameContextValue = {
   state: GameState;
   isWon: boolean;
@@ -163,25 +180,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/gameId/seedReady + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { seed, gameId, seedReady, startNewDealSession, replaySeed } =
-    useGameSession({
-      rules,
-      allowFoundationPullback,
-      undoLimit,
-      faceDownCount,
-      setHistory,
-      setTimeElapsedMs,
-      setHasStarted,
-      setStartedAtMs,
-      setEndedAtMs,
-      setIsAbandoned,
-      setUndosUsed,
-      setMoveCount,
-      setMoves,
-      setCursor,
-      cursorRef,
-      setCheckpoint
-    });
+  const {
+    seed,
+    gameId,
+    seedReady,
+    startNewDealSession,
+    replaySeed,
+    startSession
+  } = useGameSession({
+    rules,
+    allowFoundationPullback,
+    undoLimit,
+    faceDownCount,
+    setHistory,
+    setTimeElapsedMs,
+    setHasStarted,
+    setStartedAtMs,
+    setEndedAtMs,
+    setIsAbandoned,
+    setUndosUsed,
+    setMoveCount,
+    setMoves,
+    setCursor,
+    cursorRef,
+    setCheckpoint
+  });
 
   const historyReady = seedReady && hydratedGameId === gameId;
 
@@ -256,6 +279,96 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setMoveCount,
     setUndosUsed
   });
+
+  const didReconcileOnLoginRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!seedReady) return;
+    if (!uid) return;
+
+    // Only run once per uid per page load.
+    if (didReconcileOnLoginRef.current === uid) return;
+    didReconcileOnLoginRef.current = uid;
+
+    let cancelled = false;
+
+    (async () => {
+      const deviceId = getOrCreateDeviceId();
+
+      // 1) Check cloud for an in-progress game for THIS device.
+      const gamesCol = collection(db, "users", uid, "games");
+      const q = query(
+        gamesCol,
+        where("status", "==", "in_progress"),
+        where("deviceId", "==", deviceId),
+        orderBy("updatedAtMs", "desc"),
+        limit(1)
+      );
+
+      const snap = await getDocs(q);
+      if (cancelled) return;
+
+      const cloudDoc = snap.docs[0];
+
+      if (cloudDoc) {
+        // Cloud wins: hydrate local, then switch the running session to it.
+        const raw = cloudDoc.data() as PersistedGame;
+        const cloudGameId = (raw.gameId as string | undefined) ?? cloudDoc.id;
+
+        const payload: PersistedGame = {
+          ...(raw as PersistedGame),
+          gameId: cloudGameId,
+          deviceId,
+          userId: uid
+        };
+
+        // Put it in IndexedDB so the normal hydration path can rebuild history/moves.
+        await upsertInProgressGame(payload);
+
+        if (cancelled) return;
+
+        // Force the active session to match the cloud record.
+        setHydratedGameId(null);
+        startSession({
+          kind: "seed+id",
+          seed: payload.seed,
+          gameId: payload.gameId
+        });
+
+        return;
+      }
+
+      // 2) No cloud in-progress for this device:
+      // Attribute the current local in-progress game to the user and push once.
+      const local = await getInProgressGameForDevice(deviceId);
+      if (cancelled) return;
+      if (!local) return;
+
+      // Only push if it’s actually an active in-progress game.
+      if (local.status !== "in_progress") return;
+      if (!local.hasStarted) return;
+
+      const payload: PersistedGame = {
+        ...local,
+        deviceId,
+        userId: uid
+      };
+
+      await upsertInProgressGame(payload);
+      if (cancelled) return;
+
+      // Push ONCE on login (your per-second persistence does not write to Firestore).
+      await setDoc(doc(db, "users", uid, "games", payload.gameId), payload, {
+        merge: true
+      });
+    })().catch((err) => {
+      console.error("[login reconcile] failed", err);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, seedReady, startSession]);
 
   // ---------------------------------------------------------------------------
   // Timer loop

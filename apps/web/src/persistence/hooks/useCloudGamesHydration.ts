@@ -173,6 +173,17 @@ export function useCloudGamesHydration(uid: string | null) {
     unsubRef.current = onSnapshot(
       q,
       (snap) => {
+        console.log("[cloud hydration] snapshot fired", {
+          uid,
+          fromCache: snap.metadata.fromCache,
+          size: snap.size,
+          docs: snap.docs.map((d) => ({
+            id: d.id,
+            status: d.data().status,
+            deviceId: d.data().deviceId
+          }))
+        });
+
         handleSnapshot(snap).catch((err) => {
           console.error("[cloud hydration] failed to apply snapshot", err);
         });
