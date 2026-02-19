@@ -68,8 +68,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!authReady) return;
     if (!uid) return;
 
-    console.log("[session] logged in as", uid);
-
     (async () => {
       try {
         const userRef = doc(db, "users", uid);

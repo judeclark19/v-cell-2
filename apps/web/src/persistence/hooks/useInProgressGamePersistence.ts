@@ -112,11 +112,6 @@ export function useInProgressGamePersistence({
         window.clearTimeout(pendingDeleteTimerRef.current);
         pendingDeleteTimerRef.current = null;
       }
-
-      console.log("[in-progress persist] disarming due to session change", {
-        prevSessionKey,
-        nextSessionKey: sessionKey
-      });
     }
   }, [sessionKey]);
 
@@ -127,51 +122,6 @@ export function useInProgressGamePersistence({
     startedAtMs: number | null;
     gameId: string;
   } | null>(null);
-
-  const logStartedDelta = (label: string) => {
-    const next = {
-      hasStarted,
-      moveCount,
-      movesLen: moves?.length ?? 0,
-      startedAtMs,
-      gameId
-    };
-
-    const prev = lastSeenRef.current;
-
-    // Always store latest
-    lastSeenRef.current = next;
-
-    // If first run, just log baseline
-    if (!prev) {
-      console.log(`[in-progress persist][delta] ${label} (baseline)`, next);
-      return;
-    }
-
-    // Only log when something important changes (esp. resets)
-    const changed =
-      prev.hasStarted !== next.hasStarted ||
-      prev.moveCount !== next.moveCount ||
-      prev.movesLen !== next.movesLen ||
-      prev.startedAtMs !== next.startedAtMs ||
-      prev.gameId !== next.gameId;
-
-    if (changed) {
-      console.warn(`[in-progress persist][delta] ${label}`, { prev, next });
-      if (
-        (prev.hasStarted ||
-          prev.moveCount > 0 ||
-          prev.movesLen > 0 ||
-          prev.startedAtMs != null) &&
-        !next.hasStarted &&
-        next.moveCount === 0 &&
-        next.movesLen === 0 &&
-        next.startedAtMs == null
-      ) {
-        console.trace("[in-progress persist][delta] RESET detected");
-      }
-    }
-  };
 
   // ---------------------------------------------------------------------------
   // Hydrate in-progress game (IndexedDB)
@@ -200,18 +150,7 @@ export function useInProgressGamePersistence({
         inProgressHydratedRef.current = true;
         hydratedSessionKeyRef.current = sessionKey;
         setHydrationVersion((v) => v + 1);
-        console.log("[in-progress hydrate] loaded from IDXDB", {
-          deviceId,
-          hasSaved: !!saved,
-          savedGameId: saved?.gameId ?? null,
-          savedHasStarted: saved?.hasStarted ?? null,
-          savedMoveCount: saved?.moveCount ?? null,
-          savedMovesLen: saved?.moves?.length ?? null,
-          savedCursor: saved?.cursor ?? null,
-          savedStartedAtMs: saved?.startedAtMs ?? null,
-          savedStatus: saved?.status ?? null,
-          savedPaused: saved?.paused ?? null
-        });
+
         if (!saved) {
           onHydrated?.(null);
           return;
@@ -270,29 +209,12 @@ export function useInProgressGamePersistence({
     const deviceId = getOrCreateDeviceId();
 
     if (isWon || isAbandoned) {
-      console.warn(
-        "[in-progress persist] deleting in-progress (won/abandoned)",
-        {
-          deviceId,
-          gameId,
-          isWon,
-          isAbandoned
-        }
-      );
       deleteInProgressGameForDevice(deviceId);
       if (uid) {
         deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
       }
       return;
     }
-
-    console.log("[in-progress persist] started flags", {
-      hasStarted,
-      moveCount,
-      movesLen: moves?.length ?? 0,
-      startedAtMs
-    });
-    logStartedDelta("per-move effect (before looksStarted)");
 
     const looksStarted =
       hasStarted ||
@@ -307,18 +229,7 @@ export function useInProgressGamePersistence({
           window.clearTimeout(pendingDeleteTimerRef.current);
           pendingDeleteTimerRef.current = null;
         }
-        console.warn(
-          "[in-progress persist] looksStarted=false but saved exists; skipping delete",
-          {
-            deviceId,
-            uid,
-            gameId,
-            hasStarted,
-            moveCount,
-            movesLen: moves?.length ?? 0,
-            startedAtMs
-          }
-        );
+
         return;
       }
 
@@ -361,14 +272,6 @@ export function useInProgressGamePersistence({
           (moves?.length ?? 0) > 0 ||
           startedAtMs != null;
 
-        if (stillLooksStarted) {
-          console.log(
-            "[in-progress persist] looksStarted recovered during grace window; not deleting",
-            { gameId }
-          );
-          return;
-        }
-
         console.error(
           "[in-progress persist] looksStarted still false after grace -> DELETING",
           {
@@ -376,9 +279,6 @@ export function useInProgressGamePersistence({
             uid,
             gameId
           }
-        );
-        console.trace(
-          "[in-progress persist] delete due to looksStarted=false (post-grace)"
         );
 
         deleteInProgressGameForDevice(deviceId);
@@ -395,13 +295,6 @@ export function useInProgressGamePersistence({
         pendingDeleteTimerRef.current = null;
       }
     }
-
-    console.log("[in-progress persist] writing snapshot (per-move)", {
-      gameId,
-      moveCount,
-      undosUsed,
-      timeElapsedMs: timeElapsedMsRef.current
-    });
 
     const payload = {
       gameId,
@@ -469,19 +362,11 @@ export function useInProgressGamePersistence({
       startedAtMs != null;
     if (!looksStarted) return;
     if (paused) return;
-    logStartedDelta("1s effect (pre-interval)");
 
     const deviceId = getOrCreateDeviceId();
 
     const id = window.setInterval(() => {
       if (!inProgressHydratedRef.current) return;
-      logStartedDelta("1s effect (inside interval tick)");
-      // console.log("[in-progress persist] writing snapshot (1s)", {
-      //   gameId,
-      //   moveCount,
-      //   undosUsed,
-      //   timeElapsedMs: timeElapsedMsRef.current
-      // });
 
       if (!looksStarted) return;
 

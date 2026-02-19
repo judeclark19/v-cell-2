@@ -112,27 +112,12 @@ export function useCloudGamesHydration(uid: string | null) {
         }
 
         if (isInProgress(status)) {
-          if (!hasInProgressFields(data)) {
-            console.warn(
-              "[cloud hydration] skipping in-progress doc with missing fields",
-              {
-                gameId,
-                keys: Object.keys(data)
-              }
-            );
-            continue;
-          }
+          if (!hasInProgressFields(data)) continue;
 
           // In-progress is per-device. Only hydrate the in-progress game that
           // belongs to THIS device; otherwise devices will overwrite each other.
           const cloudDeviceId = data.deviceId;
-          if (typeof cloudDeviceId !== "string") {
-            console.warn(
-              "[cloud hydration] skipping in-progress doc without deviceId",
-              { gameId, keys: Object.keys(data) }
-            );
-            continue;
-          }
+          if (typeof cloudDeviceId !== "string") continue;
           if (cloudDeviceId !== localDeviceId) {
             // Another device's in-progress game; ignore for local single-slot store.
             continue;
@@ -148,16 +133,7 @@ export function useCloudGamesHydration(uid: string | null) {
 
           await upsertInProgressGame(payload);
         } else {
-          if (!hasCompletedFields(data)) {
-            console.warn(
-              "[cloud hydration] skipping completed doc with missing fields",
-              {
-                gameId,
-                keys: Object.keys(data)
-              }
-            );
-            continue;
-          }
+          if (!hasCompletedFields(data)) continue;
 
           const payload = {
             ...(data as unknown as PersistedGame),
@@ -173,22 +149,8 @@ export function useCloudGamesHydration(uid: string | null) {
     unsubRef.current = onSnapshot(
       q,
       (snap) => {
-        console.log("[cloud hydration] snapshot fired", {
-          uid,
-          fromCache: snap.metadata.fromCache,
-          size: snap.size,
-          docs: snap.docs.map((d) => ({
-            id: d.id,
-            status: d.data().status,
-            deviceId: d.data().deviceId
-          }))
-        });
-
         // Ignore cache snapshots; only hydrate from server-confirmed data.
-        if (snap.metadata.fromCache) {
-          console.log("[cloud hydration] ignoring cache snapshot");
-          return;
-        }
+        if (snap.metadata.fromCache) return;
 
         handleSnapshot(snap).catch((err) => {
           console.error("[cloud hydration] failed to apply snapshot", err);

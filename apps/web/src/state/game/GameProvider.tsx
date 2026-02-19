@@ -219,51 +219,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undosUsed
   });
 
-  useEffect(() => {
-    console.log("[GameProvider] session state", {
-      uid,
-      seedReady,
-      gameId,
-      seed,
-      hasStarted,
-      moveCount,
-      movesLen: moves.length,
-      startedAtMs,
-      paused,
-      isAbandoned,
-      isWon
-    });
-  }, [
-    uid,
-    seedReady,
-    gameId,
-    seed,
-    hasStarted,
-    moveCount,
-    moves.length,
-    startedAtMs,
-    paused,
-    isAbandoned,
-    isWon
-  ]);
-
   const onInProgressHydrated = useCallback(
     (saved: PersistedGame | null) => {
-      console.log("[GameProvider] onInProgressHydrated", {
-        incoming: saved
-          ? {
-              gameId: saved.gameId,
-              hasStarted: saved.hasStarted,
-              moveCount: saved.moveCount,
-              movesLen: saved.moves?.length ?? 0,
-              cursor: saved.cursor,
-              startedAtMs: saved.startedAtMs,
-              status: saved.status,
-              paused: saved.paused
-            }
-          : null,
-        currentGameId: gameId
-      });
       if (!saved) {
         setHydratedGameId(gameId);
         return;
@@ -337,7 +294,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      console.log("[login reconcile] start", { uid });
       const deviceId = getOrCreateDeviceId();
 
       // 1) Check cloud for an in-progress game for THIS device.
@@ -365,28 +321,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
 
       const cloudDoc = snap.docs[0];
-
-      if (cloudDoc) {
-        const raw = cloudDoc.data() as PersistedGame;
-        console.log("[login reconcile] cloud doc summary", {
-          id: cloudDoc.id,
-          gameId: raw.gameId ?? cloudDoc.id,
-          deviceId: raw.deviceId,
-          status: raw.status,
-          hasStarted: raw.hasStarted,
-          moveCount: raw.moveCount,
-          movesLen: raw.moves?.length ?? 0,
-          cursor: raw.cursor,
-          startedAtMs: raw.startedAtMs,
-          updatedAtMs: raw.updatedAtMs,
-          fromCache: snap.metadata?.fromCache
-        });
-      } else {
-        console.log("[login reconcile] no cloud doc", {
-          fromCache: snap.metadata?.fromCache,
-          size: snap.size
-        });
-      }
 
       if (cloudDoc) {
         // Cloud wins: hydrate local, then switch the running session to it.
@@ -419,24 +353,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       // 2) No cloud in-progress for this device:
       // Attribute the current local in-progress game to the user and push once.
       const local = await getInProgressGameForDevice(deviceId);
-      console.log(
-        "[login reconcile] local IDXDB summary",
-        local
-          ? {
-              gameId: local.gameId,
-              status: local.status,
-              hasStarted: local.hasStarted,
-              moveCount: local.moveCount,
-              movesLen: local.moves?.length ?? 0,
-              cursor: local.cursor,
-              startedAtMs: local.startedAtMs,
-              paused: local.paused,
-              updatedAtMs: local.updatedAtMs
-            }
-          : null
-      );
+
       if (cancelled) return;
-      console.log("[login reconcile] local?", local?.gameId, local?.hasStarted);
       if (!local) return;
 
       // Only push if it’s actually an active in-progress game.
