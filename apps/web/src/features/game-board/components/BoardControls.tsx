@@ -54,20 +54,20 @@ export default function BoardControls({
           <button
             type="button"
             className="btn btn--secondary"
+            onClick={onRestart}
+          >
+            Restart deal
+          </button>
+
+          <button
+            type="button"
+            className="btn btn--secondary"
             onClick={onUndo}
             disabled={!canUndo}
           >
             {undoLimit === "unlimited" || undoLimit === 0
               ? "Undo"
               : `Undo (${undosRemaining})`}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={onRestart}
-          >
-            Restart deal
           </button>
         </div>
 

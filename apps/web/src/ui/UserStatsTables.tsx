@@ -13,7 +13,14 @@ export type GameStats = {
 
 const tableStyle: React.CSSProperties = {
   width: "100%",
-  borderCollapse: "collapse"
+  borderCollapse: "collapse",
+  minWidth: 560
+};
+
+const tableWrapperStyle: React.CSSProperties = {
+  width: "100%",
+  overflowX: "auto",
+  WebkitOverflowScrolling: "touch"
 };
 
 const thTdStyle: React.CSSProperties = {
@@ -23,30 +30,32 @@ const thTdStyle: React.CSSProperties = {
 };
 
 const renderGamesTable = (rows: PersistedGame[]) => (
-  <table style={tableStyle}>
-    <thead>
-      <tr>
-        <th style={thTdStyle}>Seed</th>
-        <th style={thTdStyle}>Date completed</th>
-        <th style={thTdStyle}>Moves</th>
-        <th style={thTdStyle}>Elapsed</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows.map((g) => (
-        <tr key={g.gameId}>
-          <td style={thTdStyle}>
-            {typeof g.seed === "string" ? <SeedButton seed={g.seed} /> : "—"}
-          </td>
-          <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
-          <td style={thTdStyle}>
-            {typeof g.moveCount === "number" ? g.moveCount : "—"}
-          </td>
-          <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+  <div style={tableWrapperStyle}>
+    <table style={tableStyle}>
+      <thead>
+        <tr>
+          <th style={thTdStyle}>Seed</th>
+          <th style={thTdStyle}>Date completed</th>
+          <th style={thTdStyle}>Moves</th>
+          <th style={thTdStyle}>Elapsed</th>
         </tr>
-      ))}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {rows.map((g) => (
+          <tr key={g.gameId}>
+            <td style={thTdStyle}>
+              {typeof g.seed === "string" ? <SeedButton seed={g.seed} /> : "—"}
+            </td>
+            <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
+            <td style={thTdStyle}>
+              {typeof g.moveCount === "number" ? g.moveCount : "—"}
+            </td>
+            <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 );
 
 function UserStatsTables({ derived }: { derived: GameStats }) {
@@ -59,7 +68,8 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
             <strong>No games finished yet.</strong>
           ) : (
             <>
-              <strong>{derived.ended.length}</strong> completed games since{" "}
+              <strong>{derived.ended.length}</strong> completed game
+              {derived.ended.length > 1 ? "s" : ""} since{" "}
               {formatDate(
                 derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
               )}
@@ -99,36 +109,38 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
         {derived.ended.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No completed games yet.</p>
         ) : (
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thTdStyle}>Seed</th>
-                <th style={thTdStyle}>Date completed</th>
-                <th style={thTdStyle}>Moves</th>
-                <th style={thTdStyle}>Elapsed</th>
-                <th style={thTdStyle}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {derived.ended.slice(0, 10).map((g) => (
-                <tr key={g.gameId}>
-                  <td style={thTdStyle}>
-                    {typeof g.seed === "string" ? (
-                      <SeedButton seed={g.seed} />
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
-                  <td style={thTdStyle}>
-                    {typeof g.moveCount === "number" ? g.moveCount : "—"}
-                  </td>
-                  <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
-                  <td style={thTdStyle}>{g.status}</td>
+          <div style={tableWrapperStyle}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thTdStyle}>Seed</th>
+                  <th style={thTdStyle}>Date completed</th>
+                  <th style={thTdStyle}>Moves</th>
+                  <th style={thTdStyle}>Elapsed</th>
+                  <th style={thTdStyle}>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {derived.ended.slice(0, 10).map((g) => (
+                  <tr key={g.gameId}>
+                    <td style={thTdStyle}>
+                      {typeof g.seed === "string" ? (
+                        <SeedButton seed={g.seed} />
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
+                    <td style={thTdStyle}>
+                      {typeof g.moveCount === "number" ? g.moveCount : "—"}
+                    </td>
+                    <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+                    <td style={thTdStyle}>{g.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </>
