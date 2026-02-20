@@ -84,6 +84,7 @@ export function NavBar() {
               width={120}
               height={30}
               loading="eager"
+              unoptimized
             />
           </Link>
 

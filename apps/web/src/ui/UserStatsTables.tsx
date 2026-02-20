@@ -55,8 +55,16 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
       <section style={{ marginBottom: 24 }}>
         <h2 style={{ marginBottom: 8 }}>Number of games played</h2>
         <p style={{ marginTop: 0 }}>
-          <strong>{derived.ended.length}</strong> completed games since{" "}
-          {formatDate(derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0)}
+          {derived.ended.length === 0 ? (
+            <strong>No games finished yet.</strong>
+          ) : (
+            <>
+              <strong>{derived.ended.length}</strong> completed games since{" "}
+              {formatDate(
+                derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
+              )}
+            </>
+          )}
         </p>
       </section>
 
