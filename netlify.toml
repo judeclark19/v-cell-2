@@ -1,16 +1,7 @@
 [build]
   base = "."
-  command = "npm run build"
+  command = "npm ci && npm -w web run build"
   publish = "apps/web/.next"
 
 [build.environment]
-  # Force npm to install optional deps (Rollup native binary lives here)
-  NPM_CONFIG_INCLUDE = "optional"
-  NPM_CONFIG_OPTIONAL = "true"
-
-  # Keep workspaces behavior
   NPM_FLAGS = "--workspaces"
-
-  # (optional but nice) speed + less noise
-  NPM_CONFIG_AUDIT = "false"
-  NPM_CONFIG_FUND = "false"
