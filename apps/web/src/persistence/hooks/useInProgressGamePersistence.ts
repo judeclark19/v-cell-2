@@ -19,21 +19,6 @@ import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 
-function areRulesEqual(a: Rules, b: Rules): boolean {
-  // Rules is a plain JSON-ish object in this app; compare shallow keys + values.
-  const aKeys = Object.keys(a as Record<string, unknown>);
-  const bKeys = Object.keys(b as Record<string, unknown>);
-  if (aKeys.length !== bKeys.length) return false;
-
-  for (const k of aKeys) {
-    if (!(k in (b as Record<string, unknown>))) return false;
-    if ((a as Record<string, unknown>)[k] !== (b as Record<string, unknown>)[k])
-      return false;
-  }
-
-  return true;
-}
-
 type InProgressSnapshot = {
   moves: Move[];
   cursor: number;
