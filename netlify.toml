@@ -1,6 +1,6 @@
 [build]
   base = "."
-  command = "npm ci && npm -w web run build"
+  command = "npm run build"
   publish = "apps/web/.next"
 
 [build.environment]
