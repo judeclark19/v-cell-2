@@ -4,4 +4,4 @@
   publish = "apps/web/.next"
 
 [build.environment]
-  NPM_FLAGS = "--workspaces"
+  NPM_FLAGS = "--workspaces --include=optional"
