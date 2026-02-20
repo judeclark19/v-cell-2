@@ -161,6 +161,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [moves]);
 
   const didApplyRuleChangeOnceRef = useRef(false);
+  const prevUidRef = useRef<string | null>(uid);
 
   // ---------------------------------------------------------------------------
   // Session (seed/gameId/seedReady + init/reseed choreography)
@@ -193,6 +194,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const historyReady = seedReady && hydratedGameId === gameId;
 
+  useEffect(() => {
+    console.log("[GameProvider debug]", {
+      uid,
+      seedReady,
+      gameId,
+      hydratedGameId,
+      historyReady,
+      seed
+    });
+  }, [uid, seedReady, gameId, hydratedGameId, historyReady, seed]);
+
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
@@ -214,22 +226,42 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       // the actual progressed game state after refresh.
       const appliedMoves = (saved.moves ?? []).slice(0, saved.cursor ?? 0);
 
-      let present = createGame(saved.seed, rules);
-      const past: GameState[] = [];
+      try {
+        let present = createGame(saved.seed, saved.rules ?? rules);
+        const past: GameState[] = [];
 
-      for (const m of appliedMoves) {
-        // push current state into past (for undo), then apply the move
-        past.push(present);
-        present = applyMove(present, m);
+        for (const m of appliedMoves) {
+          // push current state into past (for undo), then apply the move
+          past.push(present);
+          present = applyMove(present, m);
 
-        // Respect undoLimit cap (keep the most recent states)
-        if (undoLimit !== "unlimited" && past.length > undoLimit) {
-          past.splice(0, past.length - undoLimit);
+          // Respect undoLimit cap (keep the most recent states)
+          if (undoLimit !== "unlimited" && past.length > undoLimit) {
+            past.splice(0, past.length - undoLimit);
+          }
         }
-      }
 
-      setHistory({ present, past });
-      setHydratedGameId(gameId);
+        setHistory({ present, past });
+        setHydratedGameId(gameId);
+      } catch (err) {
+        console.error(
+          "[hydrate] failed to apply persisted moves; falling back",
+          {
+            err,
+            gameId,
+            savedGameId: saved.gameId,
+            seed: saved.seed,
+            cursor: saved.cursor,
+            movesLen: saved.moves?.length ?? 0,
+            appliedLen: appliedMoves.length,
+            savedRules: saved.rules,
+            currentRules: rules
+          }
+        );
+
+        // Fail soft: don't apply hydration, just mark this session as ready.
+        setHydratedGameId(gameId);
+      }
     },
     [rules, undoLimit, gameId]
   );
@@ -272,14 +304,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setHydratedGameId
   });
 
-  // When the user logs out, reset to a fresh guest deal and require a new first move
-  // before any local in-progress record is created.
+  // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
+  // IMPORTANT: Don't key off `uid === null && hasStarted` because `hasStarted` becomes true
+  // on the first guest move and would cause an infinite redeal loop.
   useEffect(() => {
     if (!seedReady) return;
-    if (uid !== null) return;
 
-    // If the current guest session hasn't started (no moves), there is no in-progress game
-    // to "reset" away from.
+    const prevUid = prevUidRef.current;
+    const didJustLogout = prevUid !== null && uid === null;
+
+    // Keep the ref updated every run.
+    prevUidRef.current = uid;
+
+    if (!didJustLogout) return;
+
+    // Only reset if the session we just logged out of had actually started.
     if (!hasStarted) return;
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
@@ -313,7 +352,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     rules,
     undoLimit,
-
+    uid,
     isWon,
     isAbandoned,
     hasStarted,

@@ -43,7 +43,11 @@ export function NavBar() {
       Log out
     </button>
   ) : (
-    <Link className="navbar__link" href="/login" onClick={closeMenu}>
+    <Link
+      className={`navbar__link ${isActive("/login") ? "navbar__link--active" : ""}`}
+      href="/login"
+      onClick={closeMenu}
+    >
       Log in
     </Link>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import {
   collection,
+  getDocsFromServer,
   onSnapshot,
   orderBy,
   query,
@@ -36,6 +37,23 @@ function shouldSkipInitialCloudPull(uid: string, deviceId: string): boolean {
     if (!raw) return false;
 
     // One-shot marker: remove it so a reload will hydrate normally.
+    localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function shouldForceServerHydrationOnce(
+  uid: string,
+  deviceId: string
+): boolean {
+  const key = `vcell:forceServerHydrationOnce:${uid}:${deviceId}`;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+
+    // One-shot marker: remove it so the next login can hydrate normally.
     localStorage.removeItem(key);
     return true;
   } catch {
@@ -87,70 +105,80 @@ export function useCloudGamesHydration(uid: string | null) {
     if (!uid) return;
 
     const localDeviceId = getOrCreateDeviceId();
-    if (shouldSkipInitialCloudPull(uid, localDeviceId)) {
-      // Skip the initial cloud pull during the same login that performed
-      // first-signup local migration on THIS device.
-      return;
-    }
+    const forceServerHydration = shouldForceServerHydrationOnce(
+      uid,
+      localDeviceId
+    );
+
+    if (shouldSkipInitialCloudPull(uid, localDeviceId)) return;
 
     const gamesCol = collection(db, "users", uid, "games");
     const q = query(gamesCol, orderBy("updatedAtMs", "desc"));
+
+    const upsertFromDocData = async (data: AnyRecord, docId: string) => {
+      const gameId = String((data.gameId as string | undefined) ?? docId);
+      const status = data.status;
+
+      if (isInProgress(status)) {
+        if (!hasInProgressFields(data)) return;
+
+        // In-progress is per-device. Only hydrate the in-progress game that
+        // belongs to THIS device; otherwise devices will overwrite each other.
+        const cloudDeviceId = data.deviceId;
+        if (typeof cloudDeviceId !== "string") return;
+        if (cloudDeviceId !== localDeviceId) return;
+
+        const payload = {
+          ...(data as unknown as PersistedGame),
+          gameId,
+          deviceId: cloudDeviceId,
+          userId: uid
+        } satisfies PersistedGame;
+
+        await upsertInProgressGame(payload);
+        return;
+      }
+
+      // Completed
+      if (!hasCompletedFields(data)) return;
+
+      const payload = {
+        ...(data as unknown as PersistedGame),
+        gameId,
+        userId: uid
+      } satisfies PersistedGame;
+
+      await upsertCompletedGame(payload, "cloud hydration");
+    };
 
     const handleSnapshot = async (snap: QuerySnapshot<DocumentData>) => {
       for (const change of snap.docChanges()) {
         const raw = change.doc.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
 
-        const gameId = String(
-          (data.gameId as string | undefined) ?? change.doc.id
-        );
-        const status = data.status;
-
         if (change.type === "removed") {
           // Conservative: ignore removals for now.
           continue;
         }
 
-        if (isInProgress(status)) {
-          if (!hasInProgressFields(data)) continue;
+        await upsertFromDocData(data, change.doc.id);
+      }
+    };
 
-          // In-progress is per-device. Only hydrate the in-progress game that
-          // belongs to THIS device; otherwise devices will overwrite each other.
-          const cloudDeviceId = data.deviceId;
-          if (typeof cloudDeviceId !== "string") continue;
-          if (cloudDeviceId !== localDeviceId) {
-            // Another device's in-progress game; ignore for local single-slot store.
-            continue;
-          }
+    const handleServerSync = async () => {
+      const snap = await getDocsFromServer(q);
 
-          // After runtime validation, assert to PersistedGame.
-          const payload = {
-            ...(data as unknown as PersistedGame),
-            gameId,
-            deviceId: cloudDeviceId,
-            userId: uid
-          } satisfies PersistedGame;
-
-          await upsertInProgressGame(payload);
-        } else {
-          if (!hasCompletedFields(data)) continue;
-
-          const payload = {
-            ...(data as unknown as PersistedGame),
-            gameId,
-            userId: uid
-          } satisfies PersistedGame;
-
-          await upsertCompletedGame(payload, "cloud hydration");
-        }
+      for (const docSnap of snap.docs) {
+        const raw = docSnap.data() ?? {};
+        const data: AnyRecord = isRecord(raw) ? raw : {};
+        await upsertFromDocData(data, docSnap.id);
       }
     };
 
     unsubRef.current = onSnapshot(
       q,
       (snap) => {
-        // Ignore cache snapshots; only hydrate from server-confirmed data.
-        if (snap.metadata.fromCache) return;
+        if (forceServerHydration && snap.metadata.fromCache) return;
 
         handleSnapshot(snap).catch((err) => {
           console.error("[cloud hydration] failed to apply snapshot", err);
@@ -160,6 +188,11 @@ export function useCloudGamesHydration(uid: string | null) {
         console.error("[cloud hydration] listener error", err);
       }
     );
+
+    // Always do a one-time server sync on login to ensure correctness.
+    handleServerSync().catch((err) => {
+      console.error("[cloud hydration] server sync failed", err);
+    });
 
     return () => {
       if (unsubRef.current) {

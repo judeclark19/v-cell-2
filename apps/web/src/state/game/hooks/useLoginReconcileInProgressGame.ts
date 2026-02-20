@@ -41,7 +41,10 @@ export function useLoginReconcileInProgressGame({
 
   useEffect(() => {
     if (!seedReady) return;
-    if (!uid) return;
+    if (!uid) {
+      didReconcileOnLoginRef.current = null;
+      return;
+    }
 
     // Only run once per uid per page load.
     if (didReconcileOnLoginRef.current === uid) return;

@@ -5,6 +5,8 @@ import { HistoryState } from "../GameProvider";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import type { PersistedGame } from "@/persistence/types";
+import { db } from "@/lib/firebaseClient";
+import { doc, setDoc } from "firebase/firestore";
 
 function undoLimitToCap(undoLimit: UndoLimit): number {
   if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
@@ -20,6 +22,7 @@ export type UseGameActionsParams = {
   // Session identity + rules
   seed: string;
   gameId: string;
+  uid: string | null;
   rules: Rules;
   undoLimit: UndoLimit;
 
@@ -85,6 +88,7 @@ export function useGameActions({
 
   seed,
   gameId,
+  uid,
   rules,
   undoLimit,
 
@@ -152,34 +156,45 @@ export function useGameActions({
           const archivedCursor = cursorRef.current;
           const archivedMoves = movesRef.current;
 
+          const completed: PersistedGame = {
+            gameId,
+            deviceId: getOrCreateDeviceId(),
+            seed,
+            rules: next.rules,
+            kind: "freeplay",
+
+            status: "won",
+
+            startedAtMs,
+            endedAtMs: ended,
+            timeElapsedMs,
+            hasStarted: true,
+            paused: false,
+
+            moveCount: archivedCursor,
+            undosUsed,
+            moves: archivedMoves,
+            cursor: archivedCursor,
+
+            updatedAtMs: Date.now(),
+            ...(uid ? { userId: uid } : {})
+          };
+
           setCompletedGames((prev) => {
             if (prev.some((g) => g.gameId === gameId)) return prev;
-            return [
-              ...prev,
-              {
-                gameId,
-                deviceId: getOrCreateDeviceId(),
-                seed,
-                rules: next.rules,
-                kind: "freeplay",
-
-                status: "won",
-
-                startedAtMs,
-                endedAtMs: ended,
-                timeElapsedMs,
-                hasStarted: true,
-                paused: false,
-
-                moveCount: archivedCursor,
-                undosUsed,
-                moves: archivedMoves,
-                cursor: archivedCursor,
-
-                updatedAtMs: Date.now()
-              }
-            ];
+            return [...prev, completed];
           });
+
+          if (uid) {
+            setDoc(doc(db, "users", uid, "games", gameId), completed, {
+              merge: true
+            }).catch((err) => {
+              console.warn(
+                "[game actions] failed to write completed game to Firestore",
+                err
+              );
+            });
+          }
         }
 
         // After a win, allow cosmetic moves but do not mutate undo history.
@@ -225,7 +240,8 @@ export function useGameActions({
       undosUsed,
       undoLimit,
       setCheckpoint,
-      movesRef
+      movesRef,
+      uid
     ]
   );
 
@@ -280,34 +296,45 @@ export function useGameActions({
         const archivedCursor = cursorRef.current;
         const archivedMoves = movesRef.current;
 
+        const completed: PersistedGame = {
+          gameId,
+          deviceId: getOrCreateDeviceId(),
+          seed,
+          rules: state.rules,
+          kind: "freeplay",
+
+          status: "abandoned",
+
+          startedAtMs,
+          endedAtMs: ended,
+          timeElapsedMs,
+          hasStarted: true,
+          paused: false,
+
+          moveCount: archivedCursor,
+          undosUsed,
+          moves: archivedMoves,
+          cursor: archivedCursor,
+
+          updatedAtMs: Date.now(),
+          ...(uid ? { userId: uid } : {})
+        };
+
         setCompletedGames((prev) => {
           if (prev.some((g) => g.gameId === gameId)) return prev;
-          return [
-            ...prev,
-            {
-              gameId,
-              deviceId: getOrCreateDeviceId(),
-              seed,
-              rules: state.rules,
-              kind: "freeplay",
-
-              status: "abandoned",
-
-              startedAtMs,
-              endedAtMs: ended,
-              timeElapsedMs,
-              hasStarted: true,
-              paused: false,
-
-              moveCount: archivedCursor,
-              undosUsed,
-              moves: archivedMoves,
-              cursor: archivedCursor,
-
-              updatedAtMs: Date.now()
-            }
-          ];
+          return [...prev, completed];
         });
+
+        if (uid) {
+          setDoc(doc(db, "users", uid, "games", gameId), completed, {
+            merge: true
+          }).catch((err) => {
+            console.warn(
+              "[game actions] failed to write completed game to Firestore",
+              err
+            );
+          });
+        }
 
         start();
         return;
@@ -331,7 +358,8 @@ export function useGameActions({
       timeElapsedMs,
       undosUsed,
       cursorRef,
-      movesRef
+      movesRef,
+      uid
     ]
   );
 
