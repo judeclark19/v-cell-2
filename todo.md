@@ -1,14 +1,10 @@
 # V-Cell V2 — TODO
 
-- upon logging out
-    - pause in progress game - firebase
-    - clear idb stores
-- upon logging in
-    - fetch all user's games
-    - resume in pogress game for current device if it exists
+- Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <button.btn btn--primary>
+Ancestor with aria-hidden: <div.autocomplete-drawer>
 - display name
 - auth email/pw
-- play by seed
 - daily seed
 - Skeletons for everything
 - Design system (Maddie?)

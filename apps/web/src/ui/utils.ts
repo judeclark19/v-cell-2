@@ -13,7 +13,12 @@ export const formatElapsed = (ms: number) => {
   return hours > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`;
 };
 
-export const formatDate = (ms: number | null | undefined) => {
+export const formatDateAndTime = (ms: number | null | undefined) => {
   if (typeof ms !== "number" || !Number.isFinite(ms)) return "—";
   return new Date(ms).toLocaleString();
+};
+
+export const formatDate = (ms: number | null | undefined) => {
+  if (typeof ms !== "number" || !Number.isFinite(ms)) return "—";
+  return new Date(ms).toLocaleDateString();
 };

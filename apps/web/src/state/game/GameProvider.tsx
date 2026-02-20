@@ -117,8 +117,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const [hydratedGameId, setHydratedGameId] = useState<string | null>(null);
 
-  const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
+  const hydratedGameIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    hydratedGameIdRef.current = hydratedGameId;
+  }, [hydratedGameId]);
+
   const { uid } = useSession();
+
+  const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
   useCompletedGamesPersistence({
     uid,
     completedGames,
@@ -192,18 +198,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCheckpoint
   });
 
-  const historyReady = seedReady && hydratedGameId === gameId;
+  const setHydratedGameIdCallback = useCallback((next: string | null) => {
+    setHydratedGameId(next);
+  }, []);
 
-  useEffect(() => {
-    console.log("[GameProvider debug]", {
-      uid,
-      seedReady,
-      gameId,
-      hydratedGameId,
-      historyReady,
-      seed
-    });
-  }, [uid, seedReady, gameId, hydratedGameId, historyReady, seed]);
+  const historyReady = seedReady && hydratedGameId === gameId;
 
   // ---------------------------------------------------------------------------
   // Derived state
@@ -218,7 +217,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const onInProgressHydrated = useCallback(
     (saved: PersistedGame | null) => {
       if (!saved) {
-        setHydratedGameId(gameId);
+        setHydratedGameIdCallback(gameId);
         return;
       }
 
@@ -242,7 +241,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         }
 
         setHistory({ present, past });
-        setHydratedGameId(gameId);
+        setHydratedGameIdCallback(gameId);
       } catch (err) {
         console.error(
           "[hydrate] failed to apply persisted moves; falling back",
@@ -260,10 +259,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         );
 
         // Fail soft: don't apply hydration, just mark this session as ready.
-        setHydratedGameId(gameId);
+        setHydratedGameIdCallback(gameId);
       }
     },
-    [rules, undoLimit, gameId]
+    [rules, undoLimit, gameId, setHydratedGameIdCallback]
   );
 
   useInProgressGamePersistence({
@@ -301,7 +300,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     uid,
     seedReady,
     startSession,
-    setHydratedGameId
+    setHydratedGameId: (next) => setHydratedGameIdCallback(next)
   });
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
@@ -323,10 +322,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
     queueMicrotask(() => {
-      setHydratedGameId(null);
+      setHydratedGameIdCallback(null);
       startNewDealSession();
     });
-  }, [uid, seedReady, hasStarted, startNewDealSession]);
+  }, [
+    uid,
+    seedReady,
+    hasStarted,
+    startNewDealSession,
+    setHydratedGameIdCallback
+  ]);
 
   // ---------------------------------------------------------------------------
   // Timer loop

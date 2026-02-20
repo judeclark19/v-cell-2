@@ -19,7 +19,7 @@ export default function SettingsPage() {
       <section>
         <h2>Account</h2>
         {isUser ? (
-          <p>DISPLAY NAME</p>
+          <p>Display name, change password</p>
         ) : (
           <p className="hint">Log in to access account settings.</p>
         )}

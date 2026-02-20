@@ -1,6 +1,6 @@
 import { PersistedGame } from "@/persistence/types";
 import SeedButton from "./SeedButton";
-import { formatDate, formatElapsed } from "./utils";
+import { formatDate, formatDateAndTime, formatElapsed } from "./utils";
 
 export type GameStats = {
   winRate: number;
@@ -38,7 +38,7 @@ const renderGamesTable = (rows: PersistedGame[]) => (
           <td style={thTdStyle}>
             {typeof g.seed === "string" ? <SeedButton seed={g.seed} /> : "—"}
           </td>
-          <td style={thTdStyle}>{formatDate(g.endedAtMs)}</td>
+          <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
           <td style={thTdStyle}>
             {typeof g.moveCount === "number" ? g.moveCount : "—"}
           </td>
@@ -52,6 +52,14 @@ const renderGamesTable = (rows: PersistedGame[]) => (
 function UserStatsTables({ derived }: { derived: GameStats }) {
   return (
     <>
+      <section style={{ marginBottom: 24 }}>
+        <h2 style={{ marginBottom: 8 }}>Number of games played</h2>
+        <p style={{ marginTop: 0 }}>
+          <strong>{derived.ended.length}</strong> completed games since{" "}
+          {formatDate(derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0)}
+        </p>
+      </section>
+
       <section style={{ marginBottom: 24 }}>
         <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
         <p style={{ marginTop: 0 }}>
@@ -103,7 +111,7 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
                       "—"
                     )}
                   </td>
-                  <td style={thTdStyle}>{formatDate(g.endedAtMs)}</td>
+                  <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
                   <td style={thTdStyle}>
                     {typeof g.moveCount === "number" ? g.moveCount : "—"}
                   </td>
