@@ -4,8 +4,21 @@ import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebaseClient";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getDocsFromServer,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import {
+  deleteInProgressGameForDevice,
   getInProgressGameForDevice,
   upsertInProgressGame
 } from "@/persistence/inProgressGamesStore";
@@ -73,8 +86,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const userRef = doc(db, "users", uid);
         const snap = await getDoc(userRef);
         const isFirstSignup = !snap.exists();
-        console.log("logged in");
-        console.log(userRef);
 
         // Ensure a user profile doc exists. Firestore collections appear when a doc is written.
         // Keep it minimal for now; add username/profile fields later.
@@ -170,7 +181,48 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = async () => {
-      // If logged in, sign out. Guests already have no auth session.
+      const deviceId = getOrCreateDeviceId();
+
+      // If logged in, pause the cloud in-progress game for THIS device.
+      // Do this BEFORE signOut so Firestore rules still allow the write.
+      if (uid) {
+        try {
+          const gamesCol = collection(db, "users", uid, "games");
+          const q = query(
+            gamesCol,
+            where("status", "==", "in_progress"),
+            where("deviceId", "==", deviceId),
+            orderBy("updatedAtMs", "desc"),
+            limit(1)
+          );
+
+          let snap;
+          try {
+            snap = await getDocsFromServer(q);
+          } catch {
+            snap = await getDocs(q);
+          }
+
+          const cloudDoc = snap.docs[0];
+          if (cloudDoc) {
+            await updateDoc(cloudDoc.ref, {
+              paused: true,
+              updatedAtMs: Date.now()
+            });
+          }
+        } catch (err) {
+          console.warn(
+            "[session] failed to pause cloud in-progress on logout",
+            err
+          );
+        }
+      }
+
+      // Clear local persistence so guest mode starts fresh.
+      await deleteInProgressGameForDevice(deviceId, "log out");
+      await clearCompletedGames();
+
+      // Finally, sign out (guests already have no auth session).
       await signOut(auth);
     };
 

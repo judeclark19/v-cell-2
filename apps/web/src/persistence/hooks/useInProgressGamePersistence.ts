@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from "react";
 import type { Move, Rules } from "@vcell/engine";
 import {
   getInProgressGameForDevice,
@@ -12,6 +18,21 @@ import { getOrCreateDeviceId } from "../schema";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
+
+type InProgressSnapshot = {
+  moves: Move[];
+  cursor: number;
+  hasStarted: boolean;
+  startedAtMs: number | null;
+  endedAtMs: number | null;
+  paused: boolean;
+  moveCount: number;
+  undosUsed: number;
+};
+
+type PersistPhase = "DISARMED" | "ARMED";
+
+type EndState = "none" | "won" | "abandoned";
 
 type Params = {
   // identity
@@ -84,12 +105,114 @@ export function useInProgressGamePersistence({
   const hydratedSessionKeyRef = useRef<string | null>(null);
   const pendingDeleteTimerRef = useRef<number | null>(null);
   const hasSavedRef = useRef<boolean>(false);
+  const snapshotRef = useRef<InProgressSnapshot>({
+    moves,
+    cursor,
+    hasStarted,
+    startedAtMs,
+    endedAtMs,
+    paused,
+    moveCount,
+    undosUsed
+  });
+
+  const phaseRef = useRef<PersistPhase>("DISARMED");
+
+  const disarm = () => {
+    phaseRef.current = "DISARMED";
+    inProgressHydratedRef.current = false;
+    hydratedGameIdRef.current = null;
+    hydratedSessionKeyRef.current = null;
+    hasSavedRef.current = false;
+
+    if (pendingDeleteTimerRef.current != null) {
+      window.clearTimeout(pendingDeleteTimerRef.current);
+      pendingDeleteTimerRef.current = null;
+    }
+  };
+
+  const armForSession = (key: string) => {
+    phaseRef.current = "ARMED";
+    inProgressHydratedRef.current = true;
+    hydratedSessionKeyRef.current = key;
+  };
+
+  const sessionKey = `${uid ?? "anon"}::${gameId}::${seed}`;
+
+  const isArmed = useCallback(() => {
+    return (
+      phaseRef.current === "ARMED" &&
+      hydratedSessionKeyRef.current === sessionKey
+    );
+  }, [sessionKey]);
 
   // Bumps whenever hydration completes so effects that are gated by refs re-run.
   // (Refs don't trigger rerenders.)
   const [hydrationVersion, setHydrationVersion] = useState(0);
 
-  const sessionKey = `${uid ?? "anon"}::${gameId}::${seed}`;
+  const endState: EndState = isWon ? "won" : isAbandoned ? "abandoned" : "none";
+
+  useEffect(() => {
+    snapshotRef.current = {
+      moves,
+      cursor,
+      hasStarted,
+      startedAtMs,
+      endedAtMs,
+      paused,
+      moveCount,
+      undosUsed
+    };
+  }, [
+    moves,
+    cursor,
+    hasStarted,
+    startedAtMs,
+    endedAtMs,
+    paused,
+    moveCount,
+    undosUsed
+  ]);
+
+  const buildInProgressPayload = useCallback(
+    (
+      deviceId: string,
+      updatedAtMs: number,
+      snapshot: InProgressSnapshot = snapshotRef.current
+    ) => {
+      const {
+        moves,
+        cursor,
+        hasStarted,
+        startedAtMs,
+        endedAtMs,
+        paused,
+        moveCount,
+        undosUsed
+      } = snapshot;
+
+      return {
+        gameId,
+        deviceId,
+        seed,
+        rules,
+        kind: "freeplay" as const,
+        moves,
+        cursor,
+        status: "in_progress" as const,
+        timeElapsedMs: timeElapsedMsRef.current ?? 0,
+        hasStarted,
+        startedAtMs,
+        endedAtMs,
+        paused,
+        moveCount,
+        undosUsed,
+        updatedAtMs,
+        ...(uid ? { userId: uid } : {})
+      };
+    },
+    [gameId, seed, rules, timeElapsedMsRef, uid]
+  );
 
   // IMPORTANT: When the active session/gameId changes, React state in the game layer may
   // temporarily reset to initial values before IDXDB/cloud hydration re-applies moves.
@@ -101,27 +224,9 @@ export function useInProgressGamePersistence({
     // Any change in identity/session inputs can briefly reset React state to initial values.
     // We disarm persistence until hydration completes for the new session.
     if (hydratedSessionKeyRef.current !== sessionKey) {
-      const prevSessionKey = hydratedSessionKeyRef.current;
-
-      inProgressHydratedRef.current = false;
-      hydratedGameIdRef.current = null;
-      hydratedSessionKeyRef.current = null;
-      hasSavedRef.current = false;
-
-      if (pendingDeleteTimerRef.current != null) {
-        window.clearTimeout(pendingDeleteTimerRef.current);
-        pendingDeleteTimerRef.current = null;
-      }
+      disarm();
     }
   }, [sessionKey]);
-
-  const lastSeenRef = useRef<{
-    hasStarted: boolean;
-    moveCount: number;
-    movesLen: number;
-    startedAtMs: number | null;
-    gameId: string;
-  } | null>(null);
 
   // ---------------------------------------------------------------------------
   // Hydrate in-progress game (IndexedDB)
@@ -130,14 +235,6 @@ export function useInProgressGamePersistence({
     let cancelled = false;
 
     if (!seedReady) return;
-    inProgressHydratedRef.current = false;
-    hydratedGameIdRef.current = null;
-    hydratedSessionKeyRef.current = null;
-    hasSavedRef.current = false;
-    if (pendingDeleteTimerRef.current != null) {
-      window.clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-    }
 
     (async () => {
       try {
@@ -147,8 +244,7 @@ export function useInProgressGamePersistence({
         hasSavedRef.current = !!saved;
 
         hydratedGameIdRef.current = gameId;
-        inProgressHydratedRef.current = true;
-        hydratedSessionKeyRef.current = sessionKey;
+        armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
 
         if (!saved) {
@@ -170,8 +266,7 @@ export function useInProgressGamePersistence({
         onHydrated?.(saved);
       } catch (err) {
         hydratedGameIdRef.current = gameId;
-        inProgressHydratedRef.current = true;
-        hydratedSessionKeyRef.current = sessionKey;
+        armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
         onHydrated?.(null);
         console.error("Failed to hydrate in-progress game", err);
@@ -203,12 +298,11 @@ export function useInProgressGamePersistence({
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!seedReady) return;
-    if (!inProgressHydratedRef.current) return;
-    if (hydratedSessionKeyRef.current !== sessionKey) return;
+    if (!isArmed()) return;
 
     const deviceId = getOrCreateDeviceId();
 
-    if (isWon || isAbandoned) {
+    if (endState !== "none") {
       deleteInProgressGameForDevice(
         deviceId,
         "useInProgressGamePersistence effect"
@@ -219,33 +313,9 @@ export function useInProgressGamePersistence({
       return;
     }
 
-    const looksStarted =
-      hasStarted ||
-      moveCount > 0 ||
-      (moves?.length ?? 0) > 0 ||
-      startedAtMs != null;
+    if (!hasStarted) return;
 
-    if (!looksStarted) return;
-
-    const payload = {
-      gameId,
-      deviceId,
-      seed,
-      rules,
-      kind: "freeplay" as const,
-      moves,
-      cursor,
-      status: "in_progress" as const,
-      timeElapsedMs: timeElapsedMsRef.current ?? 0,
-      hasStarted: looksStarted,
-      startedAtMs,
-      endedAtMs,
-      paused,
-      moveCount,
-      undosUsed,
-      updatedAtMs: Date.now(),
-      ...(uid ? { userId: uid } : {})
-    };
+    const payload = buildInProgressPayload(deviceId, Date.now());
 
     upsertInProgressGame(payload).catch((err) => {
       console.error("[in-progress persist] write failed", err);
@@ -267,14 +337,15 @@ export function useInProgressGamePersistence({
     hasStarted,
     startedAtMs,
     endedAtMs,
-    isAbandoned,
+    endState,
     paused,
     moveCount,
     undosUsed,
-    isWon,
     timeElapsedMsRef,
     hydrationVersion,
-    sessionKey
+    sessionKey,
+    isArmed,
+    buildInProgressPayload
   ]);
 
   // ---------------------------------------------------------------------------
@@ -282,45 +353,18 @@ export function useInProgressGamePersistence({
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!seedReady) return;
-    if (!inProgressHydratedRef.current) return;
-    if (hydratedSessionKeyRef.current !== sessionKey) return;
+    if (!isArmed()) return;
 
-    if (isWon || isAbandoned) return;
-    const looksStarted =
-      hasStarted ||
-      moveCount > 0 ||
-      (moves?.length ?? 0) > 0 ||
-      startedAtMs != null;
-    console.log("LOOKS STARTED?", looksStarted);
-    if (!looksStarted) return;
+    if (endState !== "none") return;
+    if (!hasStarted) return;
     if (paused) return;
 
     const deviceId = getOrCreateDeviceId();
 
     const id = window.setInterval(() => {
-      if (!inProgressHydratedRef.current) return;
-
-      if (!looksStarted) return;
-
-      upsertInProgressGame({
-        gameId,
-        deviceId,
-        seed,
-        rules,
-        kind: "freeplay",
-        moves,
-        cursor,
-        status: "in_progress",
-        timeElapsedMs: timeElapsedMsRef.current ?? 0,
-        hasStarted: looksStarted,
-        startedAtMs,
-        endedAtMs,
-        paused,
-        moveCount,
-        undosUsed,
-        updatedAtMs: Date.now(),
-        ...(uid ? { userId: uid } : {})
-      }).catch((err) => {
+      upsertInProgressGame(
+        buildInProgressPayload(deviceId, Date.now(), snapshotRef.current)
+      ).catch((err) => {
         console.error("[in-progress persist] write failed (1s)", err);
       });
     }, 1000);
@@ -335,22 +379,12 @@ export function useInProgressGamePersistence({
     };
   }, [
     seedReady,
-    gameId,
-    uid,
-    seed,
-    rules,
-    moves,
-    cursor,
+    sessionKey,
+    isArmed,
     hasStarted,
-    startedAtMs,
-    endedAtMs,
-    isAbandoned,
     paused,
-    moveCount,
-    undosUsed,
-    isWon,
-    timeElapsedMsRef,
-    hydrationVersion,
-    sessionKey
+    endState,
+    uid,
+    buildInProgressPayload
   ]);
 }
