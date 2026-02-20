@@ -1,0 +1,7 @@
+[build]
+  base = "."
+  command = "npm ci && npm -w web run build"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NPM_FLAGS = "--workspaces"

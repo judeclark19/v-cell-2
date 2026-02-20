@@ -9,7 +9,7 @@
     "check": "npm -ws run check",
     "test": "npm -ws run test",
     "typecheck": "npm -ws run typecheck",
-    "build": "npm -ws run build",
+    "build": "npm -ws run build --if-present && npm -w web run build",
     "engine:check": "npm -w @vcell/engine run check",
     "engine:test": "npm -w @vcell/engine run test",
     "engine:typecheck": "npm -w @vcell/engine run typecheck",
