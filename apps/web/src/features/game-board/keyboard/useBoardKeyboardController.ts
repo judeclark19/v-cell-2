@@ -109,7 +109,53 @@ export function useBoardKeyboardController({
   });
 
   const onBoardKeyDown = (e: KeyboardEvent) => {
-    if (isInputSuppressed) {
+    if (isInputSuppressed) return;
+    // Let Tab / Shift+Tab escape the board (or at least allow the browser to do its normal
+    // focus order traversal). We explicitly avoid preventing default here.
+    // Also: if we're in keyboard-carry mode, cancel it so we don't keep carry visuals stuck
+    // while focus moves elsewhere.
+    if (e.key === "Tab") {
+      // Always cancel carry visuals when leaving via Tab.
+      setKbCarrying(false);
+      visuals.clearKbCarryVisuals();
+
+      // Forward Tab can use the browser's normal traversal.
+      if (!e.shiftKey) return;
+
+      // Shift+Tab: if something elsewhere is trapping focus back into the board,
+      // manually focus the previous focusable element that is NOT inside the board.
+      const boardEl = boardRef.current;
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (!boardEl || !activeEl) return;
+
+      const focusables = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => {
+        // Skip elements not actually tabbable/visible.
+        if (el.tabIndex < 0) return false;
+        const ariaDisabled = el.getAttribute("aria-disabled");
+        if (ariaDisabled === "true") return false;
+        // Basic visibility check: offsetParent is null for display:none; fixed elements still have an offsetParent.
+        // Also allow SVG/edge cases by checking bounding rect.
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return false;
+        return true;
+      });
+
+      const idx = focusables.indexOf(activeEl);
+      if (idx <= 0) return;
+
+      for (let i = idx - 1; i >= 0; i--) {
+        const candidate = focusables[i];
+        if (boardEl.contains(candidate)) continue;
+
+        e.preventDefault();
+        candidate.focus();
+        return;
+      }
+
       return;
     }
     // Arrow-key navigation always works within the board.

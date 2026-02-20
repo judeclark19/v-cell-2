@@ -18,9 +18,6 @@ type FreeCellsProps = {
   isAutoCompleting: boolean;
   runAutoComplete: () => void;
   stopAutoComplete: () => void;
-  seedReady: boolean;
-  paused: boolean;
-  shouldShowWinModal: boolean;
   onCardPointerUp?: (e: React.PointerEvent<HTMLDivElement>) => void;
 };
 
@@ -35,14 +32,12 @@ function FreeCells({
   isAutoCompleting,
   runAutoComplete,
   stopAutoComplete,
-  seedReady,
-  paused,
-  shouldShowWinModal,
   onCardPointerUp
 }: FreeCellsProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
   const kbFlight = drag.kbFlight;
+
   return (
     <div className="board-bottom" aria-label="Free cells">
       <div
@@ -58,7 +53,7 @@ function FreeCells({
             if (isAutoCompleting) stopAutoComplete();
             else runAutoComplete();
           }}
-          disabled={!seedReady || paused || shouldShowWinModal}
+          disabled={!showAcp}
         >
           {isAutoCompleting ? "Stop" : "Autocomplete"}
         </button>

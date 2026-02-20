@@ -87,9 +87,6 @@ function Board() {
                   isAutoCompleting={vm.isAutoCompleting}
                   runAutoComplete={vm.runAutoComplete}
                   stopAutoComplete={vm.stopAutoComplete}
-                  seedReady={vm.seedReady}
-                  paused={vm.paused}
-                  shouldShowWinModal={vm.shouldShowWinModal}
                   onCardPointerUp={vm.onCardPointerUp}
                 />
               </>
