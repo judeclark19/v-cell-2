@@ -123,6 +123,9 @@ export function useGameActions({
 }: UseGameActionsParams): UseGameActionsResult {
   const dispatchMove = useCallback(
     (move: Move) => {
+      // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
+      if (isAbandoned || endedAtMs != null) return;
+
       // First move starts the timer clock.
       setHasStarted(true);
       setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
@@ -146,7 +149,24 @@ export function useGameActions({
       }
 
       setHistory((h) => {
-        const next = applyMove(h.present, move);
+        let next: GameState;
+        try {
+          next = applyMove(h.present, move);
+        } catch (err) {
+          console.warn(
+            "[dispatchMove] applyMove rejected move; dropping move",
+            {
+              err,
+              move,
+              gameId,
+              seed,
+              isWon,
+              endedAtMs,
+              cursor: cursorRef.current
+            }
+          );
+          return h;
+        }
 
         // If this move produces a win, stamp `endedAtMs` exactly once.
         if (!isWon && areAllCardsUnlocked(next)) {
@@ -224,6 +244,8 @@ export function useGameActions({
       setHasStarted,
       setStartedAtMs,
       isWon,
+      endedAtMs,
+      isAbandoned,
       setEndedAtMs,
       setIsAbandoned,
       setMoveCount,
