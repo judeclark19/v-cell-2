@@ -172,7 +172,16 @@ function Foundations({
             onClick={onPause}
             disabled={!hasStarted || isWon || isAbandoned}
           >
-            ⏸︎
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="var(--surface)"
+              aria-hidden="true"
+            >
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
           </button>
         </div>
         {foundationCards.map((card, foundationIndex) => (

@@ -8,8 +8,6 @@
 - after kb drop, focus goes back to original source. I thought we arleady fixed this. focus should stay target position.
 
 ## Features
-- the pause button is displaying as an emoji on mobile
-- stats tables are not mobile responsive
 - display name
 - auth email/pw
 - daily seed
@@ -19,3 +17,4 @@
 
 ## Cannot replicate
 - If I start a new deal during autocomplete then one card stays invisible
+- ran into illegalmove error while playing ob prod
