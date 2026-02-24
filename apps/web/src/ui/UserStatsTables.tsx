@@ -29,39 +29,76 @@ const thTdStyle: React.CSSProperties = {
   textAlign: "left"
 };
 
-const renderGamesTable = (rows: PersistedGame[]) => (
-  <div style={tableWrapperStyle}>
-    <table style={tableStyle}>
-      <thead>
-        <tr>
-          <th style={thTdStyle}>Seed</th>
-          <th style={thTdStyle}>Date completed</th>
-          <th style={thTdStyle}>Moves</th>
-          <th style={thTdStyle}>Elapsed</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((g) => (
-          <tr key={g.gameId}>
-            <td style={thTdStyle}>
-              {typeof g.seed === "string" ? <SeedButton seed={g.seed} /> : "—"}
-            </td>
-            <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
-            <td style={thTdStyle}>
-              {typeof g.moveCount === "number" ? g.moveCount : "—"}
-            </td>
-            <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+const renderGamesTable = (
+  rows: PersistedGame[],
+  kind: "fastest" | "fewestMoves"
+) => {
+  const isFastest = kind === "fastest";
+
+  return (
+    <div style={tableWrapperStyle}>
+      <table style={tableStyle}>
+        <thead>
+          <tr>
+            <th style={thTdStyle}>Rank</th>
+            {isFastest ? (
+              <th style={thTdStyle}>Elapsed</th>
+            ) : (
+              <th style={thTdStyle}>Moves</th>
+            )}
+            <th style={thTdStyle}>Date completed</th>
+            {isFastest ? (
+              <th style={thTdStyle}>Moves</th>
+            ) : (
+              <th style={thTdStyle}>Elapsed</th>
+            )}
+            <th style={thTdStyle}>Seed</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+        </thead>
+        <tbody>
+          {rows.slice(0, 10).map((g, index) => (
+            <tr key={g.gameId}>
+              <td style={thTdStyle}>
+                <strong>{index + 1}</strong>
+              </td>
+
+              {isFastest ? (
+                <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+              ) : (
+                <td style={thTdStyle}>
+                  {typeof g.moveCount === "number" ? g.moveCount : "—"}
+                </td>
+              )}
+
+              <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
+
+              {isFastest ? (
+                <td style={thTdStyle}>
+                  {typeof g.moveCount === "number" ? g.moveCount : "—"}
+                </td>
+              ) : (
+                <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+              )}
+
+              <td style={thTdStyle}>
+                {typeof g.seed === "string" ? (
+                  <SeedButton seed={g.seed} />
+                ) : (
+                  "—"
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 function UserStatsTables({ derived }: { derived: GameStats }) {
   return (
     <>
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <h2 style={{ marginBottom: 8 }}>Number of games played</h2>
         <p style={{ marginTop: 0 }}>
           {derived.ended.length === 0 ? (
@@ -78,7 +115,7 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
         </p>
       </section>
 
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
         <p style={{ marginTop: 0 }}>
           <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins out of{" "}
@@ -86,25 +123,25 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
         </p>
       </section>
 
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <h2 style={{ marginBottom: 8 }}>Fastest wins</h2>
         {derived.fastest.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
-          renderGamesTable(derived.fastest)
+          renderGamesTable(derived.fastest, "fastest")
         )}
       </section>
 
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <h2 style={{ marginBottom: 8 }}>Fewest moves (wins)</h2>
         {derived.fewestMoves.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
-          renderGamesTable(derived.fewestMoves)
+          renderGamesTable(derived.fewestMoves, "fewestMoves")
         )}
       </section>
 
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <h2 style={{ marginBottom: 8 }}>Most recent completed games</h2>
         {derived.ended.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No completed games yet.</p>
@@ -113,16 +150,22 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
             <table style={tableStyle}>
               <thead>
                 <tr>
-                  <th style={thTdStyle}>Seed</th>
                   <th style={thTdStyle}>Date completed</th>
-                  <th style={thTdStyle}>Moves</th>
-                  <th style={thTdStyle}>Elapsed</th>
                   <th style={thTdStyle}>Status</th>
+                  <th style={thTdStyle}>Elapsed</th>
+                  <th style={thTdStyle}>Moves</th>
+                  <th style={thTdStyle}>Seed</th>
                 </tr>
               </thead>
               <tbody>
                 {derived.ended.slice(0, 10).map((g) => (
                   <tr key={g.gameId}>
+                    <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
+                    <td style={thTdStyle}>{g.status}</td>
+                    <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+                    <td style={thTdStyle}>
+                      {typeof g.moveCount === "number" ? g.moveCount : "—"}
+                    </td>
                     <td style={thTdStyle}>
                       {typeof g.seed === "string" ? (
                         <SeedButton seed={g.seed} />
@@ -130,12 +173,6 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
                         "—"
                       )}
                     </td>
-                    <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
-                    <td style={thTdStyle}>
-                      {typeof g.moveCount === "number" ? g.moveCount : "—"}
-                    </td>
-                    <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
-                    <td style={thTdStyle}>{g.status}</td>
                   </tr>
                 ))}
               </tbody>
