@@ -92,25 +92,30 @@ export function useCompletedGamesPersistence({
   // Sync new completed games to Firestore
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!uid) return;
     if (!completedGamesHydratedRef.current) return;
 
-    const synced = firestoreCompletedSyncedIdsRef.current;
+    let cancelled = false;
 
     (async () => {
-      for (const g of completedGames) {
-        if (synced.has(g.gameId)) continue;
-        try {
-          await setDoc(
-            doc(db, "users", uid, "games", g.gameId),
-            { ...g, userId: uid },
-            { merge: true }
-          );
-          synced.add(g.gameId);
-        } catch {
-          // ignore; try later
-        }
+      try {
+        const persisted = await getAllCompletedGames();
+        if (cancelled) return;
+
+        persistedCompletedGameIdsRef.current = new Set(
+          persisted.map((g) => g.gameId)
+        );
+
+        setCompletedGames(persisted);
+      } catch (err) {
+        console.error(
+          "Failed to re-hydrate completed games from IndexedDB after session change",
+          err
+        );
       }
     })();
-  }, [uid, completedGames]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, setCompletedGames]);
 }

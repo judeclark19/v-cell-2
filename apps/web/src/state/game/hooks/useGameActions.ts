@@ -124,7 +124,7 @@ export function useGameActions({
   const dispatchMove = useCallback(
     (move: Move) => {
       // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
-      if (isAbandoned || endedAtMs != null) return;
+      if (isAbandoned) return;
 
       // First move starts the timer clock.
       setHasStarted(true);

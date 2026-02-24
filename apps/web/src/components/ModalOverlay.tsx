@@ -108,7 +108,9 @@ export default function ModalOverlay({
         </div>
 
         <div className="modal-overlay__body">
-          <p className="modal-overlay__hint">{bodyText}</p>
+          <p className="modal-overlay__hint" style={{ whiteSpace: "pre-line" }}>
+            {bodyText}
+          </p>
 
           <div className="modal-overlay__buttons">
             {secondaryButtonLabel && (
