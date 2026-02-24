@@ -1,8 +1,5 @@
 import { useCallback } from "react";
-import { applyMove } from "@vcell/engine";
-import type { PileRef } from "@vcell/engine";
-
-type Move = Parameters<typeof applyMove>[1];
+import type { Move, PileRef } from "@vcell/engine";
 
 type UseAutoFoundationArgs = {
   legalMoves: Move[];

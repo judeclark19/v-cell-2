@@ -1,9 +1,6 @@
 import { useCallback } from "react";
-
-import { applyMove } from "@vcell/engine";
 import type { PileRef } from "@vcell/engine";
-
-type Move = Parameters<typeof applyMove>[1];
+import { Move } from "@vcell/engine";
 
 /**
  * Deterministic "auto" placement into free cells.
