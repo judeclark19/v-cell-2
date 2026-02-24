@@ -91,7 +91,7 @@
   left: 0;
   width: 100%;
   aspect-ratio: 2 / 3;
-  z-index: 0;
+  z-index: var(--z-base, 0);
 }
 
 /* Ensure the inner Card slot fills the underlay */

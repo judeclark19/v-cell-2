@@ -31,20 +31,6 @@ function isInProgress(status: unknown): boolean {
   return status === "in_progress";
 }
 
-function shouldSkipInitialCloudPull(uid: string, deviceId: string): boolean {
-  const key = `vcell:skipCloudPull:${uid}:${deviceId}`;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return false;
-
-    // One-shot marker: remove it so a reload will hydrate normally.
-    localStorage.removeItem(key);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function getLastCloudSyncMs(uid: string, deviceId: string): number {
   const key = `vcell:lastCloudSyncMs:${uid}:${deviceId}`;
   try {

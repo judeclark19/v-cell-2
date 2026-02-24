@@ -1,8 +1,7 @@
-
 .modal-overlay {
   position: absolute;
   inset: 0;
-  z-index: 1000001; /* above drag-layer */
+  z-index: var(--z-modal); /* above drag-layer */
 
   display: grid;
   place-items: center;

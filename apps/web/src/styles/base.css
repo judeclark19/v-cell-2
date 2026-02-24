@@ -1,5 +1,35 @@
 /* apps/web/src/styles/base.css */
 
+/* -------------------------------------------------------------------------- */
+/* Z-index scale                                                               */
+/*
+  Use these variables instead of ad-hoc z-index numbers.
+  Keep values small and spaced so new layers can be inserted.
+
+  Intended stacking (lowest -> highest):
+  - base content
+  - sticky chrome (navbar)
+  - popovers / menus
+  - game overlays (non-blocking)
+  - modal overlays (blocking)
+  - drag layer (if it must float above modals, otherwise keep below)
+*/
+:root {
+  --z-base: 0;
+  --z-card: 1;
+
+  /* Board-adjacent visuals */
+  --z-drag: 100;
+
+  /* Overlays */
+  --z-overlay: 200;
+  --z-modal: 300;
+
+  /* App chrome */
+  --z-navbar: 400;
+  --z-popover: 500;
+}
+
 html,
 body {
   max-width: 100vw;
