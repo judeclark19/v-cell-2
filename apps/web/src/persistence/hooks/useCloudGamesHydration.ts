@@ -7,6 +7,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  where,
   type DocumentData,
   type QuerySnapshot
 } from "firebase/firestore";
@@ -41,6 +42,27 @@ function shouldSkipInitialCloudPull(uid: string, deviceId: string): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+function getLastCloudSyncMs(uid: string, deviceId: string): number {
+  const key = `vcell:lastCloudSyncMs:${uid}:${deviceId}`;
+  try {
+    const raw = localStorage.getItem(key);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setLastCloudSyncMs(uid: string, deviceId: string, ms: number): void {
+  if (!Number.isFinite(ms) || ms <= 0) return;
+  const key = `vcell:lastCloudSyncMs:${uid}:${deviceId}`;
+  try {
+    localStorage.setItem(key, String(Math.floor(ms)));
+  } catch {
+    // ignore
   }
 }
 
@@ -109,24 +131,42 @@ export function useCloudGamesHydration(uid: string | null) {
       uid,
       localDeviceId
     );
-
-    if (shouldSkipInitialCloudPull(uid, localDeviceId)) return;
+    const lastCloudSyncMs = getLastCloudSyncMs(uid, localDeviceId);
 
     const gamesCol = collection(db, "users", uid, "games");
-    const q = query(gamesCol, orderBy("updatedAtMs", "desc"));
+    // Incremental listener: after we have a watermark, only listen for docs newer than the last sync.
+    // First run (no watermark) still listens to the full collection.
+    const q =
+      lastCloudSyncMs > 0
+        ? query(
+            gamesCol,
+            where("updatedAtMs", ">", lastCloudSyncMs),
+            orderBy("updatedAtMs", "asc")
+          )
+        : query(gamesCol, orderBy("updatedAtMs", "desc"));
 
-    const upsertFromDocData = async (data: AnyRecord, docId: string) => {
+    const upsertFromDocData = async (
+      data: AnyRecord,
+      docId: string
+    ): Promise<boolean> => {
+      if (
+        typeof data.updatedAtMs === "number" &&
+        data.updatedAtMs <= lastCloudSyncMs
+      ) {
+        return false;
+      }
+
       const gameId = String((data.gameId as string | undefined) ?? docId);
       const status = data.status;
 
       if (isInProgress(status)) {
-        if (!hasInProgressFields(data)) return;
+        if (!hasInProgressFields(data)) return false;
 
         // In-progress is per-device. Only hydrate the in-progress game that
         // belongs to THIS device; otherwise devices will overwrite each other.
         const cloudDeviceId = data.deviceId;
-        if (typeof cloudDeviceId !== "string") return;
-        if (cloudDeviceId !== localDeviceId) return;
+        if (typeof cloudDeviceId !== "string") return false;
+        if (cloudDeviceId !== localDeviceId) return false;
 
         const payload = {
           ...(data as unknown as PersistedGame),
@@ -136,11 +176,11 @@ export function useCloudGamesHydration(uid: string | null) {
         } satisfies PersistedGame;
 
         await upsertInProgressGame(payload);
-        return;
+        return true;
       }
 
       // Completed
-      if (!hasCompletedFields(data)) return;
+      if (!hasCompletedFields(data)) return false;
 
       const payload = {
         ...(data as unknown as PersistedGame),
@@ -148,10 +188,14 @@ export function useCloudGamesHydration(uid: string | null) {
         userId: uid
       } satisfies PersistedGame;
 
-      await upsertCompletedGame(payload, "cloud hydration");
+      await upsertCompletedGame(payload, "upsertFromDocData");
+      return true;
     };
 
     const handleSnapshot = async (snap: QuerySnapshot<DocumentData>) => {
+      let maxSeen = 0;
+      let appliedCount = 0;
+
       for (const change of snap.docChanges()) {
         const raw = change.doc.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
@@ -161,8 +205,30 @@ export function useCloudGamesHydration(uid: string | null) {
           continue;
         }
 
-        await upsertFromDocData(data, change.doc.id);
+        const applied = await upsertFromDocData(data, change.doc.id);
+        if (applied) appliedCount += 1;
+
+        if (
+          typeof data.updatedAtMs === "number" &&
+          data.updatedAtMs > maxSeen
+        ) {
+          maxSeen = data.updatedAtMs;
+        }
       }
+
+      if (maxSeen > 0) {
+        setLastCloudSyncMs(
+          uid,
+          localDeviceId,
+          Math.max(lastCloudSyncMs, maxSeen)
+        );
+      }
+
+      console.debug("[cloud hydration]", {
+        count: appliedCount,
+        maxUpdatedAtMsSeen: maxSeen,
+        fromCache: snap.metadata.fromCache
+      });
     };
 
     const handleServerSync = async () => {
