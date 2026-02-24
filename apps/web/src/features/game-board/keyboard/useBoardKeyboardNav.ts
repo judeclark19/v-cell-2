@@ -74,15 +74,27 @@ export function useBoardKeyboardNav<TState, TPlayable>({
     }
   }, [activeFocusIndex, kbCarrying, isLegalDropTargetEl]);
 
-  const focusByIndex = useCallback((idx: number) => {
-    const els = focusablesRef.current;
-    if (!els.length) return;
-    const next = els[Math.max(0, Math.min(idx, els.length - 1))];
-    if (!next) return;
-    next.focus();
-  }, []);
+  const focusByIndex = useCallback(
+    (idx: number) => {
+      const els = focusablesRef.current;
+      if (!els.length) return;
+
+      if (idx === 0) {
+        console.log("[kb-nav] focusByIndex(0)", { activeFocusIndex });
+        console.trace("[kb-nav] focusByIndex(0) stack");
+      }
+
+      const next = els[Math.max(0, Math.min(idx, els.length - 1))];
+      if (!next) return;
+      next.focus();
+    },
+    [activeFocusIndex]
+  );
 
   const focusFirstPlayable = useCallback(() => {
+    console.log("[kb-nav] focusFirstPlayable()");
+    console.trace("[kb-nav] focusFirstPlayable stack");
+
     refreshKeyboardFocusables();
     const els = focusablesRef.current;
     if (els.length === 0) return;
@@ -317,17 +329,21 @@ export function useBoardKeyboardNav<TState, TPlayable>({
     [focusByIndex, getCenter, getActiveFocusableEl, getNodeMeta]
   );
 
-  const onBoardFocusCapture = useCallback(() => {
-    // When focus enters the board and nothing inside is focused,
-    // focus the current active element.
-    const els = focusablesRef.current;
-    if (!els.length) return;
+  const onBoardFocusCapture = useCallback(
+    (e: React.FocusEvent<HTMLDivElement>) => {
+      const els = focusablesRef.current;
+      if (!els.length) return;
 
-    const activeEl = document.activeElement as HTMLElement | null;
-    if (activeEl && els.includes(activeEl)) return;
+      // Board container focused (empty click) => do nothing
+      if (e.target === e.currentTarget) return;
 
-    requestAnimationFrame(() => focusByIndex(activeFocusIndex));
-  }, [activeFocusIndex, focusByIndex]);
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (activeEl && els.includes(activeEl)) return;
+
+      requestAnimationFrame(() => focusByIndex(activeFocusIndex));
+    },
+    [activeFocusIndex, focusByIndex]
+  );
 
   return {
     boardRef,

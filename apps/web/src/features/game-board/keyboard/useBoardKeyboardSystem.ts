@@ -190,7 +190,7 @@ export function useBoardKeyboardSystem({
         ) as HTMLElement | null) || target;
 
       const focused = focusElIfFocusable(candidate);
-      if (!focused) focusFirstPlayable();
+      if (!focused) return;
     },
     [isInputSuppressed, focusElIfFocusable, focusFirstPlayable]
   );
@@ -241,12 +241,15 @@ export function useBoardKeyboardSystem({
 
   const onBoardFocusCapture = useCallback<
     React.FocusEventHandler<HTMLDivElement>
-  >(() => {
-    if (isInputSuppressed) return;
-    hadBoardFocusRef.current = true;
-    // Forward the event into nav's focus capture handler.
-    onNavFocusCapture();
-  }, [isInputSuppressed, hadBoardFocusRef, onNavFocusCapture]);
+  >(
+    (e) => {
+      if (isInputSuppressed) return;
+      hadBoardFocusRef.current = true;
+      // Forward the event into nav's focus capture handler.
+      onNavFocusCapture(e);
+    },
+    [isInputSuppressed, hadBoardFocusRef, onNavFocusCapture]
+  );
 
   useEffect(() => {
     const source = pendingKbDropFocusSourceRef.current;

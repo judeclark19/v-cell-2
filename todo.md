@@ -3,11 +3,9 @@
 ## Smaller tasks
 - confirm reset deal and destructive actions with a modal?
 - on mobile, if the modal is open and you open the nav bar the nav bar goes behind
-- Vertical space btw tables is too big on mobile 
-- When I touch in a random spot on mobile I still see a card getting focus
-- after kb drop, focus goes back to original source. I thought we arleady fixed this. focus should stay target position.
 
 ## Features
+- Make right-click send to foundation if possible and freecell if not.
 - display name
 - auth email/pw
 - daily seed
