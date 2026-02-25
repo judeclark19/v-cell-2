@@ -8,8 +8,6 @@ import {
 import { deleteInProgressGameForDevice } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 import type { PersistedGame } from "../types";
-import { db } from "@/lib/firebaseClient";
-import { doc, setDoc } from "firebase/firestore";
 
 type Params = {
   uid: string | null;
@@ -24,7 +22,6 @@ export function useCompletedGamesPersistence({
 }: Params) {
   const completedGamesHydratedRef = useRef<boolean>(false);
   const persistedCompletedGameIdsRef = useRef<Set<string>>(new Set());
-  const firestoreCompletedSyncedIdsRef = useRef<Set<string>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Hydrate completed games (IndexedDB)

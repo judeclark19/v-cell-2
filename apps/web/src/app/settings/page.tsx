@@ -3,6 +3,7 @@
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useGame } from "@/state/game/GameProvider";
 import { useSession } from "@/state/session/SessionProvider";
+import AccountSettings from "@/ui/AccountSettings";
 
 export default function SettingsPage() {
   const { showTimer, setShowTimer } = useGame();
@@ -19,7 +20,7 @@ export default function SettingsPage() {
       <section>
         <h2>Account</h2>
         {isUser ? (
-          <p>Display name, change password</p>
+          <AccountSettings />
         ) : (
           <p className="hint">Log in to access account settings.</p>
         )}
