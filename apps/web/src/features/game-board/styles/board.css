@@ -132,6 +132,7 @@
 }
 
 .autocomplete-drawer--visible {
+  z-index: var(--z-drag);
   transform: translateY(-100%);
 }
 

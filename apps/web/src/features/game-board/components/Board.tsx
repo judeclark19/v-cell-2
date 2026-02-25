@@ -9,6 +9,7 @@ import FreeCells from "./FreeCells";
 import BoardModals from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
+import SeedButton from "@/ui/SeedButton";
 
 function Board() {
   const game = useGame();
@@ -89,11 +90,35 @@ function Board() {
                   stopAutoComplete={vm.stopAutoComplete}
                   onCardPointerUp={vm.onCardPointerUp}
                 />
+                <div
+                  className="row"
+                  style={{ marginTop: "1em", marginBottom: "0.5em" }}
+                >
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={vm.restartWithCelebration}
+                  >
+                    Restart deal
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    onClick={vm.undo}
+                    disabled={!vm.canUndo}
+                  >
+                    {vm.undoLimit === "unlimited" || vm.undoLimit === 0
+                      ? "Undo"
+                      : `Undo (${vm.undosRemaining})`}
+                  </button>
+                </div>
               </>
             ) : (
               <div className="board-loading" aria-label="Loading deal" />
             )}
           </div>
+
           <BoardModals
             paused={vm.paused}
             onResume={() => vm.setPaused(false)}
@@ -105,14 +130,16 @@ function Board() {
           />
         </BoardKbAttrsContext.Provider>
       </div>
-
+      <p className="hint" style={{ textAlign: "center" }}>
+        Current seed:{" "}
+        {vm.state?.seed ? (
+          <SeedButton seed={vm.state?.seed ?? "(unknown)"} />
+        ) : (
+          "(unknown)"
+        )}
+      </p>
       <BoardControls
-        seed={vm.state?.seed ?? "(unknown)"}
         onNewDeal={vm.newDealWithCelebration}
-        onRestart={vm.restartWithCelebration}
-        onUndo={vm.undo}
-        canUndo={vm.canUndo}
-        undosRemaining={vm.undosRemaining}
         startBySeed={vm.startBySeed}
       />
     </>

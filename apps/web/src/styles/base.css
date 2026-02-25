@@ -115,6 +115,7 @@ textarea {
   font: inherit;
   color: var(--foreground);
     padding: 8px 10px;
+  height: 34px;;
 }
 
 input::placeholder,

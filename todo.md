@@ -4,7 +4,7 @@
 - confirm reset deal and destructive actions with a modal?
 
 ## Features
-- display name
+- Set display name upon login
 - auth email/pw
 - daily seed
 - Skeletons for everything

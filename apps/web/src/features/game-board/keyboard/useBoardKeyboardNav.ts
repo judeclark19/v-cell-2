@@ -74,27 +74,16 @@ export function useBoardKeyboardNav<TState, TPlayable>({
     }
   }, [activeFocusIndex, kbCarrying, isLegalDropTargetEl]);
 
-  const focusByIndex = useCallback(
-    (idx: number) => {
-      const els = focusablesRef.current;
-      if (!els.length) return;
+  const focusByIndex = useCallback((idx: number) => {
+    const els = focusablesRef.current;
+    if (!els.length) return;
 
-      if (idx === 0) {
-        console.log("[kb-nav] focusByIndex(0)", { activeFocusIndex });
-        console.trace("[kb-nav] focusByIndex(0) stack");
-      }
-
-      const next = els[Math.max(0, Math.min(idx, els.length - 1))];
-      if (!next) return;
-      next.focus();
-    },
-    [activeFocusIndex]
-  );
+    const next = els[Math.max(0, Math.min(idx, els.length - 1))];
+    if (!next) return;
+    next.focus();
+  }, []);
 
   const focusFirstPlayable = useCallback(() => {
-    console.log("[kb-nav] focusFirstPlayable()");
-    console.trace("[kb-nav] focusFirstPlayable stack");
-
     refreshKeyboardFocusables();
     const els = focusablesRef.current;
     if (els.length === 0) return;
@@ -181,16 +170,6 @@ export function useBoardKeyboardNav<TState, TPlayable>({
   useEffect(() => {
     const el = getActiveFocusableEl();
     if (!el) return;
-
-    const meta = getNodeMeta(el);
-    // Sanity check: confirm we can classify the currently focused element.
-    // Use debug to keep noise low.
-    console.debug("[kb-nav] active", {
-      idx: activeFocusIndex,
-      meta,
-      ariaLabel: el.getAttribute("aria-label"),
-      cardId: el.getAttribute("data-card-id") || el.dataset.cardId
-    });
   }, [activeFocusIndex, kbCarrying, getActiveFocusableEl, getNodeMeta]);
 
   const findNextByDirection = useCallback(
@@ -337,12 +316,20 @@ export function useBoardKeyboardNav<TState, TPlayable>({
       // Board container focused (empty click) => do nothing
       if (e.target === e.currentTarget) return;
 
-      const activeEl = document.activeElement as HTMLElement | null;
-      if (activeEl && els.includes(activeEl)) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
 
-      requestAnimationFrame(() => focusByIndex(activeFocusIndex));
+      // If focus moved to something that is NOT one of our declared board focusables
+      // (e.g. a control button like "Restart deal"), do NOT snap focus back into the board.
+      const idx = els.indexOf(target);
+      if (idx < 0) return;
+
+      // Focus moved onto a board focusable: treat it as the new active index.
+      if (idx !== activeFocusIndex) {
+        setActiveFocusIndex(idx);
+      }
     },
-    [activeFocusIndex, focusByIndex]
+    [activeFocusIndex]
   );
 
   return {
