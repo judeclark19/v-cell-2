@@ -5,7 +5,8 @@
 
 ## Features
 - Set display name upon login
-- auth email/pw
+- pw change flow
+- auth via email/pw
 - daily seed
 - Skeletons for everything
 - Design system (Maddie?)

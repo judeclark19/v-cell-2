@@ -1,6 +1,7 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { useGame } from "@/state/game/GameProvider";
+import { useSession } from "@/state/session/SessionProvider";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 
@@ -28,6 +29,7 @@ export default function BoardModals({
 }: BoardModalsProps) {
   const router = useRouter();
   const game = useGame();
+  const { isUser } = useSession();
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -59,6 +61,8 @@ export default function BoardModals({
     const isNewBestMoves = fewestMoves?.gameId === game.gameId;
 
     let bodyText = `Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`;
+
+    if (!isUser) return bodyText; // only show win rate and records to signed-in users since it's based on persisted history
 
     bodyText += `\nYou have won ${deriveWinRateLastN(game.completedGames).wins} out of your last ${deriveWinRateLastN(game.completedGames).count} games (${deriveWinRateLastN(game.completedGames).winRate}% win rate)`;
 
@@ -95,9 +99,12 @@ export default function BoardModals({
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
           primaryButtonAction={onNewDeal}
-          secondaryButtonLabel="View all stats"
+          secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
-            router.push("/stats");
+            onDismissWinModal();
+            if (isUser) {
+              router.push("/stats");
+            }
           }}
         />
       )}
