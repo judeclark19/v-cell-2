@@ -4,7 +4,6 @@
 - confirm reset deal and destructive actions with a modal?
 
 ## Features
-- Make right-click send to foundation if possible and freecell if not.
 - display name
 - auth email/pw
 - daily seed

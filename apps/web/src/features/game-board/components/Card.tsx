@@ -38,7 +38,8 @@ type CardProps = {
   emptyLabel?: string;
   className?: string;
   style?: React.CSSProperties;
-  onActivate?: (el: HTMLElement) => void;
+  // Return true if a move was performed (e.g. moved to foundation). Return false if no move occurred.
+  onActivate?: (el: HTMLElement) => boolean;
   onAutoFreeCell?: (el: HTMLElement) => void;
   onPointerDownCard?: (e: React.PointerEvent<HTMLDivElement>) => void;
 } & Omit<
@@ -108,10 +109,17 @@ function Card({
         }
       }}
       onContextMenu={(e) => {
-        // Right-click: auto-move to a free cell (if caller provides handler).
-        if (!card || faceDown || !onAutoFreeCell) return;
+        // Right-click: try foundation first (onActivate). If that fails, fall back to free cell.
+        if (!card || faceDown) return;
+        if (!onActivate && !onAutoFreeCell) return;
+
         e.preventDefault();
-        onAutoFreeCell(e.currentTarget);
+
+        const activated =
+          canActivate && onActivate ? onActivate(e.currentTarget) : false;
+        if (!activated && onAutoFreeCell) {
+          onAutoFreeCell(e.currentTarget);
+        }
       }}
       onPointerDown={onPointerDown}
     >
