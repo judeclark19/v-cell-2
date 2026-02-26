@@ -180,7 +180,6 @@ export function useCloudGamesHydration(uid: string | null) {
 
     const handleSnapshot = async (snap: QuerySnapshot<DocumentData>) => {
       let maxSeen = 0;
-      let appliedCount = 0;
 
       for (const change of snap.docChanges()) {
         const raw = change.doc.data() ?? {};
@@ -190,9 +189,6 @@ export function useCloudGamesHydration(uid: string | null) {
           // Conservative: ignore removals for now.
           continue;
         }
-
-        const applied = await upsertFromDocData(data, change.doc.id);
-        if (applied) appliedCount += 1;
 
         if (
           typeof data.updatedAtMs === "number" &&
