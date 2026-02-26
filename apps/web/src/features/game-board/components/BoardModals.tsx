@@ -133,18 +133,7 @@ export default function BoardModals({
           onClose={onDismissWinModal}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
-          primaryButtonAction={() =>
-            requestConfirm(
-              {
-                title: "Start a new deal?",
-                bodyText:
-                  "Starting a new deal will abandon your current progress.",
-                confirmLabel: "New deal",
-                cancelLabel: "Cancel"
-              },
-              onNewDealAction
-            )
-          }
+          primaryButtonAction={onNewDealAction}
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
             onDismissWinModal();
