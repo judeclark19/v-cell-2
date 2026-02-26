@@ -24,10 +24,16 @@ import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 
+type UiResets = {
+  resetDrag?: () => void;
+  stopAutoComplete?: () => void;
+};
+
 type GameContextValue = {
   state: GameState;
   isWon: boolean;
   dispatchMove: (move: Move) => void;
+  registerUiResets: (handlers: UiResets | null) => void;
   restart: () => void;
   newDeal: () => void;
   replaySeed: (seed: string) => void;
@@ -122,6 +128,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     hydratedGameIdRef.current = hydratedGameId;
   }, [hydratedGameId]);
 
+  const uiResetsRef = useRef<UiResets | null>(null);
+
   const { uid } = useSession();
 
   const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
@@ -197,6 +205,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursorRef,
     setCheckpoint
   });
+
+  // Wrap startSession so all session resets can reliably cancel transient UI (autocomplete, drag overlays)
+  // BEFORE the session key changes. This prevents the brief “initial values” window from triggering
+  // persistence/delete logic and avoids stuck drag layers.
+  const startSessionWithResets = useCallback(
+    (...args: Parameters<typeof startSession>) => {
+      uiResetsRef.current?.stopAutoComplete?.();
+      uiResetsRef.current?.resetDrag?.();
+      return startSession(...args);
+    },
+    [startSession]
+  );
+
+  const startNewDealSessionWithResets = useCallback(() => {
+    startSessionWithResets({ kind: "new" });
+  }, [startSessionWithResets]);
+
+  const replaySeedWithResets = useCallback(
+    (nextSeed: string) => {
+      startSessionWithResets({ kind: "seed", seed: nextSeed });
+    },
+    [startSessionWithResets]
+  );
+
+  const registerUiResets = useCallback((handlers: UiResets | null) => {
+    uiResetsRef.current = handlers;
+  }, []);
 
   const setHydratedGameIdCallback = useCallback((next: string | null) => {
     setHydratedGameId(next);
@@ -299,7 +334,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useLoginReconcileInProgressGame({
     uid,
     seedReady,
-    startSession,
+    startSession: startSessionWithResets,
     setHydratedGameId: (next) => setHydratedGameIdCallback(next)
   });
 
@@ -387,8 +422,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timeElapsedMs,
     startedAtMs,
 
-    startNewDealSession,
-    replaySeed
+    startNewDealSession: startNewDealSessionWithResets,
+    replaySeed: replaySeedWithResets
   });
 
   const newDealRef = useRef(newDeal);
@@ -441,6 +476,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     state,
     isWon,
     dispatchMove,
+    registerUiResets,
     restart,
     newDeal,
     replaySeed,

@@ -31,11 +31,26 @@ export default function ModalOverlay({
   useEffect(() => {
     prevFocusedElRef.current = document.activeElement as HTMLElement | null;
 
+    // Lock background scroll while modal is open.
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevPaddingRight = body.style.paddingRight;
+
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
     // Focus the primary CTA (best default). Fall back to the panel.
     const focusTarget = primaryButtonRef.current ?? panelRef.current;
     focusTarget?.focus();
 
     return () => {
+      // Restore background scroll.
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
       // Restore focus to whatever had it before the modal opened.
       prevFocusedElRef.current?.focus?.();
     };

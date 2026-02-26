@@ -28,6 +28,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     setPaused,
     allowFoundationPullback,
     dispatchMove,
+    registerUiResets,
     undo,
     canUndo,
     undoLimit,
@@ -227,6 +228,11 @@ export function useBoardController(params: UseBoardControllerParams) {
     tryAutoFoundationFromEl: tryAutoFoundationFromElFast,
     waitForFlipComplete
   });
+
+  useEffect(() => {
+    registerUiResets({ resetDrag, stopAutoComplete });
+    return () => registerUiResets(null);
+  }, [registerUiResets, resetDrag, stopAutoComplete]);
 
   const {
     prevCardRectsRef,

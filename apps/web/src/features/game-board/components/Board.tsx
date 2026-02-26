@@ -32,10 +32,6 @@ function Board() {
     req: Omit<ConfirmRequest, "onConfirm">,
     onConfirm: () => void
   ) => {
-    console.log("confirmIfInProgress", {
-      hasStarted: vm.hasStarted,
-      isWon: vm.isWon
-    });
     // Only confirm if a game is actually in progress (i.e. started and not finished).
     // When no progress exists, just do the action.
     if (!vm.hasStarted || (vm.hasStarted && vm.isWon)) {
