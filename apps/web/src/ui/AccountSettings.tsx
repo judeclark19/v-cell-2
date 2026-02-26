@@ -23,7 +23,7 @@ function AccountSettings() {
 
     const timer = setTimeout(() => {
       setMessage(null);
-    }, 8000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [message]);
