@@ -28,6 +28,23 @@ function Board() {
 
   const dismissConfirm = () => setConfirmReq(null);
 
+  const confirmIfInProgress = (
+    req: Omit<ConfirmRequest, "onConfirm">,
+    onConfirm: () => void
+  ) => {
+    console.log("confirmIfInProgress", {
+      hasStarted: vm.hasStarted,
+      isWon: vm.isWon
+    });
+    // Only confirm if a game is actually in progress (i.e. started and not finished).
+    // When no progress exists, just do the action.
+    if (!vm.hasStarted || (vm.hasStarted && vm.isWon)) {
+      onConfirm();
+      return;
+    }
+    confirmThen(req, onConfirm);
+  };
+
   return (
     <>
       <div
@@ -109,18 +126,7 @@ function Board() {
                   <button
                     type="button"
                     className="btn btn--secondary"
-                    onClick={() =>
-                      confirmThen(
-                        {
-                          title: "Restart deal?",
-                          bodyText:
-                            "This will restart the current deal and abandon your current progress.",
-                          confirmLabel: "Restart",
-                          cancelLabel: "Cancel"
-                        },
-                        vm.restartWithCelebration
-                      )
-                    }
+                    onClick={vm.restartWithCelebration}
                   >
                     Restart deal
                   </button>
@@ -166,7 +172,7 @@ function Board() {
       </p>
       <BoardControls
         onNewDeal={() =>
-          confirmThen(
+          confirmIfInProgress(
             {
               title: "Start a new deal?",
               bodyText: "Starting a new deal will abandon your current game.",
@@ -177,7 +183,7 @@ function Board() {
           )
         }
         startBySeed={(seed) =>
-          confirmThen(
+          confirmIfInProgress(
             {
               title: "Start a new game from seed?",
               bodyText: "Starting a new deal will abandon your current game.",
