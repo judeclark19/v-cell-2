@@ -41,7 +41,6 @@ export default function BoardModals({
   timeElapsedMs,
   confirmReq,
   dismissConfirm,
-  requestConfirm,
   onNewDealAction
 }: BoardModalsProps) {
   const router = useRouter();
