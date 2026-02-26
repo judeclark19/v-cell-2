@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebaseClient";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordInner() {
   const searchParams = useSearchParams();
 
   // Where to return after completing auth flows.
@@ -119,5 +119,13 @@ export default function ForgotPasswordPage() {
         </section>
       )}
     </main>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<main />}>
+      <ForgotPasswordInner />
+    </Suspense>
   );
 }
