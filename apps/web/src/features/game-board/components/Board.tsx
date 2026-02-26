@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
@@ -6,7 +7,7 @@ import { useBoardController } from "@/features/game-board/hooks/useBoardControll
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
-import BoardModals from "./BoardModals";
+import BoardModals, { type ConfirmRequest } from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
@@ -15,6 +16,17 @@ function Board() {
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
     useBoardController(game);
+
+  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
+
+  const confirmThen = (
+    req: Omit<ConfirmRequest, "onConfirm">,
+    onConfirm: () => void
+  ) => {
+    setConfirmReq({ ...req, onConfirm });
+  };
+
+  const dismissConfirm = () => setConfirmReq(null);
 
   return (
     <>
@@ -97,7 +109,18 @@ function Board() {
                   <button
                     type="button"
                     className="btn btn--secondary"
-                    onClick={vm.restartWithCelebration}
+                    onClick={() =>
+                      confirmThen(
+                        {
+                          title: "Restart deal?",
+                          bodyText:
+                            "This will restart the current deal and abandon your current progress.",
+                          confirmLabel: "Restart",
+                          cancelLabel: "Cancel"
+                        },
+                        vm.restartWithCelebration
+                      )
+                    }
                   >
                     Restart deal
                   </button>
@@ -126,7 +149,10 @@ function Board() {
             onDismissWinModal={vm.dismissWinModal}
             moveCount={vm.moveCount}
             timeElapsedMs={vm.timeElapsedMs}
-            onNewDeal={vm.newDealWithCelebration}
+            confirmReq={confirmReq}
+            dismissConfirm={dismissConfirm}
+            requestConfirm={confirmThen}
+            onNewDealAction={vm.newDealWithCelebration}
           />
         </BoardKbAttrsContext.Provider>
       </div>
@@ -139,8 +165,29 @@ function Board() {
         )}
       </p>
       <BoardControls
-        onNewDeal={vm.newDealWithCelebration}
-        startBySeed={vm.startBySeed}
+        onNewDeal={() =>
+          confirmThen(
+            {
+              title: "Start a new deal?",
+              bodyText: "Starting a new deal will abandon your current game.",
+              confirmLabel: "New deal",
+              cancelLabel: "Cancel"
+            },
+            vm.newDealWithCelebration
+          )
+        }
+        startBySeed={(seed) =>
+          confirmThen(
+            {
+              title: "Start a new game from seed?",
+              bodyText: "Starting a new deal will abandon your current game.",
+              confirmLabel: "Play seed",
+              cancelLabel: "Cancel"
+            },
+            () => vm.startBySeed(seed)
+          )
+        }
+        requestConfirm={confirmThen}
       />
     </>
   );

@@ -209,12 +209,6 @@ export function useCloudGamesHydration(uid: string | null) {
           Math.max(lastCloudSyncMs, maxSeen)
         );
       }
-
-      console.debug("[cloud hydration]", {
-        count: appliedCount,
-        maxUpdatedAtMsSeen: maxSeen,
-        fromCache: snap.metadata.fromCache
-      });
     };
 
     const handleServerSync = async () => {

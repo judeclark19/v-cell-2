@@ -5,6 +5,15 @@ import { UndoLimit } from "@vcell/engine";
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
+  requestConfirm: (
+    req: {
+      title: string;
+      bodyText: string;
+      confirmLabel: string;
+      cancelLabel: string;
+    },
+    onConfirm: () => void
+  ) => void;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -22,7 +31,8 @@ const parseUndoLimit = (value: string): UndoLimit => {
 
 export default function BoardControls({
   onNewDeal,
-  startBySeed
+  startBySeed,
+  requestConfirm
 }: BoardControlsProps) {
   const {
     allowFoundationPullback,
@@ -116,7 +126,8 @@ export default function BoardControls({
       <section className="control">
         <h2>Gameplay</h2>
         <p className="hint" style={{ marginBottom: "1em" }}>
-          Changing any gameplay setting starts a new game.
+          Changing any gameplay setting starts a new game and abandons the
+          current one.
         </p>
         <div className="grid">
           <label className="field">
@@ -125,9 +136,20 @@ export default function BoardControls({
               className="control"
               id="face-down-cards"
               value={String(faceDownCount)}
-              onChange={(e) =>
-                setFaceDownCount(parseFaceDownCount(e.target.value))
-              }
+              onChange={(e) => {
+                const next = parseFaceDownCount(e.target.value);
+                if (next === faceDownCount) return;
+                requestConfirm(
+                  {
+                    title: "Change face-down cards?",
+                    bodyText:
+                      "Changing this will start a new game and abandon your current one.",
+                    confirmLabel: "Change",
+                    cancelLabel: "Cancel"
+                  },
+                  () => setFaceDownCount(next)
+                );
+              }}
             >
               <option value="0">0 (all face-up)</option>
               <option value="7">7 (classic)</option>
@@ -146,7 +168,20 @@ export default function BoardControls({
               className="control"
               id="undo-limit"
               value={String(undoLimit)}
-              onChange={(e) => setUndoLimit(parseUndoLimit(e.target.value))}
+              onChange={(e) => {
+                const next = parseUndoLimit(e.target.value);
+                if (next === undoLimit) return;
+                requestConfirm(
+                  {
+                    title: "Change undo limit?",
+                    bodyText:
+                      "Changing this will start a new game and abandon your current one.",
+                    confirmLabel: "Change",
+                    cancelLabel: "Cancel"
+                  },
+                  () => setUndoLimit(next)
+                );
+              }}
             >
               <option value="0">0</option>
               <option value="1">1</option>
@@ -166,9 +201,20 @@ export default function BoardControls({
               className="control"
               id="foundation-pullback"
               value={allowFoundationPullback ? "on" : "off"}
-              onChange={(e) =>
-                setAllowFoundationPullback(e.target.value === "on")
-              }
+              onChange={(e) => {
+                const next = e.target.value === "on";
+                if (next === allowFoundationPullback) return;
+                requestConfirm(
+                  {
+                    title: "Change foundation pullback?",
+                    bodyText:
+                      "Changing this will start a new game and abandon your current one.",
+                    confirmLabel: "Change",
+                    cancelLabel: "Cancel"
+                  },
+                  () => setAllowFoundationPullback(next)
+                );
+              }}
             >
               <option value="on">On (easier)</option>
               <option value="off">Off (harder)</option>

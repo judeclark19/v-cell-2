@@ -5,6 +5,14 @@ import { useSession } from "@/state/session/SessionProvider";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 
+export type ConfirmRequest = {
+  title: string;
+  bodyText: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+};
+
 type BoardModalsProps = {
   paused: boolean;
   onResume: () => void;
@@ -15,7 +23,13 @@ type BoardModalsProps = {
   moveCount: number;
   timeElapsedMs: number;
 
-  onNewDeal: () => void;
+  confirmReq: ConfirmRequest | null;
+  dismissConfirm: () => void;
+  requestConfirm: (
+    req: Omit<ConfirmRequest, "onConfirm">,
+    onConfirm: () => void
+  ) => void;
+  onNewDealAction: () => void;
 };
 
 export default function BoardModals({
@@ -25,7 +39,10 @@ export default function BoardModals({
   onDismissWinModal,
   moveCount,
   timeElapsedMs,
-  onNewDeal
+  confirmReq,
+  dismissConfirm,
+  requestConfirm,
+  onNewDealAction
 }: BoardModalsProps) {
   const router = useRouter();
   const game = useGame();
@@ -79,6 +96,24 @@ export default function BoardModals({
 
   return (
     <>
+      {confirmReq && (
+        <ModalOverlay
+          overlayAriaLabel="Confirm action"
+          title={confirmReq.title}
+          buttonAriaLabel="Close confirmation dialog"
+          onClose={dismissConfirm}
+          bodyText={confirmReq.bodyText}
+          primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
+          primaryButtonAction={() => {
+            const fn = confirmReq.onConfirm;
+            dismissConfirm();
+            fn();
+          }}
+          secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
+          secondaryButtonAction={dismissConfirm}
+        />
+      )}
+
       {paused && (
         <ModalOverlay
           overlayAriaLabel="Game paused"
@@ -98,7 +133,18 @@ export default function BoardModals({
           onClose={onDismissWinModal}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
-          primaryButtonAction={onNewDeal}
+          primaryButtonAction={() =>
+            requestConfirm(
+              {
+                title: "Start a new deal?",
+                bodyText:
+                  "Starting a new deal will abandon your current progress.",
+                confirmLabel: "New deal",
+                cancelLabel: "Cancel"
+              },
+              onNewDealAction
+            )
+          }
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
             onDismissWinModal();
