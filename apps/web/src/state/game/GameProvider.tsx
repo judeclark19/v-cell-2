@@ -23,12 +23,10 @@ import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   selectSessionPhase,
-  selectSeed,
   hydrateHistory,
-  gameStore,
   selectHistory
 } from "../gameStore_new";
 
@@ -120,6 +118,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
 
   const history = useSelector(selectHistory);
+  const dispatch = useDispatch();
 
   const [hydratedGameId, setHydratedGameId] = useState<string | null>(null);
 
@@ -270,7 +269,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        gameStore.dispatch(hydrateHistory({ present, past }));
+        dispatch(hydrateHistory({ present, past }));
         setHydratedGameIdCallback(gameId);
       } catch (err) {
         console.error(
@@ -292,7 +291,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         setHydratedGameIdCallback(gameId);
       }
     },
-    [rules, undoLimit, gameId, setHydratedGameIdCallback]
+    [rules, undoLimit, gameId, setHydratedGameIdCallback, dispatch]
   );
 
   useInProgressGamePersistence({

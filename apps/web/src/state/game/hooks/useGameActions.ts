@@ -8,11 +8,11 @@ import { db } from "@/lib/firebaseClient";
 import { doc, setDoc } from "firebase/firestore";
 import {
   applyMoveToHistory,
-  gameStore,
   hydrateHistory,
   HistoryState,
   undoHistory
 } from "@/state/gameStore_new";
+import { useDispatch } from "react-redux";
 
 export type UseGameActionsParams = {
   // Core state
@@ -117,6 +117,7 @@ export function useGameActions({
   startNewDealSession,
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
+  const dispatch = useDispatch();
   const dispatchMove = useCallback(
     (move: Move) => {
       // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
@@ -214,7 +215,7 @@ export function useGameActions({
       }
 
       // Update engine history in RTK (present + undo stack).
-      gameStore.dispatch(applyMoveToHistory({ move, undoLimit, isWon }));
+      dispatch(applyMoveToHistory({ move, undoLimit, isWon }));
     },
     [
       setHasStarted,
@@ -239,16 +240,15 @@ export function useGameActions({
       setCheckpoint,
       movesRef,
       uid,
-      history.present
+      history.present,
+      dispatch
     ]
   );
 
   const restart = useCallback(() => {
     // Restart should reset the deal back to its original position and clear history,
     // but it should NOT affect the timer.
-    gameStore.dispatch(
-      hydrateHistory({ present: createGame(seed, rules), past: [] })
-    );
+    dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
     setUndosUsed(0);
     setMoveCount(0);
     setMoves([]);
@@ -269,7 +269,8 @@ export function useGameActions({
     setCheckpoint,
     setEndedAtMs,
     setIsAbandoned,
-    movesRef
+    movesRef,
+    dispatch
   ]);
 
   const abandonIfNeededThenStart = useCallback(
@@ -400,7 +401,7 @@ export function useGameActions({
       return next;
     });
 
-    gameStore.dispatch(undoHistory());
+    dispatch(undoHistory());
   }, [
     isWon,
     history.past.length,
@@ -410,7 +411,8 @@ export function useGameActions({
     setMoveCount,
     setCursor,
     cursorRef,
-    movesRef
+    movesRef,
+    dispatch
   ]);
 
   return { dispatchMove, restart, newDeal, startBySeed, undo };

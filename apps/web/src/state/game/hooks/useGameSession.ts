@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
-  gameStore,
   startSession as startSession_new,
   selectSeed,
   selectGameId,
@@ -99,7 +98,7 @@ export function useGameSession({
   // Keep deterministic placeholders to avoid hydration mismatches.
   const seed = useSelector(selectSeed);
   const gameId = useSelector(selectGameId);
-
+  const dispatch = useDispatch();
   const startSession = useCallback(
     (mode: StartSessionMode) => {
       const nextSeed = mode.kind === "new" ? makeNewSeed() : mode.seed;
@@ -107,12 +106,10 @@ export function useGameSession({
         mode.kind === "seed+id" ? mode.gameId : makeNewGameId();
 
       // Persist session identity to the new RTK store.
-      gameStore.dispatch(
-        startSession_new({ rules, seed: nextSeed, gameId: nextGameId })
-      );
+      dispatch(startSession_new({ rules, seed: nextSeed, gameId: nextGameId }));
 
       // New session.
-      gameStore.dispatch(
+      dispatch(
         hydrateHistory({ present: createGame(nextSeed, rules), past: [] })
       );
       setTimeElapsedMs(0);
@@ -128,6 +125,7 @@ export function useGameSession({
       setCheckpoint(null);
     },
     [
+      dispatch,
       rules,
       setTimeElapsedMs,
       setHasStarted,
