@@ -24,7 +24,13 @@ import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 import { useSelector } from "react-redux";
-import { selectSessionPhase, selectSeed } from "../gameStore_new";
+import {
+  selectSessionPhase,
+  selectSeed,
+  hydrateHistory,
+  gameStore,
+  selectHistory
+} from "../gameStore_new";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -66,11 +72,6 @@ type GameContextValue = {
   completedGames: PersistedGame[];
 };
 
-export type HistoryState = {
-  present: GameState;
-  past: GameState[];
-};
-
 const GameContext = createContext<GameContextValue | null>(null);
 
 export function useGame() {
@@ -84,8 +85,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Seed + rules
   // ---------------------------------------------------------------------------
   // Seed and gameId state are now owned by useGameSession.
-
-  const bootSeed = useSelector(selectSeed);
 
   const [allowFoundationPullback, setAllowFoundationPullback] =
     useState<boolean>(true);
@@ -119,11 +118,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // History / engine state
   // ---------------------------------------------------------------------------
-  const [history, setHistory] = useState<HistoryState>(() => ({
-    present: createGame(bootSeed, rules),
-    past: []
-  }));
-  const state = history.present;
+
+  const history = useSelector(selectHistory);
 
   const [hydratedGameId, setHydratedGameId] = useState<string | null>(null);
 
@@ -193,7 +189,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       allowFoundationPullback,
       undoLimit,
       faceDownCount,
-      setHistory,
       setTimeElapsedMs,
       setHasStarted,
       setStartedAtMs,
@@ -244,8 +239,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Derived state
   // ---------------------------------------------------------------------------
   const { isWon, undosRemaining, canUndo } = useGameDerivedState({
-    state,
-    pastLength: history.past.length,
+    history,
     undoLimit,
     undosUsed
   });
@@ -276,7 +270,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        setHistory({ present, past });
+        gameStore.dispatch(hydrateHistory({ present, past }));
         setHydratedGameIdCallback(gameId);
       } catch (err) {
         console.error(
@@ -385,9 +379,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Actions
   // ---------------------------------------------------------------------------
   const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
-    state,
     history,
-    setHistory,
 
     seed,
     gameId,
@@ -455,7 +447,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useGameSnapshotLogger({
     gameId,
     seed,
-    state,
+    state: history.present,
     hasStarted,
     isAbandoned,
     paused,
@@ -475,7 +467,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const value: GameContextValue = {
     sessionReady,
-    state,
+    state: history.present,
     isWon,
     dispatchMove,
     registerUiResets,

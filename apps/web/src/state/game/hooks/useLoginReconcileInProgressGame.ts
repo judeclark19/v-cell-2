@@ -19,8 +19,6 @@ import {
   upsertInProgressGame
 } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
-import { useSelector } from "react-redux";
-import { selectSessionPhase } from "@/state/gameStore_new";
 
 type Params = {
   uid: string | null;

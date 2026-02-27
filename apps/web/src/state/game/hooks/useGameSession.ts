@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
-import { HistoryState } from "../GameProvider";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
   gameStore,
   startSession as startSession_new,
   selectSeed,
-  selectGameId
+  selectGameId,
+  hydrateHistory
 } from "@/state/gameStore_new";
 
 type StartSessionMode =
@@ -51,7 +51,6 @@ export type UseGameSessionParams = {
   faceDownCount: Rules["faceDownCount"];
 
   // State setters owned by GameProvider
-  setHistory: React.Dispatch<React.SetStateAction<HistoryState>>;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
   setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
@@ -84,7 +83,6 @@ export type UseGameSessionResult = {
  */
 export function useGameSession({
   rules,
-  setHistory,
   setTimeElapsedMs,
   setHasStarted,
   setStartedAtMs,
@@ -114,8 +112,9 @@ export function useGameSession({
       );
 
       // New session.
-      setHistory({ present: createGame(nextSeed, rules), past: [] });
-
+      gameStore.dispatch(
+        hydrateHistory({ present: createGame(nextSeed, rules), past: [] })
+      );
       setTimeElapsedMs(0);
       setHasStarted(false);
       setStartedAtMs(null);
@@ -130,7 +129,6 @@ export function useGameSession({
     },
     [
       rules,
-      setHistory,
       setTimeElapsedMs,
       setHasStarted,
       setStartedAtMs,

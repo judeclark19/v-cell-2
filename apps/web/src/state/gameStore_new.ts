@@ -1,18 +1,24 @@
 // Redux Toolkit
-
 import { createSlice, configureStore, PayloadAction } from "@reduxjs/toolkit";
-import { createGame, GameState, Rules } from "@vcell/engine";
+import {
+  applyMove,
+  createGame,
+  GameState,
+  Move,
+  Rules,
+  UndoLimit
+} from "@vcell/engine";
 
 export type SessionPhase = "boot" | "ready";
-
+export type HistoryState = {
+  present: GameState;
+  past: GameState[];
+};
 interface GameStoreState {
   seed: string;
   gameId: string;
   sessionPhase: SessionPhase;
-  history: {
-    present: GameState | null;
-    past: GameState[];
-  };
+  history: HistoryState;
 }
 
 function safeRandomId(): string {
@@ -29,12 +35,21 @@ function safeRandomId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function undoLimitToCap(undoLimit: UndoLimit): number {
+  if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
+  return undoLimit;
+}
+
 const initialState: GameStoreState = {
   seed: safeRandomId(),
   gameId: safeRandomId(),
   sessionPhase: "boot",
   history: {
-    present: null,
+    present: createGame(safeRandomId(), {
+      allowFoundationPullback: false,
+      undoLimit: "unlimited",
+      faceDownCount: 0
+    }),
     past: []
   }
 };
@@ -47,8 +62,8 @@ const gameSlice = createSlice({
       state,
       action: PayloadAction<{ rules: Rules; seed?: string; gameId?: string }>
     ) => {
-      const seed = action.payload.seed ?? crypto.randomUUID();
-      const gameId = action.payload.gameId ?? crypto.randomUUID();
+      const seed = action.payload.seed ?? safeRandomId();
+      const gameId = action.payload.gameId ?? safeRandomId();
 
       const initialGame = createGame(seed, action.payload.rules);
 
@@ -63,11 +78,60 @@ const gameSlice = createSlice({
       state.history.present = initialGame;
       state.history.past = [];
       state.sessionPhase = "ready";
+    },
+    hydrateHistory: (
+      state,
+      action: PayloadAction<{ present: GameState; past: GameState[] }>
+    ) => {
+      state.history.present = action.payload.present;
+      state.history.past = action.payload.past;
+    },
+    applyMoveToHistory: (
+      state,
+      action: PayloadAction<{
+        move: Move;
+        undoLimit: UndoLimit;
+        isWon: boolean;
+      }>
+    ) => {
+      const { move, undoLimit, isWon } = action.payload;
+
+      let next: GameState;
+      try {
+        next = applyMove(state.history.present, move);
+      } catch {
+        // Invalid move: drop it.
+        return;
+      }
+
+      // After a win, allow cosmetic moves but do not mutate undo history.
+      if (isWon) {
+        state.history.present = next;
+        return;
+      }
+
+      const cap = undoLimitToCap(undoLimit);
+      const nextPast = [...state.history.past, state.history.present];
+
+      if (Number.isFinite(cap) && nextPast.length > cap) {
+        // Keep the most recent `cap` states.
+        nextPast.splice(0, nextPast.length - cap);
+      }
+
+      state.history.present = next;
+      state.history.past = nextPast;
+    },
+    undoHistory: (state) => {
+      if (state.history.past.length === 0) return;
+      const prev = state.history.past[state.history.past.length - 1];
+      state.history.present = prev;
+      state.history.past = state.history.past.slice(0, -1);
     }
   }
 });
 
-export const { startSession } = gameSlice.actions;
+export const { startSession, hydrateHistory, applyMoveToHistory, undoHistory } =
+  gameSlice.actions;
 
 export const gameStore = configureStore({
   reducer: {
@@ -82,6 +146,4 @@ export type AppDispatch = typeof gameStore.dispatch;
 export const selectSeed = (state: RootState) => state.game.seed;
 export const selectGameId = (state: RootState) => state.game.gameId;
 export const selectSessionPhase = (state: RootState) => state.game.sessionPhase;
-export const selectPresent = (state: RootState) => state.game.history.present;
-export const selectPastLength = (state: RootState) =>
-  state.game.history.past.length;
+export const selectHistory = (state: RootState) => state.game.history;

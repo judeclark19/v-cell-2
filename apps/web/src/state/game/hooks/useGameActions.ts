@@ -1,24 +1,22 @@
 import { useCallback } from "react";
 import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
-import { HistoryState } from "../GameProvider";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import type { PersistedGame } from "@/persistence/types";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc } from "firebase/firestore";
-
-function undoLimitToCap(undoLimit: UndoLimit): number {
-  if (undoLimit === "unlimited") return Number.POSITIVE_INFINITY;
-  return undoLimit;
-}
+import {
+  applyMoveToHistory,
+  gameStore,
+  hydrateHistory,
+  HistoryState,
+  undoHistory
+} from "@/state/gameStore_new";
 
 export type UseGameActionsParams = {
   // Core state
-  state: GameState;
   history: HistoryState;
-  setHistory: React.Dispatch<React.SetStateAction<HistoryState>>;
-
   // Session identity + rules
   seed: string;
   gameId: string;
@@ -82,9 +80,7 @@ export type UseGameActionsResult = {
  * This is intentionally a mechanical extraction from GameProvider.
  */
 export function useGameActions({
-  state,
   history,
-  setHistory,
 
   seed,
   gameId,
@@ -148,97 +144,77 @@ export function useGameActions({
         setCursor(nextCursor);
       }
 
-      setHistory((h) => {
-        let next: GameState;
-        try {
-          next = applyMove(h.present, move);
-        } catch (err) {
-          console.warn(
-            "[dispatchMove] applyMove rejected move; dropping move",
-            {
-              err,
-              move,
-              gameId,
-              seed,
-              isWon,
-              endedAtMs,
-              cursor: cursorRef.current
-            }
-          );
-          return h;
-        }
+      let next: GameState;
+      try {
+        next = applyMove(history.present, move);
+      } catch (err) {
+        console.warn("[dispatchMove] applyMove rejected move; dropping move", {
+          err,
+          move,
+          gameId,
+          seed,
+          isWon,
+          endedAtMs,
+          cursor: cursorRef.current
+        });
+        return;
+      }
 
-        // If this move produces a win, stamp `endedAtMs` exactly once.
-        if (!isWon && areAllCardsUnlocked(next)) {
-          const ended = Date.now();
-          setEndedAtMs((prev) => (prev == null ? ended : prev));
+      // If this move produces a win, stamp `endedAtMs` exactly once.
+      if (!isWon && areAllCardsUnlocked(next)) {
+        const ended = Date.now();
+        setEndedAtMs((prev) => (prev == null ? ended : prev));
 
-          const archivedCursor = cursorRef.current;
-          const archivedMoves = movesRef.current;
+        const archivedCursor = cursorRef.current;
+        const archivedMoves = movesRef.current;
 
-          const completed: PersistedGame = {
-            gameId,
-            deviceId: getOrCreateDeviceId(),
-            seed,
-            rules: next.rules,
-            kind: "freeplay",
+        const completed: PersistedGame = {
+          gameId,
+          deviceId: getOrCreateDeviceId(),
+          seed,
+          rules: next.rules,
+          kind: "freeplay",
 
-            status: "won",
+          status: "won",
 
-            startedAtMs,
-            endedAtMs: ended,
-            timeElapsedMs,
-            hasStarted: true,
-            paused: false,
+          startedAtMs,
+          endedAtMs: ended,
+          timeElapsedMs,
+          hasStarted: true,
+          paused: false,
 
-            moveCount: archivedCursor,
-            undosUsed,
-            moves: archivedMoves,
-            cursor: archivedCursor,
+          moveCount: archivedCursor,
+          undosUsed,
+          moves: archivedMoves,
+          cursor: archivedCursor,
 
-            updatedAtMs: Date.now(),
-            ...(uid ? { userId: uid } : {})
-          };
-
-          setCompletedGames((prev) => {
-            if (prev.some((g) => g.gameId === gameId)) return prev;
-            return [...prev, completed];
-          });
-
-          if (uid) {
-            setDoc(doc(db, "users", uid, "games", gameId), completed, {
-              merge: true
-            }).catch((err) => {
-              console.warn(
-                "[game actions] failed to write completed game to Firestore",
-                err
-              );
-            });
-          }
-        }
-
-        // After a win, allow cosmetic moves but do not mutate undo history.
-        if (isWon) {
-          return { present: next, past: h.past };
-        }
-
-        const cap = undoLimitToCap(undoLimit);
-        const nextPast = [...h.past, h.present];
-
-        if (Number.isFinite(cap) && nextPast.length > cap) {
-          // Keep the most recent `cap` states.
-          nextPast.splice(0, nextPast.length - cap);
-        }
-
-        if (cursorRef.current > 0 && cursorRef.current % 20 === 0) {
-          setCheckpoint({ at: cursorRef.current, state: next });
-        }
-
-        return {
-          present: next,
-          past: nextPast
+          updatedAtMs: Date.now(),
+          ...(uid ? { userId: uid } : {})
         };
-      });
+
+        setCompletedGames((prev) => {
+          if (prev.some((g) => g.gameId === gameId)) return prev;
+          return [...prev, completed];
+        });
+
+        if (uid) {
+          setDoc(doc(db, "users", uid, "games", gameId), completed, {
+            merge: true
+          }).catch((err) => {
+            console.warn(
+              "[game actions] failed to write completed game to Firestore",
+              err
+            );
+          });
+        }
+      }
+
+      if (cursorRef.current > 0 && cursorRef.current % 20 === 0) {
+        setCheckpoint({ at: cursorRef.current, state: next });
+      }
+
+      // Update engine history in RTK (present + undo stack).
+      gameStore.dispatch(applyMoveToHistory({ move, undoLimit, isWon }));
     },
     [
       setHasStarted,
@@ -252,7 +228,6 @@ export function useGameActions({
       cursorRef,
       setMoves,
       setCursor,
-      setHistory,
       gameId,
       seed,
       setCompletedGames,
@@ -263,14 +238,17 @@ export function useGameActions({
       undoLimit,
       setCheckpoint,
       movesRef,
-      uid
+      uid,
+      history.present
     ]
   );
 
   const restart = useCallback(() => {
     // Restart should reset the deal back to its original position and clear history,
     // but it should NOT affect the timer.
-    setHistory({ present: createGame(seed, rules), past: [] });
+    gameStore.dispatch(
+      hydrateHistory({ present: createGame(seed, rules), past: [] })
+    );
     setUndosUsed(0);
     setMoveCount(0);
     setMoves([]);
@@ -281,7 +259,6 @@ export function useGameActions({
     setEndedAtMs(null);
     setIsAbandoned(false);
   }, [
-    setHistory,
     seed,
     rules,
     setUndosUsed,
@@ -322,7 +299,7 @@ export function useGameActions({
           gameId,
           deviceId: getOrCreateDeviceId(),
           seed,
-          rules: state.rules,
+          rules: history.present.rules,
           kind: "freeplay",
 
           status: "abandoned",
@@ -375,7 +352,7 @@ export function useGameActions({
       setCompletedGames,
       gameId,
       seed,
-      state.rules,
+      history.present.rules,
       startedAtMs,
       timeElapsedMs,
       undosUsed,
@@ -423,14 +400,7 @@ export function useGameActions({
       return next;
     });
 
-    setHistory((h) => {
-      if (h.past.length === 0) return h;
-      const prev = h.past[h.past.length - 1];
-      return {
-        present: prev,
-        past: h.past.slice(0, -1)
-      };
-    });
+    gameStore.dispatch(undoHistory());
   }, [
     isWon,
     history.past.length,
@@ -440,7 +410,6 @@ export function useGameActions({
     setMoveCount,
     setCursor,
     cursorRef,
-    setHistory,
     movesRef
   ]);
 
