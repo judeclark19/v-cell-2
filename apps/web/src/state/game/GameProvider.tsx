@@ -24,7 +24,7 @@ import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 import { useSelector } from "react-redux";
-import { selectSessionPhase } from "../gameStore_new";
+import { selectSessionPhase, selectSeed } from "../gameStore_new";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -85,6 +85,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Seed and gameId state are now owned by useGameSession.
 
+  const bootSeed = useSelector(selectSeed);
+
   const [allowFoundationPullback, setAllowFoundationPullback] =
     useState<boolean>(true);
 
@@ -118,7 +120,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // History / engine state
   // ---------------------------------------------------------------------------
   const [history, setHistory] = useState<HistoryState>(() => ({
-    present: createGame("seed-init", rules),
+    present: createGame(bootSeed, rules),
     past: []
   }));
   const state = history.present;

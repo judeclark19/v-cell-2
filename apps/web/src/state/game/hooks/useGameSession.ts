@@ -8,8 +8,8 @@ import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
   gameStore,
   startSession as startSession_new,
-  selectSeed as selectSeed_new,
-  selectGameId as selectGameId_new
+  selectSeed,
+  selectGameId
 } from "@/state/gameStore_new";
 
 type StartSessionMode =
@@ -99,8 +99,8 @@ export function useGameSession({
 }: UseGameSessionParams): UseGameSessionResult {
   // Seed/gameId are now owned by the RTK store.
   // Keep deterministic placeholders to avoid hydration mismatches.
-  const seed = useSelector(selectSeed_new) ?? "seed-init";
-  const gameId = useSelector(selectGameId_new) ?? "game-init";
+  const seed = useSelector(selectSeed);
+  const gameId = useSelector(selectGameId);
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {

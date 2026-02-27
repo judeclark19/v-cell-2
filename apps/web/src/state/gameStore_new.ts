@@ -6,8 +6,8 @@ import { createGame, GameState, Rules } from "@vcell/engine";
 export type SessionPhase = "boot" | "ready";
 
 interface GameStoreState {
-  seed: string | null;
-  gameId: string | null;
+  seed: string;
+  gameId: string;
   sessionPhase: SessionPhase;
   history: {
     present: GameState | null;
@@ -15,9 +15,23 @@ interface GameStoreState {
   };
 }
 
+function safeRandomId(): string {
+  const c = globalThis.crypto as Crypto | undefined;
+  const maybeUUID = c?.randomUUID;
+  if (typeof maybeUUID === "function") return maybeUUID.call(c);
+
+  if (c?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 const initialState: GameStoreState = {
-  seed: null,
-  gameId: null,
+  seed: safeRandomId(),
+  gameId: safeRandomId(),
   sessionPhase: "boot",
   history: {
     present: null,

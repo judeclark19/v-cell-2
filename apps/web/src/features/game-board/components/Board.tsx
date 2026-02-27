@@ -19,8 +19,6 @@ function Board() {
 
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
 
-  // const sessionPhase = useSelector(selectSessionPhase);
-
   const confirmThen = (
     req: Omit<ConfirmRequest, "onConfirm">,
     onConfirm: () => void
