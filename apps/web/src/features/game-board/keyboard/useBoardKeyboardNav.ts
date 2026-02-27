@@ -265,6 +265,71 @@ export function useBoardKeyboardNav<TState, TPlayable>({
       // Up/Down may leave the region when appropriate.
       const restrictToSameRegion = dir === "left" || dir === "right";
 
+      // Tableau-specific rule: Left/Right should ALWAYS change columns.
+      // Geometry-based dx checks can accidentally treat a slightly-offset lower card as “right”.
+      if (
+        (dir === "left" || dir === "right") &&
+        fromMeta?.region === "tableau"
+      ) {
+        const fromPos = fromMeta as Extract<
+          BoardNodeMeta,
+          { region: "tableau" }
+        >;
+        const fromCol = fromPos.tableauCol;
+        const fromRow = fromPos.tableauIndex;
+
+        if (typeof fromCol === "number" && typeof fromRow === "number") {
+          // If focused on an empty slot/container (-1), treat it as the bottom of the column.
+          const effectiveFromRow =
+            fromRow === -1 ? Number.POSITIVE_INFINITY : fromRow;
+
+          let bestIdx = -1;
+          let bestColDelta = Number.POSITIVE_INFINITY;
+          let bestRowDelta = Number.POSITIVE_INFINITY;
+
+          for (let i = 0; i < els.length; i++) {
+            const el = els[i];
+            if (el === fromEl) continue;
+
+            const meta = getNodeMeta(el);
+            if (!meta || meta.region !== "tableau") continue;
+
+            const pos = meta as Extract<BoardNodeMeta, { region: "tableau" }>;
+            const toCol = pos.tableauCol;
+            const toRowRaw = pos.tableauIndex;
+
+            if (typeof toCol !== "number" || typeof toRowRaw !== "number")
+              continue;
+            if (toCol === fromCol) continue; // L/R must change columns
+
+            // Enforce direction by column index (not by pixel geometry).
+            if (dir === "right" && toCol <= fromCol) continue;
+            if (dir === "left" && toCol >= fromCol) continue;
+
+            const colDelta = Math.abs(toCol - fromCol);
+            const effectiveToRow =
+              toRowRaw === -1 ? Number.POSITIVE_INFINITY : toRowRaw;
+            const rowDelta = Math.abs(effectiveToRow - effectiveFromRow);
+
+            // Prefer the nearest next column, then stay aligned by row.
+            if (
+              colDelta < bestColDelta ||
+              (colDelta === bestColDelta && rowDelta < bestRowDelta)
+            ) {
+              bestColDelta = colDelta;
+              bestRowDelta = rowDelta;
+              bestIdx = i;
+            }
+          }
+
+          if (bestIdx >= 0) {
+            setActiveFocusIndex(bestIdx);
+            requestAnimationFrame(() => focusByIndex(bestIdx));
+            return;
+          }
+        }
+      }
+
       for (let i = 0; i < els.length; i++) {
         const el = els[i];
         if (el === fromEl) continue;
