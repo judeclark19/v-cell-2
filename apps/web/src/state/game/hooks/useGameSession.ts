@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { createGame } from "@vcell/engine";
 import type { GameState, Rules, Move } from "@vcell/engine";
 import { HistoryState } from "../GameProvider";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
+import {
+  gameStore,
+  startSession as startSession_new,
+  selectSeed as selectSeed_new,
+  selectGameId as selectGameId_new
+} from "@/state/gameStore_new";
 
 type StartSessionMode =
   | { kind: "new" }
@@ -63,7 +70,6 @@ export type UseGameSessionParams = {
 export type UseGameSessionResult = {
   seed: string;
   gameId: string;
-  seedReady: boolean;
 
   startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
@@ -91,10 +97,10 @@ export function useGameSession({
   cursorRef,
   setCheckpoint
 }: UseGameSessionParams): UseGameSessionResult {
-  // Seed is initialized to a deterministic placeholder to avoid hydration mismatches.
-  const [seed, setSeed] = useState<string>("seed-init");
-  const [gameId, setGameId] = useState<string>("game-init");
-  const [seedReady, setSeedReady] = useState<boolean>(false);
+  // Seed/gameId are now owned by the RTK store.
+  // Keep deterministic placeholders to avoid hydration mismatches.
+  const seed = useSelector(selectSeed_new) ?? "seed-init";
+  const gameId = useSelector(selectGameId_new) ?? "game-init";
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {
@@ -102,8 +108,10 @@ export function useGameSession({
       const nextGameId =
         mode.kind === "seed+id" ? mode.gameId : makeNewGameId();
 
-      setSeed(nextSeed);
-      setGameId(nextGameId);
+      // Persist session identity to the new RTK store.
+      gameStore.dispatch(
+        startSession_new({ rules, seed: nextSeed, gameId: nextGameId })
+      );
 
       // New session.
       setHistory({ present: createGame(nextSeed, rules), past: [] });
@@ -170,8 +178,6 @@ export function useGameSession({
         } else {
           startSessionRef.current({ kind: "new" });
         }
-
-        setSeedReady(true);
       } catch (err) {
         console.error(
           "Failed to bootstrap session from in-progress games",
@@ -180,7 +186,6 @@ export function useGameSession({
 
         if (cancelled) return;
         startSessionRef.current({ kind: "new" });
-        setSeedReady(true);
       }
     })();
 
@@ -203,7 +208,6 @@ export function useGameSession({
   return {
     seed,
     gameId,
-    seedReady,
     startNewDealSession,
     replaySeed,
     startSession

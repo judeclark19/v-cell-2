@@ -3,9 +3,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type FoundationDrainPreference = "freecells-first" | "tableau-first";
 
 export type UseFoundationDrainAutoCompleteArgs = {
-  /** Whether the current seed/state is ready for interactions. */
-  seedReady: boolean;
-
   /** Gameplay pause state (used to stop the runner). */
   paused: boolean;
 
@@ -59,7 +56,6 @@ export function useFoundationDrainAutoComplete(
   args: UseFoundationDrainAutoCompleteArgs
 ): UseFoundationDrainAutoCompleteReturn {
   const {
-    seedReady,
     paused,
     isAnyModalOpen,
     shouldShowWinModal,
@@ -80,7 +76,6 @@ export function useFoundationDrainAutoComplete(
     isAutoCompletingRef.current = isAutoCompleting;
   }, [isAutoCompleting]);
 
-  const seedReadyRef = useLatest(seedReady);
   const pausedRef = useLatest(paused);
   const isAnyModalOpenRef = useLatest(isAnyModalOpen);
   const shouldShowWinModalRef = useLatest(shouldShowWinModal);
@@ -140,7 +135,6 @@ export function useFoundationDrainAutoComplete(
   const runAutoComplete = useCallback(async () => {
     // Don’t start if we’re already running or if UI/game state blocks it.
     if (isAutoCompletingRef.current) return;
-    if (!seedReadyRef.current) return;
     if (pausedRef.current) return;
     if (isAnyModalOpenRef.current) return;
     if (shouldShowWinModalRef.current) return;
@@ -154,7 +148,6 @@ export function useFoundationDrainAutoComplete(
 
       while (true) {
         if (!isAutoCompletingRef.current) break;
-        if (!seedReadyRef.current) break;
         if (pausedRef.current) break;
         if (isAnyModalOpenRef.current) break;
         if (shouldShowWinModalRef.current) break;
@@ -212,7 +205,6 @@ export function useFoundationDrainAutoComplete(
     maxStepsRef,
     pausedRef,
     preferenceRef,
-    seedReadyRef,
     shouldShowWinModalRef,
     tryAutoFoundationFromElRef,
     waitForFlipComplete,

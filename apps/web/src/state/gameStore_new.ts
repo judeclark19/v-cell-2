@@ -31,10 +31,10 @@ const gameSlice = createSlice({
   reducers: {
     startSession: (
       state,
-      action: PayloadAction<{ rules: Rules; seed?: string }>
+      action: PayloadAction<{ rules: Rules; seed?: string; gameId?: string }>
     ) => {
       const seed = action.payload.seed ?? crypto.randomUUID();
-      const gameId = crypto.randomUUID();
+      const gameId = action.payload.gameId ?? crypto.randomUUID();
 
       const initialGame = createGame(seed, action.payload.rules);
 

@@ -3,9 +3,6 @@ import type { RefObject } from "react";
 import { useFoundationDrainAutoComplete } from "@/features/game-board/hooks/useFoundationDrainAutoComplete";
 
 export type UseBoardAutoCompleteArgs = {
-  /** Whether the current seed/layout is ready for actions */
-  seedReady: boolean;
-
   /** Whether the game is paused */
   paused: boolean;
 
@@ -40,7 +37,6 @@ export type UseBoardAutoCompleteArgs = {
  * doesn’t need to manage it inline.
  */
 export function useBoardAutoComplete({
-  seedReady,
   paused,
   isAnyModalOpen,
   shouldShowWinModal,
@@ -54,7 +50,6 @@ export function useBoardAutoComplete({
 
   const { isAutoCompleting, runAutoComplete, stopAutoComplete } =
     useFoundationDrainAutoComplete({
-      seedReady,
       paused,
       isAnyModalOpen,
       shouldShowWinModal,

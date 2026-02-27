@@ -1,11 +1,6 @@
 "use client";
 
 import {
-  gameStore,
-  startSession as startSession_new
-} from "@/state/gameStore_new";
-
-import {
   createContext,
   useCallback,
   useContext,
@@ -28,6 +23,8 @@ import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
+import { useSelector } from "react-redux";
+import { selectSessionPhase } from "../gameStore_new";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -35,6 +32,7 @@ type UiResets = {
 };
 
 type GameContextValue = {
+  sessionReady: boolean;
   state: GameState;
   isWon: boolean;
   dispatchMove: (move: Move) => void;
@@ -56,7 +54,6 @@ type GameContextValue = {
   setPaused: (next: boolean) => void;
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
-  seedReady: boolean;
   historyReady: boolean;
   timeElapsedMs: number;
   startedAtMs: number | null;
@@ -182,34 +179,31 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const didApplyRuleChangeOnceRef = useRef(false);
   const prevUidRef = useRef<string | null>(uid);
 
+  const sessionPhase = useSelector(selectSessionPhase);
+  const sessionReady = sessionPhase === "ready";
+
   // ---------------------------------------------------------------------------
-  // Session (seed/gameId/seedReady + init/reseed choreography)
+  // Session (seed/gameId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const {
-    seed,
-    gameId,
-    seedReady,
-    startNewDealSession,
-    replaySeed,
-    startSession
-  } = useGameSession({
-    rules,
-    allowFoundationPullback,
-    undoLimit,
-    faceDownCount,
-    setHistory,
-    setTimeElapsedMs,
-    setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
-    setIsAbandoned,
-    setUndosUsed,
-    setMoveCount,
-    setMoves,
-    setCursor,
-    cursorRef,
-    setCheckpoint
-  });
+  const { seed, gameId, startNewDealSession, replaySeed, startSession } =
+    useGameSession({
+      rules,
+      allowFoundationPullback,
+      undoLimit,
+      faceDownCount,
+      setHistory,
+      setTimeElapsedMs,
+      setHasStarted,
+      setStartedAtMs,
+      setEndedAtMs,
+      setIsAbandoned,
+      setUndosUsed,
+      setMoveCount,
+      setMoves,
+      setCursor,
+      cursorRef,
+      setCheckpoint
+    });
 
   // Wrap startSession so all session resets can reliably cancel transient UI (autocomplete, drag overlays)
   // BEFORE the session key changes. This prevents the brief “initial values” window from triggering
@@ -224,28 +218,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   const startNewDealSessionWithResets = useCallback(() => {
-    // 1) Clear transient UI BEFORE changing session.
-    // (stopAutoComplete/resetDrag live inside startSessionWithResets)
-
-    // 2) Start the new RTK session (generates seed/gameId + fresh history)
-    gameStore.dispatch(startSession_new({ rules }));
-
-    // 3) Read the chosen seed and start the old session by seed so both systems agree.
-    const nextSeed = gameStore.getState().game.seed;
-    if (nextSeed) {
-      startSessionWithResets({ kind: "seed", seed: nextSeed });
-    } else {
-      // Fallback: old behavior
-      startSessionWithResets({ kind: "new" });
-    }
-  }, [startSessionWithResets, rules]);
+    startSessionWithResets({ kind: "new" });
+  }, [startSessionWithResets]);
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
-      gameStore.dispatch(startSession_new({ rules, seed: nextSeed }));
       startSessionWithResets({ kind: "seed", seed: nextSeed });
     },
-    [rules, startSessionWithResets]
+    [startSessionWithResets]
   );
 
   const registerUiResets = useCallback((handlers: UiResets | null) => {
@@ -256,7 +236,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setHydratedGameId(next);
   }, []);
 
-  const historyReady = seedReady && hydratedGameId === gameId;
+  const historyReady = sessionPhase === "ready" && hydratedGameId === gameId;
 
   // ---------------------------------------------------------------------------
   // Derived state
@@ -320,8 +300,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   useInProgressGamePersistence({
+    sessionReady,
     uid,
-    seedReady,
     gameId,
     seed,
     rules,
@@ -352,16 +332,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   useLoginReconcileInProgressGame({
     uid,
-    seedReady,
     startSession: startSessionWithResets,
-    setHydratedGameId: (next) => setHydratedGameIdCallback(next)
+    setHydratedGameId: (next) => setHydratedGameIdCallback(next),
+    sessionReady
   });
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
   // IMPORTANT: Don't key off `uid === null && hasStarted` because `hasStarted` becomes true
   // on the first guest move and would cause an infinite redeal loop.
   useEffect(() => {
-    if (!seedReady) return;
+    if (sessionPhase !== "ready") return;
 
     const prevUid = prevUidRef.current;
     const didJustLogout = prevUid !== null && uid === null;
@@ -381,7 +361,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
   }, [
     uid,
-    seedReady,
+    sessionPhase,
     hasStarted,
     startNewDealSession,
     setHydratedGameIdCallback
@@ -392,11 +372,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   useGameTimer({
     paused,
-    seedReady,
     hasStarted,
     isWon,
     isAbandoned,
-    setTimeElapsedMs
+    setTimeElapsedMs,
+    sessionReady
   });
 
   // ---------------------------------------------------------------------------
@@ -455,7 +435,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Rule changes => abandon + archive current game, then start a new deal
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!seedReady) return;
+    if (sessionPhase !== "ready") return;
 
     // Skip initial mount (otherwise we'd immediately newDeal after boot).
     if (!didApplyRuleChangeOnceRef.current) {
@@ -465,7 +445,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     // This will archive the current game if it has started, then start a new session.
     newDealRef.current();
-  }, [seedReady, allowFoundationPullback, undoLimit, faceDownCount]);
+  }, [sessionPhase, allowFoundationPullback, undoLimit, faceDownCount]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
@@ -492,6 +472,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Context value
   // ---------------------------------------------------------------------------
   const value: GameContextValue = {
+    sessionReady,
     state,
     isWon,
     dispatchMove,
@@ -513,7 +494,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setPaused,
     allowFoundationPullback,
     setAllowFoundationPullback,
-    seedReady,
     historyReady,
     timeElapsedMs,
     startedAtMs,

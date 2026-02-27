@@ -22,9 +22,6 @@ export type UseBoardFlipAnimationArgs<TState> = {
   // The board state object (used only as a dependency trigger, same as Board.tsx)
   state: TState;
 
-  // Seed gate used in Board.tsx; prevents weird initial flashes
-  seedReady: boolean;
-
   // Keyboard carry state was in Board deps; keep it to match behavior
   kbCarrying: boolean;
 
@@ -47,7 +44,6 @@ export type UseBoardFlipAnimationArgs<TState> = {
 export function useBoardFlipAnimation<TState>({
   boardRef,
   state,
-  seedReady,
   kbCarrying,
   drag,
   getNodeMeta,
@@ -254,7 +250,6 @@ export function useBoardFlipAnimation<TState>({
     return () => cancelAnimationFrame(raf);
   }, [
     state,
-    seedReady,
     kbCarrying,
     drag.active,
     drag.pending,

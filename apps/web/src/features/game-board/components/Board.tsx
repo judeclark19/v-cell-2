@@ -19,6 +19,8 @@ function Board() {
 
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
 
+  // const sessionPhase = useSelector(selectSessionPhase);
+
   const confirmThen = (
     req: Omit<ConfirmRequest, "onConfirm">,
     onConfirm: () => void
@@ -45,7 +47,7 @@ function Board() {
     <>
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
-        key={vm.seedReady ? vm.state.seed : "loading"}
+        key={game.sessionReady ? vm.state.seed : "loading"}
       >
         <BoardKbAttrsContext.Provider value={kbAttrsContextValue}>
           <div
@@ -66,7 +68,7 @@ function Board() {
             onBlurCapture={vm.onBoardBlurCapture}
             onFocus={vm.onBoardFocus}
           >
-            {vm.seedReady && vm.historyReady ? (
+            {game.sessionReady && vm.historyReady ? (
               <>
                 {/* Foundations on top */}
                 <Foundations

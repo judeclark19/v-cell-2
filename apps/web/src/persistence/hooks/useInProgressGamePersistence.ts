@@ -37,12 +37,12 @@ type EndState = "none" | "won" | "abandoned";
 type Params = {
   // identity
   uid: string | null;
-  seedReady: boolean;
   gameId: string;
   seed: string;
   rules: Rules;
 
   onHydrated?: (saved: PersistedGame | null) => void;
+  sessionReady: boolean;
 
   // snapshot + meta
   moves: Move[];
@@ -72,7 +72,6 @@ type Params = {
 
 export function useInProgressGamePersistence({
   uid,
-  seedReady,
   gameId,
   seed,
   rules,
@@ -88,7 +87,7 @@ export function useInProgressGamePersistence({
   moveCount,
   undosUsed,
   isWon,
-
+  sessionReady,
   setMoves,
   setCursor,
   setTimeElapsedMs,
@@ -234,7 +233,7 @@ export function useInProgressGamePersistence({
   useEffect(() => {
     let cancelled = false;
 
-    if (!seedReady) return;
+    if (!sessionReady) return;
 
     (async () => {
       try {
@@ -283,7 +282,7 @@ export function useInProgressGamePersistence({
       cancelled = true;
     };
   }, [
-    seedReady,
+    sessionReady,
     gameId,
     onHydrated,
     setTimeElapsedMs,
@@ -306,7 +305,7 @@ export function useInProgressGamePersistence({
   // Persist per-move (IndexedDB)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!seedReady) return;
+    if (!sessionReady) return;
     if (!isArmed()) return;
 
     const deviceId = getOrCreateDeviceId();
@@ -337,7 +336,7 @@ export function useInProgressGamePersistence({
     }
   }, [
     uid,
-    seedReady,
+    sessionReady,
     gameId,
     seed,
     rules,
@@ -361,7 +360,7 @@ export function useInProgressGamePersistence({
   // Persist once per second between moves (IndexedDB)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!seedReady) return;
+    if (!sessionReady) return;
     if (!isArmed()) return;
 
     if (endState !== "none") return;
@@ -387,7 +386,7 @@ export function useInProgressGamePersistence({
       window.clearInterval(id);
     };
   }, [
-    seedReady,
+    sessionReady,
     sessionKey,
     isArmed,
     hasStarted,

@@ -19,28 +19,30 @@ import {
   upsertInProgressGame
 } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
+import { useSelector } from "react-redux";
+import { selectSessionPhase } from "@/state/gameStore_new";
 
 type Params = {
   uid: string | null;
-  seedReady: boolean;
   startSession: (args: {
     kind: "seed+id";
     seed: string;
     gameId: string;
   }) => void;
   setHydratedGameId: (next: string | null) => void;
+  sessionReady: boolean;
 };
 
 export function useLoginReconcileInProgressGame({
   uid,
-  seedReady,
   startSession,
-  setHydratedGameId
+  setHydratedGameId,
+  sessionReady
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!seedReady) return;
+    if (!sessionReady) return;
     if (!uid) {
       didReconcileOnLoginRef.current = null;
       return;
@@ -141,5 +143,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, seedReady, startSession, setHydratedGameId]);
+  }, [uid, sessionReady, startSession, setHydratedGameId]);
 }

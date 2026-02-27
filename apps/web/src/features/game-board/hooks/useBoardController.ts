@@ -37,7 +37,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     restart,
     replaySeed,
     startBySeed,
-    seedReady,
     historyReady,
     timeElapsedMs,
     hasStarted,
@@ -214,7 +213,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     stopAutoComplete,
     stopAutoCompleteRef
   } = useBoardAutoComplete({
-    seedReady,
     paused,
     isAnyModalOpen,
     shouldShowWinModal,
@@ -399,7 +397,6 @@ export function useBoardController(params: UseBoardControllerParams) {
   useBoardFlipAnimation({
     boardRef,
     state,
-    seedReady,
     kbCarrying,
     drag,
     getNodeMeta,
@@ -421,7 +418,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     canUndo,
     undoLimit,
     undosRemaining,
-    seedReady,
     historyReady,
     timeElapsedMs,
     hasStarted,

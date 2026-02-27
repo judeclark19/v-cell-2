@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react";
 
 export type UseGameTimerParams = {
   paused: boolean;
-  seedReady: boolean;
   hasStarted: boolean;
   isWon: boolean;
   isAbandoned: boolean;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
+  sessionReady: boolean;
 };
 
 /**
@@ -18,11 +18,11 @@ export type UseGameTimerParams = {
  */
 export function useGameTimer({
   paused,
-  seedReady,
   hasStarted,
   isWon,
   isAbandoned,
-  setTimeElapsedMs
+  setTimeElapsedMs,
+  sessionReady
 }: UseGameTimerParams) {
   const intervalIdRef = useRef<number | null>(null);
   const lastTickAtRef = useRef<number | null>(null);
@@ -62,7 +62,7 @@ export function useGameTimer({
         document.hasFocus() &&
         !paused &&
         !isFinished &&
-        seedReady &&
+        sessionReady &&
         hasStarted
       ) {
         startTimerInterval();
@@ -79,7 +79,7 @@ export function useGameTimer({
         document.hasFocus() &&
         !paused &&
         !isFinished &&
-        seedReady &&
+        sessionReady &&
         hasStarted
       ) {
         startTimerInterval();
@@ -89,7 +89,7 @@ export function useGameTimer({
     if (
       !paused &&
       !isFinished &&
-      seedReady &&
+      sessionReady &&
       hasStarted &&
       document.visibilityState === "visible" &&
       document.hasFocus()
@@ -111,5 +111,5 @@ export function useGameTimer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, seedReady, hasStarted, isWon, isAbandoned, setTimeElapsedMs]);
+  }, [paused, sessionReady, hasStarted, isWon, isAbandoned, setTimeElapsedMs]);
 }
