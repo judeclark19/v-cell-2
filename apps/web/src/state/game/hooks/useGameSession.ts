@@ -107,6 +107,7 @@ export function useGameSession({
 
       // New session.
       setHistory({ present: createGame(nextSeed, rules), past: [] });
+
       setTimeElapsedMs(0);
       setHasStarted(false);
       setStartedAtMs(null);

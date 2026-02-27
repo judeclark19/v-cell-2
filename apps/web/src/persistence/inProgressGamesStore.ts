@@ -57,11 +57,11 @@ export async function deleteInProgressGameForDevice(
   source: string
 ): Promise<void> {
   if (typeof window === "undefined") return;
-  console.log(
-    "deleting in-progress game for device called by",
-    source,
-    deviceId
-  );
+  // console.log(
+  //   "deleting in-progress game for device called by",
+  //   source,
+  //   deviceId
+  // );
   const db = await openVCellDb();
 
   return new Promise((resolve, reject) => {

@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  gameStore,
+  startSession as startSession_new
+} from "@/state/gameStore_new";
+
+import {
   createContext,
   useCallback,
   useContext,
@@ -219,14 +224,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   const startNewDealSessionWithResets = useCallback(() => {
-    startSessionWithResets({ kind: "new" });
-  }, [startSessionWithResets]);
+    // 1) Clear transient UI BEFORE changing session.
+    // (stopAutoComplete/resetDrag live inside startSessionWithResets)
+
+    // 2) Start the new RTK session (generates seed/gameId + fresh history)
+    gameStore.dispatch(startSession_new({ rules }));
+
+    // 3) Read the chosen seed and start the old session by seed so both systems agree.
+    const nextSeed = gameStore.getState().game.seed;
+    if (nextSeed) {
+      startSessionWithResets({ kind: "seed", seed: nextSeed });
+    } else {
+      // Fallback: old behavior
+      startSessionWithResets({ kind: "new" });
+    }
+  }, [startSessionWithResets, rules]);
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
+      gameStore.dispatch(startSession_new({ rules, seed: nextSeed }));
       startSessionWithResets({ kind: "seed", seed: nextSeed });
     },
-    [startSessionWithResets]
+    [rules, startSessionWithResets]
   );
 
   const registerUiResets = useCallback((handlers: UiResets | null) => {
