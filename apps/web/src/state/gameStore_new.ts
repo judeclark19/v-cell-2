@@ -69,9 +69,15 @@ const gameSlice = createSlice({
       state,
       action: PayloadAction<{ rules: Rules; seed?: string; gameId?: string }>
     ) => {
-      const seed = action.payload.seed ?? safeRandomId();
-      const gameId = action.payload.gameId ?? safeRandomId();
+      const seed =
+        action.payload.seed && action.payload.seed !== "seed-boot"
+          ? action.payload.seed
+          : safeRandomId();
 
+      const gameId =
+        action.payload.gameId && action.payload.gameId !== "game-boot"
+          ? action.payload.gameId
+          : safeRandomId();
       const initialGame = createGame(seed, action.payload.rules);
 
       console.log("[gameStore_new:startSession]", {
@@ -85,6 +91,7 @@ const gameSlice = createSlice({
       state.history.present = initialGame;
       state.history.past = [];
       state.sessionPhase = "hydrating";
+      // state.sessionPhase = "ready";
 
       state.moves = [];
       state.cursor = 0;
@@ -100,6 +107,7 @@ const gameSlice = createSlice({
     hydrateFromPersisted: (
       state,
       action: PayloadAction<{
+        gameId: string;
         seed: string;
         rules?: Rules;
         moves?: Move[];
@@ -132,6 +140,7 @@ const gameSlice = createSlice({
         }
       }
 
+      state.gameId = action.payload.gameId;
       state.seed = seed;
       state.history.present = present;
       state.history.past = past;

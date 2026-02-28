@@ -155,7 +155,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const [undosUsed, setUndosUsed] = useState<number>(0);
 
-  const didApplyRuleChangeOnceRef = useRef(false);
+  // Track previous rules for rule-change effect
+  const prevRulesRef = useRef<{
+    allowFoundationPullback: boolean;
+    undoLimit: UndoLimit;
+    faceDownCount: Rules["faceDownCount"];
+  } | null>(null);
   const prevUidRef = useRef<string | null>(uid);
 
   const sessionPhase = useSelector(selectSessionPhase);
@@ -217,12 +222,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const onInProgressHydrated = useCallback(
     (saved: PersistedGame | null) => {
       if (!saved) {
-        dispatch(finalizeHydration());
         return;
       }
 
       dispatch(
         hydrateFromPersisted({
+          gameId: saved.gameId,
           seed: saved.seed,
           rules: saved.rules,
           moves: saved.moves,
@@ -347,17 +352,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Rule changes => abandon + archive current game, then start a new deal
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (sessionPhase !== "ready") return;
+    if (!sessionReady) return;
 
-    // Skip initial mount (otherwise we'd immediately newDeal after boot).
-    if (!didApplyRuleChangeOnceRef.current) {
-      didApplyRuleChangeOnceRef.current = true;
+    const currentRules = {
+      allowFoundationPullback,
+      undoLimit,
+      faceDownCount
+    };
+
+    // First run: just record rules.
+    if (prevRulesRef.current === null) {
+      prevRulesRef.current = currentRules;
       return;
     }
 
-    // This will archive the current game if it has started, then start a new session.
+    const prev = prevRulesRef.current;
+
+    const rulesChanged =
+      prev.allowFoundationPullback !== currentRules.allowFoundationPullback ||
+      prev.undoLimit !== currentRules.undoLimit ||
+      prev.faceDownCount !== currentRules.faceDownCount;
+
+    if (!rulesChanged) return;
+
+    prevRulesRef.current = currentRules;
+
     newDealRef.current();
-  }, [sessionPhase, allowFoundationPullback, undoLimit, faceDownCount]);
+  }, [sessionReady, allowFoundationPullback, undoLimit, faceDownCount]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
@@ -416,6 +437,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     completedGames
   };
+
+  // console.log("GameProvider render", {
+  //   uid,
+  //   sessionPhase,
+  //   seed,
+  //   gameId,
+  //   present: !!history.present,
+  //   movesLen: moves.length,
+  //   cursor,
+  //   moveCount
+  // });
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

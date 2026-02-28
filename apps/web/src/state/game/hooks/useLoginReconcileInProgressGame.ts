@@ -36,6 +36,7 @@ export function useLoginReconcileInProgressGame({
   sessionReady
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
+  const lastSwitchedSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!sessionReady) return;
@@ -97,12 +98,22 @@ export function useLoginReconcileInProgressGame({
 
         if (cancelled) return;
 
-        // Force the active session to match the cloud record.
-        startSession({
-          kind: "seed+id",
+        console.debug("[login reconcile] cloud wins; switching session", {
           seed: payload.seed,
           gameId: payload.gameId
         });
+
+        // Force the active session to match the cloud record.
+        const sessionKey = `${payload.seed}:${payload.gameId}`;
+        if (lastSwitchedSessionRef.current !== sessionKey) {
+          lastSwitchedSessionRef.current = sessionKey;
+
+          startSession({
+            kind: "seed+id",
+            seed: payload.seed,
+            gameId: payload.gameId
+          });
+        }
 
         return;
       }

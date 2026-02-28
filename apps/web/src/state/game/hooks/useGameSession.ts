@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { GameState, Rules } from "@vcell/engine";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
@@ -6,7 +6,8 @@ import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
   startSession as startSession_new,
   selectSeed,
-  selectGameId
+  selectGameId,
+  finalizeHydration
 } from "@/state/gameStore_new";
 
 type StartSessionMode =
@@ -59,6 +60,10 @@ export function useGameSession({
   const gameId = useSelector(selectGameId);
   const dispatch = useDispatch();
 
+  // Prevent duplicate bootstraps (can happen due to hydration remounts in dev/prod).
+  // We guard both per-mount (ref) and per-page-load (global) to avoid double-dispatch.
+  const didBootstrapRef = useRef(false);
+
   const resetPerSessionState = useCallback(() => {
     setTimeElapsedMs(0);
     setHasStarted(false);
@@ -79,8 +84,23 @@ export function useGameSession({
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {
+      console.debug("[useGameSession] startSession", {
+        kind: mode.kind,
+        seed: mode.seed,
+        gameId: mode.kind === "seed+id" ? mode.gameId : undefined
+      });
+
       const nextSeed = mode.seed;
       const nextGameId = mode.kind === "seed+id" ? mode.gameId : undefined;
+
+      // If we’re already on this session, don’t reinitialize (prevents ready->hydrating churn).
+      if (
+        mode.kind === "seed+id" &&
+        nextSeed === seed &&
+        nextGameId === gameId
+      ) {
+        return;
+      }
 
       dispatch(
         startSession_new({
@@ -92,10 +112,16 @@ export function useGameSession({
 
       resetPerSessionState();
     },
-    [dispatch, rules, resetPerSessionState]
+    [dispatch, rules, resetPerSessionState, seed, gameId]
   );
 
   useEffect(() => {
+    // If Redux has already hydrated a real session, do NOT reboot it.
+    if (seed !== "seed-boot" && gameId !== "game-boot") return;
+    // Per-mount guard
+    if (didBootstrapRef.current) return;
+    didBootstrapRef.current = true;
+
     let cancelled = false;
 
     (async () => {
@@ -105,7 +131,11 @@ export function useGameSession({
 
         if (cancelled) return;
 
-        if (saved) {
+        if (
+          saved &&
+          saved.seed !== "seed-boot" &&
+          saved.gameId !== "game-boot"
+        ) {
           startSession({
             kind: "seed+id",
             seed: saved.seed,
@@ -113,6 +143,7 @@ export function useGameSession({
           });
         } else {
           dispatch(startSession_new({ rules }));
+          dispatch(finalizeHydration());
           resetPerSessionState();
         }
       } catch (err) {
@@ -123,17 +154,20 @@ export function useGameSession({
 
         if (cancelled) return;
         dispatch(startSession_new({ rules }));
+        dispatch(finalizeHydration());
         resetPerSessionState();
       }
     })();
 
     return () => {
       cancelled = true;
+      didBootstrapRef.current = false;
     };
-  }, [dispatch, rules, resetPerSessionState, startSession]);
+  }, [dispatch, rules, resetPerSessionState, startSession, seed, gameId]);
 
   const startNewDealSession = useCallback(() => {
     dispatch(startSession_new({ rules }));
+    dispatch(finalizeHydration());
     resetPerSessionState();
   }, [dispatch, rules, resetPerSessionState]);
 
