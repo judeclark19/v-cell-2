@@ -66,7 +66,7 @@ function Board() {
             onBlurCapture={vm.onBoardBlurCapture}
             onFocus={vm.onBoardFocus}
           >
-            {game.sessionReady && vm.historyReady ? (
+            {game.sessionReady ? (
               <>
                 {/* Foundations on top */}
                 <Foundations

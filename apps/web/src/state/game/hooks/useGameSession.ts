@@ -1,53 +1,20 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createGame } from "@vcell/engine";
-import type { GameState, Rules, Move } from "@vcell/engine";
+import type { GameState, Rules } from "@vcell/engine";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
   startSession as startSession_new,
   selectSeed,
-  selectGameId,
-  hydrateHistory
+  selectGameId
 } from "@/state/gameStore_new";
 
 type StartSessionMode =
-  | { kind: "new" }
   | { kind: "seed"; seed: string }
   | { kind: "seed+id"; seed: string; gameId: string };
 
-function safeRandomId(): string {
-  // Prefer the native UUID if available
-  const c = globalThis.crypto as Crypto | undefined;
-  const maybeUUID = c?.randomUUID;
-  if (typeof maybeUUID === "function") return maybeUUID.call(c);
-
-  // Fallback: 16 random bytes -> hex (not a UUID, but plenty unique for IDs/seeds)
-  if (c?.getRandomValues) {
-    const bytes = new Uint8Array(16);
-    c.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  // Last-ditch fallback (worst uniqueness, but avoids crashing)
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function makeNewSeed(): string {
-  return safeRandomId();
-}
-
-function makeNewGameId(): string {
-  return safeRandomId();
-}
-
 export type UseGameSessionParams = {
   rules: Rules;
-
-  // Use these as deps for the "rule changes => reseed" effect.
-  allowFoundationPullback: boolean;
-  undoLimit: Rules["undoLimit"];
-  faceDownCount: Rules["faceDownCount"];
 
   // State setters owned by GameProvider
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
@@ -56,10 +23,6 @@ export type UseGameSessionParams = {
   setEndedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
-  setMoveCount: React.Dispatch<React.SetStateAction<number>>;
-  setMoves: React.Dispatch<React.SetStateAction<Move[]>>;
-  setCursor: React.Dispatch<React.SetStateAction<number>>;
-  cursorRef: React.RefObject<number>;
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
   >;
@@ -88,10 +51,6 @@ export function useGameSession({
   setEndedAtMs,
   setIsAbandoned,
   setUndosUsed,
-  setMoveCount,
-  setMoves,
-  setCursor,
-  cursorRef,
   setCheckpoint
 }: UseGameSessionParams): UseGameSessionResult {
   // Seed/gameId are now owned by the RTK store.
@@ -99,63 +58,44 @@ export function useGameSession({
   const seed = useSelector(selectSeed);
   const gameId = useSelector(selectGameId);
   const dispatch = useDispatch();
+
+  const resetPerSessionState = useCallback(() => {
+    setTimeElapsedMs(0);
+    setHasStarted(false);
+    setStartedAtMs(null);
+    setEndedAtMs(null);
+    setIsAbandoned(false);
+    setUndosUsed(0);
+    setCheckpoint(null);
+  }, [
+    setTimeElapsedMs,
+    setHasStarted,
+    setStartedAtMs,
+    setEndedAtMs,
+    setIsAbandoned,
+    setUndosUsed,
+    setCheckpoint
+  ]);
+
   const startSession = useCallback(
     (mode: StartSessionMode) => {
-      const nextSeed = mode.kind === "new" ? makeNewSeed() : mode.seed;
-      const nextGameId =
-        mode.kind === "seed+id" ? mode.gameId : makeNewGameId();
+      const nextSeed = mode.seed;
+      const nextGameId = mode.kind === "seed+id" ? mode.gameId : undefined;
 
-      // Persist session identity to the new RTK store.
-      dispatch(startSession_new({ rules, seed: nextSeed, gameId: nextGameId }));
-
-      // New session.
       dispatch(
-        hydrateHistory({ present: createGame(nextSeed, rules), past: [] })
+        startSession_new({
+          rules,
+          seed: nextSeed,
+          ...(nextGameId ? { gameId: nextGameId } : {})
+        })
       );
-      setTimeElapsedMs(0);
-      setHasStarted(false);
-      setStartedAtMs(null);
-      setEndedAtMs(null);
-      setIsAbandoned(false);
-      setUndosUsed(0);
-      setMoveCount(0);
-      setMoves([]);
-      setCursor(0);
-      cursorRef.current = 0;
-      setCheckpoint(null);
+
+      resetPerSessionState();
     },
-    [
-      dispatch,
-      rules,
-      setTimeElapsedMs,
-      setHasStarted,
-      setStartedAtMs,
-      setEndedAtMs,
-      setIsAbandoned,
-      setUndosUsed,
-      setMoveCount,
-      setMoves,
-      setCursor,
-      cursorRef,
-      setCheckpoint
-    ]
+    [dispatch, rules, resetPerSessionState]
   );
 
-  const startSessionRef = useRef(startSession);
-
   useEffect(() => {
-    startSessionRef.current = startSession;
-  }, [startSession]);
-
-  // ---------------------------------------------------------------------------
-  // Client-only bootstrap (resume most recent in-progress game if present)
-  // ---------------------------------------------------------------------------
-  const didInitRandomSeedRef = useRef(false);
-
-  useEffect(() => {
-    if (didInitRandomSeedRef.current) return;
-    didInitRandomSeedRef.current = true;
-
     let cancelled = false;
 
     (async () => {
@@ -166,13 +106,14 @@ export function useGameSession({
         if (cancelled) return;
 
         if (saved) {
-          startSessionRef.current({
+          startSession({
             kind: "seed+id",
             seed: saved.seed,
             gameId: saved.gameId
           });
         } else {
-          startSessionRef.current({ kind: "new" });
+          dispatch(startSession_new({ rules }));
+          resetPerSessionState();
         }
       } catch (err) {
         console.error(
@@ -181,18 +122,20 @@ export function useGameSession({
         );
 
         if (cancelled) return;
-        startSessionRef.current({ kind: "new" });
+        dispatch(startSession_new({ rules }));
+        resetPerSessionState();
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [dispatch, rules, resetPerSessionState, startSession]);
 
   const startNewDealSession = useCallback(() => {
-    startSession({ kind: "new" });
-  }, [startSession]);
+    dispatch(startSession_new({ rules }));
+    resetPerSessionState();
+  }, [dispatch, rules, resetPerSessionState]);
 
   const replaySeed = useCallback(
     (nextSeed: string) => {

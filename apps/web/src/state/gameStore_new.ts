@@ -9,7 +9,7 @@ import {
   UndoLimit
 } from "@vcell/engine";
 
-export type SessionPhase = "boot" | "ready";
+export type SessionPhase = "boot" | "hydrating" | "ready";
 export type HistoryState = {
   present: GameState;
   past: GameState[];
@@ -19,6 +19,10 @@ interface GameStoreState {
   gameId: string;
   sessionPhase: SessionPhase;
   history: HistoryState;
+
+  moves: Move[];
+  cursor: number;
+  moveCount: number;
 }
 
 function safeRandomId(): string {
@@ -51,7 +55,10 @@ const initialState: GameStoreState = {
       faceDownCount: 0
     }),
     past: []
-  }
+  },
+  moves: [],
+  cursor: 0,
+  moveCount: 0
 };
 
 const gameSlice = createSlice({
@@ -77,7 +84,11 @@ const gameSlice = createSlice({
       state.gameId = gameId;
       state.history.present = initialGame;
       state.history.past = [];
-      state.sessionPhase = "ready";
+      state.sessionPhase = "hydrating";
+
+      state.moves = [];
+      state.cursor = 0;
+      state.moveCount = 0;
     },
     hydrateHistory: (
       state,
@@ -85,6 +96,49 @@ const gameSlice = createSlice({
     ) => {
       state.history.present = action.payload.present;
       state.history.past = action.payload.past;
+    },
+    hydrateFromPersisted: (
+      state,
+      action: PayloadAction<{
+        seed: string;
+        rules?: Rules;
+        moves?: Move[];
+        cursor?: number;
+        fallbackRules: Rules;
+        undoLimit: UndoLimit;
+      }>
+    ) => {
+      const { seed, rules, moves, cursor, fallbackRules, undoLimit } =
+        action.payload;
+
+      const appliedMoves = (moves ?? []).slice(0, cursor ?? 0);
+
+      let present = createGame(seed, rules ?? fallbackRules);
+      const past: GameState[] = [];
+
+      for (const m of appliedMoves) {
+        past.push(present);
+        try {
+          present = applyMove(present, m);
+        } catch {
+          // Fail-soft: revert to base deal
+          present = createGame(seed, rules ?? fallbackRules);
+          past.length = 0;
+          break;
+        }
+
+        if (undoLimit !== "unlimited" && past.length > undoLimit) {
+          past.splice(0, past.length - undoLimit);
+        }
+      }
+
+      state.seed = seed;
+      state.history.present = present;
+      state.history.past = past;
+      state.sessionPhase = "ready";
+      state.moves = moves ?? [];
+      state.cursor = cursor ?? 0;
+      state.moveCount = state.cursor;
     },
     applyMoveToHistory: (
       state,
@@ -110,6 +164,14 @@ const gameSlice = createSlice({
         return;
       }
 
+      // Record move in timeline (truncate “future” if we had undone).
+      if (state.cursor < state.moves.length) {
+        state.moves = state.moves.slice(0, state.cursor);
+      }
+      state.moves.push(move);
+      state.cursor += 1;
+      state.moveCount = state.cursor;
+
       const cap = undoLimitToCap(undoLimit);
       const nextPast = [...state.history.past, state.history.present];
 
@@ -126,12 +188,29 @@ const gameSlice = createSlice({
       const prev = state.history.past[state.history.past.length - 1];
       state.history.present = prev;
       state.history.past = state.history.past.slice(0, -1);
+      state.cursor = Math.max(0, state.cursor - 1);
+      state.moveCount = Math.min(state.moveCount, state.cursor);
+    },
+    resetTimeline: (state) => {
+      state.moves = [];
+      state.cursor = 0;
+      state.moveCount = 0;
+    },
+    finalizeHydration: (state) => {
+      state.sessionPhase = "ready";
     }
   }
 });
 
-export const { startSession, hydrateHistory, applyMoveToHistory, undoHistory } =
-  gameSlice.actions;
+export const {
+  startSession,
+  hydrateHistory,
+  hydrateFromPersisted,
+  applyMoveToHistory,
+  undoHistory,
+  resetTimeline,
+  finalizeHydration
+} = gameSlice.actions;
 
 export const gameStore = configureStore({
   reducer: {
@@ -147,3 +226,6 @@ export const selectSeed = (state: RootState) => state.game.seed;
 export const selectGameId = (state: RootState) => state.game.gameId;
 export const selectSessionPhase = (state: RootState) => state.game.sessionPhase;
 export const selectHistory = (state: RootState) => state.game.history;
+export const selectMoves = (state: RootState) => state.game.moves;
+export const selectCursor = (state: RootState) => state.game.cursor;
+export const selectMoveCount = (state: RootState) => state.game.moveCount;

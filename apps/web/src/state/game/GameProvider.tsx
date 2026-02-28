@@ -11,7 +11,6 @@ import {
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import { applyMove, createGame } from "@vcell/engine";
 import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
@@ -26,8 +25,12 @@ import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProg
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectSessionPhase,
-  hydrateHistory,
-  selectHistory
+  selectHistory,
+  selectMoves,
+  selectCursor,
+  selectMoveCount,
+  hydrateFromPersisted,
+  finalizeHydration
 } from "../gameStore_new";
 
 type UiResets = {
@@ -58,7 +61,6 @@ type GameContextValue = {
   setPaused: (next: boolean) => void;
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
-  historyReady: boolean;
   timeElapsedMs: number;
   startedAtMs: number | null;
   endedAtMs: number | null;
@@ -118,14 +120,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
 
   const history = useSelector(selectHistory);
+  const moves = useSelector(selectMoves);
+  const cursor = useSelector(selectCursor);
+  const moveCount = useSelector(selectMoveCount);
   const dispatch = useDispatch();
-
-  const [hydratedGameId, setHydratedGameId] = useState<string | null>(null);
-
-  const hydratedGameIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    hydratedGameIdRef.current = hydratedGameId;
-  }, [hydratedGameId]);
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -157,22 +155,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const [undosUsed, setUndosUsed] = useState<number>(0);
 
-  // Score-keeping move count: freezes once the game is won. (Cosmetic post-win moves are allowed.)
-  const [moveCount, setMoveCount] = useState<number>(0);
-  const [moves, setMoves] = useState<Move[]>([]);
-  const [cursor, setCursor] = useState<number>(0);
-
-  const cursorRef = useRef<number>(0);
-  useEffect(() => {
-    cursorRef.current = cursor;
-  }, [cursor]);
-
-  const movesRef = useRef<Move[]>(moves);
-
-  useEffect(() => {
-    movesRef.current = moves;
-  }, [moves]);
-
   const didApplyRuleChangeOnceRef = useRef(false);
   const prevUidRef = useRef<string | null>(uid);
 
@@ -185,19 +167,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const { seed, gameId, startNewDealSession, replaySeed, startSession } =
     useGameSession({
       rules,
-      allowFoundationPullback,
-      undoLimit,
-      faceDownCount,
       setTimeElapsedMs,
       setHasStarted,
       setStartedAtMs,
       setEndedAtMs,
       setIsAbandoned,
       setUndosUsed,
-      setMoveCount,
-      setMoves,
-      setCursor,
-      cursorRef,
       setCheckpoint
     });
 
@@ -214,8 +189,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   const startNewDealSessionWithResets = useCallback(() => {
-    startSessionWithResets({ kind: "new" });
-  }, [startSessionWithResets]);
+    uiResetsRef.current?.stopAutoComplete?.();
+    uiResetsRef.current?.resetDrag?.();
+    startNewDealSession();
+  }, [startNewDealSession]);
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
@@ -227,12 +204,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const registerUiResets = useCallback((handlers: UiResets | null) => {
     uiResetsRef.current = handlers;
   }, []);
-
-  const setHydratedGameIdCallback = useCallback((next: string | null) => {
-    setHydratedGameId(next);
-  }, []);
-
-  const historyReady = sessionPhase === "ready" && hydratedGameId === gameId;
 
   // ---------------------------------------------------------------------------
   // Derived state
@@ -246,56 +217,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const onInProgressHydrated = useCallback(
     (saved: PersistedGame | null) => {
       if (!saved) {
-        setHydratedGameIdCallback(gameId);
+        dispatch(finalizeHydration());
         return;
       }
 
-      // Rebuild history.present from persisted moves/cursor so the UI reflects
-      // the actual progressed game state after refresh.
-      const appliedMoves = (saved.moves ?? []).slice(0, saved.cursor ?? 0);
-
-      try {
-        let present = createGame(saved.seed, saved.rules ?? rules);
-        const past: GameState[] = [];
-
-        for (const m of appliedMoves) {
-          // push current state into past (for undo), then apply the move
-          past.push(present);
-          present = applyMove(present, m);
-
-          // Respect undoLimit cap (keep the most recent states)
-          if (undoLimit !== "unlimited" && past.length > undoLimit) {
-            past.splice(0, past.length - undoLimit);
-          }
-        }
-
-        dispatch(hydrateHistory({ present, past }));
-        setHydratedGameIdCallback(gameId);
-      } catch (err) {
-        console.error(
-          "[hydrate] failed to apply persisted moves; falling back",
-          {
-            err,
-            gameId,
-            savedGameId: saved.gameId,
-            seed: saved.seed,
-            cursor: saved.cursor,
-            movesLen: saved.moves?.length ?? 0,
-            appliedLen: appliedMoves.length,
-            savedRules: saved.rules,
-            currentRules: rules
-          }
-        );
-
-        // Fail soft: don't apply hydration, just mark this session as ready.
-        setHydratedGameIdCallback(gameId);
-      }
+      dispatch(
+        hydrateFromPersisted({
+          seed: saved.seed,
+          rules: saved.rules,
+          moves: saved.moves,
+          cursor: saved.cursor,
+          fallbackRules: rules,
+          undoLimit
+        })
+      );
     },
-    [rules, undoLimit, gameId, setHydratedGameIdCallback, dispatch]
+    [rules, undoLimit, dispatch]
   );
 
   useInProgressGamePersistence({
-    sessionReady,
+    readyToHydrate: !!gameId && !!seed,
     uid,
     gameId,
     seed,
@@ -313,22 +254,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undosUsed,
     isWon,
 
-    setMoves,
-    setCursor,
     setTimeElapsedMs,
     setHasStarted,
     setStartedAtMs,
     setEndedAtMs,
     setIsAbandoned,
     setPaused,
-    setMoveCount,
     setUndosUsed
   });
 
   useLoginReconcileInProgressGame({
     uid,
     startSession: startSessionWithResets,
-    setHydratedGameId: (next) => setHydratedGameIdCallback(next),
     sessionReady
   });
 
@@ -351,16 +288,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
     queueMicrotask(() => {
-      setHydratedGameIdCallback(null);
       startNewDealSession();
     });
-  }, [
-    uid,
-    sessionPhase,
-    hasStarted,
-    startNewDealSession,
-    setHydratedGameIdCallback
-  ]);
+  }, [uid, sessionPhase, hasStarted, startNewDealSession, dispatch]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
@@ -397,18 +327,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     undosUsed,
     setUndosUsed,
-    moveCount,
-    setMoveCount,
-
-    moves,
-    setMoves,
-    cursor,
-    setCursor,
-    cursorRef,
-    movesRef,
-
     setCheckpoint,
-
     setCompletedGames,
 
     timeElapsedMs,
@@ -487,7 +406,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setPaused,
     allowFoundationPullback,
     setAllowFoundationPullback,
-    historyReady,
     timeElapsedMs,
     startedAtMs,
     endedAtMs,

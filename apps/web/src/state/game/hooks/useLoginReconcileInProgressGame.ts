@@ -27,14 +27,12 @@ type Params = {
     seed: string;
     gameId: string;
   }) => void;
-  setHydratedGameId: (next: string | null) => void;
   sessionReady: boolean;
 };
 
 export function useLoginReconcileInProgressGame({
   uid,
   startSession,
-  setHydratedGameId,
   sessionReady
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
@@ -100,7 +98,6 @@ export function useLoginReconcileInProgressGame({
         if (cancelled) return;
 
         // Force the active session to match the cloud record.
-        setHydratedGameId(null);
         startSession({
           kind: "seed+id",
           seed: payload.seed,
@@ -141,5 +138,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, sessionReady, startSession, setHydratedGameId]);
+  }, [uid, sessionReady, startSession]);
 }

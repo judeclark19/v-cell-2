@@ -10,9 +10,12 @@ import {
   applyMoveToHistory,
   hydrateHistory,
   HistoryState,
-  undoHistory
+  undoHistory,
+  resetTimeline,
+  selectCursor,
+  selectMoves
 } from "@/state/gameStore_new";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 export type UseGameActionsParams = {
   // Core state
@@ -39,15 +42,6 @@ export type UseGameActionsParams = {
   // Analytics / logs
   undosUsed: number;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
-  moveCount: number;
-  setMoveCount: React.Dispatch<React.SetStateAction<number>>;
-
-  moves: Move[];
-  setMoves: React.Dispatch<React.SetStateAction<Move[]>>;
-  cursor: number;
-  setCursor: React.Dispatch<React.SetStateAction<number>>;
-  cursorRef: React.RefObject<number>;
-  movesRef: React.RefObject<Move[]>;
 
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
@@ -100,12 +94,6 @@ export function useGameActions({
 
   undosUsed,
   setUndosUsed,
-  setMoveCount,
-
-  setMoves,
-  setCursor,
-  cursorRef,
-  movesRef,
 
   setCheckpoint,
 
@@ -118,6 +106,9 @@ export function useGameActions({
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
   const dispatch = useDispatch();
+  const moves = useSelector(selectMoves);
+  const cursor = useSelector(selectCursor);
+
   const dispatchMove = useCallback(
     (move: Move) => {
       // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
@@ -127,22 +118,17 @@ export function useGameActions({
       setHasStarted(true);
       setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
 
-      // If the game isn't finished yet, a move means we're actively playing (not abandoned).
-      // Post-win cosmetic moves should NOT clear `endedAtMs`.
+      let nextCursor = cursor;
+      let nextMoves = moves;
+
       if (!isWon) {
         setEndedAtMs(null);
         setIsAbandoned(false);
-        setMoveCount((n) => n + 1);
-        const baseCursor = cursorRef.current;
 
-        const truncated = movesRef.current.slice(0, baseCursor);
-        const nextMoves = [...truncated, move];
-        movesRef.current = nextMoves;
-        setMoves(nextMoves);
-
-        const nextCursor = baseCursor + 1;
-        cursorRef.current = nextCursor;
-        setCursor(nextCursor);
+        // For archive/checkpoint bookkeeping, compute the post-move timeline values.
+        const truncated = moves.slice(0, cursor);
+        nextMoves = [...truncated, move];
+        nextCursor = cursor + 1;
       }
 
       let next: GameState;
@@ -156,7 +142,7 @@ export function useGameActions({
           seed,
           isWon,
           endedAtMs,
-          cursor: cursorRef.current
+          cursor: nextCursor
         });
         return;
       }
@@ -166,8 +152,8 @@ export function useGameActions({
         const ended = Date.now();
         setEndedAtMs((prev) => (prev == null ? ended : prev));
 
-        const archivedCursor = cursorRef.current;
-        const archivedMoves = movesRef.current;
+        const archivedCursor = nextCursor;
+        const archivedMoves = nextMoves;
 
         const completed: PersistedGame = {
           gameId,
@@ -210,8 +196,8 @@ export function useGameActions({
         }
       }
 
-      if (cursorRef.current > 0 && cursorRef.current % 20 === 0) {
-        setCheckpoint({ at: cursorRef.current, state: next });
+      if (nextCursor > 0 && nextCursor % 20 === 0) {
+        setCheckpoint({ at: nextCursor, state: next });
       }
 
       // Update engine history in RTK (present + undo stack).
@@ -225,10 +211,8 @@ export function useGameActions({
       isAbandoned,
       setEndedAtMs,
       setIsAbandoned,
-      setMoveCount,
-      cursorRef,
-      setMoves,
-      setCursor,
+      cursor,
+      moves,
       gameId,
       seed,
       setCompletedGames,
@@ -238,7 +222,6 @@ export function useGameActions({
       undosUsed,
       undoLimit,
       setCheckpoint,
-      movesRef,
       uid,
       history.present,
       dispatch
@@ -249,12 +232,8 @@ export function useGameActions({
     // Restart should reset the deal back to its original position and clear history,
     // but it should NOT affect the timer.
     dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
+    dispatch(resetTimeline());
     setUndosUsed(0);
-    setMoveCount(0);
-    setMoves([]);
-    movesRef.current = [];
-    setCursor(0);
-    cursorRef.current = 0;
     setCheckpoint(null);
     setEndedAtMs(null);
     setIsAbandoned(false);
@@ -262,14 +241,9 @@ export function useGameActions({
     seed,
     rules,
     setUndosUsed,
-    setMoveCount,
-    setMoves,
-    setCursor,
-    cursorRef,
     setCheckpoint,
     setEndedAtMs,
     setIsAbandoned,
-    movesRef,
     dispatch
   ]);
 
@@ -293,8 +267,8 @@ export function useGameActions({
         setIsAbandoned(true);
         setEndedAtMs((prev) => (prev == null ? ended : prev));
 
-        const archivedCursor = cursorRef.current;
-        const archivedMoves = movesRef.current;
+        const archivedCursor = cursor;
+        const archivedMoves = moves;
 
         const completed: PersistedGame = {
           gameId,
@@ -357,8 +331,8 @@ export function useGameActions({
       startedAtMs,
       timeElapsedMs,
       undosUsed,
-      cursorRef,
-      movesRef,
+      cursor,
+      moves,
       uid
     ]
   );
@@ -393,13 +367,6 @@ export function useGameActions({
 
     // Count a successful undo exactly once (outside the history updater).
     setUndosUsed((n) => n + 1);
-    setMoveCount((n) => Math.max(0, n - 1));
-    setCursor((c) => {
-      const next = Math.max(0, c - 1);
-      cursorRef.current = next;
-      movesRef.current = movesRef.current.slice(0, next);
-      return next;
-    });
 
     dispatch(undoHistory());
   }, [
@@ -408,10 +375,6 @@ export function useGameActions({
     undoLimit,
     undosUsed,
     setUndosUsed,
-    setMoveCount,
-    setCursor,
-    cursorRef,
-    movesRef,
     dispatch
   ]);
 
