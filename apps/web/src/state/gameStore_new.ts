@@ -41,11 +41,11 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
 }
 
 const initialState: GameStoreState = {
-  seed: safeRandomId(),
-  gameId: safeRandomId(),
+  seed: "seed-boot",
+  gameId: "game-boot",
   sessionPhase: "boot",
   history: {
-    present: createGame(safeRandomId(), {
+    present: createGame("seed-boot", {
       allowFoundationPullback: false,
       undoLimit: "unlimited",
       faceDownCount: 0
