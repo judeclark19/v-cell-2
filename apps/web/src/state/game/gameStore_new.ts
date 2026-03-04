@@ -1,5 +1,5 @@
 // Redux Toolkit
-import { createSlice, configureStore, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   applyMove,
   createGame,
@@ -18,6 +18,7 @@ export interface GameStoreState {
   seed: string;
   gameId: string;
   sessionPhase: SessionPhase;
+  rules: Rules;
   history: HistoryState;
 
   moves: Move[];
@@ -48,11 +49,16 @@ const initialState: GameStoreState = {
   seed: "seed-boot",
   gameId: "game-boot",
   sessionPhase: "boot",
+  rules: {
+    allowFoundationPullback: false,
+    undoLimit: "unlimited",
+    faceDownCount: 7
+  },
   history: {
     present: createGame("seed-boot", {
       allowFoundationPullback: false,
       undoLimit: "unlimited",
-      faceDownCount: 0
+      faceDownCount: 7
     }),
     past: []
   },
@@ -79,6 +85,7 @@ export const gameSlice = createSlice({
           ? action.payload.gameId
           : safeRandomId();
       const initialGame = createGame(seed, action.payload.rules);
+      state.rules = action.payload.rules;
 
       state.seed = seed;
       state.gameId = gameId;
@@ -134,6 +141,7 @@ export const gameSlice = createSlice({
         }
       }
 
+      state.rules = rules ?? fallbackRules;
       state.gameId = action.payload.gameId;
       state.seed = seed;
       state.history.present = present;
@@ -230,3 +238,14 @@ export const selectCursor = (state: { game: GameStoreState }) =>
   state.game.cursor;
 export const selectMoveCount = (state: { game: GameStoreState }) =>
   state.game.moveCount;
+export const selectRules = (state: { game: GameStoreState }) =>
+  state.game.rules;
+export const selectFaceDownCount = (state: { game: GameStoreState }) =>
+  state.game.rules.faceDownCount;
+
+export const selectUndoLimit = (state: { game: GameStoreState }) =>
+  state.game.rules.undoLimit;
+
+export const selectAllowFoundationPullback = (state: {
+  game: GameStoreState;
+}) => state.game.rules.allowFoundationPullback;

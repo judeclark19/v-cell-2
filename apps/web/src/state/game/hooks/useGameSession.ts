@@ -5,10 +5,10 @@ import {
   startSession as startSession_new,
   selectSeed,
   selectGameId,
-  finalizeHydration,
-  AppDispatch
+  finalizeHydration
 } from "@/state/game";
 import { bootSession } from "@/state/session";
+import { AppDispatch } from "@/state/reduxStore";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }

@@ -13,7 +13,8 @@ import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useDispatch } from "react-redux";
 import { applyRulesChangeStartNewDeal } from "@/state/session";
-import { AppDispatch } from "@/state/game";
+import { AppDispatch } from "@/state/reduxStore";
+import { FaceDownCount, UndoLimit } from "@vcell/engine";
 
 function Board() {
   const game = useGame();
@@ -62,14 +63,17 @@ function Board() {
       onConfirm();
       return;
     }
-    confirmThen(req, onConfirm);
+    confirmThen(req, () => {
+      setConfirmReq(null);
+      onConfirm();
+    });
   };
 
   const dispatch = useDispatch<AppDispatch>();
 
   const requestRulesChange = async (patch: {
-    faceDownCount?: 0 | 7 | 14 | 21;
-    undoLimit?: import("@vcell/engine").UndoLimit;
+    faceDownCount?: FaceDownCount;
+    undoLimit?: UndoLimit;
     allowFoundationPullback?: boolean;
   }) => {
     const ok = await requestConfirm({
@@ -233,7 +237,6 @@ function Board() {
         }
         allowFoundationPullback={vm.allowFoundationPullback}
         undoLimit={vm.undoLimit}
-        faceDownCount={vm.faceDownCount}
         requestRulesChange={requestRulesChange}
       />
     </>

@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { UndoLimit } from "@vcell/engine";
+import { FaceDownCount, UndoLimit } from "@vcell/engine";
+import { useSelector } from "react-redux";
+import { selectFaceDownCount } from "@/state/game";
 
 type BoardControlsProps = {
   onNewDeal: () => void;
@@ -7,10 +9,9 @@ type BoardControlsProps = {
 
   allowFoundationPullback: boolean;
   undoLimit: UndoLimit;
-  faceDownCount: 0 | 7 | 14 | 21;
 
   requestRulesChange: (patch: {
-    faceDownCount?: 0 | 7 | 14 | 21;
+    faceDownCount?: FaceDownCount;
     undoLimit?: UndoLimit;
     allowFoundationPullback?: boolean;
   }) => Promise<void>;
@@ -34,11 +35,10 @@ export default function BoardControls({
   startBySeed,
   allowFoundationPullback,
   undoLimit,
-  faceDownCount,
   requestRulesChange
 }: BoardControlsProps) {
   const [seedInput, setSeedInput] = useState("");
-
+  const faceDownCount = useSelector(selectFaceDownCount);
   return (
     <>
       <section className="control" aria-label="Start a new game">

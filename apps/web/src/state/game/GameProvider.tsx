@@ -28,7 +28,8 @@ import {
   selectHistory,
   selectMoves,
   selectCursor,
-  selectMoveCount
+  selectMoveCount,
+  selectFaceDownCount
 } from "./";
 
 type UiResets = {
@@ -51,8 +52,6 @@ type GameContextValue = {
   undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
-  faceDownCount: Rules["faceDownCount"];
-  setFaceDownCount: (next: Rules["faceDownCount"]) => void;
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
   paused: boolean;
@@ -90,22 +89,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
-  const {
-    showTimer,
-    setShowTimer,
-    undoLimit,
-    setUndoLimit,
-    faceDownCount,
-    setFaceDownCount
-  } = useGameSettings();
+  const { showTimer, setShowTimer, undoLimit, setUndoLimit } =
+    useGameSettings();
+
+  const faceDownCount = useSelector(selectFaceDownCount);
 
   const rules = useMemo<Rules>(
     () => ({
       allowFoundationPullback,
-      faceDownCount,
-      undoLimit
+      undoLimit,
+      faceDownCount
     }),
-    [allowFoundationPullback, faceDownCount, undoLimit]
+    [allowFoundationPullback, undoLimit, faceDownCount]
   );
 
   const [checkpoint, setCheckpoint] = useState<{
@@ -161,29 +156,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/gameId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { seed, gameId, startNewDealSession, replaySeed, startSession } =
-    useGameSession({
-      rules,
-      setTimeElapsedMs,
-      setHasStarted,
-      setStartedAtMs,
-      setEndedAtMs,
-      setIsAbandoned,
-      setUndosUsed,
-      setCheckpoint
-    });
-
-  // Wrap startSession so all session resets can reliably cancel transient UI (autocomplete, drag overlays)
-  // BEFORE the session key changes. This prevents the brief “initial values” window from triggering
-  // persistence/delete logic and avoids stuck drag layers.
-  const startSessionWithResets = useCallback(
-    (...args: Parameters<typeof startSession>) => {
-      uiResetsRef.current?.stopAutoComplete?.();
-      uiResetsRef.current?.resetDrag?.();
-      return startSession(...args);
-    },
-    [startSession]
-  );
+  const { seed, gameId, startNewDealSession, replaySeed } = useGameSession({
+    rules,
+    setTimeElapsedMs,
+    setHasStarted,
+    setStartedAtMs,
+    setEndedAtMs,
+    setIsAbandoned,
+    setUndosUsed,
+    setCheckpoint
+  });
 
   const startNewDealSessionWithResets = useCallback(() => {
     uiResetsRef.current?.stopAutoComplete?.();
@@ -193,9 +175,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
-      startSessionWithResets({ kind: "seed", seed: nextSeed });
+      uiResetsRef.current?.stopAutoComplete?.();
+      uiResetsRef.current?.resetDrag?.();
+      replaySeed(nextSeed);
     },
-    [startSessionWithResets]
+    [replaySeed]
   );
 
   const registerUiResets = useCallback((handlers: UiResets | null) => {
@@ -240,7 +224,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   useLoginReconcileInProgressGame({
     uid,
-    startSession: startSessionWithResets,
     sessionReady,
     currentSeed: seed,
     currentGameId: gameId
@@ -359,8 +342,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undoLimit,
     setUndoLimit,
     undosRemaining,
-    faceDownCount,
-    setFaceDownCount,
     showTimer,
     setShowTimer,
     paused,

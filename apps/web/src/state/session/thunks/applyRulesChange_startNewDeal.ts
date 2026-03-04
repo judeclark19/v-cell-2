@@ -1,12 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { Rules } from "@vcell/engine";
 
-import {
-  finalizeHydration,
-  RootState,
-  selectHistory,
-  startSession
-} from "@/state/game";
+import { finalizeHydration, selectHistory } from "@/state/game";
+import { RootState } from "@/state/reduxStore";
+import { transitionSession } from "../transitionSession_new";
 
 function areRulesEqual(a: Rules, b: Rules): boolean {
   return (
@@ -39,11 +36,27 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
     }
 
     if (confirm) {
+      console.debug("[rulesChange] waiting for confirm");
+
       const ok = await confirm();
+
+      console.debug("[rulesChange] confirm resolved:", ok);
+
       if (!ok) return { kind: "cancelled" as const };
     }
 
-    thunkApi.dispatch(startSession({ rules: nextRules }));
+    transitionSession(
+      {
+        seed: crypto.randomUUID(),
+        gameId: crypto.randomUUID(),
+        rules: nextRules
+      },
+      {
+        getState: thunkApi.getState,
+        dispatch: thunkApi.dispatch
+      }
+    );
+
     thunkApi.dispatch(finalizeHydration());
     return { kind: "started" as const };
   }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import type { Rules, UndoLimit } from "@vcell/engine";
+import type { UndoLimit, FaceDownCount } from "@vcell/engine";
+import { useSelector } from "react-redux";
+import { selectFaceDownCount } from "..";
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
 const UNDO_LIMIT_KEY = "vcell:undoLimit";
@@ -10,8 +12,6 @@ export type UseGameSettingsResult = {
   setShowTimer: (next: boolean) => void;
   undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
-  faceDownCount: Rules["faceDownCount"];
-  setFaceDownCount: (next: Rules["faceDownCount"]) => void;
 };
 
 export function useGameSettings(): UseGameSettingsResult {
@@ -19,7 +19,7 @@ export function useGameSettings(): UseGameSettingsResult {
 
   const [undoLimit, setUndoLimit] = useState<UndoLimit>("unlimited");
 
-  const [faceDownCount, setFaceDownCount] = useState<Rules["faceDownCount"]>(7);
+  // const [faceDownCount, setFaceDownCount] = useState<Rules["faceDownCount"]>(7);
 
   const [hydrated, setHydrated] = useState(false);
 
@@ -29,7 +29,7 @@ export function useGameSettings(): UseGameSettingsResult {
     try {
       let nextShowTimer: boolean | null = null;
       let nextUndoLimit: UndoLimit | null = null;
-      let nextFaceDownCount: Rules["faceDownCount"] | null = null;
+      let nextFaceDownCount: FaceDownCount | null = null;
 
       const rawShowTimer = window.localStorage.getItem(SHOW_TIMER_KEY);
       if (rawShowTimer != null) {
@@ -75,9 +75,9 @@ export function useGameSettings(): UseGameSettingsResult {
         if (nextUndoLimit != null) {
           setUndoLimit(nextUndoLimit);
         }
-        if (nextFaceDownCount != null) {
-          setFaceDownCount(nextFaceDownCount);
-        }
+        // if (nextFaceDownCount != null) {
+        //   setFaceDownCount(nextFaceDownCount);
+        // }
         setHydrated(true);
       });
     } catch {
@@ -97,6 +97,7 @@ export function useGameSettings(): UseGameSettingsResult {
     if (!hydrated) return;
     window.localStorage.setItem(UNDO_LIMIT_KEY, String(undoLimit));
   }, [hydrated, undoLimit]);
+  const faceDownCount = useSelector(selectFaceDownCount);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -107,8 +108,6 @@ export function useGameSettings(): UseGameSettingsResult {
     showTimer,
     setShowTimer,
     undoLimit,
-    setUndoLimit,
-    faceDownCount,
-    setFaceDownCount
+    setUndoLimit
   };
 }

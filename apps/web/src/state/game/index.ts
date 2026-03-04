@@ -22,5 +22,9 @@ export {
   selectHistory,
   selectMoves,
   selectCursor,
-  selectMoveCount
+  selectMoveCount,
+  selectRules,
+  selectFaceDownCount,
+  selectUndoLimit,
+  selectAllowFoundationPullback
 } from "./gameStore_new";

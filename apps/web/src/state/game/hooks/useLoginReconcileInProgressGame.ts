@@ -19,14 +19,12 @@ import {
   upsertInProgressGame
 } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/state/reduxStore";
+import { ensureSessionStarted } from "@/state/session";
 
 type Params = {
   uid: string | null;
-  startSession: (args: {
-    kind: "seed+id";
-    seed: string;
-    gameId: string;
-  }) => void;
   sessionReady: boolean;
   currentSeed: string;
   currentGameId: string;
@@ -34,13 +32,13 @@ type Params = {
 
 export function useLoginReconcileInProgressGame({
   uid,
-  startSession,
   sessionReady,
   currentSeed,
   currentGameId
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
   const lastSwitchedSessionRef = useRef<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (!sessionReady) return;
@@ -118,11 +116,13 @@ export function useLoginReconcileInProgressGame({
 
         if (lastSwitchedSessionRef.current !== sessionKey) {
           lastSwitchedSessionRef.current = sessionKey;
-          startSession({
-            kind: "seed+id",
-            seed: payload.seed,
-            gameId: payload.gameId
-          });
+          dispatch(
+            ensureSessionStarted({
+              seed: payload.seed,
+              gameId: payload.gameId,
+              rules: payload.rules
+            })
+          );
         }
 
         return;
@@ -159,5 +159,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, sessionReady, startSession, currentSeed, currentGameId]);
+  }, [uid, sessionReady, currentSeed, currentGameId, dispatch]);
 }
