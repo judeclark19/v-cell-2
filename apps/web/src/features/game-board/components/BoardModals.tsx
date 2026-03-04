@@ -11,6 +11,7 @@ export type ConfirmRequest = {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
+  onCancel?: () => void;
 };
 
 type BoardModalsProps = {

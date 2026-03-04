@@ -1,0 +1,1 @@
+// Game should not import Session. Session is a dependency of Game, but not the other way around. This is to avoid circular dependencies and to keep the game store focused on game state management without being concerned with session management.

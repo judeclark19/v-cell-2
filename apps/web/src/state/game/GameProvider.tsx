@@ -29,9 +29,8 @@ import {
   selectMoves,
   selectCursor,
   selectMoveCount,
-  hydrateFromPersisted,
-  finalizeHydration
-} from "../gameStore_new";
+  hydrateFromPersisted
+} from "./gameStore_new";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -353,34 +352,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Rule changes => abandon + archive current game, then start a new deal
   // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (!sessionReady) return;
+  // useEffect(() => {
+  //   if (!sessionReady) return;
 
-    const currentRules = {
-      allowFoundationPullback,
-      undoLimit,
-      faceDownCount
-    };
+  //   const currentRules = {
+  //     allowFoundationPullback,
+  //     undoLimit,
+  //     faceDownCount
+  //   };
 
-    // First run: just record rules.
-    if (prevRulesRef.current === null) {
-      prevRulesRef.current = currentRules;
-      return;
-    }
+  //   // First run: just record rules.
+  //   if (prevRulesRef.current === null) {
+  //     prevRulesRef.current = currentRules;
+  //     return;
+  //   }
 
-    const prev = prevRulesRef.current;
+  //   const prev = prevRulesRef.current;
 
-    const rulesChanged =
-      prev.allowFoundationPullback !== currentRules.allowFoundationPullback ||
-      prev.undoLimit !== currentRules.undoLimit ||
-      prev.faceDownCount !== currentRules.faceDownCount;
+  //   const rulesChanged =
+  //     prev.allowFoundationPullback !== currentRules.allowFoundationPullback ||
+  //     prev.undoLimit !== currentRules.undoLimit ||
+  //     prev.faceDownCount !== currentRules.faceDownCount;
 
-    if (!rulesChanged) return;
+  //   if (!rulesChanged) return;
 
-    prevRulesRef.current = currentRules;
+  //   prevRulesRef.current = currentRules;
 
-    newDealRef.current();
-  }, [sessionReady, allowFoundationPullback, undoLimit, faceDownCount]);
+  //   newDealRef.current();
+  // }, [sessionReady, allowFoundationPullback, undoLimit, faceDownCount]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging

@@ -14,7 +14,7 @@ import {
   resetTimeline,
   selectCursor,
   selectMoves
-} from "@/state/gameStore_new";
+} from "@/state/game/gameStore_new";
 import { useDispatch, useSelector } from "react-redux";
 
 export type UseGameActionsParams = {

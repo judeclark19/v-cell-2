@@ -8,7 +8,7 @@ import {
   finalizeHydration,
   bootSession,
   AppDispatch
-} from "@/state/gameStore_new";
+} from "@/state/game/gameStore_new";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }

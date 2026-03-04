@@ -5,15 +5,12 @@ import { UndoLimit } from "@vcell/engine";
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
-  requestConfirm: (
-    req: {
-      title: string;
-      bodyText: string;
-      confirmLabel: string;
-      cancelLabel: string;
-    },
-    onConfirm: () => void
-  ) => void;
+  requestConfirm: (req: {
+    title: string;
+    bodyText: string;
+    confirmLabel: string;
+    cancelLabel: string;
+  }) => Promise<boolean>;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -136,19 +133,19 @@ export default function BoardControls({
               className="control"
               id="face-down-cards"
               value={String(faceDownCount)}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
                 if (next === faceDownCount) return;
-                requestConfirm(
-                  {
-                    title: "Change face-down cards?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setFaceDownCount(next)
-                );
+
+                const ok = await requestConfirm({
+                  title: "Change face-down cards?",
+                  bodyText:
+                    "Changing this will start a new game and abandon your current one.",
+                  confirmLabel: "Change",
+                  cancelLabel: "Cancel"
+                });
+                if (!ok) return;
+                setFaceDownCount(next);
               }}
             >
               <option value="0">0 (all face-up)</option>
@@ -168,19 +165,19 @@ export default function BoardControls({
               className="control"
               id="undo-limit"
               value={String(undoLimit)}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
                 if (next === undoLimit) return;
-                requestConfirm(
-                  {
-                    title: "Change undo limit?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setUndoLimit(next)
-                );
+
+                const ok = await requestConfirm({
+                  title: "Change undo limit?",
+                  bodyText:
+                    "Changing this will start a new game and abandon your current one.",
+                  confirmLabel: "Change",
+                  cancelLabel: "Cancel"
+                });
+                if (!ok) return;
+                setUndoLimit(next);
               }}
             >
               <option value="0">0</option>
@@ -201,19 +198,18 @@ export default function BoardControls({
               className="control"
               id="foundation-pullback"
               value={allowFoundationPullback ? "on" : "off"}
-              onChange={(e) => {
+              onChange={async (e) => {
                 const next = e.target.value === "on";
                 if (next === allowFoundationPullback) return;
-                requestConfirm(
-                  {
-                    title: "Change foundation pullback?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setAllowFoundationPullback(next)
-                );
+                const ok = await requestConfirm({
+                  title: "Change foundation pullback?",
+                  bodyText:
+                    "Changing this will start a new game and abandon your current one.",
+                  confirmLabel: "Change",
+                  cancelLabel: "Cancel"
+                });
+                if (!ok) return;
+                setAllowFoundationPullback(next);
               }}
             >
               <option value="on">On (easier)</option>

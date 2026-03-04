@@ -26,7 +26,28 @@ function Board() {
     setConfirmReq({ ...req, onConfirm });
   };
 
-  const dismissConfirm = () => setConfirmReq(null);
+  const dismissConfirm = () => {
+    confirmReq?.onCancel?.();
+    setConfirmReq(null);
+  };
+
+  const requestConfirm = (req: Omit<ConfirmRequest, "onConfirm">) => {
+    return new Promise<boolean>((resolve) => {
+      setConfirmReq({
+        ...req,
+        onConfirm: () => {
+          resolve(true);
+          setConfirmReq(null);
+        },
+        // IMPORTANT: this assumes BoardModals calls dismissConfirm() on cancel.
+        // We'll wire that up in step 2.
+        onCancel: () => {
+          resolve(false);
+          setConfirmReq(null);
+        }
+      });
+    });
+  };
 
   const confirmIfInProgress = (
     req: Omit<ConfirmRequest, "onConfirm">,
@@ -189,7 +210,7 @@ function Board() {
             () => vm.startBySeed(seed)
           )
         }
-        requestConfirm={confirmThen}
+        requestConfirm={requestConfirm}
       />
     </>
   );

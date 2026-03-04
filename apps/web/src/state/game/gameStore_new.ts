@@ -225,7 +225,8 @@ export type RootState = ReturnType<typeof gameStore.getState>;
 export type AppDispatch = typeof gameStore.dispatch;
 
 // Session-domain thunks (kept as re-exports so existing call sites don’t break)
-export { bootSession } from "@/state/session/ensureSession_new";
+export { bootSession } from "@/state/session/bootSession_new";
+export { applyRulesChangeStartNewDeal } from "@/state/session/thunks/applyRulesChange_startNewDeal";
 
 // Selectors
 export const selectSeed = (state: RootState) => state.game.seed;

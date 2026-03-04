@@ -64,6 +64,14 @@ export function useCompletedGamesPersistence({
     (async () => {
       for (const g of pending) {
         try {
+          console.debug(
+            "[completedGamesPersistence] persisting completed game",
+            {
+              gameId: g.gameId,
+              status: g.status,
+              endedAtMs: g.endedAtMs
+            }
+          );
           const gameToPersist = uid ? { ...g, userId: uid } : g;
           await upsertCompletedGame(
             gameToPersist,
