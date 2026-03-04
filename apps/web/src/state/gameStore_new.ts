@@ -1,10 +1,5 @@
 // Redux Toolkit
-import {
-  createSlice,
-  configureStore,
-  PayloadAction,
-  createAsyncThunk
-} from "@reduxjs/toolkit";
+import { createSlice, configureStore, PayloadAction } from "@reduxjs/toolkit";
 import {
   applyMove,
   createGame,
@@ -13,9 +8,6 @@ import {
   Rules,
   UndoLimit
 } from "@vcell/engine";
-
-import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
-import { getOrCreateDeviceId } from "@/persistence/schema";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
 export type HistoryState = {
@@ -232,39 +224,8 @@ export const gameStore = configureStore({
 export type RootState = ReturnType<typeof gameStore.getState>;
 export type AppDispatch = typeof gameStore.dispatch;
 
-// Thunks
-export const bootSession = createAsyncThunk(
-  "game/bootSession",
-  async (args: { rules: Rules }, thunkApi) => {
-    const { rules } = args;
-
-    const deviceId = getOrCreateDeviceId();
-    const saved = await getInProgressGameForDevice(deviceId);
-
-    // If we have a saved in-progress game, hydrate it directly into READY.
-    if (saved && saved.seed && saved.gameId) {
-      thunkApi.dispatch(
-        hydrateFromPersisted({
-          gameId: saved.gameId,
-          seed: saved.seed,
-          rules: saved.rules,
-          moves: saved.moves,
-          cursor: saved.cursor,
-          fallbackRules: rules,
-          // Prefer the saved rules' undoLimit if present, otherwise use current rules.
-          undoLimit: saved.rules.undoLimit
-        })
-      );
-
-      return { kind: "hydrated" as const };
-    }
-
-    // Otherwise start a fresh session and immediately mark READY.
-    thunkApi.dispatch(startSession({ rules }));
-    thunkApi.dispatch(finalizeHydration());
-    return { kind: "fresh" as const };
-  }
-);
+// Session-domain thunks (kept as re-exports so existing call sites don’t break)
+export { bootSession } from "@/state/session/ensureSession_new";
 
 // Selectors
 export const selectSeed = (state: RootState) => state.game.seed;
