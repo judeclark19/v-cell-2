@@ -18,6 +18,10 @@ export interface GameStoreState {
   seed: string;
   gameId: string;
   sessionPhase: SessionPhase;
+
+  startedAtMs: number | null;
+  endedAtMs: number | null;
+
   rules: Rules;
   history: HistoryState;
 
@@ -49,6 +53,8 @@ const initialState: GameStoreState = {
   seed: "seed-boot",
   gameId: "game-boot",
   sessionPhase: "boot",
+  startedAtMs: null,
+  endedAtMs: null,
   rules: {
     allowFoundationPullback: false,
     undoLimit: "unlimited",
@@ -92,11 +98,12 @@ export const gameSlice = createSlice({
       state.history.present = initialGame;
       state.history.past = [];
       state.sessionPhase = "hydrating";
-      // state.sessionPhase = "ready";
 
       state.moves = [];
       state.cursor = 0;
       state.moveCount = 0;
+      state.startedAtMs = null;
+      state.endedAtMs = null;
     },
     hydrateHistory: (
       state,
@@ -115,6 +122,8 @@ export const gameSlice = createSlice({
         cursor?: number;
         fallbackRules: Rules;
         undoLimit: UndoLimit;
+        startedAtMs?: number | null;
+        endedAtMs?: number | null;
       }>
     ) => {
       const { seed, rules, moves, cursor, fallbackRules, undoLimit } =
@@ -150,6 +159,8 @@ export const gameSlice = createSlice({
       state.moves = moves ?? [];
       state.cursor = cursor ?? 0;
       state.moveCount = state.cursor;
+      state.startedAtMs = action.payload.startedAtMs ?? null;
+      state.endedAtMs = action.payload.endedAtMs ?? null;
     },
     applyMoveToHistory: (
       state,
@@ -168,10 +179,12 @@ export const gameSlice = createSlice({
         // Invalid move: drop it.
         return;
       }
+      if (state.startedAtMs == null) state.startedAtMs = Date.now();
 
       // After a win, allow cosmetic moves but do not mutate undo history.
       if (isWon) {
         state.history.present = next;
+
         return;
       }
 

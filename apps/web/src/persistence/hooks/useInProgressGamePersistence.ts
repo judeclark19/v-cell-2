@@ -165,6 +165,39 @@ export function useInProgressGamePersistence({
     undosUsed
   ]);
 
+  // ---------------------------------------------------------------------------
+  // Derive/stamp lifecycle timestamps from deterministic state
+  // - startedAtMs is stamped on the first ever move (moves.length > 0)
+  // - endedAtMs is stamped when we enter a terminal endState
+  // NOTE: We never clear these here; persistence should reflect the first start.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!readyToHydrate) return;
+    if (!isArmed()) return;
+
+    // First move observed: stamp startedAtMs once.
+    if (startedAtMs == null && moves.length > 0) {
+      const now = Date.now();
+      setStartedAtMs(now);
+      setHasStarted(true);
+    }
+
+    // Terminal state reached: stamp endedAtMs once.
+    if (endState !== "none" && endedAtMs == null) {
+      setEndedAtMs(Date.now());
+    }
+  }, [
+    readyToHydrate,
+    isArmed,
+    moves.length,
+    startedAtMs,
+    endState,
+    endedAtMs,
+    setStartedAtMs,
+    setHasStarted,
+    setEndedAtMs
+  ]);
+
   const buildInProgressPayload = useCallback(
     (
       deviceId: string,
@@ -297,7 +330,8 @@ export function useInProgressGamePersistence({
       return;
     }
 
-    if (!hasStarted) return;
+    // Persist once we've seen at least one move (even if the user undoes back to the start).
+    if (moves.length === 0) return;
 
     const payload = buildInProgressPayload(deviceId, Date.now());
 
@@ -340,7 +374,8 @@ export function useInProgressGamePersistence({
     if (!isArmed()) return;
 
     if (endState !== "none") return;
-    if (!hasStarted) return;
+    // Persist once we've seen at least one move (even if the user undoes back to the start).
+    if (moves.length === 0) return;
     if (paused) return;
 
     const deviceId = getOrCreateDeviceId();
@@ -369,6 +404,7 @@ export function useInProgressGamePersistence({
     paused,
     endState,
     uid,
-    buildInProgressPayload
+    buildInProgressPayload,
+    moves.length
   ]);
 }

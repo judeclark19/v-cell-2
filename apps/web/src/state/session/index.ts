@@ -7,6 +7,8 @@ export {
   selectSessionKey,
   selectSessionKeyString,
   selectSessionPhase,
-  selectRules
+  selectRules,
+  selectStartedAtMs,
+  selectEndedAtMs
 } from "./selectors_new";
 export type { SessionKey } from "./selectors_new";

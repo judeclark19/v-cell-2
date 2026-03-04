@@ -27,3 +27,11 @@ export function selectSessionKeyString(state: RootState): string {
   const { seed, gameId } = selectSessionKey(state);
   return `${seed}:${gameId}`;
 }
+
+export function selectStartedAtMs(state: RootState): number | null {
+  return state.game.startedAtMs;
+}
+
+export function selectEndedAtMs(state: RootState): number | null {
+  return state.game.endedAtMs;
+}
