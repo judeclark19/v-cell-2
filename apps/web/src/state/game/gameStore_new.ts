@@ -215,20 +215,18 @@ export const {
   finalizeHydration
 } = gameSlice.actions;
 
-export const gameStore = configureStore({
-  reducer: {
-    game: gameSlice.reducer
-  }
-});
-
-export type RootState = ReturnType<typeof gameStore.getState>;
-export type AppDispatch = typeof gameStore.dispatch;
-
+export const gameReducer = gameSlice.reducer;
 // Selectors
-export const selectSeed = (state: RootState) => state.game.seed;
-export const selectGameId = (state: RootState) => state.game.gameId;
-export const selectSessionPhase = (state: RootState) => state.game.sessionPhase;
-export const selectHistory = (state: RootState) => state.game.history;
-export const selectMoves = (state: RootState) => state.game.moves;
-export const selectCursor = (state: RootState) => state.game.cursor;
-export const selectMoveCount = (state: RootState) => state.game.moveCount;
+export const selectSeed = (state: { game: GameStoreState }) => state.game.seed;
+export const selectGameId = (state: { game: GameStoreState }) =>
+  state.game.gameId;
+export const selectSessionPhase = (state: { game: GameStoreState }) =>
+  state.game.sessionPhase;
+export const selectHistory = (state: { game: GameStoreState }) =>
+  state.game.history;
+export const selectMoves = (state: { game: GameStoreState }) =>
+  state.game.moves;
+export const selectCursor = (state: { game: GameStoreState }) =>
+  state.game.cursor;
+export const selectMoveCount = (state: { game: GameStoreState }) =>
+  state.game.moveCount;
