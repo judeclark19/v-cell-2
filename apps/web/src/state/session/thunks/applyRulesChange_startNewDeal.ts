@@ -6,7 +6,7 @@ import {
   RootState,
   selectHistory,
   startSession
-} from "@/state/game/gameStore_new";
+} from "@/state/game";
 
 function areRulesEqual(a: Rules, b: Rules): boolean {
   return (
@@ -22,17 +22,18 @@ function areRulesEqual(a: Rules, b: Rules): boolean {
  */
 export const applyRulesChangeStartNewDeal = createAsyncThunk<
   { kind: "noop" | "cancelled" | "started" },
-  { nextRules: Rules; confirm?: () => Promise<boolean> },
+  { patch: Partial<Rules>; confirm?: () => Promise<boolean> },
   { state: RootState }
 >(
   "session/applyRulesChangeStartNewDeal",
-  async (
-    args: { nextRules: Rules; confirm?: () => Promise<boolean> },
-    thunkApi
-  ) => {
-    const { nextRules, confirm } = args;
-
+  async ({ patch, confirm }, thunkApi) => {
     const currentRules = selectHistory(thunkApi.getState()).present.rules;
+
+    const nextRules: Rules = {
+      ...currentRules,
+      ...patch
+    };
+
     if (areRulesEqual(currentRules, nextRules)) {
       return { kind: "noop" as const };
     }

@@ -6,9 +6,9 @@ import {
   selectSeed,
   selectGameId,
   finalizeHydration,
-  bootSession,
   AppDispatch
-} from "@/state/game/gameStore_new";
+} from "@/state/game";
+import { bootSession } from "@/state/session";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }

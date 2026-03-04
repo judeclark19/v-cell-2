@@ -145,7 +145,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Clear local persistence so guest mode starts fresh.
-      await deleteInProgressGameForDevice(deviceId, "log out");
+      await deleteInProgressGameForDevice(deviceId);
       await clearCompletedGames();
 
       // Finally, sign out (guests already have no auth session).

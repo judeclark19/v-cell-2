@@ -290,10 +290,7 @@ export function useInProgressGamePersistence({
     const deviceId = getOrCreateDeviceId();
 
     if (endState !== "none") {
-      deleteInProgressGameForDevice(
-        deviceId,
-        "useInProgressGamePersistence effect"
-      );
+      deleteInProgressGameForDevice(deviceId);
       if (uid) {
         deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
       }

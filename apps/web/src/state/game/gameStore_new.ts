@@ -14,7 +14,7 @@ export type HistoryState = {
   present: GameState;
   past: GameState[];
 };
-interface GameStoreState {
+export interface GameStoreState {
   seed: string;
   gameId: string;
   sessionPhase: SessionPhase;
@@ -61,7 +61,7 @@ const initialState: GameStoreState = {
   moveCount: 0
 };
 
-const gameSlice = createSlice({
+export const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
@@ -223,10 +223,6 @@ export const gameStore = configureStore({
 
 export type RootState = ReturnType<typeof gameStore.getState>;
 export type AppDispatch = typeof gameStore.dispatch;
-
-// Session-domain thunks (kept as re-exports so existing call sites don’t break)
-export { bootSession } from "@/state/session/bootSession_new";
-export { applyRulesChangeStartNewDeal } from "@/state/session/thunks/applyRulesChange_startNewDeal";
 
 // Selectors
 export const selectSeed = (state: RootState) => state.game.seed;

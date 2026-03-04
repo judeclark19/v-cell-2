@@ -14,7 +14,7 @@ import {
   resetTimeline,
   selectCursor,
   selectMoves
-} from "@/state/game/gameStore_new";
+} from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
 
 export type UseGameActionsParams = {
@@ -254,10 +254,7 @@ export function useGameActions({
 
       const start = () => {
         const deviceId = getOrCreateDeviceId();
-        deleteInProgressGameForDevice(
-          deviceId,
-          "useGameActions abandonIfNeededThenStart"
-        ).catch(() => {});
+        deleteInProgressGameForDevice(deviceId).catch(() => {});
         startNext();
       };
 

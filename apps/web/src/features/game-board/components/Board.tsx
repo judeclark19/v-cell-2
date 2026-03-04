@@ -11,6 +11,9 @@ import BoardModals, { type ConfirmRequest } from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
+import { useDispatch } from "react-redux";
+import { applyRulesChangeStartNewDeal } from "@/state/session";
+import { AppDispatch } from "@/state/game";
 
 function Board() {
   const game = useGame();
@@ -60,6 +63,24 @@ function Board() {
       return;
     }
     confirmThen(req, onConfirm);
+  };
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const requestRulesChange = async (patch: {
+    faceDownCount?: 0 | 7 | 14 | 21;
+    undoLimit?: import("@vcell/engine").UndoLimit;
+    allowFoundationPullback?: boolean;
+  }) => {
+    const ok = await requestConfirm({
+      title: "Change gameplay setting?",
+      bodyText:
+        "Changing this will start a new game and abandon your current one.",
+      confirmLabel: "Change",
+      cancelLabel: "Cancel"
+    });
+    if (!ok) return;
+    dispatch(applyRulesChangeStartNewDeal({ patch }));
   };
 
   return (
@@ -210,7 +231,10 @@ function Board() {
             () => vm.startBySeed(seed)
           )
         }
-        requestConfirm={requestConfirm}
+        allowFoundationPullback={vm.allowFoundationPullback}
+        undoLimit={vm.undoLimit}
+        faceDownCount={vm.faceDownCount}
+        requestRulesChange={requestRulesChange}
       />
     </>
   );

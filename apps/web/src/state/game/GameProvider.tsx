@@ -22,15 +22,14 @@ import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import {
   selectSessionPhase,
   selectHistory,
   selectMoves,
   selectCursor,
-  selectMoveCount,
-  hydrateFromPersisted
-} from "./gameStore_new";
+  selectMoveCount
+} from "./";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -122,7 +121,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const moves = useSelector(selectMoves);
   const cursor = useSelector(selectCursor);
   const moveCount = useSelector(selectMoveCount);
-  const dispatch = useDispatch();
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -155,11 +153,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [undosUsed, setUndosUsed] = useState<number>(0);
 
   // Track previous rules for rule-change effect
-  const prevRulesRef = useRef<{
-    allowFoundationPullback: boolean;
-    undoLimit: UndoLimit;
-    faceDownCount: Rules["faceDownCount"];
-  } | null>(null);
   const prevUidRef = useRef<string | null>(uid);
 
   const sessionPhase = useSelector(selectSessionPhase);
@@ -218,34 +211,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undosUsed
   });
 
-  const onInProgressHydrated = useCallback(
-    (saved: PersistedGame | null) => {
-      if (!saved) {
-        return;
-      }
-
-      dispatch(
-        hydrateFromPersisted({
-          gameId: saved.gameId,
-          seed: saved.seed,
-          rules: saved.rules,
-          moves: saved.moves,
-          cursor: saved.cursor,
-          fallbackRules: rules,
-          undoLimit
-        })
-      );
-    },
-    [rules, undoLimit, dispatch]
-  );
-
   useInProgressGamePersistence({
     readyToHydrate: !!gameId && !!seed,
     uid,
     gameId,
     seed,
     rules,
-    onHydrated: onInProgressHydrated,
     isAbandoned,
     moves,
     cursor,
@@ -296,7 +267,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     queueMicrotask(() => {
       startNewDealSession();
     });
-  }, [uid, sessionPhase, hasStarted, startNewDealSession, dispatch]);
+  }, [uid, sessionPhase, hasStarted, startNewDealSession]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
@@ -348,38 +319,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     newDealRef.current = newDeal;
   }, [newDeal]);
-
-  // ---------------------------------------------------------------------------
-  // Rule changes => abandon + archive current game, then start a new deal
-  // ---------------------------------------------------------------------------
-  // useEffect(() => {
-  //   if (!sessionReady) return;
-
-  //   const currentRules = {
-  //     allowFoundationPullback,
-  //     undoLimit,
-  //     faceDownCount
-  //   };
-
-  //   // First run: just record rules.
-  //   if (prevRulesRef.current === null) {
-  //     prevRulesRef.current = currentRules;
-  //     return;
-  //   }
-
-  //   const prev = prevRulesRef.current;
-
-  //   const rulesChanged =
-  //     prev.allowFoundationPullback !== currentRules.allowFoundationPullback ||
-  //     prev.undoLimit !== currentRules.undoLimit ||
-  //     prev.faceDownCount !== currentRules.faceDownCount;
-
-  //   if (!rulesChanged) return;
-
-  //   prevRulesRef.current = currentRules;
-
-  //   newDealRef.current();
-  // }, [sessionReady, allowFoundationPullback, undoLimit, faceDownCount]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
@@ -438,17 +377,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     completedGames
   };
-
-  // console.log("GameProvider render", {
-  //   uid,
-  //   sessionPhase,
-  //   seed,
-  //   gameId,
-  //   present: !!history.present,
-  //   movesLen: moves.length,
-  //   cursor,
-  //   moveCount
-  // });
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

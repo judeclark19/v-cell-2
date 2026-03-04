@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { useGame } from "@/state/game/GameProvider";
 import { UndoLimit } from "@vcell/engine";
 
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
-  requestConfirm: (req: {
-    title: string;
-    bodyText: string;
-    confirmLabel: string;
-    cancelLabel: string;
-  }) => Promise<boolean>;
+
+  allowFoundationPullback: boolean;
+  undoLimit: UndoLimit;
+  faceDownCount: 0 | 7 | 14 | 21;
+
+  requestRulesChange: (patch: {
+    faceDownCount?: 0 | 7 | 14 | 21;
+    undoLimit?: UndoLimit;
+    allowFoundationPullback?: boolean;
+  }) => Promise<void>;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -29,17 +32,11 @@ const parseUndoLimit = (value: string): UndoLimit => {
 export default function BoardControls({
   onNewDeal,
   startBySeed,
-  requestConfirm
+  allowFoundationPullback,
+  undoLimit,
+  faceDownCount,
+  requestRulesChange
 }: BoardControlsProps) {
-  const {
-    allowFoundationPullback,
-    setAllowFoundationPullback,
-    undoLimit,
-    setUndoLimit,
-    faceDownCount,
-    setFaceDownCount
-  } = useGame();
-
   const [seedInput, setSeedInput] = useState("");
 
   return (
@@ -136,16 +133,7 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
                 if (next === faceDownCount) return;
-
-                const ok = await requestConfirm({
-                  title: "Change face-down cards?",
-                  bodyText:
-                    "Changing this will start a new game and abandon your current one.",
-                  confirmLabel: "Change",
-                  cancelLabel: "Cancel"
-                });
-                if (!ok) return;
-                setFaceDownCount(next);
+                await requestRulesChange({ faceDownCount: next });
               }}
             >
               <option value="0">0 (all face-up)</option>
@@ -168,16 +156,7 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
                 if (next === undoLimit) return;
-
-                const ok = await requestConfirm({
-                  title: "Change undo limit?",
-                  bodyText:
-                    "Changing this will start a new game and abandon your current one.",
-                  confirmLabel: "Change",
-                  cancelLabel: "Cancel"
-                });
-                if (!ok) return;
-                setUndoLimit(next);
+                await requestRulesChange({ undoLimit: next });
               }}
             >
               <option value="0">0</option>
@@ -201,15 +180,7 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = e.target.value === "on";
                 if (next === allowFoundationPullback) return;
-                const ok = await requestConfirm({
-                  title: "Change foundation pullback?",
-                  bodyText:
-                    "Changing this will start a new game and abandon your current one.",
-                  confirmLabel: "Change",
-                  cancelLabel: "Cancel"
-                });
-                if (!ok) return;
-                setAllowFoundationPullback(next);
+                await requestRulesChange({ allowFoundationPullback: next });
               }}
             >
               <option value="on">On (easier)</option>

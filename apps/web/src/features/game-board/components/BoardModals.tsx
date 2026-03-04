@@ -104,13 +104,12 @@ export default function BoardModals({
           onClose={dismissConfirm}
           bodyText={confirmReq.bodyText}
           primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
-          primaryButtonAction={() => {
-            const fn = confirmReq.onConfirm;
-            dismissConfirm();
-            fn();
-          }}
+          primaryButtonAction={confirmReq.onConfirm}
           secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
-          secondaryButtonAction={dismissConfirm}
+          secondaryButtonAction={() => {
+            confirmReq.onCancel?.();
+            dismissConfirm();
+          }}
         />
       )}
 
