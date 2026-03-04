@@ -271,7 +271,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useLoginReconcileInProgressGame({
     uid,
     startSession: startSessionWithResets,
-    sessionReady
+    sessionReady,
+    currentSeed: seed,
+    currentGameId: gameId
   });
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).

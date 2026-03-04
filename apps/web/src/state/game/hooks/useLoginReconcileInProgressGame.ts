@@ -28,12 +28,16 @@ type Params = {
     gameId: string;
   }) => void;
   sessionReady: boolean;
+  currentSeed: string;
+  currentGameId: string;
 };
 
 export function useLoginReconcileInProgressGame({
   uid,
   startSession,
-  sessionReady
+  sessionReady,
+  currentSeed,
+  currentGameId
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
   const lastSwitchedSessionRef = useRef<string | null>(null);
@@ -98,16 +102,22 @@ export function useLoginReconcileInProgressGame({
 
         if (cancelled) return;
 
+        const sessionKey = `${payload.seed}:${payload.gameId}`;
+
+        if (payload.seed === currentSeed && payload.gameId === currentGameId) {
+          console.debug("[login reconcile] noop; already on winning session", {
+            sessionKey
+          });
+          return;
+        }
+
         console.debug("[login reconcile] cloud wins; switching session", {
           seed: payload.seed,
           gameId: payload.gameId
         });
 
-        // Force the active session to match the cloud record.
-        const sessionKey = `${payload.seed}:${payload.gameId}`;
         if (lastSwitchedSessionRef.current !== sessionKey) {
           lastSwitchedSessionRef.current = sessionKey;
-
           startSession({
             kind: "seed+id",
             seed: payload.seed,
@@ -149,5 +159,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, sessionReady, startSession]);
+  }, [uid, sessionReady, startSession, currentSeed, currentGameId]);
 }

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { GameState, Rules } from "@vcell/engine";
-import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
-import { getOrCreateDeviceId } from "@/persistence/schema";
 import {
   startSession as startSession_new,
   selectSeed,
   selectGameId,
-  finalizeHydration
+  finalizeHydration,
+  bootSession,
+  AppDispatch
 } from "@/state/gameStore_new";
 
 type StartSessionMode =
@@ -58,7 +58,7 @@ export function useGameSession({
   // Keep deterministic placeholders to avoid hydration mismatches.
   const seed = useSelector(selectSeed);
   const gameId = useSelector(selectGameId);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Prevent duplicate bootstraps (can happen due to hydration remounts in dev/prod).
   // We guard both per-mount (ref) and per-page-load (global) to avoid double-dispatch.
@@ -118,52 +118,20 @@ export function useGameSession({
   useEffect(() => {
     // If Redux has already hydrated a real session, do NOT reboot it.
     if (seed !== "seed-boot" && gameId !== "game-boot") return;
-    // Per-mount guard
     if (didBootstrapRef.current) return;
     didBootstrapRef.current = true;
 
-    let cancelled = false;
+    // Reset provider-owned per-session state once at boot.
+    resetPerSessionState();
 
-    (async () => {
-      try {
-        const deviceId = getOrCreateDeviceId();
-        const saved = await getInProgressGameForDevice(deviceId);
-
-        if (cancelled) return;
-
-        if (
-          saved &&
-          saved.seed !== "seed-boot" &&
-          saved.gameId !== "game-boot"
-        ) {
-          startSession({
-            kind: "seed+id",
-            seed: saved.seed,
-            gameId: saved.gameId
-          });
-        } else {
-          dispatch(startSession_new({ rules }));
-          dispatch(finalizeHydration());
-          resetPerSessionState();
-        }
-      } catch (err) {
-        console.error(
-          "Failed to bootstrap session from in-progress games",
-          err
-        );
-
-        if (cancelled) return;
-        dispatch(startSession_new({ rules }));
-        dispatch(finalizeHydration());
-        resetPerSessionState();
-      }
-    })();
+    dispatch(bootSession({ rules })).catch((err) => {
+      console.error("bootSession failed", err);
+    });
 
     return () => {
-      cancelled = true;
       didBootstrapRef.current = false;
     };
-  }, [dispatch, rules, resetPerSessionState, startSession, seed, gameId]);
+  }, [dispatch, rules, resetPerSessionState, seed, gameId]);
 
   const startNewDealSession = useCallback(() => {
     dispatch(startSession_new({ rules }));
