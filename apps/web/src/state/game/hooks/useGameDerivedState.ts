@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { areAllCardsUnlocked } from "@vcell/engine";
 import type { UndoLimit } from "@vcell/engine";
-import { HistoryState } from "@/state/game/gameStore_new";
+import type { HistoryState } from "@/state/game";
 
 export type UseGameDerivedStateParams = {
   history: HistoryState;

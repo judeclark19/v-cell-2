@@ -8,7 +8,7 @@ import {
   finalizeHydration,
   hydrateFromPersisted,
   startSession
-} from "@/state/game/gameStore_new";
+} from "@/state/game";
 
 /**
  * Boot the session from local persistence.
