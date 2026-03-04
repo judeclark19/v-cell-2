@@ -18,6 +18,14 @@ import { getOrCreateDeviceId } from "../schema";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/state/reduxStore";
+import {
+  setStartedAtMs,
+  selectStartedAtMs,
+  selectEndedAtMs,
+  setEndedAtMs
+} from "@/state/session";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -49,8 +57,6 @@ type Params = {
   cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
   hasStarted: boolean;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
   isAbandoned: boolean;
   paused: boolean;
   moveCount: number;
@@ -60,8 +66,6 @@ type Params = {
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
-  setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
-  setEndedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setPaused: React.Dispatch<React.SetStateAction<boolean>>;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
@@ -77,8 +81,6 @@ export function useInProgressGamePersistence({
   cursor,
   timeElapsedMsRef,
   hasStarted,
-  startedAtMs,
-  endedAtMs,
   isAbandoned,
   paused,
   moveCount,
@@ -87,8 +89,6 @@ export function useInProgressGamePersistence({
   readyToHydrate,
   setTimeElapsedMs,
   setHasStarted,
-  setStartedAtMs,
-  setEndedAtMs,
   setIsAbandoned,
   setPaused,
   setUndosUsed
@@ -97,6 +97,9 @@ export function useInProgressGamePersistence({
   const hydratedSessionKeyRef = useRef<string | null>(null);
   const pendingDeleteTimerRef = useRef<number | null>(null);
   const hasSavedRef = useRef<boolean>(false);
+  const startedAtMs = useSelector(selectStartedAtMs);
+  const endedAtMs = useSelector(selectEndedAtMs);
+
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
     cursor,
@@ -165,6 +168,8 @@ export function useInProgressGamePersistence({
     undosUsed
   ]);
 
+  const dispatch = useDispatch<AppDispatch>();
+
   // ---------------------------------------------------------------------------
   // Derive/stamp lifecycle timestamps from deterministic state
   // - startedAtMs is stamped on the first ever move (moves.length > 0)
@@ -177,14 +182,13 @@ export function useInProgressGamePersistence({
 
     // First move observed: stamp startedAtMs once.
     if (startedAtMs == null && moves.length > 0) {
-      const now = Date.now();
-      setStartedAtMs(now);
+      dispatch(setStartedAtMs(Date.now()));
       setHasStarted(true);
     }
 
     // Terminal state reached: stamp endedAtMs once.
     if (endState !== "none" && endedAtMs == null) {
-      setEndedAtMs(Date.now());
+      dispatch(setEndedAtMs(Date.now()));
     }
   }, [
     readyToHydrate,
@@ -193,9 +197,8 @@ export function useInProgressGamePersistence({
     startedAtMs,
     endState,
     endedAtMs,
-    setStartedAtMs,
     setHasStarted,
-    setEndedAtMs
+    dispatch
   ]);
 
   const buildInProgressPayload = useCallback(
@@ -277,8 +280,9 @@ export function useInProgressGamePersistence({
         // Restore snapshot + meta (clamp cursor to move list length)
         setTimeElapsedMs(saved.timeElapsedMs);
         setHasStarted(saved.hasStarted);
-        setStartedAtMs(saved.startedAtMs);
-        setEndedAtMs(saved.endedAtMs);
+        dispatch(setStartedAtMs(saved.startedAtMs));
+        dispatch(setEndedAtMs(saved.endedAtMs));
+
         setIsAbandoned(saved.status === "abandoned");
         setPaused(saved.paused);
         setUndosUsed(saved.undosUsed);
@@ -302,15 +306,14 @@ export function useInProgressGamePersistence({
     onHydrated,
     setTimeElapsedMs,
     setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
     setIsAbandoned,
     setPaused,
     setUndosUsed,
     sessionKey,
     rules,
     uid,
-    seed
+    seed,
+    dispatch
   ]);
 
   // ---------------------------------------------------------------------------

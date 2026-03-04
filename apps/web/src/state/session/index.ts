@@ -1,4 +1,3 @@
-//Session may import Game actions
 export { bootSession } from "./thunks/bootSession";
 export { applyRulesChangeStartNewDeal } from "./thunks/applyRulesChange_startNewDeal";
 
@@ -12,3 +11,6 @@ export {
   selectEndedAtMs
 } from "./selectors_new";
 export type { SessionKey } from "./selectors_new";
+
+// Session may import Game actions
+export { setStartedAtMs, setEndedAtMs } from "@/state/game";

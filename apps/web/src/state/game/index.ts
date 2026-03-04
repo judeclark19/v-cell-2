@@ -16,6 +16,8 @@ export {
   undoHistory,
   resetTimeline,
   finalizeHydration,
+  setStartedAtMs,
+  setEndedAtMs,
   selectSeed,
   selectGameId,
   selectSessionPhase,

@@ -220,6 +220,12 @@ export const gameSlice = createSlice({
       state.cursor = 0;
       state.moveCount = 0;
     },
+    setStartedAtMs: (state, action: PayloadAction<number | null>) => {
+      state.startedAtMs = action.payload;
+    },
+    setEndedAtMs: (state, action: PayloadAction<number | null>) => {
+      state.endedAtMs = action.payload;
+    },
     finalizeHydration: (state) => {
       state.sessionPhase = "ready";
     }
@@ -233,6 +239,8 @@ export const {
   applyMoveToHistory,
   undoHistory,
   resetTimeline,
+  setStartedAtMs,
+  setEndedAtMs,
   finalizeHydration
 } = gameSlice.actions;
 

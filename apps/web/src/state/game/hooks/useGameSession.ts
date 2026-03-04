@@ -7,7 +7,7 @@ import {
   selectGameId,
   finalizeHydration
 } from "@/state/game";
-import { bootSession } from "@/state/session";
+import { bootSession, setStartedAtMs, setEndedAtMs } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
 
 type StartSessionMode =
@@ -20,8 +20,6 @@ export type UseGameSessionParams = {
   // State setters owned by GameProvider
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
-  setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
-  setEndedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
   setCheckpoint: React.Dispatch<
@@ -48,8 +46,6 @@ export function useGameSession({
   rules,
   setTimeElapsedMs,
   setHasStarted,
-  setStartedAtMs,
-  setEndedAtMs,
   setIsAbandoned,
   setUndosUsed,
   setCheckpoint
@@ -67,19 +63,18 @@ export function useGameSession({
   const resetPerSessionState = useCallback(() => {
     setTimeElapsedMs(0);
     setHasStarted(false);
-    setStartedAtMs(null);
-    setEndedAtMs(null);
+    dispatch(setStartedAtMs(null));
+    dispatch(setEndedAtMs(null));
     setIsAbandoned(false);
     setUndosUsed(0);
     setCheckpoint(null);
   }, [
     setTimeElapsedMs,
     setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
     setIsAbandoned,
     setUndosUsed,
-    setCheckpoint
+    setCheckpoint,
+    dispatch
   ]);
 
   const startSession = useCallback(

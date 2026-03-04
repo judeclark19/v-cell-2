@@ -59,8 +59,6 @@ type GameContextValue = {
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
   timeElapsedMs: number;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
   hasStarted: boolean;
   isAbandoned: boolean;
   setIsAbandoned: (next: boolean) => void;
@@ -137,8 +135,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timeElapsedMsRef.current = timeElapsedMs;
   }, [timeElapsedMs]);
   const [hasStarted, setHasStarted] = useState<boolean>(false);
-  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
-  const [endedAtMs, setEndedAtMs] = useState<number | null>(null);
   const [isAbandoned, setIsAbandoned] = useState<boolean>(false);
   const [paused, setPaused] = useState<boolean>(false);
 
@@ -160,8 +156,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     rules,
     setTimeElapsedMs,
     setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
     setIsAbandoned,
     setUndosUsed,
     setCheckpoint
@@ -206,8 +200,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursor,
     timeElapsedMsRef,
     hasStarted,
-    startedAtMs,
-    endedAtMs,
     paused,
     moveCount,
     undosUsed,
@@ -215,8 +207,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     setTimeElapsedMs,
     setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
     setIsAbandoned,
     setPaused,
     setUndosUsed
@@ -278,11 +268,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isWon,
     isAbandoned,
     hasStarted,
-    endedAtMs,
 
     setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
     setIsAbandoned,
 
     undosUsed,
@@ -291,7 +278,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCompletedGames,
 
     timeElapsedMs,
-    startedAtMs,
 
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
@@ -317,8 +303,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     moveCount,
     undosUsed,
     timeElapsedMs,
-    startedAtMs,
-    endedAtMs,
     moves,
     cursor,
     checkpoint
@@ -349,8 +333,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     allowFoundationPullback,
     setAllowFoundationPullback,
     timeElapsedMs,
-    startedAtMs,
-    endedAtMs,
+
     hasStarted,
     isAbandoned,
     setIsAbandoned,

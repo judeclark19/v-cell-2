@@ -16,6 +16,12 @@ import {
   selectMoves
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  selectStartedAtMs,
+  setStartedAtMs,
+  setEndedAtMs,
+  selectEndedAtMs
+} from "@/state/session";
 
 export type UseGameActionsParams = {
   // Core state
@@ -31,12 +37,9 @@ export type UseGameActionsParams = {
   isWon: boolean;
   isAbandoned: boolean;
   hasStarted: boolean;
-  endedAtMs: number | null;
 
   // Run state setters
   setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
-  setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
-  setEndedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
 
   // Analytics / logs
@@ -52,7 +55,6 @@ export type UseGameActionsParams = {
 
   // Timing values captured in archive
   timeElapsedMs: number;
-  startedAtMs: number | null;
 
   // Session transition
   startNewDealSession: () => void;
@@ -85,11 +87,8 @@ export function useGameActions({
   isWon,
   isAbandoned,
   hasStarted,
-  endedAtMs,
 
   setHasStarted,
-  setStartedAtMs,
-  setEndedAtMs,
   setIsAbandoned,
 
   undosUsed,
@@ -100,7 +99,6 @@ export function useGameActions({
   setCompletedGames,
 
   timeElapsedMs,
-  startedAtMs,
 
   startNewDealSession,
   replaySeed
@@ -108,6 +106,8 @@ export function useGameActions({
   const dispatch = useDispatch();
   const moves = useSelector(selectMoves);
   const cursor = useSelector(selectCursor);
+  const startedAtMs = useSelector(selectStartedAtMs);
+  const endedAtMs = useSelector(selectEndedAtMs);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -116,13 +116,16 @@ export function useGameActions({
 
       // First move starts the timer clock.
       setHasStarted(true);
-      setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
+      // setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
+      if (startedAtMs == null) {
+        dispatch(setStartedAtMs(Date.now()));
+      }
 
       let nextCursor = cursor;
       let nextMoves = moves;
 
       if (!isWon) {
-        setEndedAtMs(null);
+        dispatch(setEndedAtMs(null));
         setIsAbandoned(false);
 
         // For archive/checkpoint bookkeeping, compute the post-move timeline values.
@@ -150,7 +153,10 @@ export function useGameActions({
       // If this move produces a win, stamp `endedAtMs` exactly once.
       if (!isWon && areAllCardsUnlocked(next)) {
         const ended = Date.now();
-        setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+        if (endedAtMs == null) {
+          dispatch(setEndedAtMs(ended));
+        }
 
         const archivedCursor = nextCursor;
         const archivedMoves = nextMoves;
@@ -205,26 +211,23 @@ export function useGameActions({
     },
     [
       setHasStarted,
-      setStartedAtMs,
       isWon,
-      endedAtMs,
       isAbandoned,
-      setEndedAtMs,
       setIsAbandoned,
       cursor,
       moves,
       gameId,
       seed,
       setCompletedGames,
-      startedAtMs,
       timeElapsedMs,
-
+      startedAtMs,
       undosUsed,
       undoLimit,
       setCheckpoint,
       uid,
       history.present,
-      dispatch
+      dispatch,
+      endedAtMs
     ]
   );
 
@@ -235,17 +238,9 @@ export function useGameActions({
     dispatch(resetTimeline());
     setUndosUsed(0);
     setCheckpoint(null);
-    setEndedAtMs(null);
+    dispatch(setEndedAtMs(null));
     setIsAbandoned(false);
-  }, [
-    seed,
-    rules,
-    setUndosUsed,
-    setCheckpoint,
-    setEndedAtMs,
-    setIsAbandoned,
-    dispatch
-  ]);
+  }, [seed, rules, setUndosUsed, setCheckpoint, setIsAbandoned, dispatch]);
 
   const abandonIfNeededThenStart = useCallback(
     (startNext: () => void) => {
@@ -262,7 +257,10 @@ export function useGameActions({
         const ended = Date.now();
 
         setIsAbandoned(true);
-        setEndedAtMs((prev) => (prev == null ? ended : prev));
+
+        if (ended) {
+          dispatch(setEndedAtMs(ended));
+        }
 
         const archivedCursor = cursor;
         const archivedMoves = moves;
@@ -315,17 +313,17 @@ export function useGameActions({
       start();
     },
     [
+      dispatch,
+      startedAtMs,
       isWon,
       isAbandoned,
       endedAtMs,
       hasStarted,
       setIsAbandoned,
-      setEndedAtMs,
       setCompletedGames,
       gameId,
       seed,
       history.present.rules,
-      startedAtMs,
       timeElapsedMs,
       undosUsed,
       cursor,
