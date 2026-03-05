@@ -30,7 +30,6 @@ import {
 type InProgressSnapshot = {
   moves: Move[];
   cursor: number;
-  hasStarted: boolean;
   startedAtMs: number | null;
   endedAtMs: number | null;
   paused: boolean;
@@ -56,7 +55,6 @@ type Params = {
   moves: Move[];
   cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
-  hasStarted: boolean;
   isAbandoned: boolean;
   paused: boolean;
   moveCount: number;
@@ -65,7 +63,6 @@ type Params = {
 
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setPaused: React.Dispatch<React.SetStateAction<boolean>>;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
@@ -80,7 +77,6 @@ export function useInProgressGamePersistence({
   moves,
   cursor,
   timeElapsedMsRef,
-  hasStarted,
   isAbandoned,
   paused,
   moveCount,
@@ -88,7 +84,6 @@ export function useInProgressGamePersistence({
   isWon,
   readyToHydrate,
   setTimeElapsedMs,
-  setHasStarted,
   setIsAbandoned,
   setPaused,
   setUndosUsed
@@ -103,7 +98,6 @@ export function useInProgressGamePersistence({
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
     cursor,
-    hasStarted,
     startedAtMs,
     endedAtMs,
     paused,
@@ -150,23 +144,13 @@ export function useInProgressGamePersistence({
     snapshotRef.current = {
       moves,
       cursor,
-      hasStarted,
       startedAtMs,
       endedAtMs,
       paused,
       moveCount,
       undosUsed
     };
-  }, [
-    moves,
-    cursor,
-    hasStarted,
-    startedAtMs,
-    endedAtMs,
-    paused,
-    moveCount,
-    undosUsed
-  ]);
+  }, [moves, cursor, startedAtMs, endedAtMs, paused, moveCount, undosUsed]);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -183,7 +167,6 @@ export function useInProgressGamePersistence({
     // First move observed: stamp startedAtMs once.
     if (startedAtMs == null && moves.length > 0) {
       dispatch(setStartedAtMs(Date.now()));
-      setHasStarted(true);
     }
 
     // Terminal state reached: stamp endedAtMs once.
@@ -197,7 +180,6 @@ export function useInProgressGamePersistence({
     startedAtMs,
     endState,
     endedAtMs,
-    setHasStarted,
     dispatch
   ]);
 
@@ -210,7 +192,6 @@ export function useInProgressGamePersistence({
       const {
         moves,
         cursor,
-        hasStarted,
         startedAtMs,
         endedAtMs,
         paused,
@@ -228,7 +209,6 @@ export function useInProgressGamePersistence({
         cursor,
         status: "in_progress" as const,
         timeElapsedMs: timeElapsedMsRef.current ?? 0,
-        hasStarted,
         startedAtMs,
         endedAtMs,
         paused,
@@ -279,7 +259,6 @@ export function useInProgressGamePersistence({
 
         // Restore snapshot + meta (clamp cursor to move list length)
         setTimeElapsedMs(saved.timeElapsedMs);
-        setHasStarted(saved.hasStarted);
         dispatch(setStartedAtMs(saved.startedAtMs));
         dispatch(setEndedAtMs(saved.endedAtMs));
 
@@ -305,7 +284,6 @@ export function useInProgressGamePersistence({
     gameId,
     onHydrated,
     setTimeElapsedMs,
-    setHasStarted,
     setIsAbandoned,
     setPaused,
     setUndosUsed,
@@ -355,7 +333,6 @@ export function useInProgressGamePersistence({
     rules,
     moves,
     cursor,
-    hasStarted,
     startedAtMs,
     endedAtMs,
     endState,
@@ -403,7 +380,6 @@ export function useInProgressGamePersistence({
     readyToHydrate,
     sessionKey,
     isArmed,
-    hasStarted,
     paused,
     endState,
     uid,

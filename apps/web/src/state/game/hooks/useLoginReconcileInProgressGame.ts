@@ -137,7 +137,7 @@ export function useLoginReconcileInProgressGame({
 
       // Only push if it’s actually an active in-progress game.
       if (local.status !== "in_progress") return;
-      if (!local.hasStarted) return;
+      if (!local.startedAtMs) return;
 
       const payload: PersistedGame = {
         ...local,

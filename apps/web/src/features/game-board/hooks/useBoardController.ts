@@ -38,7 +38,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     replaySeed,
     startBySeed,
     timeElapsedMs,
-    hasStarted,
     moveCount
   } = params;
 
@@ -418,7 +417,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     undoLimit,
     undosRemaining,
     timeElapsedMs,
-    hasStarted,
     moveCount,
     startBySeed,
     // derived/wiring

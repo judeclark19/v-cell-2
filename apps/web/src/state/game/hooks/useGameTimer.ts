@@ -1,8 +1,9 @@
+import { selectStartedAtMs } from "@/state/session";
 import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 
 export type UseGameTimerParams = {
   paused: boolean;
-  hasStarted: boolean;
   isWon: boolean;
   isAbandoned: boolean;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
@@ -18,7 +19,6 @@ export type UseGameTimerParams = {
  */
 export function useGameTimer({
   paused,
-  hasStarted,
   isWon,
   isAbandoned,
   setTimeElapsedMs,
@@ -26,6 +26,7 @@ export function useGameTimer({
 }: UseGameTimerParams) {
   const intervalIdRef = useRef<number | null>(null);
   const lastTickAtRef = useRef<number | null>(null);
+  const startedAtMs = useSelector(selectStartedAtMs);
 
   useEffect(() => {
     const isFinished = isWon || isAbandoned;
@@ -63,7 +64,7 @@ export function useGameTimer({
         !paused &&
         !isFinished &&
         sessionReady &&
-        hasStarted
+        startedAtMs
       ) {
         startTimerInterval();
       }
@@ -80,7 +81,7 @@ export function useGameTimer({
         !paused &&
         !isFinished &&
         sessionReady &&
-        hasStarted
+        startedAtMs
       ) {
         startTimerInterval();
       }
@@ -90,7 +91,7 @@ export function useGameTimer({
       !paused &&
       !isFinished &&
       sessionReady &&
-      hasStarted &&
+      startedAtMs &&
       document.visibilityState === "visible" &&
       document.hasFocus()
     ) {
@@ -111,5 +112,5 @@ export function useGameTimer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionReady, hasStarted, isWon, isAbandoned, setTimeElapsedMs]);
+  }, [paused, sessionReady, isWon, isAbandoned, setTimeElapsedMs, startedAtMs]);
 }

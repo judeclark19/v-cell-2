@@ -11,16 +11,23 @@ import BoardModals, { type ConfirmRequest } from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
-import { useDispatch } from "react-redux";
-import { applyRulesChangeStartNewDeal } from "@/state/session";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  applyRulesChangeStartNewDeal,
+  selectStartedAtMs
+} from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
 
 function Board() {
+  const dispatch = useDispatch<AppDispatch>();
+  const startedAtMs = useSelector(selectStartedAtMs);
+
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
     useBoardController(game);
 
+  // TODO: move this?
   const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
 
   const confirmThen = (
@@ -59,7 +66,7 @@ function Board() {
   ) => {
     // Only confirm if a game is actually in progress (i.e. started and not finished).
     // When no progress exists, just do the action.
-    if (!vm.hasStarted || (vm.hasStarted && vm.isWon)) {
+    if (!startedAtMs || (startedAtMs && vm.isWon)) {
       onConfirm();
       return;
     }
@@ -69,8 +76,7 @@ function Board() {
     });
   };
 
-  const dispatch = useDispatch<AppDispatch>();
-
+  // TODO: move this?
   const requestRulesChange = async (patch: {
     faceDownCount?: FaceDownCount;
     undoLimit?: UndoLimit;
@@ -116,7 +122,6 @@ function Board() {
               <>
                 {/* Foundations on top */}
                 <Foundations
-                  hasStarted={vm.hasStarted}
                   timeElapsedMs={vm.timeElapsedMs}
                   foundationCards={vm.foundationCards}
                   foundations={vm.state.foundations}

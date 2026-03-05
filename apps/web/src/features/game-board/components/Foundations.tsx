@@ -5,6 +5,8 @@ import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
+import { useSelector } from "react-redux";
+import { selectStartedAtMs } from "@/state/session/selectors_new";
 
 type FoundationProps = {
   i: number;
@@ -128,7 +130,6 @@ type FoundationsProps = {
   allowFoundationPullback: boolean;
   showTimer: boolean;
   timeElapsedMs: number;
-  hasStarted: boolean;
   onPause: () => void;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
@@ -147,7 +148,6 @@ function Foundations({
   allowFoundationPullback,
   showTimer,
   timeElapsedMs,
-  hasStarted,
   onPause,
   setFoundationRef,
   handleFoundationPointerDown,
@@ -158,11 +158,13 @@ function Foundations({
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
   const kbFlight = drag?.kbFlight;
 
+  const startedAtMs = useSelector(selectStartedAtMs);
+
   return (
     <div className="board-top" aria-label="Foundations">
       <div className="pile-row" aria-label="Foundations">
         <div className="timer-cell" aria-hidden={showTimer ? "false" : "true"}>
-          <div className={`timer${!hasStarted ? " muted" : ""}`}>
+          <div className={`timer${!startedAtMs ? " muted" : ""}`}>
             {showTimer ? formatElapsed(timeElapsedMs) : ""}
           </div>
           <button
@@ -170,7 +172,7 @@ function Foundations({
             aria-label="Pause timer"
             type="button"
             onClick={onPause}
-            disabled={!hasStarted || isWon || isAbandoned}
+            disabled={!startedAtMs || isWon || isAbandoned}
           >
             <svg
               width="16"

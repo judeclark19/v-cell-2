@@ -9,7 +9,6 @@ export type GameSnapshot = {
   gameId: string;
   seed: string;
   rules: GameState["rules"];
-  hasStarted: boolean;
   isAbandoned: boolean;
   paused: boolean;
   canUndo: boolean;
@@ -43,7 +42,6 @@ export type UseGameSnapshotLoggerParams = {
   seed: string;
   state: GameState;
 
-  hasStarted: boolean;
   isAbandoned: boolean;
   paused: boolean;
   canUndo: boolean;
@@ -71,7 +69,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     gameId,
     seed,
     state,
-    hasStarted,
     isAbandoned,
     paused,
     canUndo,
@@ -88,7 +85,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       rules: state.rules,
-      hasStarted,
       isAbandoned,
       paused,
       canUndo,
@@ -106,7 +102,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       state,
-      hasStarted,
       isAbandoned,
       paused,
       canUndo,
@@ -127,7 +122,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       rules: state.rules,
-      hasStarted,
       isAbandoned,
       paused,
       canUndo,
@@ -144,7 +138,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       state,
-      hasStarted,
       startedAtMs,
       endedAtMs,
       isAbandoned,

@@ -21,7 +21,6 @@ export type PersistedGame = {
 
   // timing + UI meta
   timeElapsedMs: number;
-  hasStarted: boolean;
   startedAtMs: number | null;
   endedAtMs: number | null;
   paused: boolean;

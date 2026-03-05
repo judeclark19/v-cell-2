@@ -76,7 +76,6 @@ function hasInProgressFields(d: AnyRecord): boolean {
     typeof d.seed === "string" &&
     typeof d.cursor === "number" &&
     typeof d.timeElapsedMs === "number" &&
-    typeof d.hasStarted === "boolean" &&
     (typeof d.startedAtMs === "number" || d.startedAtMs === null) &&
     (typeof d.endedAtMs === "number" || d.endedAtMs === null) &&
     typeof d.paused === "boolean" &&

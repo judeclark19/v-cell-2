@@ -19,7 +19,6 @@ export type UseGameSessionParams = {
 
   // State setters owned by GameProvider
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
   setCheckpoint: React.Dispatch<
@@ -45,7 +44,6 @@ export type UseGameSessionResult = {
 export function useGameSession({
   rules,
   setTimeElapsedMs,
-  setHasStarted,
   setIsAbandoned,
   setUndosUsed,
   setCheckpoint
@@ -62,20 +60,12 @@ export function useGameSession({
 
   const resetPerSessionState = useCallback(() => {
     setTimeElapsedMs(0);
-    setHasStarted(false);
     dispatch(setStartedAtMs(null));
     dispatch(setEndedAtMs(null));
     setIsAbandoned(false);
     setUndosUsed(0);
     setCheckpoint(null);
-  }, [
-    setTimeElapsedMs,
-    setHasStarted,
-    setIsAbandoned,
-    setUndosUsed,
-    setCheckpoint,
-    dispatch
-  ]);
+  }, [setTimeElapsedMs, setIsAbandoned, setUndosUsed, setCheckpoint, dispatch]);
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {

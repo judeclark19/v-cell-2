@@ -36,10 +36,8 @@ export type UseGameActionsParams = {
   // Derived
   isWon: boolean;
   isAbandoned: boolean;
-  hasStarted: boolean;
 
   // Run state setters
-  setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
 
   // Analytics / logs
@@ -86,9 +84,6 @@ export function useGameActions({
 
   isWon,
   isAbandoned,
-  hasStarted,
-
-  setHasStarted,
   setIsAbandoned,
 
   undosUsed,
@@ -115,8 +110,6 @@ export function useGameActions({
       if (isAbandoned) return;
 
       // First move starts the timer clock.
-      setHasStarted(true);
-      // setStartedAtMs((prev) => (prev == null ? Date.now() : prev));
       if (startedAtMs == null) {
         dispatch(setStartedAtMs(Date.now()));
       }
@@ -173,7 +166,6 @@ export function useGameActions({
           startedAtMs,
           endedAtMs: ended,
           timeElapsedMs,
-          hasStarted: true,
           paused: false,
 
           moveCount: archivedCursor,
@@ -210,7 +202,6 @@ export function useGameActions({
       dispatch(applyMoveToHistory({ move, undoLimit, isWon }));
     },
     [
-      setHasStarted,
       isWon,
       isAbandoned,
       setIsAbandoned,
@@ -253,7 +244,7 @@ export function useGameActions({
         startNext();
       };
 
-      if (hasStarted && !isFinished) {
+      if (startedAtMs && !isFinished) {
         const ended = Date.now();
 
         setIsAbandoned(true);
@@ -277,7 +268,6 @@ export function useGameActions({
           startedAtMs,
           endedAtMs: ended,
           timeElapsedMs,
-          hasStarted: true,
           paused: false,
 
           moveCount: archivedCursor,
@@ -315,10 +305,9 @@ export function useGameActions({
     [
       dispatch,
       startedAtMs,
+      endedAtMs,
       isWon,
       isAbandoned,
-      endedAtMs,
-      hasStarted,
       setIsAbandoned,
       setCompletedGames,
       gameId,

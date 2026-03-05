@@ -31,6 +31,7 @@ import {
   selectMoveCount,
   selectFaceDownCount
 } from "./";
+import { selectStartedAtMs } from "../session";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -59,7 +60,6 @@ type GameContextValue = {
   allowFoundationPullback: boolean;
   setAllowFoundationPullback: (next: boolean) => void;
   timeElapsedMs: number;
-  hasStarted: boolean;
   isAbandoned: boolean;
   setIsAbandoned: (next: boolean) => void;
   moveCount: number;
@@ -114,6 +114,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const moves = useSelector(selectMoves);
   const cursor = useSelector(selectCursor);
   const moveCount = useSelector(selectMoveCount);
+  const startedAtMs = useSelector(selectStartedAtMs);
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -134,7 +135,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     timeElapsedMsRef.current = timeElapsedMs;
   }, [timeElapsedMs]);
-  const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [isAbandoned, setIsAbandoned] = useState<boolean>(false);
   const [paused, setPaused] = useState<boolean>(false);
 
@@ -155,7 +155,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const { seed, gameId, startNewDealSession, replaySeed } = useGameSession({
     rules,
     setTimeElapsedMs,
-    setHasStarted,
     setIsAbandoned,
     setUndosUsed,
     setCheckpoint
@@ -199,14 +198,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     moves,
     cursor,
     timeElapsedMsRef,
-    hasStarted,
     paused,
     moveCount,
     undosUsed,
     isWon,
 
     setTimeElapsedMs,
-    setHasStarted,
     setIsAbandoned,
     setPaused,
     setUndosUsed
@@ -220,7 +217,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   });
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
-  // IMPORTANT: Don't key off `uid === null && hasStarted` because `hasStarted` becomes true
+  // IMPORTANT: Don't key off `uid === null && startedAtMs` because `startedAtMs` becomes true
   // on the first guest move and would cause an infinite redeal loop.
   useEffect(() => {
     if (sessionPhase !== "ready") return;
@@ -234,20 +231,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!didJustLogout) return;
 
     // Only reset if the session we just logged out of had actually started.
-    if (!hasStarted) return;
+    if (!startedAtMs) return;
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
     queueMicrotask(() => {
       startNewDealSession();
     });
-  }, [uid, sessionPhase, hasStarted, startNewDealSession]);
+  }, [uid, sessionPhase, startedAtMs, startNewDealSession]);
 
   // ---------------------------------------------------------------------------
   // Timer loop
   // ---------------------------------------------------------------------------
   useGameTimer({
     paused,
-    hasStarted,
     isWon,
     isAbandoned,
     setTimeElapsedMs,
@@ -267,9 +263,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     uid,
     isWon,
     isAbandoned,
-    hasStarted,
-
-    setHasStarted,
     setIsAbandoned,
 
     undosUsed,
@@ -296,7 +289,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     seed,
     state: history.present,
-    hasStarted,
     isAbandoned,
     paused,
     canUndo,
@@ -334,7 +326,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setAllowFoundationPullback,
     timeElapsedMs,
 
-    hasStarted,
     isAbandoned,
     setIsAbandoned,
     moveCount,
