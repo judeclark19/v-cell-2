@@ -14,3 +14,5 @@ export type { SessionKey } from "./selectors_new";
 
 // Session may import Game actions
 export { setStartedAtMs, setEndedAtMs } from "@/state/game";
+
+export { sessionReducer } from "./sessionSlice";

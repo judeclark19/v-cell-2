@@ -1,6 +1,6 @@
 //“Do we actually start a session, or is it already the same one?”
 
-import { startSession } from "@/state/game/gameStore_new";
+import { startSession } from "@/state/game/gameSlice";
 import { selectSessionKey, selectSessionPhase } from "@/state/session";
 import { RootState } from "../reduxStore";
 import { Rules } from "@vcell/engine";

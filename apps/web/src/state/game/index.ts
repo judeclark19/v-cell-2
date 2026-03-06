@@ -5,7 +5,7 @@ export type {
   SessionPhase,
   HistoryState,
   GameStatus
-} from "./gameStore_new";
+} from "./gameSlice";
 
 export {
   gameSlice,
@@ -38,4 +38,4 @@ export {
   selectStatus,
   selectPaused,
   selectTimeElapsedMs
-} from "./gameStore_new";
+} from "./gameSlice";

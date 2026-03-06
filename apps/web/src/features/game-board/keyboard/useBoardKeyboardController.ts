@@ -6,7 +6,7 @@ import type { Move } from "@vcell/engine";
 import { useKbCarryVisuals } from "./useKbCarryVisuals";
 import { useKeyboardActions } from "./useKeyboardActions";
 import { DragSource, DropTarget } from "../animations/dragTypes";
-import { selectCanUndo } from "@/state/game/gameStore_new";
+import { selectCanUndo } from "@/state/game/gameSlice";
 import { useSelector } from "react-redux";
 
 type DragLike = {
