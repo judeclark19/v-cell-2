@@ -7,7 +7,12 @@ import { getOrCreateDeviceId } from "@/persistence/schema";
 import { transitionSession } from "../transitionSession_new";
 import type { RootState } from "@/state/reduxStore";
 import { hydrateFromPersisted } from "@/state/game/gameSlice";
-import { setPaused, setSessionPhase, setStartedAtMs } from "../sessionSlice";
+import {
+  setEndedAtMs,
+  setPaused,
+  setSessionPhase,
+  setStartedAtMs
+} from "../sessionSlice";
 
 /**
  * Boot the session from local persistence.
@@ -43,6 +48,7 @@ export const bootSession = createAsyncThunk<
     thunkApi.dispatch(setSessionPhase("ready"));
     thunkApi.dispatch(setPaused(saved.paused ?? false));
     thunkApi.dispatch(setStartedAtMs(saved.startedAtMs ?? null));
+    thunkApi.dispatch(setEndedAtMs(saved.endedAtMs ?? null));
 
     return { kind: "hydrated" as const };
   }

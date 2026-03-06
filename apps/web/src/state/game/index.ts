@@ -10,7 +10,6 @@ export {
   undoHistory,
   resetTimeline,
   resetPerSessionState,
-  setEndedAtMs,
   setTimeElapsedMs,
   setUndosUsed,
   setStatus,

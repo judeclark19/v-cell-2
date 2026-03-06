@@ -4,6 +4,7 @@ import { startSession } from "@/state/game/gameSlice";
 import { selectSessionKey } from "@/state/session";
 import {
   selectSessionPhase,
+  setEndedAtMs,
   setPaused,
   setStartedAtMs
 } from "@/state/session/sessionSlice";
@@ -52,6 +53,7 @@ export async function transitionSession(
   dispatch(setSessionPhase("hydrating"));
   dispatch(setPaused(false));
   dispatch(setStartedAtMs(null));
+  dispatch(setEndedAtMs(null));
 
   return {
     kind: "started" as const,

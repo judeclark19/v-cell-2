@@ -20,7 +20,6 @@ import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { selectEndedAtMs, setEndedAtMs } from "@/state/session";
 import {
   GameStatus,
   selectStatus,
@@ -34,14 +33,14 @@ import {
   selectPaused,
   setPaused,
   setStartedAtMs,
-  selectStartedAtMs
+  selectStartedAtMs,
+  selectEndedAtMs,
+  setEndedAtMs
 } from "@/state/session/sessionSlice";
 
 type InProgressSnapshot = {
   moves: Move[];
   cursor: number;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
   paused: boolean;
   moveCount: number;
   undosUsed: number;
@@ -92,8 +91,6 @@ export function useInProgressGamePersistence({
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
     cursor,
-    startedAtMs,
-    endedAtMs,
     paused,
     moveCount,
     undosUsed
@@ -139,8 +136,6 @@ export function useInProgressGamePersistence({
     snapshotRef.current = {
       moves,
       cursor,
-      startedAtMs,
-      endedAtMs,
       paused,
       moveCount,
       undosUsed
@@ -184,15 +179,7 @@ export function useInProgressGamePersistence({
       updatedAtMs: number,
       snapshot: InProgressSnapshot = snapshotRef.current
     ) => {
-      const {
-        moves,
-        cursor,
-        startedAtMs,
-        endedAtMs,
-        paused,
-        moveCount,
-        undosUsed
-      } = snapshot;
+      const { moves, cursor, paused, moveCount, undosUsed } = snapshot;
 
       return {
         gameId,
@@ -204,16 +191,16 @@ export function useInProgressGamePersistence({
         cursor,
         status: "in_progress" as GameStatus,
         timeElapsedMs,
-        startedAtMs,
-        endedAtMs,
         paused,
         moveCount,
         undosUsed,
         updatedAtMs,
-        ...(uid ? { userId: uid } : {})
+        ...(uid ? { userId: uid } : {}),
+        startedAtMs,
+        endedAtMs
       };
     },
-    [gameId, seed, rules, uid, timeElapsedMs]
+    [gameId, seed, rules, uid, timeElapsedMs, startedAtMs, endedAtMs]
   );
 
   // IMPORTANT: When the active session/gameId changes, React state in the game layer may
@@ -306,7 +293,11 @@ export function useInProgressGamePersistence({
 
     const payload = buildInProgressPayload(deviceId, Date.now());
 
-    upsertInProgressGame(payload).catch((err) => {
+    upsertInProgressGame({
+      ...payload,
+      startedAtMs,
+      endedAtMs
+    }).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
 

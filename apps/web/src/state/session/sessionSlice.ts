@@ -6,12 +6,14 @@ export interface SessionStoreState {
   sessionPhase: "boot" | "hydrating" | "ready";
   paused: boolean;
   startedAtMs: number | null;
+  endedAtMs: number | null;
 }
 
 const initialState: SessionStoreState = {
   sessionPhase: "boot",
   paused: false,
-  startedAtMs: null
+  startedAtMs: null,
+  endedAtMs: null
 };
 
 export const sessionSlice = createSlice({
@@ -26,13 +28,16 @@ export const sessionSlice = createSlice({
     },
     setStartedAtMs: (state, action: PayloadAction<number | null>) => {
       state.startedAtMs = action.payload;
+    },
+    setEndedAtMs: (state, action: PayloadAction<number | null>) => {
+      state.endedAtMs = action.payload;
     }
   }
 });
 
 export const sessionReducer = sessionSlice.reducer;
 
-export const { setSessionPhase, setPaused, setStartedAtMs } =
+export const { setSessionPhase, setPaused, setStartedAtMs, setEndedAtMs } =
   sessionSlice.actions;
 
 // Selectors
@@ -44,3 +49,6 @@ export const selectPaused = (state: { session: SessionStoreState }) =>
 
 export const selectStartedAtMs = (state: { session: SessionStoreState }) =>
   state.session.startedAtMs;
+
+export const selectEndedAtMs = (state: { session: SessionStoreState }) =>
+  state.session.endedAtMs;

@@ -18,7 +18,6 @@ export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
   gameId: string;
-  endedAtMs: number | null;
   timeElapsedMs: number;
 
   status: GameStatus | null;
@@ -55,7 +54,6 @@ const initialState: GameStoreState = {
   seed: "seed-boot",
   gameId: "game-boot",
 
-  endedAtMs: null,
   timeElapsedMs: 0,
   status: null,
   rules: {
@@ -106,7 +104,6 @@ export const gameSlice = createSlice({
       state.cursor = 0;
       state.moveCount = 0;
       state.undosUsed = 0;
-      state.endedAtMs = null;
       state.timeElapsedMs = 0;
       state.status = null;
     },
@@ -128,7 +125,6 @@ export const gameSlice = createSlice({
         cursor?: number;
         fallbackRules: Rules;
         undoLimit: UndoLimit;
-        endedAtMs?: number | null;
         timeElapsedMs?: number;
         status?: GameStatus | null;
       }>
@@ -166,7 +162,6 @@ export const gameSlice = createSlice({
       state.undosUsed = action.payload.undosUsed ?? 0;
       state.cursor = cursor ?? 0;
       state.moveCount = state.cursor;
-      state.endedAtMs = action.payload.endedAtMs ?? null;
       state.timeElapsedMs = action.payload.timeElapsedMs ?? 0;
       state.status = action.payload.status ?? null;
     },
@@ -229,9 +224,6 @@ export const gameSlice = createSlice({
       state.moveCount = 0;
       state.undosUsed = 0;
     },
-    setEndedAtMs: (state, action: PayloadAction<number | null>) => {
-      state.endedAtMs = action.payload;
-    },
     setUndosUsed: (state, action: PayloadAction<number>) => {
       state.undosUsed = action.payload;
     },
@@ -242,7 +234,6 @@ export const gameSlice = createSlice({
       state.timeElapsedMs = action.payload;
     },
     resetPerSessionState: (state) => {
-      state.endedAtMs = null;
       state.undosUsed = 0;
     }
   }
@@ -255,7 +246,6 @@ export const {
   applyMoveToHistory,
   undoHistory,
   resetTimeline,
-  setEndedAtMs,
   setTimeElapsedMs,
   setUndosUsed,
   setStatus,

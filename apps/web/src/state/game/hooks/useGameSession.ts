@@ -14,7 +14,8 @@ import { AppDispatch } from "@/state/reduxStore";
 import {
   setPaused,
   setSessionPhase,
-  setStartedAtMs
+  setStartedAtMs,
+  setEndedAtMs
 } from "@/state/session/sessionSlice";
 
 type StartSessionMode =
@@ -101,6 +102,7 @@ export function useGameSession({
       dispatch(setSessionPhase("hydrating"));
       dispatch(setPaused(false));
       dispatch(setStartedAtMs(null));
+      dispatch(setEndedAtMs(null));
 
       resetPerSessionState_old();
     },
@@ -130,6 +132,7 @@ export function useGameSession({
     dispatch(setSessionPhase("ready"));
     dispatch(setPaused(false));
     dispatch(setStartedAtMs(null));
+    dispatch(setEndedAtMs(null));
     resetPerSessionState_old();
   }, [dispatch, rules, resetPerSessionState_old]);
 
