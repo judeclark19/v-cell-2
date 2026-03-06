@@ -11,7 +11,11 @@ import {
 import { startSession as startSession_new } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
-import { setPaused, setSessionPhase } from "@/state/session/sessionSlice";
+import {
+  setPaused,
+  setSessionPhase,
+  setStartedAtMs
+} from "@/state/session/sessionSlice";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }
@@ -63,8 +67,7 @@ export function useGameSession({
     setCheckpoint(null);
 
     dispatch(resetPerSessionState());
-
-    // call reeucer resetPerSessionState from redux game
+    dispatch(setStartedAtMs(null));
   }, [setCheckpoint, dispatch]);
 
   const startSession = useCallback(
@@ -97,6 +100,7 @@ export function useGameSession({
 
       dispatch(setSessionPhase("hydrating"));
       dispatch(setPaused(false));
+      dispatch(setStartedAtMs(null));
 
       resetPerSessionState_old();
     },
@@ -125,6 +129,7 @@ export function useGameSession({
     dispatch(startSession_new({ rules }));
     dispatch(setSessionPhase("ready"));
     dispatch(setPaused(false));
+    dispatch(setStartedAtMs(null));
     resetPerSessionState_old();
   }, [dispatch, rules, resetPerSessionState_old]);
 

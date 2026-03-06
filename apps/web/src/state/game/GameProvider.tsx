@@ -29,8 +29,7 @@ import {
   selectRules,
   selectUndosRemaining
 } from "./";
-import { selectStartedAtMs } from "../session";
-import { selectSessionPhase } from "../session/sessionSlice";
+import { selectSessionPhase, selectStartedAtMs } from "../session/sessionSlice";
 
 type UiResets = {
   resetDrag?: () => void;

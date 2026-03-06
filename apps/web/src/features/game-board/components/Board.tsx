@@ -12,11 +12,11 @@ import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useDispatch, useSelector } from "react-redux";
+import { applyRulesChangeStartNewDeal } from "@/state/session";
 import {
-  applyRulesChangeStartNewDeal,
+  selectSessionPhase,
   selectStartedAtMs
-} from "@/state/session";
-import { selectSessionPhase } from "@/state/session/sessionSlice";
+} from "@/state/session/sessionSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
 import {

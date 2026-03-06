@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectEndedAtMs, selectStartedAtMs } from "@/state/session";
+import { selectEndedAtMs } from "@/state/session";
 import { selectCanUndo, selectUndosUsed } from "../";
 import { selectPaused } from "@/state/session/sessionSlice";
 
@@ -17,7 +17,6 @@ export type GameSnapshot = {
   moves: Move[];
   cursor: number;
   checkpoint: { at: number; state: GameState } | null;
-  startedAtMs: number | null;
   endedAtMs: number | null;
   // Keep the full engine state in the snapshot so we can inspect it when debugging.
   state: GameState;
@@ -53,7 +52,6 @@ export type UseGameSnapshotLoggerParams = {
  * from the change signature so timer ticks don't flood the console.
  */
 export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
-  const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const canUndo = useSelector(selectCanUndo);
@@ -69,7 +67,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       canUndo,
       moveCount,
       undosUsed,
-      startedAtMs,
       endedAtMs,
       paused,
       state,
@@ -84,7 +81,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       canUndo,
       moveCount,
       undosUsed,
-      startedAtMs,
       endedAtMs,
       moves,
       cursor,
@@ -103,7 +99,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       canUndo,
       moveCount,
       undosUsed,
-      startedAtMs,
       endedAtMs,
       state,
       moves,
@@ -114,7 +109,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       state,
-      startedAtMs,
       endedAtMs,
       canUndo,
       moveCount,

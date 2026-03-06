@@ -20,12 +20,7 @@ import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import {
-  setStartedAtMs,
-  selectStartedAtMs,
-  selectEndedAtMs,
-  setEndedAtMs
-} from "@/state/session";
+import { selectEndedAtMs, setEndedAtMs } from "@/state/session";
 import {
   GameStatus,
   selectStatus,
@@ -35,7 +30,12 @@ import {
   setTimeElapsedMs,
   setUndosUsed
 } from "@/state/game";
-import { selectPaused, setPaused } from "@/state/session/sessionSlice";
+import {
+  selectPaused,
+  setPaused,
+  setStartedAtMs,
+  selectStartedAtMs
+} from "@/state/session/sessionSlice";
 
 type InProgressSnapshot = {
   moves: Move[];

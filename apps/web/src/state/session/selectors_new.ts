@@ -23,10 +23,6 @@ export function selectSessionKeyString(state: RootState): string {
   return `${seed}:${gameId}`;
 }
 
-export function selectStartedAtMs(state: RootState): number | null {
-  return state.game.startedAtMs;
-}
-
 export function selectEndedAtMs(state: RootState): number | null {
   return state.game.endedAtMs;
 }

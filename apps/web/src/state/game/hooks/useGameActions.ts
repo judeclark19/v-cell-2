@@ -21,12 +21,12 @@ import {
   selectTimeElapsedMs
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
+import { setEndedAtMs, selectEndedAtMs } from "@/state/session";
+
 import {
   selectStartedAtMs,
-  setStartedAtMs,
-  setEndedAtMs,
-  selectEndedAtMs
-} from "@/state/session";
+  setStartedAtMs
+} from "@/state/session/sessionSlice";
 
 export type UseGameActionsParams = {
   // Core state

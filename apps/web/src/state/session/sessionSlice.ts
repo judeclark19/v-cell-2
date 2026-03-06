@@ -5,11 +5,13 @@ export type SessionPhase = "boot" | "hydrating" | "ready";
 export interface SessionStoreState {
   sessionPhase: "boot" | "hydrating" | "ready";
   paused: boolean;
+  startedAtMs: number | null;
 }
 
 const initialState: SessionStoreState = {
   sessionPhase: "boot",
-  paused: false
+  paused: false,
+  startedAtMs: null
 };
 
 export const sessionSlice = createSlice({
@@ -21,13 +23,17 @@ export const sessionSlice = createSlice({
     },
     setPaused: (state, action: PayloadAction<boolean>) => {
       state.paused = action.payload;
+    },
+    setStartedAtMs: (state, action: PayloadAction<number | null>) => {
+      state.startedAtMs = action.payload;
     }
   }
 });
 
 export const sessionReducer = sessionSlice.reducer;
 
-export const { setSessionPhase, setPaused } = sessionSlice.actions;
+export const { setSessionPhase, setPaused, setStartedAtMs } =
+  sessionSlice.actions;
 
 // Selectors
 export const selectSessionPhase = (state: { session: SessionStoreState }) =>
@@ -35,3 +41,6 @@ export const selectSessionPhase = (state: { session: SessionStoreState }) =>
 
 export const selectPaused = (state: { session: SessionStoreState }) =>
   state.session.paused;
+
+export const selectStartedAtMs = (state: { session: SessionStoreState }) =>
+  state.session.startedAtMs;

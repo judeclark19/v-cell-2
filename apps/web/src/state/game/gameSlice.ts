@@ -18,8 +18,6 @@ export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
   gameId: string;
-
-  startedAtMs: number | null;
   endedAtMs: number | null;
   timeElapsedMs: number;
 
@@ -56,7 +54,7 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
 const initialState: GameStoreState = {
   seed: "seed-boot",
   gameId: "game-boot",
-  startedAtMs: null,
+
   endedAtMs: null,
   timeElapsedMs: 0,
   status: null,
@@ -108,7 +106,6 @@ export const gameSlice = createSlice({
       state.cursor = 0;
       state.moveCount = 0;
       state.undosUsed = 0;
-      state.startedAtMs = null;
       state.endedAtMs = null;
       state.timeElapsedMs = 0;
       state.status = null;
@@ -131,7 +128,6 @@ export const gameSlice = createSlice({
         cursor?: number;
         fallbackRules: Rules;
         undoLimit: UndoLimit;
-        startedAtMs?: number | null;
         endedAtMs?: number | null;
         timeElapsedMs?: number;
         status?: GameStatus | null;
@@ -166,12 +162,10 @@ export const gameSlice = createSlice({
       state.seed = seed;
       state.history.present = present;
       state.history.past = past;
-      // state.sessionPhase = "ready";
       state.moves = moves ?? [];
       state.undosUsed = action.payload.undosUsed ?? 0;
       state.cursor = cursor ?? 0;
       state.moveCount = state.cursor;
-      state.startedAtMs = action.payload.startedAtMs ?? null;
       state.endedAtMs = action.payload.endedAtMs ?? null;
       state.timeElapsedMs = action.payload.timeElapsedMs ?? 0;
       state.status = action.payload.status ?? null;
@@ -193,7 +187,6 @@ export const gameSlice = createSlice({
         // Invalid move: drop it.
         return;
       }
-      if (state.startedAtMs == null) state.startedAtMs = Date.now();
 
       // After a win, allow cosmetic moves but do not mutate undo history.
       if (isWon) {
@@ -236,9 +229,6 @@ export const gameSlice = createSlice({
       state.moveCount = 0;
       state.undosUsed = 0;
     },
-    setStartedAtMs: (state, action: PayloadAction<number | null>) => {
-      state.startedAtMs = action.payload;
-    },
     setEndedAtMs: (state, action: PayloadAction<number | null>) => {
       state.endedAtMs = action.payload;
     },
@@ -252,7 +242,6 @@ export const gameSlice = createSlice({
       state.timeElapsedMs = action.payload;
     },
     resetPerSessionState: (state) => {
-      state.startedAtMs = null;
       state.endedAtMs = null;
       state.undosUsed = 0;
     }
@@ -266,7 +255,6 @@ export const {
   applyMoveToHistory,
   undoHistory,
   resetTimeline,
-  setStartedAtMs,
   setEndedAtMs,
   setTimeElapsedMs,
   setUndosUsed,

@@ -2,7 +2,11 @@
 
 import { startSession } from "@/state/game/gameSlice";
 import { selectSessionKey } from "@/state/session";
-import { selectSessionPhase, setPaused } from "@/state/session/sessionSlice";
+import {
+  selectSessionPhase,
+  setPaused,
+  setStartedAtMs
+} from "@/state/session/sessionSlice";
 import { RootState } from "../reduxStore";
 import { Rules } from "@vcell/engine";
 import { setSessionPhase } from "./sessionSlice";
@@ -47,6 +51,7 @@ export async function transitionSession(
 
   dispatch(setSessionPhase("hydrating"));
   dispatch(setPaused(false));
+  dispatch(setStartedAtMs(null));
 
   return {
     kind: "started" as const,
