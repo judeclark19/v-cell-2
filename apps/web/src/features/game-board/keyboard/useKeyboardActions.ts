@@ -9,8 +9,8 @@ import type {
   DragSource,
   DropTarget
 } from "@/features/game-board/animations/dragTypes";
-import { selectCanUndo } from "@/state/game";
-import { useSelector } from "react-redux";
+import { selectCanUndo, selectPaused, setPaused } from "@/state/game";
+import { useDispatch, useSelector } from "react-redux";
 /**
  * The goal of this hook is to own *actions* (effects on the game),
  * independent of keyboard navigation routing and independent of DOM class mutations.
@@ -98,9 +98,6 @@ export type UseKeyboardActionsArgs = {
 
   newDeal: () => void;
   restart: () => void;
-
-  paused: boolean;
-  setPaused: (next: boolean) => void;
 
   /** UI helpers (already exist elsewhere; we call them as a first-class behavior) */
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
@@ -488,9 +485,12 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
     args.restart();
   }, [args]);
 
+  const paused = useSelector(selectPaused);
+  const dispatch = useDispatch();
+
   const handlePauseToggle = useCallback((): void => {
-    args.setPaused(!args.paused);
-  }, [args]);
+    dispatch(setPaused(!paused));
+  }, [dispatch, paused]);
 
   return {
     lastKbMovedCardIdRef,

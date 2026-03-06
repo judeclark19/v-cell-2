@@ -28,8 +28,10 @@ import {
 } from "@/state/session";
 import {
   GameStatus,
+  selectPaused,
   selectStatus,
   selectUndosUsed,
+  setPaused,
   setStatus,
   setUndosUsed
 } from "@/state/game";
@@ -62,13 +64,11 @@ type Params = {
   moves: Move[];
   cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
-  paused: boolean;
   moveCount: number;
   isWon: boolean;
 
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  setPaused: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export function useInProgressGamePersistence({
@@ -80,12 +80,10 @@ export function useInProgressGamePersistence({
   moves,
   cursor,
   timeElapsedMsRef,
-  paused,
   moveCount,
   isWon,
   readyToHydrate,
-  setTimeElapsedMs,
-  setPaused
+  setTimeElapsedMs
 }: Params) {
   const inProgressHydratedRef = useRef<boolean>(false);
   const hydratedSessionKeyRef = useRef<string | null>(null);
@@ -95,6 +93,7 @@ export function useInProgressGamePersistence({
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
+  const paused = useSelector(selectPaused);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
@@ -268,7 +267,7 @@ export function useInProgressGamePersistence({
         dispatch(setEndedAtMs(saved.endedAtMs));
         dispatch(setUndosUsed(saved.undosUsed));
         dispatch(setStatus(saved.status));
-        setPaused(saved.paused);
+        dispatch(setPaused(saved.paused));
         onHydrated?.(saved);
         armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
@@ -288,7 +287,6 @@ export function useInProgressGamePersistence({
     gameId,
     onHydrated,
     setTimeElapsedMs,
-    setPaused,
     sessionKey,
     rules,
     uid,

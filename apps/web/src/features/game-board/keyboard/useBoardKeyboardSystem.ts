@@ -31,8 +31,6 @@ export type UseBoardKeyboardSystemArgs = {
   // controller game actions
   dispatchMove: CtrlArgs["dispatchMove"]; // you will pass commitMoveFromKeyboard here
   undo: CtrlArgs["undo"];
-  paused: CtrlArgs["paused"];
-  setPaused: CtrlArgs["setPaused"];
   newDeal: CtrlArgs["newDeal"];
   restart: CtrlArgs["restart"];
 
@@ -88,8 +86,6 @@ export function useBoardKeyboardSystem({
   tryAutoFreeCellFromEl,
   dispatchMove,
   undo,
-  paused,
-  setPaused,
   newDeal,
   restart,
   legalMoves,
@@ -135,8 +131,6 @@ export function useBoardKeyboardSystem({
     setKbCarrying,
     dispatchMove,
     undo,
-    paused,
-    setPaused,
     newDeal,
     restart,
     tryAutoFoundationFromEl,

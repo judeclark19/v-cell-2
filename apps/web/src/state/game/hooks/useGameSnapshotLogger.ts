@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectEndedAtMs, selectStartedAtMs } from "@/state/session";
-import { selectCanUndo, selectStatus, selectUndosUsed } from "../";
+import { selectCanUndo, selectPaused, selectUndosUsed } from "../";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 // Intentionally excludes `timeElapsedMs` from the LOG signature so timer ticks don't spam logs.
@@ -42,8 +42,6 @@ export type UseGameSnapshotLoggerParams = {
   seed: string;
   state: GameState;
 
-  paused: boolean;
-
   moveCount: number;
   timeElapsedMs: number;
 
@@ -63,12 +61,12 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const canUndo = useSelector(selectCanUndo);
+  const paused = useSelector(selectPaused);
 
   const {
     gameId,
     seed,
     state,
-    paused,
     moveCount,
     timeElapsedMs,
     moves,
@@ -81,13 +79,13 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       rules: state.rules,
-      paused,
       canUndo,
       moveCount,
       undosUsed,
       timeElapsedMs,
       startedAtMs,
       endedAtMs,
+      paused,
       state,
       moves,
       cursor,
@@ -97,7 +95,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       state,
-      paused,
       canUndo,
       moveCount,
       undosUsed,
@@ -106,7 +103,8 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       endedAtMs,
       moves,
       cursor,
-      checkpoint
+      checkpoint,
+      paused
     ]
   );
 
@@ -133,13 +131,13 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       state,
       startedAtMs,
       endedAtMs,
-      paused,
       canUndo,
       moveCount,
       undosUsed,
       moves,
       cursor,
-      checkpoint
+      checkpoint,
+      paused
     ]
   );
 

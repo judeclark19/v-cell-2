@@ -2,8 +2,10 @@ import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { useGame } from "@/state/game/GameProvider";
 import { useSession } from "@/state/session/SessionProvider";
+import { selectPaused, setPaused } from "@/state/game";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
 
 export type ConfirmRequest = {
   title: string;
@@ -15,9 +17,6 @@ export type ConfirmRequest = {
 };
 
 type BoardModalsProps = {
-  paused: boolean;
-  onResume: () => void;
-
   shouldShowWinModal: boolean;
   onDismissWinModal: () => void;
 
@@ -34,8 +33,6 @@ type BoardModalsProps = {
 };
 
 export default function BoardModals({
-  paused,
-  onResume,
   shouldShowWinModal,
   onDismissWinModal,
   moveCount,
@@ -47,6 +44,9 @@ export default function BoardModals({
   const router = useRouter();
   const game = useGame();
   const { isUser } = useSession();
+
+  const dispatch = useDispatch();
+  const paused = useSelector(selectPaused);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -118,7 +118,7 @@ export default function BoardModals({
           overlayAriaLabel="Game paused"
           title="Paused"
           buttonAriaLabel="Resume game"
-          onClose={onResume}
+          onClose={() => dispatch(setPaused(false))}
           bodyText="Timer is paused. Gameplay is disabled until you resume."
           primaryButtonLabel="Resume"
         />

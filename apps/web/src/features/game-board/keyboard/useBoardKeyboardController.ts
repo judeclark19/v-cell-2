@@ -29,8 +29,6 @@ type UseBoardKeyboardControllerArgs = {
   undo: () => void;
   newDeal: () => void;
   restart: () => void;
-  paused: boolean;
-  setPaused: (next: boolean) => void;
 
   /** Whether input is currently suppressed (e.g., due to a modal or auto-completing). */
   isInputSuppressed: boolean;
@@ -71,8 +69,6 @@ export function useBoardKeyboardController({
   undo,
   newDeal,
   restart,
-  paused,
-  setPaused,
   isInputSuppressed,
   tryAutoFoundationFromEl,
   tryAutoFreeCellFromEl,
@@ -93,8 +89,6 @@ export function useBoardKeyboardController({
     undo,
     newDeal,
     restart,
-    paused,
-    setPaused,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
     buildKbDragFromEl,

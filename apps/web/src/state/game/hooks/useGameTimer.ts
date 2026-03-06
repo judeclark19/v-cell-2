@@ -1,10 +1,9 @@
 import { selectStartedAtMs } from "@/state/session";
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { selectStatus } from "..";
+import { selectPaused, selectStatus } from "..";
 
 export type UseGameTimerParams = {
-  paused: boolean;
   isWon: boolean;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   sessionReady: boolean;
@@ -18,7 +17,6 @@ export type UseGameTimerParams = {
  * - Pauses when document is hidden.
  */
 export function useGameTimer({
-  paused,
   isWon,
   setTimeElapsedMs,
   sessionReady
@@ -27,6 +25,8 @@ export function useGameTimer({
   const lastTickAtRef = useRef<number | null>(null);
   const startedAtMs = useSelector(selectStartedAtMs);
   const status = useSelector(selectStatus);
+  const paused = useSelector(selectPaused);
+
   useEffect(() => {
     const isFinished = isWon || status === "abandoned";
 

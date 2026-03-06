@@ -5,9 +5,9 @@ import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectStartedAtMs } from "@/state/session/selectors_new";
-import { selectRules } from "@/state/game";
+import { selectRules, setPaused } from "@/state/game";
 
 type FoundationProps = {
   i: number;
@@ -129,7 +129,6 @@ type FoundationsProps = {
   playableFoundations: boolean[];
   showTimer: boolean;
   timeElapsedMs: number;
-  onPause: () => void;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
     e: React.PointerEvent<HTMLDivElement>,
@@ -146,7 +145,6 @@ function Foundations({
   playableFoundations,
   showTimer,
   timeElapsedMs,
-  onPause,
   setFoundationRef,
   handleFoundationPointerDown,
   isWon,
@@ -157,6 +155,7 @@ function Foundations({
   const kbFlight = drag?.kbFlight;
 
   const startedAtMs = useSelector(selectStartedAtMs);
+  const dispatch = useDispatch();
 
   return (
     <div className="board-top" aria-label="Foundations">
@@ -169,7 +168,7 @@ function Foundations({
             className="btn btn--primary"
             aria-label="Pause timer"
             type="button"
-            onClick={onPause}
+            onClick={() => dispatch(setPaused(true))}
             disabled={!startedAtMs || isWon || isAbandoned}
           >
             <svg

@@ -22,6 +22,7 @@ export {
   setEndedAtMs,
   setUndosUsed,
   setStatus,
+  setPaused,
   selectSeed,
   selectGameId,
   selectSessionPhase,
@@ -33,5 +34,6 @@ export {
   selectUndosUsed,
   selectUndosRemaining,
   selectCanUndo,
-  selectStatus
+  selectStatus,
+  selectPaused
 } from "./gameStore_new";

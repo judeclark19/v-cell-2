@@ -56,8 +56,6 @@ type GameContextValue = {
   undosRemaining: number; // Infinity when unlimited
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
-  paused: boolean;
-  setPaused: (next: boolean) => void;
   timeElapsedMs: number;
   moveCount: number;
   gameId: string;
@@ -118,8 +116,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timeElapsedMsRef.current = timeElapsedMs;
   }, [timeElapsedMs]);
 
-  const [paused, setPaused] = useState<boolean>(false);
-
   // ---------------------------------------------------------------------------
   // Undo analytics
   // ---------------------------------------------------------------------------
@@ -175,12 +171,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     moves,
     cursor,
     timeElapsedMsRef,
-    paused,
     moveCount,
     isWon,
-
-    setTimeElapsedMs,
-    setPaused
+    setTimeElapsedMs
   });
 
   useLoginReconcileInProgressGame({
@@ -217,7 +210,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Timer loop
   // ---------------------------------------------------------------------------
   useGameTimer({
-    paused,
     isWon,
     setTimeElapsedMs,
     sessionReady
@@ -258,7 +250,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     seed,
     state: history.present,
-    paused,
     moveCount,
     timeElapsedMs,
     moves,
@@ -286,8 +277,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undosRemaining,
     showTimer,
     setShowTimer,
-    paused,
-    setPaused,
     timeElapsedMs,
     moveCount,
     gameId,

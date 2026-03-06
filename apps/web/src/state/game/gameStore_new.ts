@@ -24,6 +24,7 @@ export interface GameStoreState {
   startedAtMs: number | null;
   endedAtMs: number | null;
   status: GameStatus | null;
+  paused: boolean;
 
   rules: Rules;
   history: HistoryState;
@@ -60,6 +61,7 @@ const initialState: GameStoreState = {
   startedAtMs: null,
   endedAtMs: null,
   status: null,
+  paused: false,
   rules: {
     allowFoundationPullback: false,
     undoLimit: "unlimited",
@@ -104,6 +106,7 @@ export const gameSlice = createSlice({
       state.history.present = initialGame;
       state.history.past = [];
       state.sessionPhase = "hydrating";
+      state.paused = false;
 
       state.moves = [];
       state.cursor = 0;
@@ -134,6 +137,7 @@ export const gameSlice = createSlice({
         startedAtMs?: number | null;
         endedAtMs?: number | null;
         status?: GameStatus | null;
+        paused?: boolean;
       }>
     ) => {
       const { seed, rules, moves, cursor, fallbackRules, undoLimit } =
@@ -173,6 +177,7 @@ export const gameSlice = createSlice({
       state.startedAtMs = action.payload.startedAtMs ?? null;
       state.endedAtMs = action.payload.endedAtMs ?? null;
       state.status = action.payload.status ?? null;
+      state.paused = action.payload.paused ?? false;
     },
     applyMoveToHistory: (
       state,
@@ -246,6 +251,9 @@ export const gameSlice = createSlice({
     setStatus: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
     },
+    setPaused: (state, action: PayloadAction<boolean>) => {
+      state.paused = action.payload;
+    },
     finalizeHydration: (state) => {
       state.sessionPhase = "ready";
     },
@@ -268,6 +276,7 @@ export const {
   setEndedAtMs,
   setUndosUsed,
   setStatus,
+  setPaused,
   finalizeHydration,
   resetPerSessionState
 } = gameSlice.actions;
@@ -313,3 +322,5 @@ export const selectCanUndo = (state: { game: GameStoreState }) => {
 };
 export const selectStatus = (state: { game: GameStoreState }) =>
   state.game.status;
+export const selectPaused = (state: { game: GameStoreState }) =>
+  state.game.paused;

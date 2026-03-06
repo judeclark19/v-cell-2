@@ -1,11 +1,10 @@
+import { selectPaused } from "@/state/game";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 
 export type FoundationDrainPreference = "freecells-first" | "tableau-first";
 
 export type UseFoundationDrainAutoCompleteArgs = {
-  /** Gameplay pause state (used to stop the runner). */
-  paused: boolean;
-
   /** When true, stop (and refuse to start) because a modal is open. */
   isAnyModalOpen: boolean;
 
@@ -56,7 +55,6 @@ export function useFoundationDrainAutoComplete(
   args: UseFoundationDrainAutoCompleteArgs
 ): UseFoundationDrainAutoCompleteReturn {
   const {
-    paused,
     isAnyModalOpen,
     shouldShowWinModal,
     drag,
@@ -68,6 +66,8 @@ export function useFoundationDrainAutoComplete(
     maxSteps
   } = args;
 
+  const paused = useSelector(selectPaused);
+
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
 
   // Important: async loops outlive renders, so we must read current values via refs.
@@ -76,7 +76,6 @@ export function useFoundationDrainAutoComplete(
     isAutoCompletingRef.current = isAutoCompleting;
   }, [isAutoCompleting]);
 
-  const pausedRef = useLatest(paused);
   const isAnyModalOpenRef = useLatest(isAnyModalOpen);
   const shouldShowWinModalRef = useLatest(shouldShowWinModal);
   const dragRef = useLatest(drag);
@@ -135,7 +134,7 @@ export function useFoundationDrainAutoComplete(
   const runAutoComplete = useCallback(async () => {
     // Don’t start if we’re already running or if UI/game state blocks it.
     if (isAutoCompletingRef.current) return;
-    if (pausedRef.current) return;
+    if (paused) return;
     if (isAnyModalOpenRef.current) return;
     if (shouldShowWinModalRef.current) return;
     if (dragRef.current.pointerId != null) return;
@@ -148,7 +147,7 @@ export function useFoundationDrainAutoComplete(
 
       while (true) {
         if (!isAutoCompletingRef.current) break;
-        if (pausedRef.current) break;
+        if (paused) break;
         if (isAnyModalOpenRef.current) break;
         if (shouldShowWinModalRef.current) break;
         if (dragRef.current.pointerId != null) {
@@ -203,12 +202,12 @@ export function useFoundationDrainAutoComplete(
     getSources,
     isAnyModalOpenRef,
     maxStepsRef,
-    pausedRef,
     preferenceRef,
     shouldShowWinModalRef,
     tryAutoFoundationFromElRef,
     waitForFlipComplete,
-    waitForFlightComplete
+    waitForFlightComplete,
+    paused
   ]);
 
   return {

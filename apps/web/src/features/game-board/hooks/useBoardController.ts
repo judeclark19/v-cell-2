@@ -16,6 +16,8 @@ import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePoli
 import { useNoFlipResets } from "@/features/game-board/hooks/useNoFlipResets";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
 import { useGame } from "@/state/game/GameProvider";
+import { useSelector } from "react-redux";
+import { selectPaused } from "@/state/game";
 
 export type UseBoardControllerParams = ReturnType<typeof useGame>;
 
@@ -24,8 +26,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     state,
     isWon,
     showTimer,
-    paused,
-    setPaused,
     dispatchMove,
     registerUiResets,
     undo,
@@ -36,6 +36,8 @@ export function useBoardController(params: UseBoardControllerParams) {
     timeElapsedMs,
     moveCount
   } = params;
+
+  const paused = useSelector(selectPaused);
 
   const { playable, legalMoves, isFullyCollected } = useBoardDerived(state);
 
@@ -66,7 +68,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     seed: state.seed,
     isWon,
     isFullyCollected,
-    isAnyModalOpenBase: paused
+    isAnyModalOpenBase: paused // TODO: need a boolean for whether a modal is open, probably in UI domain
   });
 
   const {
@@ -206,7 +208,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     stopAutoComplete,
     stopAutoCompleteRef
   } = useBoardAutoComplete({
-    paused,
     isAnyModalOpen,
     shouldShowWinModal,
     drag: {
@@ -358,8 +359,6 @@ export function useBoardController(params: UseBoardControllerParams) {
 
     dispatchMove: commitMoveFromKeyboard,
     undo,
-    paused,
-    setPaused,
 
     newDeal: newDealWithCelebration,
     restart: restartWithCelebration,
@@ -403,8 +402,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     state,
     isWon,
     showTimer,
-    paused,
-    setPaused,
     undo,
     timeElapsedMs,
     moveCount,

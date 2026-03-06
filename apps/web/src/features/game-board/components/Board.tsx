@@ -18,18 +18,12 @@ import {
 } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
-import {
-  selectCanUndo,
-  selectRules,
-  selectUndosRemaining,
-  selectUndosUsed
-} from "@/state/game";
+import { selectCanUndo, selectRules, selectUndosRemaining } from "@/state/game";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
   const startedAtMs = useSelector(selectStartedAtMs);
   const rules = useSelector(selectRules);
-  const undosUsed = useSelector(selectUndosUsed);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
 
@@ -140,7 +134,6 @@ function Board() {
                   showTimer={vm.showTimer}
                   setFoundationRef={vm.setFoundationRef}
                   handleFoundationPointerDown={vm.handleFoundationPointerDown}
-                  onPause={() => vm.setPaused(true)}
                   isWon={vm.isWon}
                   isAbandoned={false}
                 />
@@ -205,8 +198,6 @@ function Board() {
           </div>
 
           <BoardModals
-            paused={vm.paused}
-            onResume={() => vm.setPaused(false)}
             shouldShowWinModal={vm.shouldShowWinModal}
             onDismissWinModal={vm.dismissWinModal}
             moveCount={vm.moveCount}
