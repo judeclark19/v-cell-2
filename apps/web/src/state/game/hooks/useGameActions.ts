@@ -15,7 +15,9 @@ import {
   selectCursor,
   selectMoves,
   setUndosUsed,
-  selectUndosUsed
+  selectUndosUsed,
+  selectStatus,
+  setStatus
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -37,10 +39,6 @@ export type UseGameActionsParams = {
 
   // Derived
   isWon: boolean;
-  isAbandoned: boolean;
-
-  // Run state setters
-  setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
 
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
@@ -81,8 +79,6 @@ export function useGameActions({
   undoLimit,
 
   isWon,
-  isAbandoned,
-  setIsAbandoned,
 
   setCheckpoint,
 
@@ -99,11 +95,12 @@ export function useGameActions({
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
+  const status = useSelector(selectStatus);
 
   const dispatchMove = useCallback(
     (move: Move) => {
       // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
-      if (isAbandoned) return;
+      if (status === "abandoned") return;
 
       // First move starts the timer clock.
       if (startedAtMs == null) {
@@ -115,7 +112,7 @@ export function useGameActions({
 
       if (!isWon) {
         dispatch(setEndedAtMs(null));
-        setIsAbandoned(false);
+        dispatch(setStatus("in_progress"));
 
         // For archive/checkpoint bookkeeping, compute the post-move timeline values.
         const truncated = moves.slice(0, cursor);
@@ -199,8 +196,7 @@ export function useGameActions({
     },
     [
       isWon,
-      isAbandoned,
-      setIsAbandoned,
+      status,
       cursor,
       moves,
       gameId,
@@ -226,13 +222,13 @@ export function useGameActions({
     dispatch(setUndosUsed(0));
     setCheckpoint(null);
     dispatch(setEndedAtMs(null));
-    setIsAbandoned(false);
-  }, [seed, rules, setCheckpoint, setIsAbandoned, dispatch]);
+    dispatch(setStatus("in_progress"));
+  }, [seed, rules, setCheckpoint, dispatch]);
 
   const abandonIfNeededThenStart = useCallback(
     (startNext: () => void) => {
       // If a game is in progress, abandon it first so it gets archived.
-      const isFinished = isWon || isAbandoned || endedAtMs != null;
+      const isFinished = isWon || status === "abandoned" || endedAtMs != null;
 
       const start = () => {
         const deviceId = getOrCreateDeviceId();
@@ -243,7 +239,7 @@ export function useGameActions({
       if (startedAtMs && !isFinished) {
         const ended = Date.now();
 
-        setIsAbandoned(true);
+        dispatch(setStatus("abandoned"));
 
         if (ended) {
           dispatch(setEndedAtMs(ended));
@@ -303,8 +299,7 @@ export function useGameActions({
       startedAtMs,
       endedAtMs,
       isWon,
-      isAbandoned,
-      setIsAbandoned,
+      status,
       setCompletedGames,
       gameId,
       seed,

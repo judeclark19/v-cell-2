@@ -59,8 +59,6 @@ type GameContextValue = {
   paused: boolean;
   setPaused: (next: boolean) => void;
   timeElapsedMs: number;
-  isAbandoned: boolean;
-  setIsAbandoned: (next: boolean) => void;
   moveCount: number;
   gameId: string;
   completedGames: PersistedGame[];
@@ -119,7 +117,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     timeElapsedMsRef.current = timeElapsedMs;
   }, [timeElapsedMs]);
-  const [isAbandoned, setIsAbandoned] = useState<boolean>(false);
+
   const [paused, setPaused] = useState<boolean>(false);
 
   // ---------------------------------------------------------------------------
@@ -138,7 +136,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const { seed, gameId, startNewDealSession, replaySeed } = useGameSession({
     rules,
     setTimeElapsedMs,
-    setIsAbandoned,
     setCheckpoint
   });
 
@@ -164,7 +161,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
-  const { isWon} = useGameDerivedState({
+  const { isWon } = useGameDerivedState({
     history,
     undoLimit
   });
@@ -175,7 +172,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     seed,
     rules,
-    isAbandoned,
     moves,
     cursor,
     timeElapsedMsRef,
@@ -184,7 +180,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isWon,
 
     setTimeElapsedMs,
-    setIsAbandoned,
     setPaused
   });
 
@@ -224,7 +219,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useGameTimer({
     paused,
     isWon,
-    isAbandoned,
     setTimeElapsedMs,
     sessionReady
   });
@@ -241,8 +235,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undoLimit,
     uid,
     isWon,
-    isAbandoned,
-    setIsAbandoned,
 
     setCheckpoint,
     setCompletedGames,
@@ -266,7 +258,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     gameId,
     seed,
     state: history.present,
-    isAbandoned,
     paused,
     moveCount,
     timeElapsedMs,
@@ -298,9 +289,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     paused,
     setPaused,
     timeElapsedMs,
-
-    isAbandoned,
-    setIsAbandoned,
     moveCount,
     gameId,
     completedGames

@@ -26,7 +26,13 @@ import {
   selectEndedAtMs,
   setEndedAtMs
 } from "@/state/session";
-import { GameStatus, selectUndosUsed, setUndosUsed } from "@/state/game";
+import {
+  GameStatus,
+  selectStatus,
+  selectUndosUsed,
+  setStatus,
+  setUndosUsed
+} from "@/state/game";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -56,14 +62,12 @@ type Params = {
   moves: Move[];
   cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
-  isAbandoned: boolean;
   paused: boolean;
   moveCount: number;
   isWon: boolean;
 
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setPaused: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
@@ -76,13 +80,11 @@ export function useInProgressGamePersistence({
   moves,
   cursor,
   timeElapsedMsRef,
-  isAbandoned,
   paused,
   moveCount,
   isWon,
   readyToHydrate,
   setTimeElapsedMs,
-  setIsAbandoned,
   setPaused
 }: Params) {
   const inProgressHydratedRef = useRef<boolean>(false);
@@ -92,6 +94,7 @@ export function useInProgressGamePersistence({
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
+  const status = useSelector(selectStatus);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
@@ -136,7 +139,11 @@ export function useInProgressGamePersistence({
   // (Refs don't trigger rerenders.)
   const [hydrationVersion, setHydrationVersion] = useState(0);
 
-  const endState: EndState = isWon ? "won" : isAbandoned ? "abandoned" : "none";
+  const endState: EndState = isWon
+    ? "won"
+    : status === "abandoned"
+      ? "abandoned"
+      : "none";
 
   useEffect(() => {
     snapshotRef.current = {
@@ -260,8 +267,7 @@ export function useInProgressGamePersistence({
         dispatch(setStartedAtMs(saved.startedAtMs));
         dispatch(setEndedAtMs(saved.endedAtMs));
         dispatch(setUndosUsed(saved.undosUsed));
-
-        setIsAbandoned(saved.status === "abandoned");
+        dispatch(setStatus(saved.status));
         setPaused(saved.paused);
         onHydrated?.(saved);
         armForSession(sessionKey);
@@ -282,7 +288,6 @@ export function useInProgressGamePersistence({
     gameId,
     onHydrated,
     setTimeElapsedMs,
-    setIsAbandoned,
     setPaused,
     sessionKey,
     rules,

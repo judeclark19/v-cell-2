@@ -1,11 +1,11 @@
 import { selectStartedAtMs } from "@/state/session";
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
+import { selectStatus } from "..";
 
 export type UseGameTimerParams = {
   paused: boolean;
   isWon: boolean;
-  isAbandoned: boolean;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   sessionReady: boolean;
 };
@@ -20,16 +20,15 @@ export type UseGameTimerParams = {
 export function useGameTimer({
   paused,
   isWon,
-  isAbandoned,
   setTimeElapsedMs,
   sessionReady
 }: UseGameTimerParams) {
   const intervalIdRef = useRef<number | null>(null);
   const lastTickAtRef = useRef<number | null>(null);
   const startedAtMs = useSelector(selectStartedAtMs);
-
+  const status = useSelector(selectStatus);
   useEffect(() => {
-    const isFinished = isWon || isAbandoned;
+    const isFinished = isWon || status === "abandoned";
 
     function clearTimerInterval() {
       if (intervalIdRef.current !== null) {
@@ -112,5 +111,5 @@ export function useGameTimer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionReady, isWon, isAbandoned, setTimeElapsedMs, startedAtMs]);
+  }, [paused, sessionReady, isWon, setTimeElapsedMs, startedAtMs, status]);
 }

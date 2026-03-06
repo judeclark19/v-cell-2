@@ -103,13 +103,6 @@ function Board() {
     dispatch(applyRulesChangeStartNewDeal({ patch }));
   };
 
-  console.log({
-    canUndo: canUndo,
-    undoLimit: rules.undoLimit,
-    undosRemaining: undosRemaining,
-    undosUsed: undosUsed
-  });
-
   return (
     <>
       <div

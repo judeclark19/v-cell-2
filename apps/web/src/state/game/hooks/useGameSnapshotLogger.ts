@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectEndedAtMs, selectStartedAtMs } from "@/state/session";
-import { selectCanUndo, selectUndosUsed } from "../gameStore_new";
+import { selectCanUndo, selectStatus, selectUndosUsed } from "../";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 // Intentionally excludes `timeElapsedMs` from the LOG signature so timer ticks don't spam logs.
@@ -10,7 +10,6 @@ export type GameSnapshot = {
   gameId: string;
   seed: string;
   rules: GameState["rules"];
-  isAbandoned: boolean;
   paused: boolean;
   canUndo: boolean;
   moveCount: number; // number of moves made in the current timeline (net of undos)
@@ -43,7 +42,6 @@ export type UseGameSnapshotLoggerParams = {
   seed: string;
   state: GameState;
 
-  isAbandoned: boolean;
   paused: boolean;
 
   moveCount: number;
@@ -70,7 +68,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     gameId,
     seed,
     state,
-    isAbandoned,
     paused,
     moveCount,
     timeElapsedMs,
@@ -84,7 +81,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       rules: state.rules,
-      isAbandoned,
       paused,
       canUndo,
       moveCount,
@@ -101,7 +97,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       state,
-      isAbandoned,
       paused,
       canUndo,
       moveCount,
@@ -121,7 +116,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       gameId,
       seed,
       rules: state.rules,
-      isAbandoned,
       paused,
       canUndo,
       moveCount,
@@ -139,7 +133,6 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       state,
       startedAtMs,
       endedAtMs,
-      isAbandoned,
       paused,
       canUndo,
       moveCount,
