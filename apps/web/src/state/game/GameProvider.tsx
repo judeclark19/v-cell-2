@@ -38,7 +38,6 @@ type UiResets = {
 };
 
 type GameContextValue = {
-  sessionReady: boolean;
   state: GameState;
   dispatchMove: (move: Move) => void;
   registerUiResets: (handlers: UiResets | null) => void;
@@ -119,7 +118,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const prevUidRef = useRef<string | null>(uid);
 
   const sessionPhase = useSelector(selectSessionPhase);
-  const sessionReady = sessionPhase === "ready";
 
   // ---------------------------------------------------------------------------
   // Session (seed/gameId + init/reseed choreography)
@@ -168,7 +166,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   useLoginReconcileInProgressGame({
     uid,
-    sessionReady,
     currentSeed: seed,
     currentGameId: gameId
   });
@@ -200,8 +197,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Timer loop
   // ---------------------------------------------------------------------------
   useGameTimer({
-    setTimeElapsedMs,
-    sessionReady
+    setTimeElapsedMs
   });
 
   // ---------------------------------------------------------------------------
@@ -249,7 +245,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Context value
   // ---------------------------------------------------------------------------
   const value: GameContextValue = {
-    sessionReady,
     state: history.present,
     dispatchMove,
     registerUiResets,

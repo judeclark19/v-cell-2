@@ -1,11 +1,10 @@
-import { selectStartedAtMs } from "@/state/session";
+import { selectSessionPhase, selectStartedAtMs } from "@/state/session";
 import { useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { selectPaused, selectStatus } from "..";
 
 export type UseGameTimerParams = {
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  sessionReady: boolean;
 };
 
 /**
@@ -15,15 +14,13 @@ export type UseGameTimerParams = {
  * - Stops on win/abandon.
  * - Pauses when document is hidden.
  */
-export function useGameTimer({
-  setTimeElapsedMs,
-  sessionReady
-}: UseGameTimerParams) {
+export function useGameTimer({ setTimeElapsedMs }: UseGameTimerParams) {
   const intervalIdRef = useRef<number | null>(null);
   const lastTickAtRef = useRef<number | null>(null);
   const startedAtMs = useSelector(selectStartedAtMs);
   const status = useSelector(selectStatus);
   const paused = useSelector(selectPaused);
+  const sessionPhase = useSelector(selectSessionPhase);
 
   useEffect(() => {
     const isFinished = status === "won" || status === "abandoned";
@@ -60,7 +57,7 @@ export function useGameTimer({
         document.hasFocus() &&
         !paused &&
         !isFinished &&
-        sessionReady &&
+        sessionPhase === "ready" &&
         startedAtMs
       ) {
         startTimerInterval();
@@ -77,7 +74,7 @@ export function useGameTimer({
         document.hasFocus() &&
         !paused &&
         !isFinished &&
-        sessionReady &&
+        sessionPhase === "ready" &&
         startedAtMs
       ) {
         startTimerInterval();
@@ -87,7 +84,7 @@ export function useGameTimer({
     if (
       !paused &&
       !isFinished &&
-      sessionReady &&
+      sessionPhase === "ready" &&
       startedAtMs &&
       document.visibilityState === "visible" &&
       document.hasFocus()
@@ -109,5 +106,5 @@ export function useGameTimer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionReady, setTimeElapsedMs, startedAtMs, status]);
+  }, [paused, sessionPhase, setTimeElapsedMs, startedAtMs, status]);
 }

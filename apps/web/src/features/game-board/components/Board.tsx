@@ -14,6 +14,7 @@ import SeedButton from "@/ui/SeedButton";
 import { useDispatch, useSelector } from "react-redux";
 import {
   applyRulesChangeStartNewDeal,
+  selectSessionPhase,
   selectStartedAtMs
 } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
@@ -32,6 +33,7 @@ function Board() {
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
   const status = useSelector(selectStatus);
+  const sessionPhase = useSelector(selectSessionPhase);
 
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
@@ -107,7 +109,7 @@ function Board() {
     <>
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
-        key={game.sessionReady ? vm.state.seed : "loading"}
+        key={sessionPhase === "ready" ? vm.state.seed : "loading"}
       >
         <BoardKbAttrsContext.Provider value={kbAttrsContextValue}>
           <div
@@ -128,7 +130,7 @@ function Board() {
             onBlurCapture={vm.onBoardBlurCapture}
             onFocus={vm.onBoardFocus}
           >
-            {game.sessionReady ? (
+            {sessionPhase === "ready" ? (
               <>
                 {/* Foundations on top */}
                 <Foundations
