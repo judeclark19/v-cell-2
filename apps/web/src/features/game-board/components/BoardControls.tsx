@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectFaceDownCount } from "@/state/game";
+import { selectRules } from "@/state/game";
 
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
-
-  allowFoundationPullback: boolean;
   undoLimit: UndoLimit;
 
   requestRulesChange: (patch: {
@@ -33,12 +31,11 @@ const parseUndoLimit = (value: string): UndoLimit => {
 export default function BoardControls({
   onNewDeal,
   startBySeed,
-  allowFoundationPullback,
   undoLimit,
   requestRulesChange
 }: BoardControlsProps) {
   const [seedInput, setSeedInput] = useState("");
-  const faceDownCount = useSelector(selectFaceDownCount);
+  const rules = useSelector(selectRules);
   return (
     <>
       <section className="control" aria-label="Start a new game">
@@ -129,10 +126,10 @@ export default function BoardControls({
             <select
               className="control"
               id="face-down-cards"
-              value={String(faceDownCount)}
+              value={String(rules.faceDownCount)}
               onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
-                if (next === faceDownCount) return;
+                if (next === rules.faceDownCount) return;
                 await requestRulesChange({ faceDownCount: next });
               }}
             >
@@ -176,10 +173,10 @@ export default function BoardControls({
             <select
               className="control"
               id="foundation-pullback"
-              value={allowFoundationPullback ? "on" : "off"}
+              value={rules.allowFoundationPullback ? "on" : "off"}
               onChange={async (e) => {
                 const next = e.target.value === "on";
-                if (next === allowFoundationPullback) return;
+                if (next === rules.allowFoundationPullback) return;
                 await requestRulesChange({ allowFoundationPullback: next });
               }}
             >

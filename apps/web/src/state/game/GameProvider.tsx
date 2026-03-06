@@ -5,13 +5,12 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState
 } from "react";
 import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
+import type { GameState, Move, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
@@ -29,7 +28,7 @@ import {
   selectMoves,
   selectCursor,
   selectMoveCount,
-  selectFaceDownCount
+  selectRules
 } from "./";
 import { selectStartedAtMs } from "../session";
 
@@ -57,8 +56,6 @@ type GameContextValue = {
   setShowTimer: (next: boolean) => void;
   paused: boolean;
   setPaused: (next: boolean) => void;
-  allowFoundationPullback: boolean;
-  setAllowFoundationPullback: (next: boolean) => void;
   timeElapsedMs: number;
   isAbandoned: boolean;
   setIsAbandoned: (next: boolean) => void;
@@ -77,29 +74,12 @@ export function useGame() {
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
-  // Seed + rules
-  // ---------------------------------------------------------------------------
-  // Seed and gameId state are now owned by useGameSession.
-
-  const [allowFoundationPullback, setAllowFoundationPullback] =
-    useState<boolean>(true);
-
-  // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
   const { showTimer, setShowTimer, undoLimit, setUndoLimit } =
     useGameSettings();
 
-  const faceDownCount = useSelector(selectFaceDownCount);
-
-  const rules = useMemo<Rules>(
-    () => ({
-      allowFoundationPullback,
-      undoLimit,
-      faceDownCount
-    }),
-    [allowFoundationPullback, undoLimit, faceDownCount]
-  );
+  const rules = useSelector(selectRules);
 
   const [checkpoint, setCheckpoint] = useState<{
     at: number;
@@ -322,8 +302,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setShowTimer,
     paused,
     setPaused,
-    allowFoundationPullback,
-    setAllowFoundationPullback,
     timeElapsedMs,
 
     isAbandoned,

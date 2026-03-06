@@ -127,7 +127,6 @@ function Board() {
                   foundations={vm.state.foundations}
                   drag={vm.drag}
                   playableFoundations={vm.playable.foundations}
-                  allowFoundationPullback={vm.allowFoundationPullback}
                   showTimer={vm.showTimer}
                   setFoundationRef={vm.setFoundationRef}
                   handleFoundationPointerDown={vm.handleFoundationPointerDown}
@@ -240,7 +239,6 @@ function Board() {
             () => vm.startBySeed(seed)
           )
         }
-        allowFoundationPullback={vm.allowFoundationPullback}
         undoLimit={vm.undoLimit}
         requestRulesChange={requestRulesChange}
       />

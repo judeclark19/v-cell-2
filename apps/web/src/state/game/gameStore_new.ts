@@ -261,12 +261,3 @@ export const selectMoveCount = (state: { game: GameStoreState }) =>
   state.game.moveCount;
 export const selectRules = (state: { game: GameStoreState }) =>
   state.game.rules;
-export const selectFaceDownCount = (state: { game: GameStoreState }) =>
-  state.game.rules.faceDownCount;
-
-export const selectUndoLimit = (state: { game: GameStoreState }) =>
-  state.game.rules.undoLimit;
-
-export const selectAllowFoundationPullback = (state: {
-  game: GameStoreState;
-}) => state.game.rules.allowFoundationPullback;

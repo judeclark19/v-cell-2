@@ -7,6 +7,7 @@ import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
 import { useSelector } from "react-redux";
 import { selectStartedAtMs } from "@/state/session/selectors_new";
+import { selectRules } from "@/state/game";
 
 type FoundationProps = {
   i: number;
@@ -15,7 +16,6 @@ type FoundationProps = {
   foundations?: Array<{ cards: EngineCard[] }>;
   drag?: DragState<{ card: EngineCard }>;
   playableFoundations: boolean[];
-  allowFoundationPullback: boolean;
   kbCarrying: boolean;
   kbFlight?: DragState<{ card: EngineCard }>["kbFlight"];
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
@@ -32,12 +32,14 @@ function Foundation({
   foundations,
   drag,
   playableFoundations,
-  allowFoundationPullback,
   kbCarrying,
   kbFlight,
   setFoundationRef,
   handleFoundationPointerDown
 }: FoundationProps) {
+  const rules = useSelector(selectRules);
+  const pullbackDisabled = !rules.allowFoundationPullback;
+
   const isDraggingFromThisFoundation =
     !!drag &&
     (drag.active || drag.pending || drag.isReturning) &&
@@ -72,8 +74,6 @@ function Foundation({
   const cardStyle = hideForKbFlightDest
     ? ({ visibility: "hidden" } as const)
     : undefined;
-
-  const pullbackDisabled = !allowFoundationPullback;
 
   return (
     <div
@@ -127,7 +127,6 @@ type FoundationsProps = {
   foundations?: Array<{ cards: EngineCard[] }>;
   drag?: DragState<{ card: EngineCard }>;
   playableFoundations: boolean[];
-  allowFoundationPullback: boolean;
   showTimer: boolean;
   timeElapsedMs: number;
   onPause: () => void;
@@ -145,7 +144,6 @@ function Foundations({
   foundations,
   drag,
   playableFoundations,
-  allowFoundationPullback,
   showTimer,
   timeElapsedMs,
   onPause,
@@ -195,7 +193,6 @@ function Foundations({
             foundations={foundations}
             drag={drag}
             playableFoundations={playableFoundations}
-            allowFoundationPullback={allowFoundationPullback}
             kbCarrying={kbCarrying}
             kbFlight={kbFlight}
             setFoundationRef={setFoundationRef}

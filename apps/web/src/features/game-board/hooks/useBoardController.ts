@@ -26,7 +26,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     showTimer,
     paused,
     setPaused,
-    allowFoundationPullback,
     dispatchMove,
     registerUiResets,
     undo,
@@ -118,7 +117,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     handleFreeCellPointerDown,
     handleFoundationPointerDown
   } = useCardDrag(state, playable, {
-    allowFoundationPullback,
     getTableauCols: () => tableauColRefs.current,
     getFreeCells: () => freeCellRefs.current,
     getFoundations: () => foundationRefs.current,
@@ -411,7 +409,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     showTimer,
     paused,
     setPaused,
-    allowFoundationPullback,
     undo,
     canUndo,
     undoLimit,

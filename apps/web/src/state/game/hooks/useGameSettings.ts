@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { UndoLimit, FaceDownCount } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectFaceDownCount } from "..";
+import { selectRules } from "..";
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
 const UNDO_LIMIT_KEY = "vcell:undoLimit";
@@ -97,12 +97,16 @@ export function useGameSettings(): UseGameSettingsResult {
     if (!hydrated) return;
     window.localStorage.setItem(UNDO_LIMIT_KEY, String(undoLimit));
   }, [hydrated, undoLimit]);
-  const faceDownCount = useSelector(selectFaceDownCount);
+
+  const rules = useSelector(selectRules);
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(FACE_DOWN_COUNT_KEY, String(faceDownCount));
-  }, [hydrated, faceDownCount]);
+    window.localStorage.setItem(
+      FACE_DOWN_COUNT_KEY,
+      String(rules.faceDownCount)
+    );
+  }, [hydrated, rules.faceDownCount]);
 
   return {
     showTimer,
