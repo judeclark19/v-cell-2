@@ -27,10 +27,6 @@ function isRecord(v: unknown): v is AnyRecord {
   return typeof v === "object" && v !== null;
 }
 
-function isInProgress(status: unknown): boolean {
-  return status === "in_progress";
-}
-
 function getLastCloudSyncMs(uid: string, deviceId: string): number {
   const key = `vcell:lastCloudSyncMs:${uid}:${deviceId}`;
   try {
@@ -144,7 +140,7 @@ export function useCloudGamesHydration(uid: string | null) {
       const gameId = String((data.gameId as string | undefined) ?? docId);
       const status = data.status;
 
-      if (isInProgress(status)) {
+      if (status === "in_progress") {
         if (!hasInProgressFields(data)) return false;
 
         // In-progress is per-device. Only hydrate the in-progress game that

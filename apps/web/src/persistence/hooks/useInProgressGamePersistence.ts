@@ -26,7 +26,7 @@ import {
   selectEndedAtMs,
   setEndedAtMs
 } from "@/state/session";
-import { selectUndosUsed, setUndosUsed } from "@/state/game";
+import { GameStatus, selectUndosUsed, setUndosUsed } from "@/state/game";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -205,7 +205,7 @@ export function useInProgressGamePersistence({
         kind: "freeplay" as const,
         moves,
         cursor,
-        status: "in_progress" as const,
+        status: "in_progress" as GameStatus,
         timeElapsedMs: timeElapsedMsRef.current ?? 0,
         startedAtMs,
         endedAtMs,

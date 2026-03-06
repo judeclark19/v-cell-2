@@ -3,7 +3,8 @@
 export type {
   GameStoreState,
   SessionPhase,
-  HistoryState
+  HistoryState,
+  GameStatus
 } from "./gameStore_new";
 
 export {
@@ -20,6 +21,7 @@ export {
   setStartedAtMs,
   setEndedAtMs,
   setUndosUsed,
+  setStatus,
   selectSeed,
   selectGameId,
   selectSessionPhase,
@@ -30,5 +32,6 @@ export {
   selectRules,
   selectUndosUsed,
   selectUndosRemaining,
-  selectCanUndo
+  selectCanUndo,
+  selectStatus
 } from "./gameStore_new";

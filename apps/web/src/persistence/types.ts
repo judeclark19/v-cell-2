@@ -1,7 +1,6 @@
 // apps/web/src/persistence/types.ts
+import { GameStatus } from "@/state/game";
 import type { GameState, Move } from "@vcell/engine";
-
-export type GameStatus = "in_progress" | "won" | "abandoned";
 
 export type PersistedGame = {
   // identity

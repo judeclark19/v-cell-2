@@ -14,6 +14,8 @@ export type HistoryState = {
   present: GameState;
   past: GameState[];
 };
+
+export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
   gameId: string;
@@ -21,6 +23,7 @@ export interface GameStoreState {
 
   startedAtMs: number | null;
   endedAtMs: number | null;
+  status: GameStatus | null;
 
   rules: Rules;
   history: HistoryState;
@@ -56,6 +59,7 @@ const initialState: GameStoreState = {
   sessionPhase: "boot",
   startedAtMs: null,
   endedAtMs: null,
+  status: null,
   rules: {
     allowFoundationPullback: false,
     undoLimit: "unlimited",
@@ -107,6 +111,7 @@ export const gameSlice = createSlice({
       state.undosUsed = 0;
       state.startedAtMs = null;
       state.endedAtMs = null;
+      state.status = null;
     },
     hydrateHistory: (
       state,
@@ -128,6 +133,7 @@ export const gameSlice = createSlice({
         undoLimit: UndoLimit;
         startedAtMs?: number | null;
         endedAtMs?: number | null;
+        status?: GameStatus | null;
       }>
     ) => {
       const { seed, rules, moves, cursor, fallbackRules, undoLimit } =
@@ -166,6 +172,7 @@ export const gameSlice = createSlice({
       state.moveCount = state.cursor;
       state.startedAtMs = action.payload.startedAtMs ?? null;
       state.endedAtMs = action.payload.endedAtMs ?? null;
+      state.status = action.payload.status ?? null;
     },
     applyMoveToHistory: (
       state,
@@ -236,6 +243,9 @@ export const gameSlice = createSlice({
     setUndosUsed: (state, action: PayloadAction<number>) => {
       state.undosUsed = action.payload;
     },
+    setStatus: (state, action: PayloadAction<GameStatus | null>) => {
+      state.status = action.payload;
+    },
     finalizeHydration: (state) => {
       state.sessionPhase = "ready";
     },
@@ -257,11 +267,13 @@ export const {
   setStartedAtMs,
   setEndedAtMs,
   setUndosUsed,
+  setStatus,
   finalizeHydration,
   resetPerSessionState
 } = gameSlice.actions;
 
 export const gameReducer = gameSlice.reducer;
+
 // Selectors
 export const selectSeed = (state: { game: GameStoreState }) => state.game.seed;
 export const selectGameId = (state: { game: GameStoreState }) =>
@@ -299,3 +311,5 @@ export const selectCanUndo = (state: { game: GameStoreState }) => {
   if (undosUsed >= rules.undoLimit) return false;
   return true;
 };
+export const selectStatus = (state: { game: GameStoreState }) =>
+  state.game.status;
