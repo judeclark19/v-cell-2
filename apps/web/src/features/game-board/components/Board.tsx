@@ -23,6 +23,7 @@ import {
   selectCanUndo,
   selectRules,
   selectStatus,
+  selectTimeElapsedMs,
   selectUndosRemaining
 } from "@/state/game";
 
@@ -34,6 +35,7 @@ function Board() {
   const canUndo = useSelector(selectCanUndo);
   const status = useSelector(selectStatus);
   const sessionPhase = useSelector(selectSessionPhase);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
@@ -78,7 +80,7 @@ function Board() {
   ) => {
     // Only confirm if a game is actually in progress (i.e. started and not finished).
     // When no progress exists, just do the action.
-    if (!startedAtMs || (startedAtMs && status && status !== "won")) {
+    if (!startedAtMs || status !== "in_progress") {
       onConfirm();
       return;
     }
@@ -134,7 +136,7 @@ function Board() {
               <>
                 {/* Foundations on top */}
                 <Foundations
-                  timeElapsedMs={vm.timeElapsedMs}
+                  timeElapsedMs={timeElapsedMs}
                   foundationCards={vm.foundationCards}
                   foundations={vm.state.foundations}
                   drag={vm.drag}
@@ -207,7 +209,7 @@ function Board() {
             shouldShowWinModal={vm.shouldShowWinModal}
             onDismissWinModal={vm.dismissWinModal}
             moveCount={vm.moveCount}
-            timeElapsedMs={vm.timeElapsedMs}
+            timeElapsedMs={timeElapsedMs}
             confirmReq={confirmReq}
             dismissConfirm={dismissConfirm}
             requestConfirm={confirmThen}

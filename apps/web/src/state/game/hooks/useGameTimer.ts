@@ -1,11 +1,12 @@
 import { selectSessionPhase, selectStartedAtMs } from "@/state/session";
 import { useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
-import { selectPaused, selectStatus } from "..";
-
-export type UseGameTimerParams = {
-  setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-};
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectPaused,
+  selectStatus,
+  selectTimeElapsedMs,
+  setTimeElapsedMs
+} from "..";
 
 /**
  * Drives the game timer while the game is active and the tab is visible.
@@ -14,13 +15,16 @@ export type UseGameTimerParams = {
  * - Stops on win/abandon.
  * - Pauses when document is hidden.
  */
-export function useGameTimer({ setTimeElapsedMs }: UseGameTimerParams) {
+export function useGameTimer() {
+  const dispatch = useDispatch();
+
   const intervalIdRef = useRef<number | null>(null);
   const lastTickAtRef = useRef<number | null>(null);
   const startedAtMs = useSelector(selectStartedAtMs);
   const status = useSelector(selectStatus);
   const paused = useSelector(selectPaused);
   const sessionPhase = useSelector(selectSessionPhase);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   useEffect(() => {
     const isFinished = status === "won" || status === "abandoned";
@@ -42,7 +46,7 @@ export function useGameTimer({ setTimeElapsedMs }: UseGameTimerParams) {
         const deltaMs = lastTickAt == null ? 0 : now - lastTickAt;
 
         if (lastTickAt != null) {
-          setTimeElapsedMs((prev) => prev + deltaMs);
+          dispatch(setTimeElapsedMs(timeElapsedMs + deltaMs));
         }
 
         lastTickAtRef.current = now;
@@ -106,5 +110,5 @@ export function useGameTimer({ setTimeElapsedMs }: UseGameTimerParams) {
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionPhase, setTimeElapsedMs, startedAtMs, status]);
+  }, [paused, sessionPhase, startedAtMs, status, dispatch, timeElapsedMs]);
 }

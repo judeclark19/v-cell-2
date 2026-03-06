@@ -23,6 +23,8 @@ export interface GameStoreState {
 
   startedAtMs: number | null;
   endedAtMs: number | null;
+  timeElapsedMs: number;
+
   status: GameStatus | null;
   paused: boolean;
 
@@ -60,6 +62,7 @@ const initialState: GameStoreState = {
   sessionPhase: "boot",
   startedAtMs: null,
   endedAtMs: null,
+  timeElapsedMs: 0,
   status: null,
   paused: false,
   rules: {
@@ -114,6 +117,7 @@ export const gameSlice = createSlice({
       state.undosUsed = 0;
       state.startedAtMs = null;
       state.endedAtMs = null;
+      state.timeElapsedMs = 0;
       state.status = null;
     },
     hydrateHistory: (
@@ -136,6 +140,7 @@ export const gameSlice = createSlice({
         undoLimit: UndoLimit;
         startedAtMs?: number | null;
         endedAtMs?: number | null;
+        timeElapsedMs?: number;
         status?: GameStatus | null;
         paused?: boolean;
       }>
@@ -176,6 +181,7 @@ export const gameSlice = createSlice({
       state.moveCount = state.cursor;
       state.startedAtMs = action.payload.startedAtMs ?? null;
       state.endedAtMs = action.payload.endedAtMs ?? null;
+      state.timeElapsedMs = action.payload.timeElapsedMs ?? 0;
       state.status = action.payload.status ?? null;
       state.paused = action.payload.paused ?? false;
     },
@@ -254,6 +260,9 @@ export const gameSlice = createSlice({
     setPaused: (state, action: PayloadAction<boolean>) => {
       state.paused = action.payload;
     },
+    setTimeElapsedMs: (state, action: PayloadAction<number>) => {
+      state.timeElapsedMs = action.payload;
+    },
     finalizeHydration: (state) => {
       state.sessionPhase = "ready";
     },
@@ -274,6 +283,7 @@ export const {
   resetTimeline,
   setStartedAtMs,
   setEndedAtMs,
+  setTimeElapsedMs,
   setUndosUsed,
   setStatus,
   setPaused,
@@ -324,3 +334,5 @@ export const selectStatus = (state: { game: GameStoreState }) =>
   state.game.status;
 export const selectPaused = (state: { game: GameStoreState }) =>
   state.game.paused;
+export const selectTimeElapsedMs = (state: { game: GameStoreState }) =>
+  state.game.timeElapsedMs;

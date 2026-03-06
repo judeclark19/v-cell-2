@@ -46,12 +46,10 @@ type GameContextValue = {
   replaySeed: (seed: string) => void;
   startBySeed: (seed: string) => void;
   undo: () => void;
-  undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
-  timeElapsedMs: number;
   moveCount: number;
   gameId: string;
   completedGames: PersistedGame[];
@@ -102,15 +100,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   });
 
   // ---------------------------------------------------------------------------
-  // Run state (timer + pause)
-  // ---------------------------------------------------------------------------
-  const [timeElapsedMs, setTimeElapsedMs] = useState<number>(0);
-  const timeElapsedMsRef = useRef<number>(0);
-  useEffect(() => {
-    timeElapsedMsRef.current = timeElapsedMs;
-  }, [timeElapsedMs]);
-
-  // ---------------------------------------------------------------------------
   // Undo analytics
   // ---------------------------------------------------------------------------
 
@@ -124,7 +113,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const { seed, gameId, startNewDealSession, replaySeed } = useGameSession({
     rules,
-    setTimeElapsedMs,
     setCheckpoint
   });
 
@@ -159,9 +147,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     rules,
     moves,
     cursor,
-    timeElapsedMsRef,
-    moveCount,
-    setTimeElapsedMs
+    moveCount
   });
 
   useLoginReconcileInProgressGame({
@@ -196,9 +182,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Timer loop
   // ---------------------------------------------------------------------------
-  useGameTimer({
-    setTimeElapsedMs
-  });
+  useGameTimer();
 
   // ---------------------------------------------------------------------------
   // Actions
@@ -215,17 +199,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCheckpoint,
     setCompletedGames,
 
-    timeElapsedMs,
-
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
-
-  const newDealRef = useRef(newDeal);
-
-  useEffect(() => {
-    newDealRef.current = newDeal;
-  }, [newDeal]);
 
   // ---------------------------------------------------------------------------
   // Snapshot logging
@@ -235,7 +211,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     seed,
     state: history.present,
     moveCount,
-    timeElapsedMs,
     moves,
     cursor,
     checkpoint
@@ -253,12 +228,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     replaySeed,
     startBySeed,
     undo,
-    undoLimit,
     setUndoLimit,
     undosRemaining,
     showTimer,
     setShowTimer,
-    timeElapsedMs,
     moveCount,
     gameId,
     completedGames

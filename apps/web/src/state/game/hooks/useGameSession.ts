@@ -7,7 +7,8 @@ import {
   selectGameId,
   finalizeHydration,
   resetPerSessionState,
-  setStatus
+  setStatus,
+  setTimeElapsedMs
 } from "@/state/game";
 import { bootSession } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
@@ -20,7 +21,6 @@ export type UseGameSessionParams = {
   rules: Rules;
 
   // State setters owned by GameProvider
-  setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
   >;
@@ -43,7 +43,6 @@ export type UseGameSessionResult = {
  */
 export function useGameSession({
   rules,
-  setTimeElapsedMs,
   setCheckpoint
 }: UseGameSessionParams): UseGameSessionResult {
   // Seed/gameId are now owned by the RTK store.
@@ -58,7 +57,7 @@ export function useGameSession({
 
   const resetPerSessionState_old = useCallback(() => {
     // TODO make this a whole reducer that sets all the values
-    setTimeElapsedMs(0);
+    dispatch(setTimeElapsedMs(0));
     // setIsAbandoned(false);
     dispatch(setStatus("in_progress"));
     setCheckpoint(null);
@@ -66,7 +65,7 @@ export function useGameSession({
     dispatch(resetPerSessionState());
 
     // call reeucer resetPerSessionState from redux game
-  }, [setTimeElapsedMs, setCheckpoint, dispatch]);
+  }, [setCheckpoint, dispatch]);
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {

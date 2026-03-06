@@ -17,7 +17,8 @@ import {
   setUndosUsed,
   selectUndosUsed,
   selectStatus,
-  setStatus
+  setStatus,
+  selectTimeElapsedMs
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -43,9 +44,6 @@ export type UseGameActionsParams = {
 
   // Completed games archive (Phase A)
   setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
-
-  // Timing values captured in archive
-  timeElapsedMs: number;
 
   // Session transition
   startNewDealSession: () => void;
@@ -76,7 +74,6 @@ export function useGameActions({
 
   setCheckpoint,
   setCompletedGames,
-  timeElapsedMs,
 
   startNewDealSession,
   replaySeed
@@ -88,6 +85,7 @@ export function useGameActions({
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   const dispatchMove = useCallback(
     (move: Move) => {

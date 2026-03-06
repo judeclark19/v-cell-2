@@ -20,6 +20,7 @@ export {
   resetPerSessionState,
   setStartedAtMs,
   setEndedAtMs,
+  setTimeElapsedMs,
   setUndosUsed,
   setStatus,
   setPaused,
@@ -35,5 +36,6 @@ export {
   selectUndosRemaining,
   selectCanUndo,
   selectStatus,
-  selectPaused
+  selectPaused,
+  selectTimeElapsedMs
 } from "./gameStore_new";

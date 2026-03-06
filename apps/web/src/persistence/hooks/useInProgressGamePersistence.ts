@@ -30,9 +30,11 @@ import {
   GameStatus,
   selectPaused,
   selectStatus,
+  selectTimeElapsedMs,
   selectUndosUsed,
   setPaused,
   setStatus,
+  setTimeElapsedMs,
   setUndosUsed
 } from "@/state/game";
 
@@ -63,11 +65,7 @@ type Params = {
   // snapshot + meta
   moves: Move[];
   cursor: number;
-  timeElapsedMsRef: React.RefObject<number>;
   moveCount: number;
-
-  // setters for hydration
-  setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
 };
 
 export function useInProgressGamePersistence({
@@ -78,10 +76,8 @@ export function useInProgressGamePersistence({
   onHydrated,
   moves,
   cursor,
-  timeElapsedMsRef,
   moveCount,
-  readyToHydrate,
-  setTimeElapsedMs
+  readyToHydrate
 }: Params) {
   const inProgressHydratedRef = useRef<boolean>(false);
   const hydratedSessionKeyRef = useRef<string | null>(null);
@@ -92,6 +88,7 @@ export function useInProgressGamePersistence({
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
   const paused = useSelector(selectPaused);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
@@ -207,7 +204,7 @@ export function useInProgressGamePersistence({
         moves,
         cursor,
         status: "in_progress" as GameStatus,
-        timeElapsedMs: timeElapsedMsRef.current ?? 0,
+        timeElapsedMs,
         startedAtMs,
         endedAtMs,
         paused,
@@ -217,7 +214,7 @@ export function useInProgressGamePersistence({
         ...(uid ? { userId: uid } : {})
       };
     },
-    [gameId, seed, rules, timeElapsedMsRef, uid]
+    [gameId, seed, rules, uid, timeElapsedMs]
   );
 
   // IMPORTANT: When the active session/gameId changes, React state in the game layer may
@@ -257,7 +254,7 @@ export function useInProgressGamePersistence({
         }
 
         // Restore snapshot + meta (clamp cursor to move list length)
-        setTimeElapsedMs(saved.timeElapsedMs);
+        dispatch(setTimeElapsedMs(saved.timeElapsedMs));
         dispatch(setStartedAtMs(saved.startedAtMs));
         dispatch(setEndedAtMs(saved.endedAtMs));
         dispatch(setUndosUsed(saved.undosUsed));
@@ -281,7 +278,6 @@ export function useInProgressGamePersistence({
     readyToHydrate,
     gameId,
     onHydrated,
-    setTimeElapsedMs,
     sessionKey,
     rules,
     uid,
@@ -334,7 +330,6 @@ export function useInProgressGamePersistence({
     paused,
     moveCount,
     undosUsed,
-    timeElapsedMsRef,
     hydrationVersion,
     sessionKey,
     isArmed,
