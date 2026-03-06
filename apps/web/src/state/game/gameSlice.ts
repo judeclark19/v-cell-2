@@ -9,7 +9,6 @@ import {
   UndoLimit
 } from "@vcell/engine";
 
-export type SessionPhase = "boot" | "hydrating" | "ready";
 export type HistoryState = {
   present: GameState;
   past: GameState[];
@@ -19,14 +18,12 @@ export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
   gameId: string;
-  sessionPhase: SessionPhase;
 
   startedAtMs: number | null;
   endedAtMs: number | null;
   timeElapsedMs: number;
 
   status: GameStatus | null;
-  paused: boolean;
 
   rules: Rules;
   history: HistoryState;
@@ -59,12 +56,10 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
 const initialState: GameStoreState = {
   seed: "seed-boot",
   gameId: "game-boot",
-  sessionPhase: "boot",
   startedAtMs: null,
   endedAtMs: null,
   timeElapsedMs: 0,
   status: null,
-  paused: false,
   rules: {
     allowFoundationPullback: false,
     undoLimit: "unlimited",
@@ -108,8 +103,6 @@ export const gameSlice = createSlice({
       state.gameId = gameId;
       state.history.present = initialGame;
       state.history.past = [];
-      state.sessionPhase = "hydrating";
-      state.paused = false;
 
       state.moves = [];
       state.cursor = 0;
@@ -142,7 +135,6 @@ export const gameSlice = createSlice({
         endedAtMs?: number | null;
         timeElapsedMs?: number;
         status?: GameStatus | null;
-        paused?: boolean;
       }>
     ) => {
       const { seed, rules, moves, cursor, fallbackRules, undoLimit } =
@@ -174,7 +166,7 @@ export const gameSlice = createSlice({
       state.seed = seed;
       state.history.present = present;
       state.history.past = past;
-      state.sessionPhase = "ready";
+      // state.sessionPhase = "ready";
       state.moves = moves ?? [];
       state.undosUsed = action.payload.undosUsed ?? 0;
       state.cursor = cursor ?? 0;
@@ -183,7 +175,6 @@ export const gameSlice = createSlice({
       state.endedAtMs = action.payload.endedAtMs ?? null;
       state.timeElapsedMs = action.payload.timeElapsedMs ?? 0;
       state.status = action.payload.status ?? null;
-      state.paused = action.payload.paused ?? false;
     },
     applyMoveToHistory: (
       state,
@@ -257,14 +248,8 @@ export const gameSlice = createSlice({
     setStatus: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
     },
-    setPaused: (state, action: PayloadAction<boolean>) => {
-      state.paused = action.payload;
-    },
     setTimeElapsedMs: (state, action: PayloadAction<number>) => {
       state.timeElapsedMs = action.payload;
-    },
-    finalizeHydration: (state) => {
-      state.sessionPhase = "ready";
     },
     resetPerSessionState: (state) => {
       state.startedAtMs = null;
@@ -286,8 +271,6 @@ export const {
   setTimeElapsedMs,
   setUndosUsed,
   setStatus,
-  setPaused,
-  finalizeHydration,
   resetPerSessionState
 } = gameSlice.actions;
 
@@ -297,8 +280,6 @@ export const gameReducer = gameSlice.reducer;
 export const selectSeed = (state: { game: GameStoreState }) => state.game.seed;
 export const selectGameId = (state: { game: GameStoreState }) =>
   state.game.gameId;
-export const selectSessionPhase = (state: { game: GameStoreState }) =>
-  state.game.sessionPhase;
 export const selectHistory = (state: { game: GameStoreState }) =>
   state.game.history;
 export const selectMoves = (state: { game: GameStoreState }) =>
@@ -318,9 +299,6 @@ export const selectUndosRemaining = (state: { game: GameStoreState }) => {
   return Math.max(0, rules.undoLimit - undosUsed);
 };
 export const selectCanUndo = (state: { game: GameStoreState }) => {
-  const sessionPhase = selectSessionPhase(state);
-  if (sessionPhase !== "ready") return false;
-
   const history = selectHistory(state);
   const rules = selectRules(state);
   const undosUsed = selectUndosUsed(state);
@@ -332,7 +310,5 @@ export const selectCanUndo = (state: { game: GameStoreState }) => {
 };
 export const selectStatus = (state: { game: GameStoreState }) =>
   state.game.status;
-export const selectPaused = (state: { game: GameStoreState }) =>
-  state.game.paused;
 export const selectTimeElapsedMs = (state: { game: GameStoreState }) =>
   state.game.timeElapsedMs;

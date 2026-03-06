@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectEndedAtMs, selectStartedAtMs } from "@/state/session";
-import { selectCanUndo, selectPaused, selectUndosUsed } from "../";
+import { selectCanUndo, selectUndosUsed } from "../";
+import { selectPaused } from "@/state/session/sessionSlice";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 export type GameSnapshot = {

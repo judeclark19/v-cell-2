@@ -132,6 +132,7 @@ export function useGameActions({
         if (endedAtMs == null) {
           dispatch(setEndedAtMs(ended));
         }
+        dispatch(setStatus("won"));
 
         const archivedCursor = nextCursor;
         const archivedMoves = nextMoves;

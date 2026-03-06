@@ -1,9 +1,11 @@
 //“Do we actually start a session, or is it already the same one?”
 
 import { startSession } from "@/state/game/gameSlice";
-import { selectSessionKey, selectSessionPhase } from "@/state/session";
+import { selectSessionKey } from "@/state/session";
+import { selectSessionPhase, setPaused } from "@/state/session/sessionSlice";
 import { RootState } from "../reduxStore";
 import { Rules } from "@vcell/engine";
+import { setSessionPhase } from "./sessionSlice";
 
 type Params = {
   seed: string;
@@ -42,6 +44,9 @@ export async function transitionSession(
       rules
     })
   );
+
+  dispatch(setSessionPhase("hydrating"));
+  dispatch(setPaused(false));
 
   return {
     kind: "started" as const,

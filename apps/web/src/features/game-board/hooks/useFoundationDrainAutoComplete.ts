@@ -1,4 +1,4 @@
-import { selectPaused } from "@/state/game";
+import { selectPaused } from "@/state/session/sessionSlice";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 

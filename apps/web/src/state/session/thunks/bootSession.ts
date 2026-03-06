@@ -4,9 +4,10 @@ import { Rules } from "@vcell/engine";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 
-import { finalizeHydration, hydrateFromPersisted } from "@/state/game";
 import { transitionSession } from "../transitionSession_new";
 import type { RootState } from "@/state/reduxStore";
+import { hydrateFromPersisted } from "@/state/game/gameSlice";
+import { setPaused, setSessionPhase } from "../sessionSlice";
 
 /**
  * Boot the session from local persistence.
@@ -39,6 +40,8 @@ export const bootSession = createAsyncThunk<
         undoLimit: saved.rules.undoLimit
       })
     );
+    thunkApi.dispatch(setSessionPhase("ready"));
+    thunkApi.dispatch(setPaused(saved.paused ?? false));
 
     return { kind: "hydrated" as const };
   }
@@ -56,6 +59,6 @@ export const bootSession = createAsyncThunk<
     }
   );
 
-  thunkApi.dispatch(finalizeHydration());
+  thunkApi.dispatch(setSessionPhase("ready"));
   return { kind: "fresh" as const };
 });

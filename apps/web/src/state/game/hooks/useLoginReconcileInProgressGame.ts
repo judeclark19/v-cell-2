@@ -21,7 +21,8 @@ import {
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { ensureSessionStarted, selectSessionPhase } from "@/state/session";
+import { ensureSessionStarted } from "@/state/session";
+import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 type Params = {
   uid: string | null;

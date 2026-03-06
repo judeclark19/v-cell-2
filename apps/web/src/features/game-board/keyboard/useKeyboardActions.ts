@@ -9,8 +9,9 @@ import type {
   DragSource,
   DropTarget
 } from "@/features/game-board/animations/dragTypes";
-import { selectCanUndo, selectPaused, setPaused } from "@/state/game";
+import { selectCanUndo } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
+import { selectPaused, setPaused } from "@/state/session/sessionSlice";
 /**
  * The goal of this hook is to own *actions* (effects on the game),
  * independent of keyboard navigation routing and independent of DOM class mutations.

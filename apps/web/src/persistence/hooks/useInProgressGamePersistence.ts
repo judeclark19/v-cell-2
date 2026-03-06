@@ -28,15 +28,14 @@ import {
 } from "@/state/session";
 import {
   GameStatus,
-  selectPaused,
   selectStatus,
   selectTimeElapsedMs,
   selectUndosUsed,
-  setPaused,
   setStatus,
   setTimeElapsedMs,
   setUndosUsed
 } from "@/state/game";
+import { selectPaused, setPaused } from "@/state/session/sessionSlice";
 
 type InProgressSnapshot = {
   moves: Move[];

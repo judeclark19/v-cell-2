@@ -22,7 +22,6 @@ import { useSession } from "@/state/session/SessionProvider";
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 import { useSelector } from "react-redux";
 import {
-  selectSessionPhase,
   selectHistory,
   selectMoves,
   selectCursor,
@@ -31,6 +30,7 @@ import {
   selectUndosRemaining
 } from "./";
 import { selectStartedAtMs } from "../session";
+import { selectSessionPhase } from "../session/sessionSlice";
 
 type UiResets = {
   resetDrag?: () => void;

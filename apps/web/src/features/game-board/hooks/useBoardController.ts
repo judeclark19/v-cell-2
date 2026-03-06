@@ -17,7 +17,7 @@ import { useNoFlipResets } from "@/features/game-board/hooks/useNoFlipResets";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
 import { useGame } from "@/state/game/GameProvider";
 import { useSelector } from "react-redux";
-import { selectPaused } from "@/state/game";
+import { selectPaused } from "@/state/session/sessionSlice";
 
 export type UseBoardControllerParams = ReturnType<typeof useGame>;
 

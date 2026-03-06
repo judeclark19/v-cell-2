@@ -1,6 +1,5 @@
 // apps/web/src/state/session/selectors.ts
 import type { RootState } from "@/state/reduxStore";
-import { SessionPhase } from "../game";
 import { Rules } from "@vcell/engine";
 
 // If SessionPhase is just a string union in game slice, import it from there.
@@ -12,10 +11,6 @@ export type SessionKey = {
 
 export function selectSessionKey(state: RootState): SessionKey {
   return { seed: state.game.seed, gameId: state.game.gameId };
-}
-
-export function selectSessionPhase(state: RootState): SessionPhase {
-  return state.game.sessionPhase;
 }
 
 export function selectRules(state: RootState): Rules {

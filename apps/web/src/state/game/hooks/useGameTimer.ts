@@ -1,12 +1,9 @@
-import { selectSessionPhase, selectStartedAtMs } from "@/state/session";
+import { selectStartedAtMs } from "@/state/session";
+
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  selectPaused,
-  selectStatus,
-  selectTimeElapsedMs,
-  setTimeElapsedMs
-} from "..";
+import { selectStatus, selectTimeElapsedMs, setTimeElapsedMs } from "..";
+import { selectSessionPhase, selectPaused } from "@/state/session/sessionSlice";
 
 /**
  * Drives the game timer while the game is active and the tab is visible.

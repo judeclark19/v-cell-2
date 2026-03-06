@@ -2,7 +2,7 @@ import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { useGame } from "@/state/game/GameProvider";
 import { useSession } from "@/state/session/SessionProvider";
-import { selectPaused, setPaused } from "@/state/game";
+import { selectPaused, setPaused } from "@/state/session/sessionSlice";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";

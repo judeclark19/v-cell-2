@@ -2,16 +2,16 @@ import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { GameState, Rules } from "@vcell/engine";
 import {
-  startSession as startSession_new,
   selectSeed,
   selectGameId,
-  finalizeHydration,
   resetPerSessionState,
   setStatus,
   setTimeElapsedMs
 } from "@/state/game";
+import { startSession as startSession_new } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
+import { setPaused, setSessionPhase } from "@/state/session/sessionSlice";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }
@@ -95,6 +95,9 @@ export function useGameSession({
         })
       );
 
+      dispatch(setSessionPhase("hydrating"));
+      dispatch(setPaused(false));
+
       resetPerSessionState_old();
     },
     [dispatch, rules, resetPerSessionState_old, seed, gameId]
@@ -120,7 +123,8 @@ export function useGameSession({
 
   const startNewDealSession = useCallback(() => {
     dispatch(startSession_new({ rules }));
-    dispatch(finalizeHydration());
+    dispatch(setSessionPhase("ready"));
+    dispatch(setPaused(false));
     resetPerSessionState_old();
   }, [dispatch, rules, resetPerSessionState_old]);
 

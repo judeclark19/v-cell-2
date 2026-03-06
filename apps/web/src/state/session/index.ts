@@ -5,7 +5,6 @@ export { ensureSessionStarted } from "./thunks/ensureSessionStarted";
 export {
   selectSessionKey,
   selectSessionKeyString,
-  selectSessionPhase,
   selectRules,
   selectStartedAtMs,
   selectEndedAtMs
