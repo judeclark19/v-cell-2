@@ -65,7 +65,6 @@ type Params = {
   cursor: number;
   timeElapsedMsRef: React.RefObject<number>;
   moveCount: number;
-  isWon: boolean;
 
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
@@ -81,7 +80,6 @@ export function useInProgressGamePersistence({
   cursor,
   timeElapsedMsRef,
   moveCount,
-  isWon,
   readyToHydrate,
   setTimeElapsedMs
 }: Params) {
@@ -138,11 +136,8 @@ export function useInProgressGamePersistence({
   // (Refs don't trigger rerenders.)
   const [hydrationVersion, setHydrationVersion] = useState(0);
 
-  const endState: EndState = isWon
-    ? "won"
-    : status === "abandoned"
-      ? "abandoned"
-      : "none";
+  const endState: EndState =
+    status === "won" ? "won" : status === "abandoned" ? "abandoned" : "none";
 
   useEffect(() => {
     snapshotRef.current = {

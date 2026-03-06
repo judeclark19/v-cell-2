@@ -14,7 +14,6 @@ import type { GameState, Move, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
-import { useGameDerivedState } from "./hooks/useGameDerivedState";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
 import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
 import type { PersistedGame } from "@/persistence/types";
@@ -29,8 +28,7 @@ import {
   selectCursor,
   selectMoveCount,
   selectRules,
-  selectUndosRemaining,
-  selectCanUndo
+  selectUndosRemaining
 } from "./";
 import { selectStartedAtMs } from "../session";
 
@@ -42,7 +40,6 @@ type UiResets = {
 type GameContextValue = {
   sessionReady: boolean;
   state: GameState;
-  isWon: boolean;
   dispatchMove: (move: Move) => void;
   registerUiResets: (handlers: UiResets | null) => void;
   restart: () => void;
@@ -50,7 +47,6 @@ type GameContextValue = {
   replaySeed: (seed: string) => void;
   startBySeed: (seed: string) => void;
   undo: () => void;
-  canUndo: boolean;
   undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
@@ -94,7 +90,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const moveCount = useSelector(selectMoveCount);
   const startedAtMs = useSelector(selectStartedAtMs);
   const undosRemaining = useSelector(selectUndosRemaining);
-  const canUndo = useSelector(selectCanUndo);
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -157,10 +152,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
-  const { isWon } = useGameDerivedState({
-    history,
-    undoLimit
-  });
 
   useInProgressGamePersistence({
     readyToHydrate: !!gameId && !!seed,
@@ -172,7 +163,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     cursor,
     timeElapsedMsRef,
     moveCount,
-    isWon,
     setTimeElapsedMs
   });
 
@@ -210,7 +200,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Timer loop
   // ---------------------------------------------------------------------------
   useGameTimer({
-    isWon,
     setTimeElapsedMs,
     sessionReady
   });
@@ -226,7 +215,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     rules,
     undoLimit,
     uid,
-    isWon,
 
     setCheckpoint,
     setCompletedGames,
@@ -263,7 +251,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const value: GameContextValue = {
     sessionReady,
     state: history.present,
-    isWon,
     dispatchMove,
     registerUiResets,
     restart,
@@ -271,7 +258,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     replaySeed,
     startBySeed,
     undo,
-    canUndo,
     undoLimit,
     setUndoLimit,
     undosRemaining,

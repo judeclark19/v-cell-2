@@ -7,7 +7,7 @@ import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { selectStartedAtMs } from "@/state/session/selectors_new";
-import { selectRules, setPaused } from "@/state/game";
+import { selectRules, selectStatus, setPaused } from "@/state/game";
 
 type FoundationProps = {
   i: number;
@@ -134,7 +134,6 @@ type FoundationsProps = {
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => void;
-  isWon: boolean;
   isAbandoned: boolean;
 };
 
@@ -147,7 +146,6 @@ function Foundations({
   timeElapsedMs,
   setFoundationRef,
   handleFoundationPointerDown,
-  isWon,
   isAbandoned
 }: FoundationsProps) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
@@ -155,6 +153,7 @@ function Foundations({
   const kbFlight = drag?.kbFlight;
 
   const startedAtMs = useSelector(selectStartedAtMs);
+  const status = useSelector(selectStatus);
   const dispatch = useDispatch();
 
   return (
@@ -169,7 +168,7 @@ function Foundations({
             aria-label="Pause timer"
             type="button"
             onClick={() => dispatch(setPaused(true))}
-            disabled={!startedAtMs || isWon || isAbandoned}
+            disabled={!startedAtMs || status === "won" || isAbandoned}
           >
             <svg
               width="16"

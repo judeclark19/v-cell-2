@@ -19,7 +19,6 @@ type TableauProps = {
   tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
   tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
   setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
-  isWon: boolean;
   onCardPointerUp: (e: React.PointerEvent<HTMLDivElement>) => void;
 };
 

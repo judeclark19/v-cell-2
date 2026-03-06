@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useWinEffects } from "@/features/game-board/effects/winEffects";
+import { useSelector } from "react-redux";
+import { selectStatus } from "@/state/game";
 
 export type UseWinStateArgs = {
   /** Current deal seed */
   seed: string;
-
-  /** True when the game is won (all cards collected to foundations). */
-  isWon: boolean;
 
   /** True when all 52 cards are in foundations. */
   isFullyCollected: boolean;
@@ -49,7 +48,6 @@ export type UseWinStateResult = {
  */
 export function useWinState({
   seed,
-  isWon,
   isFullyCollected,
   isAnyModalOpenBase
 }: UseWinStateArgs): UseWinStateResult {
@@ -61,9 +59,11 @@ export function useWinState({
   // ACP policy: show once won, with an escape hatch override.
   const [showAcpOverride, setShowAcpOverride] = useState(false);
 
+  const status = useSelector(selectStatus);
+
   const showAcp = useMemo(() => {
-    return (isWon && !isFullyCollected) || showAcpOverride;
-  }, [isWon, isFullyCollected, showAcpOverride]);
+    return (status === "won" && !isFullyCollected) || showAcpOverride;
+  }, [status, isFullyCollected, showAcpOverride]);
 
   const shouldShowWinModal = useMemo(() => {
     if (!isFullyCollected) return false;

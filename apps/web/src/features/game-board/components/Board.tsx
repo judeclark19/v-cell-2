@@ -18,7 +18,12 @@ import {
 } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
-import { selectCanUndo, selectRules, selectUndosRemaining } from "@/state/game";
+import {
+  selectCanUndo,
+  selectRules,
+  selectStatus,
+  selectUndosRemaining
+} from "@/state/game";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
@@ -26,6 +31,7 @@ function Board() {
   const rules = useSelector(selectRules);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
+  const status = useSelector(selectStatus);
 
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
@@ -70,7 +76,7 @@ function Board() {
   ) => {
     // Only confirm if a game is actually in progress (i.e. started and not finished).
     // When no progress exists, just do the action.
-    if (!startedAtMs || (startedAtMs && vm.isWon)) {
+    if (!startedAtMs || (startedAtMs && status && status !== "won")) {
       onConfirm();
       return;
     }
@@ -134,7 +140,6 @@ function Board() {
                   showTimer={vm.showTimer}
                   setFoundationRef={vm.setFoundationRef}
                   handleFoundationPointerDown={vm.handleFoundationPointerDown}
-                  isWon={vm.isWon}
                   isAbandoned={false}
                 />
 
@@ -146,7 +151,6 @@ function Board() {
                   handleTableauPointerDown={vm.handleTableauPointerDown}
                   tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
                   setTableauColRef={vm.setTableauColRef}
-                  isWon={vm.isWon}
                   tryAutoFreeCellFromEl={vm.tryAutoFreeCellFromEl}
                   onCardPointerUp={vm.onCardPointerUp}
                 />

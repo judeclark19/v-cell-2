@@ -1,5 +1,7 @@
+import { selectStatus } from "@/state/game";
 import { Move } from "@vcell/engine";
 import { useCallback, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 
 export type UseBoardMovePolicyArgs<
   TOnDrop extends (...args: never[]) => boolean
@@ -21,9 +23,6 @@ export type UseBoardMovePolicyArgs<
 
   /** Restart action that already applies the no-FLIP policy (from Board/useNoFlipResets wiring) */
   restartNoFlip: () => void;
-
-  /** True when the current deal is won */
-  isWon: boolean;
 
   /** Current seed (used when replaying the same seed) */
   seed: string;
@@ -68,12 +67,11 @@ export function useBoardMovePolicy<
   clearCelebration,
   newDealNoFlip,
   restartNoFlip,
-  isWon,
   seed,
   replaySeed
 }: UseBoardMovePolicyArgs<TOnDrop>): UseBoardMovePolicyResult<TOnDrop> {
   const suppressFlipOnceNextRef = useRef<(() => void) | null>(null);
-
+  const status = useSelector(selectStatus);
   useEffect(() => {
     suppressFlipOnceNextRef.current = suppressFlipOnceNext;
   }, [suppressFlipOnceNext]);
@@ -110,7 +108,7 @@ export function useBoardMovePolicy<
   const restartWithCelebration = useCallback(() => {
     // After a win, "restart" means "replay this deal" (same seed, new gameId),
     // if the engine provides that action.
-    if (isWon && replaySeed) {
+    if (status === "won" && replaySeed) {
       replaySeedWithCelebration();
       return;
     }
@@ -118,7 +116,7 @@ export function useBoardMovePolicy<
     clearCelebration();
     restartNoFlip();
   }, [
-    isWon,
+    status,
     replaySeed,
     replaySeedWithCelebration,
     clearCelebration,

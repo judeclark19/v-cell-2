@@ -24,7 +24,6 @@ export type UseBoardControllerParams = ReturnType<typeof useGame>;
 export function useBoardController(params: UseBoardControllerParams) {
   const {
     state,
-    isWon,
     showTimer,
     dispatchMove,
     registerUiResets,
@@ -66,7 +65,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     showAcp
   } = useWinState({
     seed: state.seed,
-    isWon,
     isFullyCollected,
     isAnyModalOpenBase: paused // TODO: need a boolean for whether a modal is open, probably in UI domain
   });
@@ -251,7 +249,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     clearCelebration,
     newDealNoFlip,
     restartNoFlip,
-    isWon,
     seed: state.seed,
     replaySeed
   });
@@ -400,7 +397,6 @@ export function useBoardController(params: UseBoardControllerParams) {
   return {
     // from useGame
     state,
-    isWon,
     showTimer,
     undo,
     timeElapsedMs,

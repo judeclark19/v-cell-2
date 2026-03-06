@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import { selectPaused, selectStatus } from "..";
 
 export type UseGameTimerParams = {
-  isWon: boolean;
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   sessionReady: boolean;
 };
@@ -17,7 +16,6 @@ export type UseGameTimerParams = {
  * - Pauses when document is hidden.
  */
 export function useGameTimer({
-  isWon,
   setTimeElapsedMs,
   sessionReady
 }: UseGameTimerParams) {
@@ -28,7 +26,7 @@ export function useGameTimer({
   const paused = useSelector(selectPaused);
 
   useEffect(() => {
-    const isFinished = isWon || status === "abandoned";
+    const isFinished = status === "won" || status === "abandoned";
 
     function clearTimerInterval() {
       if (intervalIdRef.current !== null) {
@@ -111,5 +109,5 @@ export function useGameTimer({
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionReady, isWon, setTimeElapsedMs, startedAtMs, status]);
+  }, [paused, sessionReady, setTimeElapsedMs, startedAtMs, status]);
 }

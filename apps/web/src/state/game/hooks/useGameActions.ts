@@ -37,9 +37,6 @@ export type UseGameActionsParams = {
   rules: Rules;
   undoLimit: UndoLimit;
 
-  // Derived
-  isWon: boolean;
-
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
   >;
@@ -71,19 +68,14 @@ export type UseGameActionsResult = {
  */
 export function useGameActions({
   history,
-
   seed,
   gameId,
   uid,
   rules,
   undoLimit,
 
-  isWon,
-
   setCheckpoint,
-
   setCompletedGames,
-
   timeElapsedMs,
 
   startNewDealSession,
@@ -110,7 +102,7 @@ export function useGameActions({
       let nextCursor = cursor;
       let nextMoves = moves;
 
-      if (!isWon) {
+      if (status !== "won") {
         dispatch(setEndedAtMs(null));
         dispatch(setStatus("in_progress"));
 
@@ -129,7 +121,6 @@ export function useGameActions({
           move,
           gameId,
           seed,
-          isWon,
           endedAtMs,
           cursor: nextCursor
         });
@@ -137,7 +128,7 @@ export function useGameActions({
       }
 
       // If this move produces a win, stamp `endedAtMs` exactly once.
-      if (!isWon && areAllCardsUnlocked(next)) {
+      if (status !== "won" && areAllCardsUnlocked(next)) {
         const ended = Date.now();
 
         if (endedAtMs == null) {
@@ -192,10 +183,11 @@ export function useGameActions({
       }
 
       // Update engine history in RTK (present + undo stack).
-      dispatch(applyMoveToHistory({ move, undoLimit, isWon }));
+      dispatch(
+        applyMoveToHistory({ move, undoLimit, isWon: status === "won" })
+      );
     },
     [
-      isWon,
       status,
       cursor,
       moves,
@@ -228,7 +220,8 @@ export function useGameActions({
   const abandonIfNeededThenStart = useCallback(
     (startNext: () => void) => {
       // If a game is in progress, abandon it first so it gets archived.
-      const isFinished = isWon || status === "abandoned" || endedAtMs != null;
+      const isFinished =
+        status === "won" || status === "abandoned" || endedAtMs != null;
 
       const start = () => {
         const deviceId = getOrCreateDeviceId();
@@ -298,7 +291,6 @@ export function useGameActions({
       dispatch,
       startedAtMs,
       endedAtMs,
-      isWon,
       status,
       setCompletedGames,
       gameId,
@@ -332,7 +324,7 @@ export function useGameActions({
 
   const undo = useCallback(() => {
     // Once the game is won, undo is disabled.
-    if (isWon) return;
+    if (status === "won") return;
 
     // Nothing to undo.
     if (history.past.length === 0) return;
@@ -344,7 +336,7 @@ export function useGameActions({
     // dispatch(setUndosUsed(undosUsed + 1));
 
     dispatch(undoHistory());
-  }, [isWon, history.past.length, undoLimit, undosUsed, dispatch]);
+  }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
 
   return { dispatchMove, restart, newDeal, startBySeed, undo };
 }
