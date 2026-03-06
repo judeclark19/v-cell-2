@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { GameState, Rules } from "@vcell/engine";
-import {
-  selectSeed,
-  resetPerSessionState,
-  setStatus,
-  setTimeElapsedMs
-} from "@/state/game";
+import { selectSeed, resetPerSessionState, setStatus } from "@/state/game";
 import { startSession as startSession_new } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
@@ -16,7 +11,8 @@ import {
   setStartedAtMs,
   setEndedAtMs,
   setGameId,
-  selectGameId
+  selectGameId,
+  setTimeElapsedMs
 } from "@/state/session/sessionSlice";
 
 type StartSessionMode =
@@ -104,6 +100,7 @@ export function useGameSession({
       dispatch(setStartedAtMs(null));
       dispatch(setEndedAtMs(null));
       dispatch(setGameId(nextGameId));
+      dispatch(setTimeElapsedMs(0));
 
       resetPerSessionState_old();
     },
@@ -134,6 +131,7 @@ export function useGameSession({
     dispatch(setPaused(false));
     dispatch(setStartedAtMs(null));
     dispatch(setEndedAtMs(null));
+    dispatch(setTimeElapsedMs(0));
     resetPerSessionState_old();
   }, [dispatch, rules, resetPerSessionState_old]);
 

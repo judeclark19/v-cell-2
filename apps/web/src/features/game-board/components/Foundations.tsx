@@ -7,7 +7,11 @@ import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { selectRules, selectStatus } from "@/state/game";
-import { setPaused, selectStartedAtMs } from "@/state/session/sessionSlice";
+import {
+  setPaused,
+  selectStartedAtMs,
+  selectTimeElapsedMs
+} from "@/state/session/sessionSlice";
 
 type FoundationProps = {
   i: number;
@@ -128,7 +132,6 @@ type FoundationsProps = {
   drag?: DragState<{ card: EngineCard }>;
   playableFoundations: boolean[];
   showTimer: boolean;
-  timeElapsedMs: number;
   setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
   handleFoundationPointerDown?: (
     e: React.PointerEvent<HTMLDivElement>,
@@ -143,7 +146,6 @@ function Foundations({
   drag,
   playableFoundations,
   showTimer,
-  timeElapsedMs,
   setFoundationRef,
   handleFoundationPointerDown,
   isAbandoned
@@ -154,6 +156,7 @@ function Foundations({
 
   const startedAtMs = useSelector(selectStartedAtMs);
   const status = useSelector(selectStatus);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const dispatch = useDispatch();
 
   return (

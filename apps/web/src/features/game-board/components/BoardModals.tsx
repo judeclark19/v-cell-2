@@ -2,7 +2,11 @@ import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { useGame } from "@/state/game/GameProvider";
 import { useSession } from "@/state/session/SessionProvider";
-import { selectPaused, setPaused } from "@/state/session/sessionSlice";
+import {
+  selectPaused,
+  selectTimeElapsedMs,
+  setPaused
+} from "@/state/session/sessionSlice";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,7 +25,6 @@ type BoardModalsProps = {
   onDismissWinModal: () => void;
 
   moveCount: number;
-  timeElapsedMs: number;
 
   confirmReq: ConfirmRequest | null;
   dismissConfirm: () => void;
@@ -36,7 +39,6 @@ export default function BoardModals({
   shouldShowWinModal,
   onDismissWinModal,
   moveCount,
-  timeElapsedMs,
   confirmReq,
   dismissConfirm,
   onNewDealAction
@@ -47,6 +49,7 @@ export default function BoardModals({
 
   const dispatch = useDispatch();
   const paused = useSelector(selectPaused);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games

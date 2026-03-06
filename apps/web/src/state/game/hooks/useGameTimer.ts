@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectStatus, selectTimeElapsedMs, setTimeElapsedMs } from "..";
+import { selectStatus } from "..";
 import {
   selectSessionPhase,
   selectPaused,
-  selectStartedAtMs
+  selectStartedAtMs,
+  selectTimeElapsedMs,
+  setTimeElapsedMs
 } from "@/state/session/sessionSlice";
 
 /**

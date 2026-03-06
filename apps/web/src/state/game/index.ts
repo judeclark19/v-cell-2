@@ -10,7 +10,6 @@ export {
   undoHistory,
   resetTimeline,
   resetPerSessionState,
-  setTimeElapsedMs,
   setUndosUsed,
   setStatus,
   selectSeed,
@@ -22,6 +21,5 @@ export {
   selectUndosUsed,
   selectUndosRemaining,
   selectCanUndo,
-  selectStatus,
-  selectTimeElapsedMs
+  selectStatus
 } from "./gameSlice";

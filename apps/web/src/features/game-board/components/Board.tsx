@@ -23,7 +23,6 @@ import {
   selectCanUndo,
   selectRules,
   selectStatus,
-  selectTimeElapsedMs,
   selectUndosRemaining
 } from "@/state/game";
 
@@ -35,7 +34,6 @@ function Board() {
   const canUndo = useSelector(selectCanUndo);
   const status = useSelector(selectStatus);
   const sessionPhase = useSelector(selectSessionPhase);
-  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
@@ -141,7 +139,6 @@ function Board() {
               <>
                 {/* Foundations on top */}
                 <Foundations
-                  timeElapsedMs={timeElapsedMs}
                   foundationCards={vm.foundationCards}
                   foundations={vm.state.foundations}
                   drag={vm.drag}
@@ -214,7 +211,6 @@ function Board() {
             shouldShowWinModal={vm.shouldShowWinModal}
             onDismissWinModal={vm.dismissWinModal}
             moveCount={vm.moveCount}
-            timeElapsedMs={timeElapsedMs}
             confirmReq={confirmReq}
             dismissConfirm={dismissConfirm}
             requestConfirm={confirmThen}

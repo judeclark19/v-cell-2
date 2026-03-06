@@ -11,7 +11,7 @@ import {
 } from "@/state/session/sessionSlice";
 import { RootState } from "../reduxStore";
 import { Rules } from "@vcell/engine";
-import { setSessionPhase } from "./sessionSlice";
+import { setSessionPhase, setTimeElapsedMs } from "./sessionSlice";
 
 type Params = {
   seed: string;
@@ -55,6 +55,7 @@ export async function transitionSession(
   dispatch(setStartedAtMs(null));
   dispatch(setEndedAtMs(null));
   dispatch(setGameId(gameId));
+  dispatch(setTimeElapsedMs(0));
 
   return {
     kind: "started" as const,

@@ -12,7 +12,8 @@ import {
   setGameId,
   setPaused,
   setSessionPhase,
-  setStartedAtMs
+  setStartedAtMs,
+  setTimeElapsedMs
 } from "../sessionSlice";
 
 /**
@@ -50,6 +51,7 @@ export const bootSession = createAsyncThunk<
     thunkApi.dispatch(setStartedAtMs(saved.startedAtMs ?? null));
     thunkApi.dispatch(setEndedAtMs(saved.endedAtMs ?? null));
     thunkApi.dispatch(setGameId(saved.gameId));
+    thunkApi.dispatch(setTimeElapsedMs(saved.timeElapsedMs ?? 0));
 
     return { kind: "hydrated" as const };
   }

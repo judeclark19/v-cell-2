@@ -17,15 +17,15 @@ import {
   setUndosUsed,
   selectUndosUsed,
   selectStatus,
-  setStatus,
-  selectTimeElapsedMs
+  setStatus
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectStartedAtMs,
   setStartedAtMs,
   setEndedAtMs,
-  selectEndedAtMs
+  selectEndedAtMs,
+  selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
 
 export type UseGameActionsParams = {

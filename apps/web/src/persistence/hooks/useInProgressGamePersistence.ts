@@ -23,10 +23,8 @@ import { AppDispatch } from "@/state/reduxStore";
 import {
   GameStatus,
   selectStatus,
-  selectTimeElapsedMs,
   selectUndosUsed,
   setStatus,
-  setTimeElapsedMs,
   setUndosUsed
 } from "@/state/game";
 import {
@@ -36,7 +34,9 @@ import {
   selectStartedAtMs,
   selectEndedAtMs,
   setEndedAtMs,
-  selectGameId
+  selectGameId,
+  selectTimeElapsedMs,
+  setTimeElapsedMs
 } from "@/state/session/sessionSlice";
 
 type InProgressSnapshot = {

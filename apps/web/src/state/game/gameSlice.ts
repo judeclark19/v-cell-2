@@ -17,8 +17,6 @@ export type HistoryState = {
 export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
-  timeElapsedMs: number;
-
   status: GameStatus | null;
 
   rules: Rules;
@@ -51,8 +49,6 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
 
 const initialState: GameStoreState = {
   seed: "seed-boot",
-
-  timeElapsedMs: 0,
   status: null,
   rules: {
     allowFoundationPullback: false,
@@ -97,7 +93,6 @@ export const gameSlice = createSlice({
       state.cursor = 0;
       state.moveCount = 0;
       state.undosUsed = 0;
-      state.timeElapsedMs = 0;
       state.status = null;
     },
     hydrateHistory: (
@@ -117,7 +112,6 @@ export const gameSlice = createSlice({
         cursor?: number;
         fallbackRules: Rules;
         undoLimit: UndoLimit;
-        timeElapsedMs?: number;
         status?: GameStatus | null;
       }>
     ) => {
@@ -153,7 +147,6 @@ export const gameSlice = createSlice({
       state.undosUsed = action.payload.undosUsed ?? 0;
       state.cursor = cursor ?? 0;
       state.moveCount = state.cursor;
-      state.timeElapsedMs = action.payload.timeElapsedMs ?? 0;
       state.status = action.payload.status ?? null;
     },
     applyMoveToHistory: (
@@ -221,9 +214,6 @@ export const gameSlice = createSlice({
     setStatus: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
     },
-    setTimeElapsedMs: (state, action: PayloadAction<number>) => {
-      state.timeElapsedMs = action.payload;
-    },
     resetPerSessionState: (state) => {
       state.undosUsed = 0;
     }
@@ -237,7 +227,6 @@ export const {
   applyMoveToHistory,
   undoHistory,
   resetTimeline,
-  setTimeElapsedMs,
   setUndosUsed,
   setStatus,
   resetPerSessionState
@@ -277,5 +266,3 @@ export const selectCanUndo = (state: { game: GameStoreState }) => {
 };
 export const selectStatus = (state: { game: GameStoreState }) =>
   state.game.status;
-export const selectTimeElapsedMs = (state: { game: GameStoreState }) =>
-  state.game.timeElapsedMs;
