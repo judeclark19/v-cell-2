@@ -29,9 +29,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     dispatchMove,
     registerUiResets,
     undo,
-    canUndo,
-    undoLimit,
-    undosRemaining,
     newDeal,
     restart,
     replaySeed,
@@ -361,7 +358,6 @@ export function useBoardController(params: UseBoardControllerParams) {
 
     dispatchMove: commitMoveFromKeyboard,
     undo,
-    canUndo,
     paused,
     setPaused,
 
@@ -410,9 +406,6 @@ export function useBoardController(params: UseBoardControllerParams) {
     paused,
     setPaused,
     undo,
-    canUndo,
-    undoLimit,
-    undosRemaining,
     timeElapsedMs,
     moveCount,
     startBySeed,

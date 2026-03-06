@@ -13,7 +13,9 @@ import {
   undoHistory,
   resetTimeline,
   selectCursor,
-  selectMoves
+  selectMoves,
+  setUndosUsed,
+  selectUndosUsed
 } from "@/state/game";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -39,10 +41,6 @@ export type UseGameActionsParams = {
 
   // Run state setters
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
-
-  // Analytics / logs
-  undosUsed: number;
-  setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
 
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
@@ -86,9 +84,6 @@ export function useGameActions({
   isAbandoned,
   setIsAbandoned,
 
-  undosUsed,
-  setUndosUsed,
-
   setCheckpoint,
 
   setCompletedGames,
@@ -103,6 +98,7 @@ export function useGameActions({
   const cursor = useSelector(selectCursor);
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
+  const undosUsed = useSelector(selectUndosUsed);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -227,11 +223,11 @@ export function useGameActions({
     // but it should NOT affect the timer.
     dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
     dispatch(resetTimeline());
-    setUndosUsed(0);
+    dispatch(setUndosUsed(0));
     setCheckpoint(null);
     dispatch(setEndedAtMs(null));
     setIsAbandoned(false);
-  }, [seed, rules, setUndosUsed, setCheckpoint, setIsAbandoned, dispatch]);
+  }, [seed, rules, setCheckpoint, setIsAbandoned, dispatch]);
 
   const abandonIfNeededThenStart = useCallback(
     (startNext: () => void) => {
@@ -350,17 +346,10 @@ export function useGameActions({
     if (undoLimit !== "unlimited" && undosUsed >= undoLimit) return;
 
     // Count a successful undo exactly once (outside the history updater).
-    setUndosUsed((n) => n + 1);
+    // dispatch(setUndosUsed(undosUsed + 1));
 
     dispatch(undoHistory());
-  }, [
-    isWon,
-    history.past.length,
-    undoLimit,
-    undosUsed,
-    setUndosUsed,
-    dispatch
-  ]);
+  }, [isWon, history.past.length, undoLimit, undosUsed, dispatch]);
 
   return { dispatchMove, restart, newDeal, startBySeed, undo };
 }

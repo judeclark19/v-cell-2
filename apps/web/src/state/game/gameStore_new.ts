@@ -28,6 +28,7 @@ export interface GameStoreState {
   moves: Move[];
   cursor: number;
   moveCount: number;
+  undosUsed: number;
 }
 
 function safeRandomId(): string {
@@ -70,7 +71,8 @@ const initialState: GameStoreState = {
   },
   moves: [],
   cursor: 0,
-  moveCount: 0
+  moveCount: 0,
+  undosUsed: 0
 };
 
 export const gameSlice = createSlice({
@@ -102,6 +104,7 @@ export const gameSlice = createSlice({
       state.moves = [];
       state.cursor = 0;
       state.moveCount = 0;
+      state.undosUsed = 0;
       state.startedAtMs = null;
       state.endedAtMs = null;
     },
@@ -119,6 +122,7 @@ export const gameSlice = createSlice({
         seed: string;
         rules?: Rules;
         moves?: Move[];
+        undosUsed?: number;
         cursor?: number;
         fallbackRules: Rules;
         undoLimit: UndoLimit;
@@ -157,6 +161,7 @@ export const gameSlice = createSlice({
       state.history.past = past;
       state.sessionPhase = "ready";
       state.moves = moves ?? [];
+      state.undosUsed = action.payload.undosUsed ?? 0;
       state.cursor = cursor ?? 0;
       state.moveCount = state.cursor;
       state.startedAtMs = action.payload.startedAtMs ?? null;
@@ -214,11 +219,13 @@ export const gameSlice = createSlice({
       state.history.past = state.history.past.slice(0, -1);
       state.cursor = Math.max(0, state.cursor - 1);
       state.moveCount = Math.min(state.moveCount, state.cursor);
+      state.undosUsed += 1;
     },
     resetTimeline: (state) => {
       state.moves = [];
       state.cursor = 0;
       state.moveCount = 0;
+      state.undosUsed = 0;
     },
     setStartedAtMs: (state, action: PayloadAction<number | null>) => {
       state.startedAtMs = action.payload;
@@ -226,8 +233,16 @@ export const gameSlice = createSlice({
     setEndedAtMs: (state, action: PayloadAction<number | null>) => {
       state.endedAtMs = action.payload;
     },
+    setUndosUsed: (state, action: PayloadAction<number>) => {
+      state.undosUsed = action.payload;
+    },
     finalizeHydration: (state) => {
       state.sessionPhase = "ready";
+    },
+    resetPerSessionState: (state) => {
+      state.startedAtMs = null;
+      state.endedAtMs = null;
+      state.undosUsed = 0;
     }
   }
 });
@@ -241,7 +256,9 @@ export const {
   resetTimeline,
   setStartedAtMs,
   setEndedAtMs,
-  finalizeHydration
+  setUndosUsed,
+  finalizeHydration,
+  resetPerSessionState
 } = gameSlice.actions;
 
 export const gameReducer = gameSlice.reducer;
@@ -261,3 +278,24 @@ export const selectMoveCount = (state: { game: GameStoreState }) =>
   state.game.moveCount;
 export const selectRules = (state: { game: GameStoreState }) =>
   state.game.rules;
+export const selectUndosUsed = (state: { game: GameStoreState }) =>
+  state.game.undosUsed;
+export const selectUndosRemaining = (state: { game: GameStoreState }) => {
+  const rules = selectRules(state);
+  const undosUsed = selectUndosUsed(state);
+  if (rules.undoLimit === "unlimited") return Infinity;
+  return Math.max(0, rules.undoLimit - undosUsed);
+};
+export const selectCanUndo = (state: { game: GameStoreState }) => {
+  const sessionPhase = selectSessionPhase(state);
+  if (sessionPhase !== "ready") return false;
+
+  const history = selectHistory(state);
+  const rules = selectRules(state);
+  const undosUsed = selectUndosUsed(state);
+
+  if (history.past.length === 0) return false;
+  if (rules.undoLimit === "unlimited") return true;
+  if (undosUsed >= rules.undoLimit) return false;
+  return true;
+};

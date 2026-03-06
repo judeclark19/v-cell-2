@@ -28,7 +28,9 @@ import {
   selectMoves,
   selectCursor,
   selectMoveCount,
-  selectRules
+  selectRules,
+  selectUndosRemaining,
+  selectCanUndo
 } from "./";
 import { selectStartedAtMs } from "../session";
 
@@ -95,6 +97,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const cursor = useSelector(selectCursor);
   const moveCount = useSelector(selectMoveCount);
   const startedAtMs = useSelector(selectStartedAtMs);
+  const undosRemaining = useSelector(selectUndosRemaining);
+  const canUndo = useSelector(selectCanUndo);
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -121,7 +125,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Undo analytics
   // ---------------------------------------------------------------------------
-  const [undosUsed, setUndosUsed] = useState<number>(0);
 
   // Track previous rules for rule-change effect
   const prevUidRef = useRef<string | null>(uid);
@@ -136,7 +139,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     rules,
     setTimeElapsedMs,
     setIsAbandoned,
-    setUndosUsed,
     setCheckpoint
   });
 
@@ -162,10 +164,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Derived state
   // ---------------------------------------------------------------------------
-  const { isWon, undosRemaining, canUndo } = useGameDerivedState({
+  const { isWon} = useGameDerivedState({
     history,
-    undoLimit,
-    undosUsed
+    undoLimit
   });
 
   useInProgressGamePersistence({
@@ -180,13 +181,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     timeElapsedMsRef,
     paused,
     moveCount,
-    undosUsed,
     isWon,
 
     setTimeElapsedMs,
     setIsAbandoned,
-    setPaused,
-    setUndosUsed
+    setPaused
   });
 
   useLoginReconcileInProgressGame({
@@ -245,8 +244,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     isAbandoned,
     setIsAbandoned,
 
-    undosUsed,
-    setUndosUsed,
     setCheckpoint,
     setCompletedGames,
 
@@ -271,9 +268,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     state: history.present,
     isAbandoned,
     paused,
-    canUndo,
     moveCount,
-    undosUsed,
     timeElapsedMs,
     moves,
     cursor,

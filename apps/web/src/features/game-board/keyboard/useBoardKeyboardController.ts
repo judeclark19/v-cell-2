@@ -6,6 +6,8 @@ import type { Move } from "@vcell/engine";
 import { useKbCarryVisuals } from "./useKbCarryVisuals";
 import { useKeyboardActions } from "./useKeyboardActions";
 import { DragSource, DropTarget } from "../animations/dragTypes";
+import { selectCanUndo } from "@/state/game/gameStore_new";
+import { useSelector } from "react-redux";
 
 type DragLike = {
   source: DragSource | null;
@@ -25,7 +27,6 @@ type UseBoardKeyboardControllerArgs = {
   legalMoves: Move[];
   dispatchMove: (m: Move) => void;
   undo: () => void;
-  canUndo: boolean;
   newDeal: () => void;
   restart: () => void;
   paused: boolean;
@@ -68,7 +69,6 @@ export function useBoardKeyboardController({
   legalMoves,
   dispatchMove,
   undo,
-  canUndo,
   newDeal,
   restart,
   paused,
@@ -84,13 +84,13 @@ export function useBoardKeyboardController({
   getFreeCellDropEl
 }: UseBoardKeyboardControllerArgs) {
   const visuals = useKbCarryVisuals({ boardRef });
+  const canUndo = useSelector(selectCanUndo);
 
   const actions = useKeyboardActions({
     boardRef,
     legalMoves,
     dispatchMove,
     undo,
-    canUndo,
     newDeal,
     restart,
     paused,

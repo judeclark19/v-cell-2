@@ -6,7 +6,6 @@ import { selectRules } from "@/state/game";
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
-  undoLimit: UndoLimit;
 
   requestRulesChange: (patch: {
     faceDownCount?: FaceDownCount;
@@ -31,7 +30,6 @@ const parseUndoLimit = (value: string): UndoLimit => {
 export default function BoardControls({
   onNewDeal,
   startBySeed,
-  undoLimit,
   requestRulesChange
 }: BoardControlsProps) {
   const [seedInput, setSeedInput] = useState("");
@@ -149,10 +147,10 @@ export default function BoardControls({
             <select
               className="control"
               id="undo-limit"
-              value={String(undoLimit)}
+              value={String(rules.undoLimit)}
               onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
-                if (next === undoLimit) return;
+                if (next === rules.undoLimit) return;
                 await requestRulesChange({ undoLimit: next });
               }}
             >

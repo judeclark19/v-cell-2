@@ -16,8 +16,10 @@ export {
   undoHistory,
   resetTimeline,
   finalizeHydration,
+  resetPerSessionState,
   setStartedAtMs,
   setEndedAtMs,
+  setUndosUsed,
   selectSeed,
   selectGameId,
   selectSessionPhase,
@@ -25,5 +27,8 @@ export {
   selectMoves,
   selectCursor,
   selectMoveCount,
-  selectRules
+  selectRules,
+  selectUndosUsed,
+  selectUndosRemaining,
+  selectCanUndo
 } from "./gameStore_new";

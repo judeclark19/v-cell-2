@@ -26,6 +26,7 @@ import {
   selectEndedAtMs,
   setEndedAtMs
 } from "@/state/session";
+import { selectUndosUsed, setUndosUsed } from "@/state/game";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -58,14 +59,12 @@ type Params = {
   isAbandoned: boolean;
   paused: boolean;
   moveCount: number;
-  undosUsed: number;
   isWon: boolean;
 
   // setters for hydration
   setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
   setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
   setPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
 };
 
 export function useInProgressGamePersistence({
@@ -80,13 +79,11 @@ export function useInProgressGamePersistence({
   isAbandoned,
   paused,
   moveCount,
-  undosUsed,
   isWon,
   readyToHydrate,
   setTimeElapsedMs,
   setIsAbandoned,
-  setPaused,
-  setUndosUsed
+  setPaused
 }: Params) {
   const inProgressHydratedRef = useRef<boolean>(false);
   const hydratedSessionKeyRef = useRef<string | null>(null);
@@ -94,6 +91,7 @@ export function useInProgressGamePersistence({
   const hasSavedRef = useRef<boolean>(false);
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
+  const undosUsed = useSelector(selectUndosUsed);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
@@ -261,10 +259,10 @@ export function useInProgressGamePersistence({
         setTimeElapsedMs(saved.timeElapsedMs);
         dispatch(setStartedAtMs(saved.startedAtMs));
         dispatch(setEndedAtMs(saved.endedAtMs));
+        dispatch(setUndosUsed(saved.undosUsed));
 
         setIsAbandoned(saved.status === "abandoned");
         setPaused(saved.paused);
-        setUndosUsed(saved.undosUsed);
         onHydrated?.(saved);
         armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
@@ -286,7 +284,6 @@ export function useInProgressGamePersistence({
     setTimeElapsedMs,
     setIsAbandoned,
     setPaused,
-    setUndosUsed,
     sessionKey,
     rules,
     uid,

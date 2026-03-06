@@ -9,6 +9,8 @@ import type {
   DragSource,
   DropTarget
 } from "@/features/game-board/animations/dragTypes";
+import { selectCanUndo } from "@/state/game";
+import { useSelector } from "react-redux";
 /**
  * The goal of this hook is to own *actions* (effects on the game),
  * independent of keyboard navigation routing and independent of DOM class mutations.
@@ -92,7 +94,6 @@ export type UseKeyboardActionsArgs = {
   legalMoves: CommitArgs["legalMoves"];
   dispatchMove: CommitArgs["dispatchMove"];
 
-  canUndo: boolean;
   undo: () => void;
 
   newDeal: () => void;
@@ -133,7 +134,6 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
   const {
     legalMoves,
     dispatchMove,
-    canUndo,
     undo,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
@@ -441,6 +441,9 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
    * We restore focus *after* React has committed the new state. Using rAF is the
    * simplest reliable way here.
    */
+
+  const canUndo = useSelector(selectCanUndo);
+
   const handleUndo = useCallback(
     (anchorEl?: HTMLElement | null): boolean => {
       if (!canUndo) return false;

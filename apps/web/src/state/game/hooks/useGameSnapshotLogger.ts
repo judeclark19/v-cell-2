@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectEndedAtMs, selectStartedAtMs } from "@/state/session";
+import { selectCanUndo, selectUndosUsed } from "../gameStore_new";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 // Intentionally excludes `timeElapsedMs` from the LOG signature so timer ticks don't spam logs.
@@ -44,10 +45,8 @@ export type UseGameSnapshotLoggerParams = {
 
   isAbandoned: boolean;
   paused: boolean;
-  canUndo: boolean;
 
   moveCount: number;
-  undosUsed: number;
   timeElapsedMs: number;
 
   moves: Move[];
@@ -64,6 +63,8 @@ export type UseGameSnapshotLoggerParams = {
 export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
+  const undosUsed = useSelector(selectUndosUsed);
+  const canUndo = useSelector(selectCanUndo);
 
   const {
     gameId,
@@ -71,9 +72,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     state,
     isAbandoned,
     paused,
-    canUndo,
     moveCount,
-    undosUsed,
     timeElapsedMs,
     moves,
     cursor,

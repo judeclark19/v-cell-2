@@ -18,10 +18,20 @@ import {
 } from "@/state/session";
 import { AppDispatch } from "@/state/reduxStore";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
+import {
+  selectCanUndo,
+  selectRules,
+  selectUndosRemaining,
+  selectUndosUsed
+} from "@/state/game";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
   const startedAtMs = useSelector(selectStartedAtMs);
+  const rules = useSelector(selectRules);
+  const undosUsed = useSelector(selectUndosUsed);
+  const undosRemaining = useSelector(selectUndosRemaining);
+  const canUndo = useSelector(selectCanUndo);
 
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
@@ -92,6 +102,13 @@ function Board() {
     if (!ok) return;
     dispatch(applyRulesChangeStartNewDeal({ patch }));
   };
+
+  console.log({
+    canUndo: canUndo,
+    undoLimit: rules.undoLimit,
+    undosRemaining: undosRemaining,
+    undosUsed: undosUsed
+  });
 
   return (
     <>
@@ -181,11 +198,11 @@ function Board() {
                     type="button"
                     className="btn btn--secondary"
                     onClick={vm.undo}
-                    disabled={!vm.canUndo}
+                    disabled={!canUndo}
                   >
-                    {vm.undoLimit === "unlimited" || vm.undoLimit === 0
+                    {rules.undoLimit === "unlimited" || rules.undoLimit === 0
                       ? "Undo"
-                      : `Undo (${vm.undosRemaining})`}
+                      : `Undo (${undosRemaining})`}
                   </button>
                 </div>
               </>
@@ -239,7 +256,6 @@ function Board() {
             () => vm.startBySeed(seed)
           )
         }
-        undoLimit={vm.undoLimit}
         requestRulesChange={requestRulesChange}
       />
     </>
