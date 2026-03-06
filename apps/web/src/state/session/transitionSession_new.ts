@@ -5,6 +5,7 @@ import { selectSessionKey } from "@/state/session";
 import {
   selectSessionPhase,
   setEndedAtMs,
+  setGameId,
   setPaused,
   setStartedAtMs
 } from "@/state/session/sessionSlice";
@@ -45,7 +46,6 @@ export async function transitionSession(
   dispatch(
     startSession({
       seed,
-      gameId,
       rules
     })
   );
@@ -54,6 +54,7 @@ export async function transitionSession(
   dispatch(setPaused(false));
   dispatch(setStartedAtMs(null));
   dispatch(setEndedAtMs(null));
+  dispatch(setGameId(gameId));
 
   return {
     kind: "started" as const,

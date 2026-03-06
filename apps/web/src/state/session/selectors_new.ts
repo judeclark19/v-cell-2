@@ -10,7 +10,7 @@ export type SessionKey = {
 };
 
 export function selectSessionKey(state: RootState): SessionKey {
-  return { seed: state.game.seed, gameId: state.game.gameId };
+  return { seed: state.game.seed, gameId: state.session.gameId };
 }
 
 export function selectRules(state: RootState): Rules {

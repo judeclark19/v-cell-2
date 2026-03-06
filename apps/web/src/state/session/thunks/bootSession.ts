@@ -9,6 +9,7 @@ import type { RootState } from "@/state/reduxStore";
 import { hydrateFromPersisted } from "@/state/game/gameSlice";
 import {
   setEndedAtMs,
+  setGameId,
   setPaused,
   setSessionPhase,
   setStartedAtMs
@@ -35,7 +36,6 @@ export const bootSession = createAsyncThunk<
   if (saved && saved.seed && saved.gameId) {
     thunkApi.dispatch(
       hydrateFromPersisted({
-        gameId: saved.gameId,
         seed: saved.seed,
         rules: saved.rules,
         moves: saved.moves,
@@ -49,6 +49,7 @@ export const bootSession = createAsyncThunk<
     thunkApi.dispatch(setPaused(saved.paused ?? false));
     thunkApi.dispatch(setStartedAtMs(saved.startedAtMs ?? null));
     thunkApi.dispatch(setEndedAtMs(saved.endedAtMs ?? null));
+    thunkApi.dispatch(setGameId(saved.gameId));
 
     return { kind: "hydrated" as const };
   }

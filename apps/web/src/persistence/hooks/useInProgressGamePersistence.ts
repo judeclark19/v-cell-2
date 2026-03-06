@@ -35,7 +35,8 @@ import {
   setStartedAtMs,
   selectStartedAtMs,
   selectEndedAtMs,
-  setEndedAtMs
+  setEndedAtMs,
+  selectGameId
 } from "@/state/session/sessionSlice";
 
 type InProgressSnapshot = {
@@ -53,7 +54,6 @@ type EndState = "none" | "won" | "abandoned";
 type Params = {
   // identity
   uid: string | null;
-  gameId: string;
   seed: string;
   rules: Rules;
 
@@ -68,7 +68,6 @@ type Params = {
 
 export function useInProgressGamePersistence({
   uid,
-  gameId,
   seed,
   rules,
   onHydrated,
@@ -87,6 +86,7 @@ export function useInProgressGamePersistence({
   const status = useSelector(selectStatus);
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const gameId = useSelector(selectGameId);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,

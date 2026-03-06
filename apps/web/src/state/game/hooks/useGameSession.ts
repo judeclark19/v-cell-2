@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import type { GameState, Rules } from "@vcell/engine";
 import {
   selectSeed,
-  selectGameId,
   resetPerSessionState,
   setStatus,
   setTimeElapsedMs
@@ -15,7 +14,9 @@ import {
   setPaused,
   setSessionPhase,
   setStartedAtMs,
-  setEndedAtMs
+  setEndedAtMs,
+  setGameId,
+  selectGameId
 } from "@/state/session/sessionSlice";
 
 type StartSessionMode =
@@ -33,7 +34,6 @@ export type UseGameSessionParams = {
 
 export type UseGameSessionResult = {
   seed: string;
-  gameId: string;
 
   startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
@@ -103,6 +103,7 @@ export function useGameSession({
       dispatch(setPaused(false));
       dispatch(setStartedAtMs(null));
       dispatch(setEndedAtMs(null));
+      dispatch(setGameId(nextGameId));
 
       resetPerSessionState_old();
     },
@@ -145,7 +146,6 @@ export function useGameSession({
 
   return {
     seed,
-    gameId,
     startNewDealSession,
     replaySeed,
     startSession

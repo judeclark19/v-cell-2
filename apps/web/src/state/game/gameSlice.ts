@@ -17,7 +17,6 @@ export type HistoryState = {
 export type GameStatus = "in_progress" | "won" | "abandoned";
 export interface GameStoreState {
   seed: string;
-  gameId: string;
   timeElapsedMs: number;
 
   status: GameStatus | null;
@@ -52,7 +51,6 @@ function undoLimitToCap(undoLimit: UndoLimit): number {
 
 const initialState: GameStoreState = {
   seed: "seed-boot",
-  gameId: "game-boot",
 
   timeElapsedMs: 0,
   status: null,
@@ -81,22 +79,17 @@ export const gameSlice = createSlice({
   reducers: {
     startSession: (
       state,
-      action: PayloadAction<{ rules: Rules; seed?: string; gameId?: string }>
+      action: PayloadAction<{ rules: Rules; seed?: string }>
     ) => {
       const seed =
         action.payload.seed && action.payload.seed !== "seed-boot"
           ? action.payload.seed
           : safeRandomId();
 
-      const gameId =
-        action.payload.gameId && action.payload.gameId !== "game-boot"
-          ? action.payload.gameId
-          : safeRandomId();
       const initialGame = createGame(seed, action.payload.rules);
       state.rules = action.payload.rules;
 
       state.seed = seed;
-      state.gameId = gameId;
       state.history.present = initialGame;
       state.history.past = [];
 
@@ -117,7 +110,6 @@ export const gameSlice = createSlice({
     hydrateFromPersisted: (
       state,
       action: PayloadAction<{
-        gameId: string;
         seed: string;
         rules?: Rules;
         moves?: Move[];
@@ -154,7 +146,6 @@ export const gameSlice = createSlice({
       }
 
       state.rules = rules ?? fallbackRules;
-      state.gameId = action.payload.gameId;
       state.seed = seed;
       state.history.present = present;
       state.history.past = past;
@@ -256,8 +247,6 @@ export const gameReducer = gameSlice.reducer;
 
 // Selectors
 export const selectSeed = (state: { game: GameStoreState }) => state.game.seed;
-export const selectGameId = (state: { game: GameStoreState }) =>
-  state.game.gameId;
 export const selectHistory = (state: { game: GameStoreState }) =>
   state.game.history;
 export const selectMoves = (state: { game: GameStoreState }) =>

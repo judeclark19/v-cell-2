@@ -14,7 +14,6 @@ export {
   setUndosUsed,
   setStatus,
   selectSeed,
-  selectGameId,
   selectHistory,
   selectMoves,
   selectCursor,

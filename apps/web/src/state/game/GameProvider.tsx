@@ -29,7 +29,11 @@ import {
   selectRules,
   selectUndosRemaining
 } from "./";
-import { selectSessionPhase, selectStartedAtMs } from "../session/sessionSlice";
+import {
+  selectSessionPhase,
+  selectStartedAtMs,
+  selectGameId
+} from "../session/sessionSlice";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -70,6 +74,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     useGameSettings();
 
   const rules = useSelector(selectRules);
+  const gameId = useSelector(selectGameId);
 
   const [checkpoint, setCheckpoint] = useState<{
     at: number;
@@ -110,7 +115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/gameId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { seed, gameId, startNewDealSession, replaySeed } = useGameSession({
+  const { seed, startNewDealSession, replaySeed } = useGameSession({
     rules,
     setCheckpoint
   });
@@ -141,7 +146,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useInProgressGamePersistence({
     readyToHydrate: !!gameId && !!seed,
     uid,
-    gameId,
     seed,
     rules,
     moves,

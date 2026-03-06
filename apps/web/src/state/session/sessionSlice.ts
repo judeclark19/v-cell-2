@@ -1,15 +1,31 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
-
 export interface SessionStoreState {
+  gameId: string;
   sessionPhase: "boot" | "hydrating" | "ready";
   paused: boolean;
   startedAtMs: number | null;
   endedAtMs: number | null;
 }
 
+// TODO: move this somewhere else
+function safeRandomId(): string {
+  const c = globalThis.crypto as Crypto | undefined;
+  const maybeUUID = c?.randomUUID;
+  if (typeof maybeUUID === "function") return maybeUUID.call(c);
+
+  if (c?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 const initialState: SessionStoreState = {
+  gameId: "game-boot",
   sessionPhase: "boot",
   paused: false,
   startedAtMs: null,
@@ -20,6 +36,17 @@ export const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
+    setGameId: (state, action: PayloadAction<string | undefined>) => {
+      let newId;
+
+      if (!action.payload || action.payload === "game-boot") {
+        newId = safeRandomId();
+      } else {
+        newId = action.payload;
+      }
+
+      state.gameId = newId;
+    },
     setSessionPhase: (state, action: PayloadAction<SessionPhase>) => {
       state.sessionPhase = action.payload;
     },
@@ -37,10 +64,18 @@ export const sessionSlice = createSlice({
 
 export const sessionReducer = sessionSlice.reducer;
 
-export const { setSessionPhase, setPaused, setStartedAtMs, setEndedAtMs } =
-  sessionSlice.actions;
+export const {
+  setGameId,
+  setSessionPhase,
+  setPaused,
+  setStartedAtMs,
+  setEndedAtMs
+} = sessionSlice.actions;
 
 // Selectors
+export const selectGameId = (state: { session: SessionStoreState }) =>
+  state.session.gameId;
+
 export const selectSessionPhase = (state: { session: SessionStoreState }) =>
   state.session.sessionPhase;
 
