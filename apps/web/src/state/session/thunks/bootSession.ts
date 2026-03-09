@@ -57,16 +57,12 @@ export const bootSession = createAsyncThunk<
   }
 
   // Otherwise start a fresh session and immediately mark READY.
-  transitionSession(
-    {
+
+  await thunkApi.dispatch(
+    transitionSession({
       seed: crypto.randomUUID(),
-      sessionId: crypto.randomUUID(),
       rules
-    },
-    {
-      getState: thunkApi.getState,
-      dispatch: thunkApi.dispatch
-    }
+    })
   );
 
   thunkApi.dispatch(setSessionPhase("ready"));

@@ -1,69 +1,29 @@
-//“Do we actually start a session, or is it already the same one?”
-
-import { startGame } from "@/state/game/gameSlice";
-import { selectSessionKey } from "@/state/session/selectors_new";
-import {
-  selectSessionPhase,
-  setCheckpoint,
-  setEndedAtMs,
-  setSessionId,
-  setPaused,
-  setStartedAtMs
-} from "@/state/session/sessionSlice";
-import { RootState } from "../reduxStore";
+import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Rules } from "@vcell/engine";
-import { setSessionPhase, setTimeElapsedMs } from "./sessionSlice";
+import { RootState } from "../reduxStore";
+import { startNewGame } from "../game/gameSlice";
+import { startNewSession } from "./sessionSlice";
 
 type Params = {
-  seed: string;
-  sessionId: string;
+  seed?: string;
   rules: Rules;
 };
 
-export async function transitionSession(
-  { seed, sessionId, rules }: Params,
-  {
-    getState,
-    dispatch
-  }: {
-    getState: () => RootState;
-    dispatch: (action: unknown) => unknown;
-  }
-) {
-  const state = getState();
-
-  const current = selectSessionKey(state);
-  const phase = selectSessionPhase(state);
-
-  const isSame = current?.seed === seed && current?.sessionId === sessionId;
-
-  if (isSame && phase !== "boot") {
-    return {
-      kind: "noop" as const,
-      reason: `already on ${seed}:${sessionId} (phase=${phase})`
-    };
-  }
+export const transitionSession = createAsyncThunk<
+  { kind: "noop" | "started" },
+  Params,
+  { state: RootState }
+>("session/transitionSession", async ({ seed, rules }, thunkApi) => {
+  const dispatch = thunkApi.dispatch;
 
   dispatch(
-    startGame({
+    startNewGame({
       seed,
       rules
     })
   );
-
-  dispatch(setSessionPhase("hydrating"));
-  dispatch(setPaused(false));
-  dispatch(setStartedAtMs(null));
-  dispatch(setEndedAtMs(null));
-  dispatch(setSessionId(sessionId));
-  dispatch(setTimeElapsedMs(0));
-  dispatch(setCheckpoint(null));
-
-  dispatch(setSessionPhase("ready"));
-
+  dispatch(startNewSession());
   return {
-    kind: "started" as const,
-    seed,
-    sessionId
+    kind: "started" as const
   };
-}
+});

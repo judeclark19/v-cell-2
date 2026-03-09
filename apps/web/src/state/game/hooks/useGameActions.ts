@@ -218,13 +218,8 @@ export function useGameActions({
       };
 
       if (startedAtMs && !isFinished) {
-        const ended = Date.now();
-
         dispatch(setStatus("abandoned"));
-
-        if (ended) {
-          dispatch(setEndedAtMs(ended));
-        }
+        dispatch(setEndedAtMs(Date.now()));
 
         const archivedCursor = cursor;
         const archivedMoves = moves;
@@ -239,7 +234,7 @@ export function useGameActions({
           status: "abandoned",
 
           startedAtMs,
-          endedAtMs: ended,
+          endedAtMs: Date.now(),
           timeElapsedMs: 0,
           paused: false,
 

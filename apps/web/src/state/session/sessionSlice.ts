@@ -41,6 +41,16 @@ export const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
+    startNewSession: (state) => {
+      state.paused = false;
+      state.startedAtMs = null;
+      state.endedAtMs = null;
+      state.sessionId = safeRandomId();
+      state.timeElapsedMs = 0;
+      state.checkpoint = null;
+
+      state.sessionPhase = "ready";
+    },
     setSessionId: (state, action: PayloadAction<string | undefined>) => {
       let newId;
 
@@ -79,6 +89,7 @@ export const sessionSlice = createSlice({
 export const sessionReducer = sessionSlice.reducer;
 
 export const {
+  startNewSession,
   setSessionId,
   setSessionPhase,
   setPaused,

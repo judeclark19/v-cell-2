@@ -1,17 +1,14 @@
 import { useState } from "react";
-import { FaceDownCount, UndoLimit } from "@vcell/engine";
+import { UndoLimit } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectRules } from "@/state/game/gameSlice";
+import { Rules } from "@vcell/engine";
 
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
 
-  requestRulesChange: (patch: {
-    faceDownCount?: FaceDownCount;
-    undoLimit?: UndoLimit;
-    allowFoundationPullback?: boolean;
-  }) => Promise<void>;
+  requestRulesChange: (rules: Rules) => Promise<void>;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -128,7 +125,7 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
                 if (next === rules.faceDownCount) return;
-                await requestRulesChange({ faceDownCount: next });
+                await requestRulesChange({ ...rules, faceDownCount: next });
               }}
             >
               <option value="0">0 (all face-up)</option>
@@ -151,7 +148,7 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
                 if (next === rules.undoLimit) return;
-                await requestRulesChange({ undoLimit: next });
+                await requestRulesChange({ ...rules, undoLimit: next });
               }}
             >
               <option value="0">0</option>
@@ -175,7 +172,10 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = e.target.value === "on";
                 if (next === rules.allowFoundationPullback) return;
-                await requestRulesChange({ allowFoundationPullback: next });
+                await requestRulesChange({
+                  ...rules,
+                  allowFoundationPullback: next
+                });
               }}
             >
               <option value="on">On (easier)</option>

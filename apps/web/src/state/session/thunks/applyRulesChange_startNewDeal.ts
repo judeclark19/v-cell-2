@@ -1,18 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { Rules } from "@vcell/engine";
-
-import { selectHistory } from "@/state/game/gameSlice";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebaseClient";
 import { RootState } from "@/state/reduxStore";
 import { transitionSession } from "../transitionSession_new";
-import { setSessionPhase } from "../sessionSlice";
-
-function areRulesEqual(a: Rules, b: Rules): boolean {
-  return (
-    a.allowFoundationPullback === b.allowFoundationPullback &&
-    a.undoLimit === b.undoLimit &&
-    a.faceDownCount === b.faceDownCount
-  );
-}
+import { setStatus } from "@/state/game/gameSlice";
+import { setEndedAtMs } from "../sessionSlice";
+import { PersistedGame } from "@/persistence/types";
+import { getOrCreateDeviceId } from "@/persistence/schema";
+import { setCompletedGames } from "@/state/records/recordsSlice";
+import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 
 /**
  * Session-domain thunk: when rules change, start a NEW deal (new seed/sessionId).
@@ -20,45 +17,68 @@ function areRulesEqual(a: Rules, b: Rules): boolean {
  */
 export const applyRulesChangeStartNewDeal = createAsyncThunk<
   { kind: "noop" | "cancelled" | "started" },
-  { patch: Partial<Rules>; confirm?: () => Promise<boolean> },
+  { newRules: Rules; uid: string | null },
   { state: RootState }
 >(
   "session/applyRulesChangeStartNewDeal",
-  async ({ patch, confirm }, thunkApi) => {
-    const currentRules = selectHistory(thunkApi.getState()).present.rules;
+  async ({ newRules, uid }, thunkApi) => {
+    // abandon current game
+    thunkApi.dispatch(setStatus("abandoned"));
+    thunkApi.dispatch(setEndedAtMs(Date.now()));
 
-    const nextRules: Rules = {
-      ...currentRules,
-      ...patch
+    const { sessionId, startedAtMs } = thunkApi.getState().session;
+    const { seed, history, cursor, moves, undosUsed } =
+      thunkApi.getState().game;
+    const { completedGames } = thunkApi.getState().records;
+
+    const completed: PersistedGame = {
+      sessionId,
+      deviceId: getOrCreateDeviceId(),
+      seed,
+      rules: history.present.rules,
+      kind: "freeplay",
+
+      status: "abandoned",
+
+      startedAtMs,
+      endedAtMs: Date.now(),
+      timeElapsedMs: 0,
+      paused: false,
+
+      moveCount: cursor,
+      undosUsed,
+      moves,
+      cursor,
+
+      updatedAtMs: Date.now(),
+      ...(uid ? { userId: uid } : {})
     };
-
-    if (areRulesEqual(currentRules, nextRules)) {
+    if (completedGames.some((g) => g.sessionId === sessionId))
       return { kind: "noop" as const };
+
+    thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
+
+    if (uid) {
+      setDoc(doc(db, "users", uid, "games", sessionId), completed, {
+        merge: true
+      }).catch((err) => {
+        console.warn(
+          "[game actions] failed to write completed game to Firestore",
+          err
+        );
+      });
     }
 
-    if (confirm) {
-      console.debug("[rulesChange] waiting for confirm");
+    const deviceId = getOrCreateDeviceId();
+    deleteInProgressGameForDevice(deviceId).catch(() => {});
 
-      const ok = await confirm();
-
-      console.debug("[rulesChange] confirm resolved:", ok);
-
-      if (!ok) return { kind: "cancelled" as const };
-    }
-
-    transitionSession(
-      {
+    thunkApi.dispatch(
+      transitionSession({
         seed: crypto.randomUUID(),
-        sessionId: crypto.randomUUID(),
-        rules: nextRules
-      },
-      {
-        getState: thunkApi.getState,
-        dispatch: thunkApi.dispatch
-      }
+        rules: newRules
+      })
     );
 
-    thunkApi.dispatch(setSessionPhase("ready"));
     return { kind: "started" as const };
   }
 );

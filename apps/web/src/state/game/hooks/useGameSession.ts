@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
 import { selectSeed, setStatus } from "@/state/game/gameSlice";
-import { setUndosUsed, startGame } from "@/state/game/gameSlice";
+import { setUndosUsed, startNewGame } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
@@ -73,7 +73,7 @@ export function useGameSession({
       }
 
       dispatch(
-        startGame({
+        startNewGame({
           rules,
           seed: nextSeed,
           ...(nextSessionId ? { sessionId: nextSessionId } : {})
@@ -120,7 +120,7 @@ export function useGameSession({
   }, [dispatch, rules, seed, sessionId]);
 
   const startNewDealSession = useCallback(() => {
-    dispatch(startGame({ rules }));
+    dispatch(startNewGame({ rules }));
 
     dispatch(setSessionPhase("ready"));
     dispatch(setPaused(false));

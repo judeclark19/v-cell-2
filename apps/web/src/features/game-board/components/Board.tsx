@@ -18,13 +18,14 @@ import {
   selectStartedAtMs
 } from "@/state/session/sessionSlice";
 import { AppDispatch } from "@/state/reduxStore";
-import { FaceDownCount, UndoLimit } from "@vcell/engine";
+import { Rules } from "@vcell/engine";
 import {
   selectCanUndo,
   selectRules,
   selectStatus,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
+import { useSession } from "@/state/session/SessionProvider";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +36,7 @@ function Board() {
   const status = useSelector(selectStatus);
   const sessionPhase = useSelector(selectSessionPhase);
 
+  const { uid } = useSession();
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
     useBoardController(game);
@@ -89,13 +91,27 @@ function Board() {
   };
 
   // TODO: move this?
-  const requestRulesChange = async (patch: {
-    faceDownCount?: FaceDownCount;
-    undoLimit?: UndoLimit;
-    allowFoundationPullback?: boolean;
-  }) => {
-    if (!startedAtMs || status !== "in_progress") {
-      dispatch(applyRulesChangeStartNewDeal({ patch }));
+  function areRulesEqual(a: Rules, b: Rules): boolean {
+    return (
+      a.allowFoundationPullback === b.allowFoundationPullback &&
+      a.undoLimit === b.undoLimit &&
+      a.faceDownCount === b.faceDownCount
+    );
+  }
+  const requestRulesChange = async (patch: Rules) => {
+    const newRules = { ...rules, ...patch };
+    if (areRulesEqual(rules, newRules)) {
+      // No change, no need to confirm or dispatch.
+      return;
+    }
+
+    if (status !== "in_progress") {
+      dispatch(
+        applyRulesChangeStartNewDeal({
+          newRules,
+          uid
+        })
+      );
       return;
     }
 
@@ -107,7 +123,12 @@ function Board() {
       cancelLabel: "Cancel"
     });
     if (!ok) return;
-    dispatch(applyRulesChangeStartNewDeal({ patch }));
+    dispatch(
+      applyRulesChangeStartNewDeal({
+        newRules,
+        uid
+      })
+    );
   };
 
   return (

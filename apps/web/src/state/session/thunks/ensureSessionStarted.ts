@@ -10,24 +10,26 @@ type Args = {
   rules: Rules;
 };
 
-type Result = { kind: "noop"; reason: string } | { kind: "started" };
-
 export const ensureSessionStarted = createAsyncThunk<
-  Result,
+  void,
   Args,
   { state: RootState }
->(
-  "session/ensureSessionStarted",
-  async ({ seed, sessionId, rules }, { getState, dispatch }) => {
-    const res = await transitionSession(
-      { seed, sessionId, rules },
-      { getState, dispatch }
-    );
+>("session/ensureSessionStarted", async ({ rules }, { dispatch }) => {
+  // const res = await transitionSession(
+  //   { seed, sessionId, rules },
+  //   { getState, dispatch }
+  // );
 
-    if (res.kind === "noop") {
-      return { kind: "noop", reason: res.reason };
-    }
+  // if (res.kind === "noop") {
+  //   return { kind: "noop", reason: res.reason };
+  // }
 
-    return { kind: "started" };
-  }
-);
+  // return { kind: "started" };
+
+  await dispatch(
+    transitionSession({
+      seed: crypto.randomUUID(),
+      rules
+    })
+  );
+});
