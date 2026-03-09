@@ -1,13 +1,16 @@
-import { useState } from "react";
 import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-
+import {
+  openConfirm,
+  closeConfirm,
+  selectConfirmReq
+} from "@/state/ui/uiSlice";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
-import BoardModals, { type ConfirmRequest } from "./BoardModals";
+import BoardModals from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
@@ -42,51 +45,36 @@ function Board() {
     useBoardController(game);
 
   // TODO: move this?
-  const [confirmReq, setConfirmReq] = useState<ConfirmRequest | null>(null);
-
-  const confirmThen = (
-    req: Omit<ConfirmRequest, "onConfirm">,
-    onConfirm: () => void
-  ) => {
-    setConfirmReq({ ...req, onConfirm });
-  };
+  const confirmReq = useSelector(selectConfirmReq);
 
   const dismissConfirm = () => {
     confirmReq?.onCancel?.();
-    setConfirmReq(null);
+    dispatch(closeConfirm());
   };
 
-  const requestConfirm = (req: Omit<ConfirmRequest, "onConfirm">) => {
-    return new Promise<boolean>((resolve) => {
-      setConfirmReq({
-        ...req,
-        onConfirm: () => {
-          resolve(true);
-          setConfirmReq(null);
-        },
-        // IMPORTANT: this assumes BoardModals calls dismissConfirm() on cancel.
-        // We'll wire that up in step 2.
-        onCancel: () => {
-          resolve(false);
-          setConfirmReq(null);
-        }
-      });
-    });
-  };
-
-  const confirmIfInProgress = (
-    req: Omit<ConfirmRequest, "onConfirm">,
-    onConfirm: () => void
-  ) => {
-    // Only confirm if a game is actually in progress (i.e. started and not finished).
-    // When no progress exists, just do the action.
-    if (!startedAtMs || status !== "in_progress") {
-      onConfirm();
-      return;
+  const confirmIfInProgress = (req: {
+    title: string;
+    bodyText: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  }) => {
+    if (!(startedAtMs && status === "in_progress")) {
+      return Promise.resolve(true);
     }
-    confirmThen(req, () => {
-      setConfirmReq(null);
-      onConfirm();
+
+    return new Promise<boolean>((resolve) => {
+      dispatch(
+        openConfirm({
+          ...req,
+          onConfirm: () => {
+            resolve(true);
+            dispatch(closeConfirm());
+          },
+          onCancel: () => {
+            resolve(false);
+          }
+        })
+      );
     });
   };
 
@@ -100,22 +88,9 @@ function Board() {
   }
   const requestRulesChange = async (patch: Rules) => {
     const newRules = { ...rules, ...patch };
-    if (areRulesEqual(rules, newRules)) {
-      // No change, no need to confirm or dispatch.
-      return;
-    }
+    if (areRulesEqual(rules, newRules)) return;
 
-    if (status !== "in_progress") {
-      dispatch(
-        applyRulesChangeStartNewDeal({
-          newRules,
-          uid
-        })
-      );
-      return;
-    }
-
-    const ok = await requestConfirm({
+    const ok = await confirmIfInProgress({
       title: "Change gameplay setting?",
       bodyText:
         "Changing this will start a new game and abandon your current one.",
@@ -123,6 +98,7 @@ function Board() {
       cancelLabel: "Cancel"
     });
     if (!ok) return;
+
     dispatch(
       applyRulesChangeStartNewDeal({
         newRules,
@@ -130,7 +106,6 @@ function Board() {
       })
     );
   };
-
   return (
     <>
       <div
@@ -234,7 +209,6 @@ function Board() {
             moveCount={vm.moveCount}
             confirmReq={confirmReq}
             dismissConfirm={dismissConfirm}
-            requestConfirm={confirmThen}
             onNewDealAction={vm.newDealWithCelebration}
           />
         </BoardKbAttrsContext.Provider>
@@ -248,28 +222,29 @@ function Board() {
         )}
       </p>
       <BoardControls
-        onNewDeal={() =>
-          confirmIfInProgress(
-            {
-              title: "Start a new deal?",
-              bodyText: "Starting a new deal will abandon your current game.",
-              confirmLabel: "New deal",
-              cancelLabel: "Cancel"
-            },
-            vm.newDealWithCelebration
-          )
-        }
-        startBySeed={(seed) =>
-          confirmIfInProgress(
-            {
-              title: "Start a new game from seed?",
-              bodyText: "Starting a new deal will abandon your current game.",
-              confirmLabel: "Play seed",
-              cancelLabel: "Cancel"
-            },
-            () => vm.startBySeed(seed)
-          )
-        }
+        onNewDeal={async () => {
+          const ok = await confirmIfInProgress({
+            title: "Start a new deal?",
+            bodyText: "Starting a new deal will abandon your current game.",
+            confirmLabel: "New deal",
+            cancelLabel: "Cancel"
+          });
+          if (!ok) return;
+
+          vm.newDealWithCelebration();
+        }}
+        startBySeed={async (seed: string) => {
+          const ok = await confirmIfInProgress({
+            title: "Start a seeded deal?",
+            bodyText:
+              "Starting this seeded deal will abandon your current game.",
+            confirmLabel: "Start",
+            cancelLabel: "Cancel"
+          });
+          if (!ok) return;
+
+          vm.startBySeed(seed);
+        }}
         requestRulesChange={requestRulesChange}
       />
     </>

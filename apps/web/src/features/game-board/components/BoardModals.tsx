@@ -29,10 +29,6 @@ type BoardModalsProps = {
 
   confirmReq: ConfirmRequest | null;
   dismissConfirm: () => void;
-  requestConfirm: (
-    req: Omit<ConfirmRequest, "onConfirm">,
-    onConfirm: () => void
-  ) => void;
   onNewDealAction: () => void;
 };
 
@@ -111,10 +107,7 @@ export default function BoardModals({
           primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
           primaryButtonAction={confirmReq.onConfirm}
           secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
-          secondaryButtonAction={() => {
-            confirmReq.onCancel?.();
-            dismissConfirm();
-          }}
+          secondaryButtonAction={dismissConfirm}
         />
       )}
 

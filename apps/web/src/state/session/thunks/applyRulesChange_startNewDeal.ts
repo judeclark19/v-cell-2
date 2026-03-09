@@ -22,15 +22,19 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
 >(
   "session/applyRulesChangeStartNewDeal",
   async ({ newRules, uid }, thunkApi) => {
+    const now = Date.now();
+    const state = thunkApi.getState();
+    const dispatch = thunkApi.dispatch;
+
+    const { sessionId, startedAtMs } = state.session;
+    const { seed, history, cursor, moves, undosUsed } = state.game;
+    const { completedGames } = state.records;
+
     // abandon current game
-    thunkApi.dispatch(setStatus("abandoned"));
-    thunkApi.dispatch(setEndedAtMs(Date.now()));
+    dispatch(setStatus("abandoned"));
+    dispatch(setEndedAtMs(now));
 
-    const { sessionId, startedAtMs } = thunkApi.getState().session;
-    const { seed, history, cursor, moves, undosUsed } =
-      thunkApi.getState().game;
-    const { completedGames } = thunkApi.getState().records;
-
+    // create a record
     const completed: PersistedGame = {
       sessionId,
       deviceId: getOrCreateDeviceId(),
@@ -41,7 +45,7 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
       status: "abandoned",
 
       startedAtMs,
-      endedAtMs: Date.now(),
+      endedAtMs: now,
       timeElapsedMs: 0,
       paused: false,
 
@@ -50,13 +54,13 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
       moves,
       cursor,
 
-      updatedAtMs: Date.now(),
+      updatedAtMs: now,
       ...(uid ? { userId: uid } : {})
     };
     if (completedGames.some((g) => g.sessionId === sessionId))
       return { kind: "noop" as const };
 
-    thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
+    dispatch(setCompletedGames([...completedGames, completed]));
 
     if (uid) {
       setDoc(doc(db, "users", uid, "games", sessionId), completed, {
@@ -72,7 +76,7 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
     const deviceId = getOrCreateDeviceId();
     deleteInProgressGameForDevice(deviceId).catch(() => {});
 
-    thunkApi.dispatch(
+    dispatch(
       transitionSession({
         seed: crypto.randomUUID(),
         rules: newRules
