@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import type { UndoLimit, FaceDownCount } from "@vcell/engine";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectRules } from "../gameSlice";
+import { selectShowTimer, setShowTimer } from "@/state/ui/uiSlice";
+import { AppDispatch } from "@/state/reduxStore";
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
 const UNDO_LIMIT_KEY = "vcell:undoLimit";
 const FACE_DOWN_COUNT_KEY = "vcell:faceDownCount";
 
 export type UseGameSettingsResult = {
-  showTimer: boolean;
-  setShowTimer: (next: boolean) => void;
   undoLimit: UndoLimit;
   setUndoLimit: (next: UndoLimit) => void;
 };
 
 export function useGameSettings(): UseGameSettingsResult {
-  const [showTimer, setShowTimer] = useState<boolean>(true);
+  // const [showTimer, setShowTimer] = useState<boolean>(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const showTimer = useSelector(selectShowTimer);
 
   const [undoLimit, setUndoLimit] = useState<UndoLimit>("unlimited");
-
-  // const [faceDownCount, setFaceDownCount] = useState<Rules["faceDownCount"]>(7);
 
   const [hydrated, setHydrated] = useState(false);
 
@@ -70,7 +70,7 @@ export function useGameSettings(): UseGameSettingsResult {
 
       queueMicrotask(() => {
         if (nextShowTimer != null) {
-          setShowTimer(nextShowTimer);
+          dispatch(setShowTimer(nextShowTimer));
         }
         if (nextUndoLimit != null) {
           setUndoLimit(nextUndoLimit);
@@ -86,7 +86,7 @@ export function useGameSettings(): UseGameSettingsResult {
         setHydrated(true);
       });
     }
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -109,8 +109,6 @@ export function useGameSettings(): UseGameSettingsResult {
   }, [hydrated, rules.faceDownCount]);
 
   return {
-    showTimer,
-    setShowTimer,
     undoLimit,
     setUndoLimit
   };

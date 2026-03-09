@@ -3,10 +3,12 @@ import type { ConfirmRequest } from "@/features/game-board/components/BoardModal
 
 export interface UiState {
   confirmReq: ConfirmRequest | null;
+  showTimer: boolean;
 }
 
 const initialState: UiState = {
-  confirmReq: null
+  confirmReq: null,
+  showTimer: true
 };
 
 const uiSlice = createSlice({
@@ -18,11 +20,15 @@ const uiSlice = createSlice({
     },
     closeConfirm: (state) => {
       state.confirmReq = null;
+    },
+    setShowTimer: (state, action: PayloadAction<boolean>) => {
+      state.showTimer = action.payload;
     }
   }
 });
 
-export const { openConfirm, closeConfirm } = uiSlice.actions;
+export const { openConfirm, closeConfirm, setShowTimer } = uiSlice.actions;
 export const uiReducer = uiSlice.reducer;
 
 export const selectConfirmReq = (state: { ui: UiState }) => state.ui.confirmReq;
+export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;

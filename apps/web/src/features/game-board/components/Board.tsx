@@ -2,7 +2,7 @@ import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-import { selectConfirmReq } from "@/state/ui/uiSlice";
+import { selectConfirmReq, selectShowTimer } from "@/state/ui/uiSlice";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -41,6 +41,8 @@ function Board() {
   const startedAtMs = useSelector(selectStartedAtMs);
   const sessionPhase = useSelector(selectSessionPhase);
   const confirmReq = useSelector(selectConfirmReq);
+  // UI state
+  const showTimer = useSelector(selectShowTimer);
 
   const { uid } = useSession();
   const game = useGame();
@@ -80,7 +82,7 @@ function Board() {
                   foundations={vm.state.foundations}
                   drag={vm.drag}
                   playableFoundations={vm.playable.foundations}
-                  showTimer={vm.showTimer}
+                  showTimer={showTimer}
                   setFoundationRef={vm.setFoundationRef}
                   handleFoundationPointerDown={vm.handleFoundationPointerDown}
                   isAbandoned={false}

@@ -49,8 +49,6 @@ type GameContextValue = {
   undo: () => void;
   setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
-  showTimer: boolean;
-  setShowTimer: (next: boolean) => void;
   moveCount: number;
   sessionId: string;
 };
@@ -67,8 +65,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
-  const { showTimer, setShowTimer, undoLimit, setUndoLimit } =
-    useGameSettings();
+  const { undoLimit, setUndoLimit } = useGameSettings();
 
   const rules = useSelector(selectRules);
   const sessionId = useSelector(selectSessionId);
@@ -199,8 +196,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undo,
     setUndoLimit,
     undosRemaining,
-    showTimer,
-    setShowTimer,
     moveCount,
     sessionId
   };

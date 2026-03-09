@@ -24,7 +24,6 @@ export type UseBoardControllerParams = ReturnType<typeof useGame>;
 export function useBoardController(params: UseBoardControllerParams) {
   const {
     state,
-    showTimer,
     dispatchMove,
     registerUiResets,
     undo,
@@ -396,7 +395,6 @@ export function useBoardController(params: UseBoardControllerParams) {
   return {
     // from useGame
     state,
-    showTimer,
     undo,
     moveCount,
     startBySeed,
