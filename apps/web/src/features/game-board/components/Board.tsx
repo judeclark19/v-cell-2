@@ -2,11 +2,7 @@ import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-import {
-  openConfirm,
-  closeConfirm,
-  selectConfirmReq
-} from "@/state/ui/uiSlice";
+import { selectConfirmReq } from "@/state/ui/uiSlice";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -15,7 +11,6 @@ import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useDispatch, useSelector } from "react-redux";
-import { applyRulesChangeStartNewDeal } from "@/state/session/thunks/applyRulesChange_startNewDeal";
 import {
   selectSessionPhase,
   selectStartedAtMs
@@ -29,83 +24,29 @@ import {
   selectUndosRemaining
 } from "@/state/game/gameSlice";
 import { useSession } from "@/state/session/SessionProvider";
+import {
+  requestConfirmation,
+  dismissConfirmation
+} from "@/state/ui/requestConfirmation";
+import { requestRulesChange as requestRulesChangeThunk } from "@/state/session/thunks/requestRulesChange";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
-  const startedAtMs = useSelector(selectStartedAtMs);
+  // Game state
   const rules = useSelector(selectRules);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
   const status = useSelector(selectStatus);
+  // Session state
+  const startedAtMs = useSelector(selectStartedAtMs);
   const sessionPhase = useSelector(selectSessionPhase);
+  const confirmReq = useSelector(selectConfirmReq);
 
   const { uid } = useSession();
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
     useBoardController(game);
 
-  // TODO: move this?
-  const confirmReq = useSelector(selectConfirmReq);
-
-  const dismissConfirm = () => {
-    confirmReq?.onCancel?.();
-    dispatch(closeConfirm());
-  };
-
-  const confirmIfInProgress = (req: {
-    title: string;
-    bodyText: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-  }) => {
-    if (!(startedAtMs && status === "in_progress")) {
-      return Promise.resolve(true);
-    }
-
-    return new Promise<boolean>((resolve) => {
-      dispatch(
-        openConfirm({
-          ...req,
-          onConfirm: () => {
-            resolve(true);
-            dispatch(closeConfirm());
-          },
-          onCancel: () => {
-            resolve(false);
-          }
-        })
-      );
-    });
-  };
-
-  // TODO: move this?
-  function areRulesEqual(a: Rules, b: Rules): boolean {
-    return (
-      a.allowFoundationPullback === b.allowFoundationPullback &&
-      a.undoLimit === b.undoLimit &&
-      a.faceDownCount === b.faceDownCount
-    );
-  }
-  const requestRulesChange = async (patch: Rules) => {
-    const newRules = { ...rules, ...patch };
-    if (areRulesEqual(rules, newRules)) return;
-
-    const ok = await confirmIfInProgress({
-      title: "Change gameplay setting?",
-      bodyText:
-        "Changing this will start a new game and abandon your current one.",
-      confirmLabel: "Change",
-      cancelLabel: "Cancel"
-    });
-    if (!ok) return;
-
-    dispatch(
-      applyRulesChangeStartNewDeal({
-        newRules,
-        uid
-      })
-    );
-  };
   return (
     <>
       <div
@@ -208,7 +149,7 @@ function Board() {
             onDismissWinModal={vm.dismissWinModal}
             moveCount={vm.moveCount}
             confirmReq={confirmReq}
-            dismissConfirm={dismissConfirm}
+            dismissConfirm={() => dismissConfirmation(dispatch, confirmReq)}
             onNewDealAction={vm.newDealWithCelebration}
           />
         </BoardKbAttrsContext.Provider>
@@ -223,29 +164,35 @@ function Board() {
       </p>
       <BoardControls
         onNewDeal={async () => {
-          const ok = await confirmIfInProgress({
-            title: "Start a new deal?",
-            bodyText: "Starting a new deal will abandon your current game.",
-            confirmLabel: "New deal",
-            cancelLabel: "Cancel"
-          });
+          const ok =
+            !(startedAtMs && status === "in_progress") ||
+            (await requestConfirmation(dispatch, {
+              title: "Start a new deal?",
+              bodyText: "Starting a new deal will abandon your current game.",
+              confirmLabel: "New deal",
+              cancelLabel: "Cancel"
+            }));
           if (!ok) return;
 
           vm.newDealWithCelebration();
         }}
         startBySeed={async (seed: string) => {
-          const ok = await confirmIfInProgress({
-            title: "Start a seeded deal?",
-            bodyText:
-              "Starting this seeded deal will abandon your current game.",
-            confirmLabel: "Start",
-            cancelLabel: "Cancel"
-          });
+          const ok =
+            !(startedAtMs && status === "in_progress") ||
+            (await requestConfirmation(dispatch, {
+              title: "Start a seeded deal?",
+              bodyText:
+                "Starting this seeded deal will abandon your current game.",
+              confirmLabel: "Start",
+              cancelLabel: "Cancel"
+            }));
           if (!ok) return;
 
           vm.startBySeed(seed);
         }}
-        requestRulesChange={requestRulesChange}
+        requestRulesChange={async (patch: Rules) => {
+          await dispatch(requestRulesChangeThunk({ patch, uid })).unwrap();
+        }}
       />
     </>
   );
