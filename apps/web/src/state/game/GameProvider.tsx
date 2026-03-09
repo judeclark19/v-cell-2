@@ -8,22 +8,22 @@ import {
   useRef
 } from "react";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
-import type { GameState, Move, UndoLimit } from "@vcell/engine";
+import type { GameState, Move } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
-import { useGameSettings } from "./hooks/useGameSettings";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
 import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   selectHistory,
   selectMoves,
   selectCursor,
   selectMoveCount,
   selectRules,
-  selectUndosRemaining
+  selectUndosRemaining,
+  selectUndoLimit
 } from "./gameSlice";
 import {
   selectSessionPhase,
@@ -32,6 +32,8 @@ import {
 } from "../session/sessionSlice";
 import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
+import { AppDispatch } from "../reduxStore";
+import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -47,7 +49,6 @@ type GameContextValue = {
   replaySeed: (seed: string) => void;
   startBySeed: (seed: string) => void;
   undo: () => void;
-  setUndoLimit: (next: UndoLimit) => void;
   undosRemaining: number; // Infinity when unlimited
   moveCount: number;
   sessionId: string;
@@ -65,7 +66,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // UI settings (localStorage)
   // ---------------------------------------------------------------------------
-  const { undoLimit, setUndoLimit } = useGameSettings();
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(initializeSettingsFromStorage());
+  }, [dispatch]);
+  const undoLimit = useSelector(selectUndoLimit);
 
   const rules = useSelector(selectRules);
   const sessionId = useSelector(selectSessionId);
@@ -194,7 +200,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     replaySeed,
     startBySeed,
     undo,
-    setUndoLimit,
     undosRemaining,
     moveCount,
     sessionId

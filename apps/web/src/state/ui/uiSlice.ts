@@ -4,11 +4,13 @@ import type { ConfirmRequest } from "@/features/game-board/components/BoardModal
 export interface UiState {
   confirmReq: ConfirmRequest | null;
   showTimer: boolean;
+  settingsHydrated: boolean;
 }
 
 const initialState: UiState = {
   confirmReq: null,
-  showTimer: true
+  showTimer: true,
+  settingsHydrated: false
 };
 
 const uiSlice = createSlice({
@@ -23,12 +25,18 @@ const uiSlice = createSlice({
     },
     setShowTimer: (state, action: PayloadAction<boolean>) => {
       state.showTimer = action.payload;
+    },
+    setSettingsHydrated: (state, action: PayloadAction<boolean>) => {
+      state.settingsHydrated = action.payload;
     }
   }
 });
 
-export const { openConfirm, closeConfirm, setShowTimer } = uiSlice.actions;
+export const { openConfirm, closeConfirm, setShowTimer, setSettingsHydrated } =
+  uiSlice.actions;
 export const uiReducer = uiSlice.reducer;
 
 export const selectConfirmReq = (state: { ui: UiState }) => state.ui.confirmReq;
 export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;
+export const selectSettingsHydrated = (state: { ui: UiState }) =>
+  state.ui.settingsHydrated;

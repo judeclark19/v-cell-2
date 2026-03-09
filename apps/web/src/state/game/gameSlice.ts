@@ -1,5 +1,6 @@
 // Redux Toolkit
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { FaceDownCount } from "@vcell/engine";
 import {
   applyMove,
   createGame,
@@ -211,6 +212,12 @@ export const gameSlice = createSlice({
     setUndosUsed: (state, action: PayloadAction<number>) => {
       state.undosUsed = action.payload;
     },
+    setUndoLimitRule: (state, action: PayloadAction<UndoLimit>) => {
+      state.rules.undoLimit = action.payload;
+    },
+    setFaceDownCountRule: (state, action: PayloadAction<FaceDownCount>) => {
+      state.rules.faceDownCount = action.payload;
+    },
     setStatus: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
     }
@@ -225,6 +232,8 @@ export const {
   undoHistory,
   resetTimeline,
   setUndosUsed,
+  setUndoLimitRule,
+  setFaceDownCountRule,
   setStatus
 } = gameSlice.actions;
 
@@ -242,22 +251,26 @@ export const selectMoveCount = (state: { game: GameStoreState }) =>
   state.game.moveCount;
 export const selectRules = (state: { game: GameStoreState }) =>
   state.game.rules;
+export const selectUndoLimit = (state: { game: GameStoreState }) =>
+  state.game.rules.undoLimit;
 export const selectUndosUsed = (state: { game: GameStoreState }) =>
   state.game.undosUsed;
+export const selectFaceDownCount = (state: { game: GameStoreState }) =>
+  state.game.rules.faceDownCount;
 export const selectUndosRemaining = (state: { game: GameStoreState }) => {
-  const rules = selectRules(state);
+  const undoLimit = selectUndoLimit(state);
   const undosUsed = selectUndosUsed(state);
-  if (rules.undoLimit === "unlimited") return Infinity;
-  return Math.max(0, rules.undoLimit - undosUsed);
+  if (undoLimit === "unlimited") return Infinity;
+  return Math.max(0, undoLimit - undosUsed);
 };
 export const selectCanUndo = (state: { game: GameStoreState }) => {
   const history = selectHistory(state);
-  const rules = selectRules(state);
+  const undoLimit = selectUndoLimit(state);
   const undosUsed = selectUndosUsed(state);
 
   if (history.past.length === 0) return false;
-  if (rules.undoLimit === "unlimited") return true;
-  if (undosUsed >= rules.undoLimit) return false;
+  if (undoLimit === "unlimited") return true;
+  if (undosUsed >= undoLimit) return false;
   return true;
 };
 export const selectStatus = (state: { game: GameStoreState }) =>
