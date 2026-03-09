@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { AppDispatch, RootState } from "@/state/reduxStore";
 import type { Rules } from "@vcell/engine";
-import { areRulesEqual } from "@/state/game/rules";
+import { areRulesEqual } from "@/state/game/utils";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { applyRulesChangeStartNewDeal } from "./applyRulesChange_startNewDeal";
 
