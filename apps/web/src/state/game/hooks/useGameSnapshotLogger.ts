@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
 import { selectCanUndo, selectUndosUsed } from "../";
-import { selectPaused, selectEndedAtMs } from "@/state/session/sessionSlice";
+import {
+  selectPaused,
+  selectEndedAtMs,
+  selectCheckpoint
+} from "@/state/session/sessionSlice";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 export type GameSnapshot = {
@@ -15,7 +19,6 @@ export type GameSnapshot = {
   undosUsed: number;
   moves: Move[];
   cursor: number;
-  checkpoint: { at: number; state: GameState } | null;
   // Keep the full engine state in the snapshot so we can inspect it when debugging.
   state: GameState;
 };
@@ -40,7 +43,6 @@ export type UseGameSnapshotLoggerParams = {
 
   moves: Move[];
   cursor: number;
-  checkpoint: { at: number; state: GameState } | null;
 };
 
 /**
@@ -54,8 +56,9 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
   const undosUsed = useSelector(selectUndosUsed);
   const canUndo = useSelector(selectCanUndo);
   const paused = useSelector(selectPaused);
+  const checkpoint = useSelector(selectCheckpoint);
 
-  const { gameId, seed, state, moveCount, moves, cursor, checkpoint } = params;
+  const { gameId, seed, state, moveCount, moves, cursor } = params;
 
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({

@@ -74,11 +74,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const rules = useSelector(selectRules);
   const gameId = useSelector(selectGameId);
 
-  const [checkpoint, setCheckpoint] = useState<{
-    at: number;
-    state: GameState;
-  } | null>(null);
-
   // ---------------------------------------------------------------------------
   // History / engine state
   // ---------------------------------------------------------------------------
@@ -112,8 +107,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Session (seed/gameId + init/reseed choreography)
   // ---------------------------------------------------------------------------
   const { seed, startNewDealSession, replaySeed } = useGameSession({
-    rules,
-    setCheckpoint
+    rules
   });
 
   const startNewDealSessionWithResets = useCallback(() => {
@@ -176,8 +170,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     undoLimit,
     uid,
 
-    setCheckpoint,
-
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
@@ -191,8 +183,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     state: history.present,
     moveCount,
     moves,
-    cursor,
-    checkpoint
+    cursor
   });
 
   // ---------------------------------------------------------------------------

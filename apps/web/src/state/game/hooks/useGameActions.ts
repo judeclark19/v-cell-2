@@ -24,7 +24,8 @@ import {
   selectStartedAtMs,
   setStartedAtMs,
   setEndedAtMs,
-  selectEndedAtMs
+  selectEndedAtMs,
+  setCheckpoint
 } from "@/state/session/sessionSlice";
 import {
   selectCompletedGames,
@@ -40,10 +41,6 @@ export type UseGameActionsParams = {
   uid: string | null;
   rules: Rules;
   undoLimit: UndoLimit;
-
-  setCheckpoint: React.Dispatch<
-    React.SetStateAction<{ at: number; state: GameState } | null>
-  >;
 
   // Session transition
   startNewDealSession: () => void;
@@ -71,8 +68,6 @@ export function useGameActions({
   uid,
   rules,
   undoLimit,
-
-  setCheckpoint,
 
   startNewDealSession,
   replaySeed
@@ -174,7 +169,7 @@ export function useGameActions({
       }
 
       if (nextCursor > 0 && nextCursor % 20 === 0) {
-        setCheckpoint({ at: nextCursor, state: next });
+        dispatch(setCheckpoint({ at: nextCursor, state: next }));
       }
 
       // Update engine history in RTK (present + undo stack).
@@ -191,7 +186,6 @@ export function useGameActions({
       startedAtMs,
       undosUsed,
       undoLimit,
-      setCheckpoint,
       uid,
       history.present,
       dispatch,
@@ -206,10 +200,10 @@ export function useGameActions({
     dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
     dispatch(resetTimeline());
     dispatch(setUndosUsed(0));
-    setCheckpoint(null);
+    dispatch(setCheckpoint(null));
     dispatch(setEndedAtMs(null));
     dispatch(setStatus("in_progress"));
-  }, [seed, rules, setCheckpoint, dispatch]);
+  }, [seed, rules, dispatch]);
 
   const abandonIfNeededThenStart = useCallback(
     (startNext: () => void) => {

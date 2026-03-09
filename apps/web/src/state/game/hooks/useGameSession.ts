@@ -12,7 +12,8 @@ import {
   setEndedAtMs,
   setGameId,
   selectGameId,
-  setTimeElapsedMs
+  setTimeElapsedMs,
+  setCheckpoint
 } from "@/state/session/sessionSlice";
 
 type StartSessionMode =
@@ -21,11 +22,6 @@ type StartSessionMode =
 
 export type UseGameSessionParams = {
   rules: Rules;
-
-  // State setters owned by GameProvider
-  setCheckpoint: React.Dispatch<
-    React.SetStateAction<{ at: number; state: GameState } | null>
-  >;
 };
 
 export type UseGameSessionResult = {
@@ -43,8 +39,7 @@ export type UseGameSessionResult = {
  * choreography that resets all per-session state.
  */
 export function useGameSession({
-  rules,
-  setCheckpoint
+  rules
 }: UseGameSessionParams): UseGameSessionResult {
   // Seed/gameId are now owned by the RTK store.
   // Keep deterministic placeholders to avoid hydration mismatches.
@@ -61,11 +56,11 @@ export function useGameSession({
     dispatch(setTimeElapsedMs(0));
     // setIsAbandoned(false);
     dispatch(setStatus("in_progress"));
-    setCheckpoint(null);
+    dispatch(setCheckpoint(null));
 
     dispatch(resetPerSessionState());
     dispatch(setStartedAtMs(null));
-  }, [setCheckpoint, dispatch]);
+  }, [dispatch]);
 
   const startSession = useCallback(
     (mode: StartSessionMode) => {

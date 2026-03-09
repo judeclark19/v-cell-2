@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { GameState } from "@vcell/engine";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
 export interface SessionStoreState {
@@ -8,6 +9,7 @@ export interface SessionStoreState {
   startedAtMs: number | null;
   endedAtMs: number | null;
   timeElapsedMs: number;
+  checkpoint: { at: number; state: GameState } | null;
 }
 
 // TODO: move this somewhere else
@@ -31,7 +33,8 @@ const initialState: SessionStoreState = {
   paused: false,
   startedAtMs: null,
   endedAtMs: null,
-  timeElapsedMs: 0
+  timeElapsedMs: 0,
+  checkpoint: null
 };
 
 export const sessionSlice = createSlice({
@@ -63,6 +66,12 @@ export const sessionSlice = createSlice({
     },
     setTimeElapsedMs: (state, action: PayloadAction<number>) => {
       state.timeElapsedMs = action.payload;
+    },
+    setCheckpoint: (
+      state,
+      action: PayloadAction<{ at: number; state: GameState } | null>
+    ) => {
+      state.checkpoint = action.payload;
     }
   }
 });
@@ -75,7 +84,8 @@ export const {
   setPaused,
   setStartedAtMs,
   setEndedAtMs,
-  setTimeElapsedMs
+  setTimeElapsedMs,
+  setCheckpoint
 } = sessionSlice.actions;
 
 // Selectors
@@ -96,3 +106,6 @@ export const selectEndedAtMs = (state: { session: SessionStoreState }) =>
 
 export const selectTimeElapsedMs = (state: { session: SessionStoreState }) =>
   state.session.timeElapsedMs;
+
+export const selectCheckpoint = (state: { session: SessionStoreState }) =>
+  state.session.checkpoint;
