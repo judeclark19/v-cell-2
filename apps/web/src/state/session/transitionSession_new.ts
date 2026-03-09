@@ -1,7 +1,7 @@
 //“Do we actually start a session, or is it already the same one?”
 
 import { startSession } from "@/state/game/gameSlice";
-import { selectSessionKey } from "@/state/session";
+import { selectSessionKey } from "@/state/session/selectors_new";
 import {
   selectSessionPhase,
   setEndedAtMs,

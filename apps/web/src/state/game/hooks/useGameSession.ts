@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
-import { selectSeed, resetPerSessionState, setStatus } from "@/state/game";
-import { startSession as startSession_new } from "@/state/game/gameSlice";
-import { bootSession } from "@/state/session";
+import { selectSeed, setStatus } from "@/state/game/gameSlice";
+import {
+  setUndosUsed,
+  startSession as startSession_new
+} from "@/state/game/gameSlice";
+import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
   setPaused,
@@ -51,17 +54,6 @@ export function useGameSession({
   // We guard both per-mount (ref) and per-page-load (global) to avoid double-dispatch.
   const didBootstrapRef = useRef(false);
 
-  const resetPerSessionState_old = useCallback(() => {
-    // TODO make this a whole reducer that sets all the values
-    dispatch(setTimeElapsedMs(0));
-    // setIsAbandoned(false);
-    dispatch(setStatus("in_progress"));
-    dispatch(setCheckpoint(null));
-
-    dispatch(resetPerSessionState());
-    dispatch(setStartedAtMs(null));
-  }, [dispatch]);
-
   const startSession = useCallback(
     (mode: StartSessionMode) => {
       console.debug("[useGameSession] startSession", {
@@ -96,11 +88,14 @@ export function useGameSession({
       dispatch(setEndedAtMs(null));
       dispatch(setGameId(nextGameId));
       dispatch(setTimeElapsedMs(0));
-      dispatch(setSessionPhase("ready"));
 
-      resetPerSessionState_old();
+      dispatch(setStatus(null));
+      dispatch(setCheckpoint(null));
+
+      dispatch(setUndosUsed(0));
+      dispatch(setSessionPhase("ready"));
     },
-    [dispatch, rules, resetPerSessionState_old, seed, gameId]
+    [dispatch, rules, seed, gameId]
   );
 
   useEffect(() => {
@@ -110,7 +105,12 @@ export function useGameSession({
     didBootstrapRef.current = true;
 
     // Reset provider-owned per-session state once at boot.
-    resetPerSessionState_old();
+    dispatch(setTimeElapsedMs(0));
+    dispatch(setStatus("in_progress"));
+    dispatch(setCheckpoint(null));
+
+    dispatch(setUndosUsed(0));
+    dispatch(setStartedAtMs(null));
 
     dispatch(bootSession({ rules })).catch((err) => {
       console.error("bootSession failed", err);
@@ -119,17 +119,21 @@ export function useGameSession({
     return () => {
       didBootstrapRef.current = false;
     };
-  }, [dispatch, rules, resetPerSessionState_old, seed, gameId]);
+  }, [dispatch, rules, seed, gameId]);
 
   const startNewDealSession = useCallback(() => {
     dispatch(startSession_new({ rules }));
+
     dispatch(setSessionPhase("ready"));
     dispatch(setPaused(false));
     dispatch(setStartedAtMs(null));
     dispatch(setEndedAtMs(null));
     dispatch(setTimeElapsedMs(0));
-    resetPerSessionState_old();
-  }, [dispatch, rules, resetPerSessionState_old]);
+    dispatch(setStatus("in_progress"));
+    dispatch(setCheckpoint(null));
+
+    dispatch(setUndosUsed(0));
+  }, [dispatch, rules]);
 
   const replaySeed = useCallback(
     (nextSeed: string) => {

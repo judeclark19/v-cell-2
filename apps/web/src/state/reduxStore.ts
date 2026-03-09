@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { gameReducer } from "./game";
-import { sessionReducer } from "./session";
+import { gameReducer } from "./game/gameSlice";
+import { sessionReducer } from "./session/sessionSlice";
 import { recordsReducer } from "./records/recordsSlice";
 
 export const reduxStore = configureStore({

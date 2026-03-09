@@ -213,9 +213,6 @@ export const gameSlice = createSlice({
     },
     setStatus: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
-    },
-    resetPerSessionState: (state) => {
-      state.undosUsed = 0;
     }
   }
 });
@@ -228,8 +225,7 @@ export const {
   undoHistory,
   resetTimeline,
   setUndosUsed,
-  setStatus,
-  resetPerSessionState
+  setStatus
 } = gameSlice.actions;
 
 export const gameReducer = gameSlice.reducer;

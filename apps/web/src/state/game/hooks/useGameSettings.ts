@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { UndoLimit, FaceDownCount } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectRules } from "..";
+import { selectRules } from "../gameSlice";
 
 const SHOW_TIMER_KEY = "vcell:showTimer";
 const UNDO_LIMIT_KEY = "vcell:undoLimit";

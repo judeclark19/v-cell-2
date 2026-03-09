@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectStatus } from "../../game";
+import { selectStatus } from "../../game/gameSlice";
 import {
   selectSessionPhase,
   selectPaused,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaceDownCount, UndoLimit } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectRules } from "@/state/game";
+import { selectRules } from "@/state/game/gameSlice";
 
 type BoardControlsProps = {
   onNewDeal: () => void;

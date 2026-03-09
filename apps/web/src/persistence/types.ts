@@ -1,5 +1,5 @@
 // apps/web/src/persistence/types.ts
-import { GameStatus } from "@/state/game";
+import { GameStatus } from "@/state/game/gameSlice";
 import type { GameState, Move } from "@vcell/engine";
 
 export type PersistedGame = {

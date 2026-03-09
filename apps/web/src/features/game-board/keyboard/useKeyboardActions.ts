@@ -9,7 +9,7 @@ import type {
   DragSource,
   DropTarget
 } from "@/features/game-board/animations/dragTypes";
-import { selectCanUndo } from "@/state/game";
+import { selectCanUndo } from "@/state/game/gameSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { selectPaused, setPaused } from "@/state/session/sessionSlice";
 /**

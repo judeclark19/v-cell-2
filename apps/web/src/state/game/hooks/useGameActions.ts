@@ -18,7 +18,7 @@ import {
   selectUndosUsed,
   selectStatus,
   setStatus
-} from "@/state/game";
+} from "@/state/game/gameSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectStartedAtMs,

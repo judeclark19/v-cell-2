@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectCanUndo, selectUndosUsed } from "../";
+import { selectCanUndo, selectUndosUsed } from "../gameSlice";
 import {
   selectPaused,
   selectEndedAtMs,

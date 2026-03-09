@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { Rules } from "@vcell/engine";
 
-import { selectHistory } from "@/state/game";
+import { selectHistory } from "@/state/game/gameSlice";
 import { RootState } from "@/state/reduxStore";
 import { transitionSession } from "../transitionSession_new";
 import { setSessionPhase } from "../sessionSlice";

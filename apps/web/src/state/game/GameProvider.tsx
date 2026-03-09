@@ -24,7 +24,7 @@ import {
   selectMoveCount,
   selectRules,
   selectUndosRemaining
-} from "./";
+} from "./gameSlice";
 import {
   selectSessionPhase,
   selectStartedAtMs,

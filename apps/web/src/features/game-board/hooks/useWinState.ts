@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useWinEffects } from "@/features/game-board/effects/winEffects";
 import { useSelector } from "react-redux";
-import { selectStatus } from "@/state/game";
+import { selectStatus } from "@/state/game/gameSlice";
 
 export type UseWinStateArgs = {
   /** Current deal seed */

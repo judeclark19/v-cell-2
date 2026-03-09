@@ -6,7 +6,7 @@ import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
-import { selectRules, selectStatus } from "@/state/game";
+import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import {
   setPaused,
   selectStartedAtMs,

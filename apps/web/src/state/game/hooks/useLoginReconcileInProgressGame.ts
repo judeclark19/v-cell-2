@@ -21,7 +21,7 @@ import {
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { ensureSessionStarted } from "@/state/session";
+import { ensureSessionStarted } from "@/state/session/thunks/ensureSessionStarted";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 type Params = {
@@ -159,5 +159,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, sessionPhase, currentSeed, currentGameId, dispatch]);
+  }, [uid, currentSeed, currentGameId, dispatch, sessionPhase]);
 }

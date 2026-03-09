@@ -12,7 +12,7 @@ import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useDispatch, useSelector } from "react-redux";
-import { applyRulesChangeStartNewDeal } from "@/state/session";
+import { applyRulesChangeStartNewDeal } from "@/state/session/thunks/applyRulesChange_startNewDeal";
 import {
   selectSessionPhase,
   selectStartedAtMs
@@ -24,7 +24,7 @@ import {
   selectRules,
   selectStatus,
   selectUndosRemaining
-} from "@/state/game";
+} from "@/state/game/gameSlice";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();

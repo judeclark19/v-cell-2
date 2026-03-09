@@ -1,4 +1,4 @@
-import { selectStatus } from "@/state/game";
+import { selectStatus } from "@/state/game/gameSlice";
 import { Move } from "@vcell/engine";
 import { useCallback, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";

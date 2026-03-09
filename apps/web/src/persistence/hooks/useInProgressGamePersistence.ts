@@ -26,7 +26,7 @@ import {
   selectUndosUsed,
   setStatus,
   setUndosUsed
-} from "@/state/game";
+} from "@/state/game/gameSlice";
 import {
   selectPaused,
   setPaused,
