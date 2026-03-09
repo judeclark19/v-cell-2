@@ -18,7 +18,7 @@ import {
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }
-  | { kind: "seed+id"; seed: string; gameId: string };
+  | { kind: "seed+id"; seed: string; sessionId: string };
 
 export type UseGameSessionParams = {
   rules: Rules;
@@ -35,16 +35,16 @@ export type UseGameSessionResult = {
 };
 
 /**
- * Owns the concept of a "game session": seed + gameId + readiness, and the
+ * Owns the concept of a "game session": seed + sessionId + readiness, and the
  * choreography that resets all per-session state.
  */
 export function useGameSession({
   rules
 }: UseGameSessionParams): UseGameSessionResult {
-  // Seed/gameId are now owned by the RTK store.
+  // Seed/sessionId are now owned by the RTK store.
   // Keep deterministic placeholders to avoid hydration mismatches.
   const seed = useSelector(selectSeed);
-  const gameId = useSelector(selectSessionId);
+  const sessionId = useSelector(selectSessionId);
   const dispatch = useDispatch<AppDispatch>();
 
   // Prevent duplicate bootstraps (can happen due to hydration remounts in dev/prod).
@@ -56,17 +56,18 @@ export function useGameSession({
       console.debug("[useGameSession] startSession", {
         kind: mode.kind,
         seed: mode.seed,
-        gameId: mode.kind === "seed+id" ? mode.gameId : undefined
+        sessionId: mode.kind === "seed+id" ? mode.sessionId : undefined
       });
 
       const nextSeed = mode.seed;
-      const nextGameId = mode.kind === "seed+id" ? mode.gameId : undefined;
+      const nextSessionId =
+        mode.kind === "seed+id" ? mode.sessionId : undefined;
 
       // If we’re already on this session, don’t reinitialize (prevents ready->hydrating churn).
       if (
         mode.kind === "seed+id" &&
         nextSeed === seed &&
-        nextGameId === gameId
+        nextSessionId === sessionId
       ) {
         return;
       }
@@ -75,7 +76,7 @@ export function useGameSession({
         startGame({
           rules,
           seed: nextSeed,
-          ...(nextGameId ? { gameId: nextGameId } : {})
+          ...(nextSessionId ? { sessionId: nextSessionId } : {})
         })
       );
 
@@ -83,7 +84,7 @@ export function useGameSession({
       dispatch(setPaused(false));
       dispatch(setStartedAtMs(null));
       dispatch(setEndedAtMs(null));
-      dispatch(setSessionId(nextGameId));
+      dispatch(setSessionId(nextSessionId));
       dispatch(setTimeElapsedMs(0));
 
       dispatch(setStatus(null));
@@ -92,12 +93,12 @@ export function useGameSession({
       dispatch(setUndosUsed(0));
       dispatch(setSessionPhase("ready"));
     },
-    [dispatch, rules, seed, gameId]
+    [dispatch, rules, seed, sessionId]
   );
 
   useEffect(() => {
     // If Redux has already hydrated a real session, do NOT reboot it.
-    if (seed !== "seed-boot" && gameId !== "game-boot") return;
+    if (seed !== "seed-boot" && sessionId !== "session-boot") return;
     if (didBootstrapRef.current) return;
     didBootstrapRef.current = true;
 
@@ -116,7 +117,7 @@ export function useGameSession({
     return () => {
       didBootstrapRef.current = false;
     };
-  }, [dispatch, rules, seed, gameId]);
+  }, [dispatch, rules, seed, sessionId]);
 
   const startNewDealSession = useCallback(() => {
     dispatch(startGame({ rules }));

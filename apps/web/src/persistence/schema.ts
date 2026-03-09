@@ -66,7 +66,7 @@ export function openVCellDb(): Promise<IDBDatabase> {
       // completedGames: durable history for stats.
       if (!db.objectStoreNames.contains(STORES.COMPLETED_GAMES)) {
         const store = db.createObjectStore(STORES.COMPLETED_GAMES, {
-          keyPath: "gameId"
+          keyPath: "sessionId"
         });
 
         // Indexes are optional today but cheap to add early.

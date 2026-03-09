@@ -22,7 +22,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
   const completedGames = useSelector(selectCompletedGames);
 
   const completedGamesHydratedRef = useRef<boolean>(false);
-  const persistedCompletedGameIdsRef = useRef<Set<string>>(new Set());
+  const persistedCompletedSessionIdsRef = useRef<Set<string>>(new Set());
 
   // ---------------------------------------------------------------------------
   // Hydrate completed games (IndexedDB)
@@ -36,7 +36,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
         if (cancelled) return;
 
         completedGamesHydratedRef.current = true;
-        persistedCompletedGameIdsRef.current = new Set(
+        persistedCompletedSessionIdsRef.current = new Set(
           persisted.map((g) => g.sessionId)
         );
 
@@ -58,7 +58,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
   useEffect(() => {
     if (!completedGamesHydratedRef.current) return;
 
-    const persistedIds = persistedCompletedGameIdsRef.current;
+    const persistedIds = persistedCompletedSessionIdsRef.current;
     const pending = completedGames.filter(
       (g) => !persistedIds.has(g.sessionId)
     );
@@ -106,7 +106,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
         const persisted = await getAllCompletedGames();
         if (cancelled) return;
 
-        persistedCompletedGameIdsRef.current = new Set(
+        persistedCompletedSessionIdsRef.current = new Set(
           persisted.map((g) => g.sessionId)
         );
 

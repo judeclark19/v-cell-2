@@ -33,7 +33,7 @@ export async function getAllCompletedGames(): Promise<PersistedGame[]> {
 /**
  * Append a completed game to IndexedDB.
  *
- * Uses `put` so retries are idempotent by `gameId`.
+ * Uses `put` so retries are idempotent by `sessionId`.
  */
 export async function upsertCompletedGame(
   game: PersistedGame,

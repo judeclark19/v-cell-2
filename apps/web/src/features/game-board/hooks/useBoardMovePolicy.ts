@@ -27,7 +27,7 @@ export type UseBoardMovePolicyArgs<
   /** Current seed (used when replaying the same seed) */
   seed: string;
 
-  /** Optional: start a new session with the same seed (new gameId). */
+  /** Optional: start a new session with the same seed (new sessionId). */
   replaySeed?: (seed: string) => void;
 };
 
@@ -43,10 +43,10 @@ export type UseBoardMovePolicyResult<
   /** New deal (always new seed) with celebration reset. */
   newDealWithCelebration: () => void;
 
-  /** Restart with celebration reset. If won and replaySeed is provided, replay same seed with new gameId. */
+  /** Restart with celebration reset. If won and replaySeed is provided, replay same seed with new sessionId. */
   restartWithCelebration: () => void;
 
-  /** Replay the current seed with a new gameId (only available when replaySeed is provided). */
+  /** Replay the current seed with a new sessionId (only available when replaySeed is provided). */
   replaySeedWithCelebration: () => void;
 };
 
@@ -106,7 +106,7 @@ export function useBoardMovePolicy<
   }, [clearCelebration, replaySeed, seed]);
 
   const restartWithCelebration = useCallback(() => {
-    // After a win, "restart" means "replay this deal" (same seed, new gameId),
+    // After a win, "restart" means "replay this deal" (same seed, new sessionId),
     // if the engine provides that action.
     if (status === "won" && replaySeed) {
       replaySeedWithCelebration();
