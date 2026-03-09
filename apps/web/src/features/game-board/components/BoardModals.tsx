@@ -1,6 +1,7 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { useGame } from "@/state/game/GameProvider";
+import { selectCompletedGames } from "@/state/records/recordsSlice";
 import { useSession } from "@/state/session/SessionProvider";
 import {
   selectPaused,
@@ -50,6 +51,7 @@ export default function BoardModals({
   const dispatch = useDispatch();
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const completedGames = useSelector(selectCompletedGames);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -67,13 +69,13 @@ export default function BoardModals({
 
   const getWinBodyText = () => {
     // calculate if the current game is the best time / best moves based on completed history
-    const fastest = [...game.completedGames]
+    const fastest = completedGames
       .filter((g) => g.status === "won" && Number.isFinite(g.timeElapsedMs))
       .sort(
         (a, b) => (a.timeElapsedMs as number) - (b.timeElapsedMs as number)
       )[0];
 
-    const fewestMoves = [...game.completedGames]
+    const fewestMoves = completedGames
       .filter((g) => g.status === "won" && Number.isFinite(g.moveCount))
       .sort((a, b) => (a.moveCount as number) - (b.moveCount as number))[0];
 
@@ -84,7 +86,7 @@ export default function BoardModals({
 
     if (!isUser) return bodyText; // only show win rate and records to signed-in users since it's based on persisted history
 
-    bodyText += `\nYou have won ${deriveWinRateLastN(game.completedGames).wins} out of your last ${deriveWinRateLastN(game.completedGames).count} games (${deriveWinRateLastN(game.completedGames).winRate}% win rate)`;
+    bodyText += `\nYou have won ${deriveWinRateLastN(completedGames).wins} out of your last ${deriveWinRateLastN(completedGames).count} games (${deriveWinRateLastN(completedGames).winRate}% win rate)`;
 
     if (isNewBestTime) {
       bodyText += "\n🎉 New record for fastest game!";

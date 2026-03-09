@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { GameState, Rules } from "@vcell/engine";
+import type { Rules } from "@vcell/engine";
 import { selectSeed, resetPerSessionState, setStatus } from "@/state/game";
 import { startSession as startSession_new } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session";

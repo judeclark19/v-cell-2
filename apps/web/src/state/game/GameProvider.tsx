@@ -5,8 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useRef,
-  useState
+  useRef
 } from "react";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
 import type { GameState, Move, UndoLimit } from "@vcell/engine";
