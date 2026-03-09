@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectStatus } from "..";
+import { selectStatus } from "../../game";
 import {
   selectSessionPhase,
   selectPaused,
@@ -16,7 +16,7 @@ import {
  * - Stops on win/abandon.
  * - Pauses when document is hidden.
  */
-export function useGameTimer() {
+export function useSessionTimer() {
   const dispatch = useDispatch();
 
   const intervalIdRef = useRef<number | null>(null);

@@ -8,14 +8,12 @@ import {
   useRef,
   useState
 } from "react";
-import { useGameTimer } from "./hooks/useGameTimer";
 import { useGameSnapshotLogger } from "./hooks/useGameSnapshotLogger";
 import type { GameState, Move, UndoLimit } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
-import { useInProgressGamePersistence } from "../../persistence/hooks/useInProgressGamePersistence";
 import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
@@ -34,6 +32,8 @@ import {
   selectStartedAtMs,
   selectGameId
 } from "../session/sessionSlice";
+import SessionTimerDriver from "./SessionTimerDriver";
+import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -139,20 +139,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     uiResetsRef.current = handlers;
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Derived state
-  // ---------------------------------------------------------------------------
-
-  useInProgressGamePersistence({
-    readyToHydrate: !!gameId && !!seed,
-    uid,
-    seed,
-    rules,
-    moves,
-    cursor,
-    moveCount
-  });
-
   useLoginReconcileInProgressGame({
     uid,
     currentSeed: seed,
@@ -181,11 +167,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       startNewDealSession();
     });
   }, [uid, sessionPhase, startedAtMs, startNewDealSession]);
-
-  // ---------------------------------------------------------------------------
-  // Timer loop
-  // ---------------------------------------------------------------------------
-  useGameTimer();
 
   // ---------------------------------------------------------------------------
   // Actions
@@ -240,5 +221,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     completedGames
   };
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameContext.Provider value={value}>
+      <SessionTimerDriver />
+      <InProgressPersistenceDriver
+        readyToHydrate={!!gameId && !!seed}
+        uid={uid}
+        seed={seed}
+        rules={rules}
+        moves={moves}
+        cursor={cursor}
+        moveCount={moveCount}
+      />
+      {children}
+    </GameContext.Provider>
+  );
 }

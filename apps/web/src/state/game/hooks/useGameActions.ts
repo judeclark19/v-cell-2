@@ -24,8 +24,7 @@ import {
   selectStartedAtMs,
   setStartedAtMs,
   setEndedAtMs,
-  selectEndedAtMs,
-  selectTimeElapsedMs
+  selectEndedAtMs
 } from "@/state/session/sessionSlice";
 
 export type UseGameActionsParams = {
@@ -85,7 +84,6 @@ export function useGameActions({
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
-  const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -127,10 +125,8 @@ export function useGameActions({
 
       // If this move produces a win, stamp `endedAtMs` exactly once.
       if (status !== "won" && areAllCardsUnlocked(next)) {
-        const ended = Date.now();
-
         if (endedAtMs == null) {
-          dispatch(setEndedAtMs(ended));
+          dispatch(setEndedAtMs(Date.now()));
         }
         dispatch(setStatus("won"));
 
@@ -147,8 +143,8 @@ export function useGameActions({
           status: "won",
 
           startedAtMs,
-          endedAtMs: ended,
-          timeElapsedMs,
+          endedAtMs: Date.now(),
+          timeElapsedMs: 0,
           paused: false,
 
           moveCount: archivedCursor,
@@ -193,7 +189,6 @@ export function useGameActions({
       gameId,
       seed,
       setCompletedGames,
-      timeElapsedMs,
       startedAtMs,
       undosUsed,
       undoLimit,
@@ -251,7 +246,7 @@ export function useGameActions({
 
           startedAtMs,
           endedAtMs: ended,
-          timeElapsedMs,
+          timeElapsedMs: 0,
           paused: false,
 
           moveCount: archivedCursor,
@@ -295,7 +290,6 @@ export function useGameActions({
       gameId,
       seed,
       history.present.rules,
-      timeElapsedMs,
       undosUsed,
       cursor,
       moves,

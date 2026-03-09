@@ -101,6 +101,7 @@ export function useGameSession({
       dispatch(setEndedAtMs(null));
       dispatch(setGameId(nextGameId));
       dispatch(setTimeElapsedMs(0));
+      dispatch(setSessionPhase("ready"));
 
       resetPerSessionState_old();
     },

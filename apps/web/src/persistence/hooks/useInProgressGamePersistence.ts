@@ -45,6 +45,7 @@ type InProgressSnapshot = {
   paused: boolean;
   moveCount: number;
   undosUsed: number;
+  timeElapsedMs: number;
 };
 
 type PersistPhase = "DISARMED" | "ARMED";
@@ -93,7 +94,8 @@ export function useInProgressGamePersistence({
     cursor,
     paused,
     moveCount,
-    undosUsed
+    undosUsed,
+    timeElapsedMs
   });
 
   const phaseRef = useRef<PersistPhase>("DISARMED");
@@ -138,40 +140,21 @@ export function useInProgressGamePersistence({
       cursor,
       paused,
       moveCount,
-      undosUsed
+      undosUsed,
+      timeElapsedMs
     };
-  }, [moves, cursor, startedAtMs, endedAtMs, paused, moveCount, undosUsed]);
+  }, [
+    moves,
+    cursor,
+    startedAtMs,
+    endedAtMs,
+    paused,
+    moveCount,
+    undosUsed,
+    timeElapsedMs
+  ]);
 
   const dispatch = useDispatch<AppDispatch>();
-
-  // ---------------------------------------------------------------------------
-  // Derive/stamp lifecycle timestamps from deterministic state
-  // - startedAtMs is stamped on the first ever move (moves.length > 0)
-  // - endedAtMs is stamped when we enter a terminal endState
-  // NOTE: We never clear these here; persistence should reflect the first start.
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (!readyToHydrate) return;
-    if (!isArmed()) return;
-
-    // First move observed: stamp startedAtMs once.
-    if (startedAtMs == null && moves.length > 0) {
-      dispatch(setStartedAtMs(Date.now()));
-    }
-
-    // Terminal state reached: stamp endedAtMs once.
-    if (endState !== "none" && endedAtMs == null) {
-      dispatch(setEndedAtMs(Date.now()));
-    }
-  }, [
-    readyToHydrate,
-    isArmed,
-    moves.length,
-    startedAtMs,
-    endState,
-    endedAtMs,
-    dispatch
-  ]);
 
   const buildInProgressPayload = useCallback(
     (
