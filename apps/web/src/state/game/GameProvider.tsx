@@ -23,7 +23,8 @@ import {
   selectMoveCount,
   selectRules,
   selectUndosRemaining,
-  selectUndoLimit
+  selectUndoLimit,
+  selectSeed
 } from "./gameSlice";
 import {
   selectSessionPhase,
@@ -86,6 +87,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const moveCount = useSelector(selectMoveCount);
   const startedAtMs = useSelector(selectStartedAtMs);
   const undosRemaining = useSelector(selectUndosRemaining);
+  const seed = useSelector(selectSeed);
 
   const uiResetsRef = useRef<UiResets | null>(null);
 
@@ -108,7 +110,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/sessionId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { seed, startNewDealSession, replaySeed } = useGameSession({
+  const { startNewDealSession, replaySeed } = useGameSession({
     rules
   });
 
@@ -208,15 +210,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   return (
     <GameContext.Provider value={value}>
       <SessionTimerDriver />
-      <InProgressPersistenceDriver
-        readyToHydrate={!!sessionId && !!seed}
-        uid={uid}
-        seed={seed}
-        rules={rules}
-        moves={moves}
-        cursor={cursor}
-        moveCount={moveCount}
-      />
+      {uid == null && (
+        <InProgressPersistenceDriver
+          readyToHydrate={!!sessionId && !!seed}
+          uid={uid}
+          seed={seed}
+          rules={rules}
+          moves={moves}
+          cursor={cursor}
+          moveCount={moveCount}
+        />
+      )}
       {children}
     </GameContext.Provider>
   );

@@ -2,19 +2,16 @@ import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
 import { selectSeed, setStatus } from "@/state/game/gameSlice";
-import { setUndosUsed, startNewGame } from "@/state/game/gameSlice";
+import { setUndosUsed } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
-  setPaused,
-  setSessionPhase,
   setStartedAtMs,
-  setEndedAtMs,
-  setSessionId,
   selectSessionId,
   setTimeElapsedMs,
   setCheckpoint
 } from "@/state/session/sessionSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }
@@ -25,8 +22,6 @@ export type UseGameSessionParams = {
 };
 
 export type UseGameSessionResult = {
-  seed: string;
-
   startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
 
@@ -73,25 +68,12 @@ export function useGameSession({
       }
 
       dispatch(
-        startNewGame({
-          rules,
+        transitionGameAndSession({
           seed: nextSeed,
-          ...(nextSessionId ? { sessionId: nextSessionId } : {})
+          sessionId: nextSessionId,
+          rules
         })
       );
-
-      dispatch(setSessionPhase("hydrating"));
-      dispatch(setPaused(false));
-      dispatch(setStartedAtMs(null));
-      dispatch(setEndedAtMs(null));
-      dispatch(setSessionId(nextSessionId));
-      dispatch(setTimeElapsedMs(0));
-
-      dispatch(setStatus(null));
-      dispatch(setCheckpoint(null));
-
-      dispatch(setUndosUsed(0));
-      dispatch(setSessionPhase("ready"));
     },
     [dispatch, rules, seed, sessionId]
   );
@@ -120,17 +102,7 @@ export function useGameSession({
   }, [dispatch, rules, seed, sessionId]);
 
   const startNewDealSession = useCallback(() => {
-    dispatch(startNewGame({ rules }));
-
-    dispatch(setSessionPhase("ready"));
-    dispatch(setPaused(false));
-    dispatch(setStartedAtMs(null));
-    dispatch(setEndedAtMs(null));
-    dispatch(setTimeElapsedMs(0));
-    dispatch(setStatus("in_progress"));
-    dispatch(setCheckpoint(null));
-
-    dispatch(setUndosUsed(0));
+    dispatch(transitionGameAndSession({ rules }));
   }, [dispatch, rules]);
 
   const replaySeed = useCallback(
@@ -141,7 +113,6 @@ export function useGameSession({
   );
 
   return {
-    seed,
     startNewDealSession,
     replaySeed,
     startSession

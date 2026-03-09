@@ -21,8 +21,9 @@ import {
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { ensureSessionStarted } from "@/state/session/thunks/ensureSessionStarted";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { hydrateFromPersisted } from "../gameSlice";
 
 type Params = {
   uid: string | null;
@@ -78,6 +79,11 @@ export function useLoginReconcileInProgressGame({
         );
         snap = await getDocs(q);
       }
+
+      console.debug(
+        "[login reconcile] cloud query docs",
+        snap.docs.map((d) => d.id)
+      );
       if (cancelled) return;
 
       const cloudDocInProgressGame = snap.docs[0];
@@ -102,6 +108,9 @@ export function useLoginReconcileInProgressGame({
 
         const sessionKey = `${payload.seed}:${payload.sessionId}`;
 
+        console.debug("current", currentSeed, currentSessionId);
+        console.debug("cloud", payload.seed, payload.sessionId);
+
         if (
           payload.seed === currentSeed &&
           payload.sessionId === currentSessionId
@@ -119,11 +128,24 @@ export function useLoginReconcileInProgressGame({
 
         if (lastSwitchedSessionRef.current !== sessionKey) {
           lastSwitchedSessionRef.current = sessionKey;
-          dispatch(
-            ensureSessionStarted({
+          await dispatch(
+            transitionGameAndSession({
               seed: payload.seed,
               sessionId: payload.sessionId,
               rules: payload.rules
+            })
+          ).unwrap();
+
+          dispatch(
+            hydrateFromPersisted({
+              seed: payload.seed,
+              rules: payload.rules,
+              moves: payload.moves,
+              undosUsed: payload.undosUsed,
+              cursor: payload.cursor,
+              fallbackRules: payload.rules,
+              undoLimit: payload.rules.undoLimit,
+              status: payload.status ?? null
             })
           );
         }

@@ -3,7 +3,7 @@ import type { Rules } from "@vcell/engine";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 import { RootState } from "@/state/reduxStore";
-import { transitionSession } from "../transitionSession_new";
+import { transitionGameAndSession } from "../../transitionGameAndSession";
 import { setStatus } from "@/state/game/gameSlice";
 import { setEndedAtMs } from "../sessionSlice";
 import { PersistedGame } from "@/persistence/types";
@@ -77,7 +77,7 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
     deleteInProgressGameForDevice(deviceId).catch(() => {});
 
     dispatch(
-      transitionSession({
+      transitionGameAndSession({
         seed: crypto.randomUUID(),
         rules: newRules
       })

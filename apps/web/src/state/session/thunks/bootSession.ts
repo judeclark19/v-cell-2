@@ -4,7 +4,7 @@ import { Rules } from "@vcell/engine";
 import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 
-import { transitionSession } from "../transitionSession_new";
+import { transitionGameAndSession } from "../../transitionGameAndSession";
 import type { RootState } from "@/state/reduxStore";
 import { hydrateFromPersisted } from "@/state/game/gameSlice";
 import {
@@ -59,7 +59,7 @@ export const bootSession = createAsyncThunk<
   // Otherwise start a fresh session and immediately mark READY.
 
   await thunkApi.dispatch(
-    transitionSession({
+    transitionGameAndSession({
       seed: crypto.randomUUID(),
       rules
     })

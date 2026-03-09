@@ -13,7 +13,11 @@ export const reduxStore = configureStore({
     ui: uiReducer
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().prepend(settingsListenerMiddleware.middleware)
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActionPaths: ["payload.onConfirm", "payload.onCancel"]
+      }
+    }).prepend(settingsListenerMiddleware.middleware) // TODO: fix this shit
 });
 
 export type RootState = ReturnType<typeof reduxStore.getState>;
