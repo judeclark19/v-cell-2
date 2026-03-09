@@ -73,7 +73,7 @@ export const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
-    startSession: (
+    startGame: (
       state,
       action: PayloadAction<{ rules: Rules; seed?: string }>
     ) => {
@@ -218,7 +218,7 @@ export const gameSlice = createSlice({
 });
 
 export const {
-  startSession,
+  startGame,
   hydrateHistory,
   hydrateFromPersisted,
   applyMoveToHistory,

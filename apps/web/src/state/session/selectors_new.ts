@@ -6,11 +6,11 @@ import { Rules } from "@vcell/engine";
 
 export type SessionKey = {
   seed: string;
-  gameId: string;
+  sessionId: string;
 };
 
 export function selectSessionKey(state: RootState): SessionKey {
-  return { seed: state.game.seed, gameId: state.session.gameId };
+  return { seed: state.game.seed, sessionId: state.session.sessionId };
 }
 
 export function selectRules(state: RootState): Rules {
@@ -19,6 +19,6 @@ export function selectRules(state: RootState): Rules {
 
 // Convenience:
 export function selectSessionKeyString(state: RootState): string {
-  const { seed, gameId } = selectSessionKey(state);
-  return `${seed}:${gameId}`;
+  const { seed, sessionId } = selectSessionKey(state);
+  return `${seed}:${sessionId}`;
 }

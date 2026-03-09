@@ -34,7 +34,7 @@ import {
   selectStartedAtMs,
   selectEndedAtMs,
   setEndedAtMs,
-  selectGameId,
+  selectSessionId,
   selectTimeElapsedMs,
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
@@ -87,7 +87,7 @@ export function useInProgressGamePersistence({
   const status = useSelector(selectStatus);
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
-  const gameId = useSelector(selectGameId);
+  const sessionId = useSelector(selectSessionId);
 
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
@@ -118,7 +118,7 @@ export function useInProgressGamePersistence({
     hydratedSessionKeyRef.current = key;
   };
 
-  const sessionKey = `${uid ?? "anon"}::${gameId}::${seed}`;
+  const sessionKey = `${uid ?? "anon"}::${sessionId}::${seed}`;
 
   const isArmed = useCallback(() => {
     return (
@@ -165,7 +165,7 @@ export function useInProgressGamePersistence({
       const { moves, cursor, paused, moveCount, undosUsed } = snapshot;
 
       return {
-        gameId,
+        sessionId,
         deviceId,
         seed,
         rules,
@@ -183,10 +183,10 @@ export function useInProgressGamePersistence({
         endedAtMs
       };
     },
-    [gameId, seed, rules, uid, timeElapsedMs, startedAtMs, endedAtMs]
+    [sessionId, seed, rules, uid, timeElapsedMs, startedAtMs, endedAtMs]
   );
 
-  // IMPORTANT: When the active session/gameId changes, React state in the game layer may
+  // IMPORTANT: When the active session/sessionId changes, React state in the game layer may
   // temporarily reset to initial values before IDXDB/cloud hydration re-applies moves.
   // During that brief window we must NOT run persistence/delete logic.
   //
@@ -245,7 +245,7 @@ export function useInProgressGamePersistence({
     };
   }, [
     readyToHydrate,
-    gameId,
+    sessionId,
     onHydrated,
     sessionKey,
     rules,
@@ -266,7 +266,7 @@ export function useInProgressGamePersistence({
     if (endState !== "none") {
       deleteInProgressGameForDevice(deviceId);
       if (uid) {
-        deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
+        deleteDoc(doc(db, "users", uid, "games", sessionId)).catch(() => {});
       }
       return;
     }
@@ -285,14 +285,14 @@ export function useInProgressGamePersistence({
     });
 
     if (uid) {
-      setDoc(doc(db, "users", uid, "games", gameId), payload, {
+      setDoc(doc(db, "users", uid, "games", sessionId), payload, {
         merge: true
       }).catch(() => {});
     }
   }, [
     uid,
     readyToHydrate,
-    gameId,
+    sessionId,
     seed,
     rules,
     moves,

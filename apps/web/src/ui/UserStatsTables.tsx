@@ -57,7 +57,7 @@ const renderGamesTable = (
         </thead>
         <tbody>
           {rows.slice(0, 10).map((g, index) => (
-            <tr key={g.gameId}>
+            <tr key={g.sessionId}>
               <td style={thTdStyle}>
                 <strong>{index + 1}</strong>
               </td>
@@ -159,7 +159,7 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
               </thead>
               <tbody>
                 {derived.ended.slice(0, 10).map((g) => (
-                  <tr key={g.gameId}>
+                  <tr key={g.sessionId}>
                     <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
                     <td style={thTdStyle}>{g.status}</td>
                     <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>

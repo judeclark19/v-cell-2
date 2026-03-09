@@ -79,8 +79,8 @@ export default function BoardModals({
       .filter((g) => g.status === "won" && Number.isFinite(g.moveCount))
       .sort((a, b) => (a.moveCount as number) - (b.moveCount as number))[0];
 
-    const isNewBestTime = fastest?.gameId === game.gameId;
-    const isNewBestMoves = fewestMoves?.gameId === game.gameId;
+    const isNewBestTime = fastest?.sessionId === game.sessionId;
+    const isNewBestMoves = fewestMoves?.sessionId === game.sessionId;
 
     let bodyText = `Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`;
 

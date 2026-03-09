@@ -18,7 +18,7 @@ import { upsertCompletedGame } from "@/persistence/completedGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 import { PersistedGame } from "../types";
 
-// Cloud model: users/{uid}/games/{gameId}
+// Cloud model: users/{uid}/games/{sessionId}
 // Local model: inProgressGames (single slot per device) + completedGames (history)
 
 type AnyRecord = Record<string, unknown>;
@@ -137,7 +137,7 @@ export function useCloudGamesHydration(uid: string | null) {
         return false;
       }
 
-      const gameId = String((data.gameId as string | undefined) ?? docId);
+      const sessionId = String((data.sessionId as string | undefined) ?? docId);
       const status = data.status;
 
       if (status === "in_progress") {
@@ -151,7 +151,7 @@ export function useCloudGamesHydration(uid: string | null) {
 
         const payload = {
           ...(data as unknown as PersistedGame),
-          gameId,
+          sessionId,
           deviceId: cloudDeviceId,
           userId: uid
         } satisfies PersistedGame;
@@ -165,7 +165,7 @@ export function useCloudGamesHydration(uid: string | null) {
 
       const payload = {
         ...(data as unknown as PersistedGame),
-        gameId,
+        sessionId,
         userId: uid
       } satisfies PersistedGame;
 

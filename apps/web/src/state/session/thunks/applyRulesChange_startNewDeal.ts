@@ -15,7 +15,7 @@ function areRulesEqual(a: Rules, b: Rules): boolean {
 }
 
 /**
- * Session-domain thunk: when rules change, start a NEW deal (new seed/gameId).
+ * Session-domain thunk: when rules change, start a NEW deal (new seed/sessionId).
  * UI can optionally require confirmation before proceeding.
  */
 export const applyRulesChangeStartNewDeal = createAsyncThunk<
@@ -49,7 +49,7 @@ export const applyRulesChangeStartNewDeal = createAsyncThunk<
     transitionSession(
       {
         seed: crypto.randomUUID(),
-        gameId: crypto.randomUUID(),
+        sessionId: crypto.randomUUID(),
         rules: nextRules
       },
       {

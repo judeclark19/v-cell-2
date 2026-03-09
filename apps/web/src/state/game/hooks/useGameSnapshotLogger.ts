@@ -10,7 +10,7 @@ import {
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 export type GameSnapshot = {
-  gameId: string;
+  sessionId: string;
   seed: string;
   rules: GameState["rules"];
   paused: boolean;
@@ -35,7 +35,7 @@ function diffKeys(prev: GameSnapshot | null, next: GameSnapshot): string[] {
 }
 
 export type UseGameSnapshotLoggerParams = {
-  gameId: string;
+  sessionId: string;
   seed: string;
   state: GameState;
 
@@ -58,11 +58,11 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
   const paused = useSelector(selectPaused);
   const checkpoint = useSelector(selectCheckpoint);
 
-  const { gameId, seed, state, moveCount, moves, cursor } = params;
+  const { sessionId, seed, state, moveCount, moves, cursor } = params;
 
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({
-      gameId,
+      sessionId,
       seed,
       rules: state.rules,
       canUndo,
@@ -76,7 +76,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       checkpoint
     }),
     [
-      gameId,
+      sessionId,
       seed,
       state,
       canUndo,
@@ -93,7 +93,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
   // Keep `timeElapsedMs` inside the snapshot, but exclude it from the LOG signature.
   const logSnapshot = useMemo<GameSnapshot>(
     () => ({
-      gameId,
+      sessionId,
       seed,
       rules: state.rules,
       paused,
@@ -107,7 +107,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
       checkpoint
     }),
     [
-      gameId,
+      sessionId,
       seed,
       state,
       endedAtMs,

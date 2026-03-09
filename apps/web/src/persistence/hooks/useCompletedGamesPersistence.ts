@@ -37,7 +37,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
 
         completedGamesHydratedRef.current = true;
         persistedCompletedGameIdsRef.current = new Set(
-          persisted.map((g) => g.gameId)
+          persisted.map((g) => g.sessionId)
         );
 
         dispatch(setCompletedGames(persisted));
@@ -59,7 +59,9 @@ export function useCompletedGamesPersistence({ uid }: Params) {
     if (!completedGamesHydratedRef.current) return;
 
     const persistedIds = persistedCompletedGameIdsRef.current;
-    const pending = completedGames.filter((g) => !persistedIds.has(g.gameId));
+    const pending = completedGames.filter(
+      (g) => !persistedIds.has(g.sessionId)
+    );
     if (pending.length === 0) return;
 
     (async () => {
@@ -68,7 +70,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
           console.debug(
             "[completedGamesPersistence] persisting completed game",
             {
-              gameId: g.gameId,
+              sessionId: g.sessionId,
               status: g.status,
               endedAtMs: g.endedAtMs
             }
@@ -78,7 +80,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
             gameToPersist,
             "useCompletedGamesPersistence effect"
           );
-          persistedIds.add(g.gameId);
+          persistedIds.add(g.sessionId);
 
           const deviceId = getOrCreateDeviceId();
 
@@ -105,7 +107,7 @@ export function useCompletedGamesPersistence({ uid }: Params) {
         if (cancelled) return;
 
         persistedCompletedGameIdsRef.current = new Set(
-          persisted.map((g) => g.gameId)
+          persisted.map((g) => g.sessionId)
         );
 
         dispatch(setCompletedGames(persisted));

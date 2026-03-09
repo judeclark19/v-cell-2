@@ -37,7 +37,7 @@ export type UseGameActionsParams = {
   history: HistoryState;
   // Session identity + rules
   seed: string;
-  gameId: string;
+  sessionId: string;
   uid: string | null;
   rules: Rules;
   undoLimit: UndoLimit;
@@ -64,7 +64,7 @@ export type UseGameActionsResult = {
 export function useGameActions({
   history,
   seed,
-  gameId,
+  sessionId,
   uid,
   rules,
   undoLimit,
@@ -111,7 +111,7 @@ export function useGameActions({
         console.warn("[dispatchMove] applyMove rejected move; dropping move", {
           err,
           move,
-          gameId,
+          sessionId,
           seed,
           endedAtMs,
           cursor: nextCursor
@@ -130,7 +130,7 @@ export function useGameActions({
         const archivedMoves = nextMoves;
 
         const completed: PersistedGame = {
-          gameId,
+          sessionId,
           deviceId: getOrCreateDeviceId(),
           seed,
           rules: next.rules,
@@ -152,12 +152,12 @@ export function useGameActions({
           ...(uid ? { userId: uid } : {})
         };
 
-        if (completedGames.some((g) => g.gameId === gameId)) return;
+        if (completedGames.some((g) => g.sessionId === sessionId)) return;
 
         dispatch(setCompletedGames([...completedGames, completed]));
 
         if (uid) {
-          setDoc(doc(db, "users", uid, "games", gameId), completed, {
+          setDoc(doc(db, "users", uid, "games", sessionId), completed, {
             merge: true
           }).catch((err) => {
             console.warn(
@@ -181,7 +181,7 @@ export function useGameActions({
       status,
       cursor,
       moves,
-      gameId,
+      sessionId,
       seed,
       startedAtMs,
       undosUsed,
@@ -230,7 +230,7 @@ export function useGameActions({
         const archivedMoves = moves;
 
         const completed: PersistedGame = {
-          gameId,
+          sessionId,
           deviceId: getOrCreateDeviceId(),
           seed,
           rules: history.present.rules,
@@ -252,12 +252,12 @@ export function useGameActions({
           ...(uid ? { userId: uid } : {})
         };
 
-        if (completedGames.some((g) => g.gameId === gameId)) return;
+        if (completedGames.some((g) => g.sessionId === sessionId)) return;
 
         dispatch(setCompletedGames([...completedGames, completed]));
 
         if (uid) {
-          setDoc(doc(db, "users", uid, "games", gameId), completed, {
+          setDoc(doc(db, "users", uid, "games", sessionId), completed, {
             merge: true
           }).catch((err) => {
             console.warn(
@@ -279,7 +279,7 @@ export function useGameActions({
       startedAtMs,
       endedAtMs,
       status,
-      gameId,
+      sessionId,
       seed,
       history.present.rules,
       undosUsed,

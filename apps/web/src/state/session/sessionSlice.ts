@@ -3,7 +3,7 @@ import { GameState } from "@vcell/engine";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
 export interface SessionStoreState {
-  gameId: string;
+  sessionId: string;
   sessionPhase: "boot" | "hydrating" | "ready";
   paused: boolean;
   startedAtMs: number | null;
@@ -28,7 +28,7 @@ function safeRandomId(): string {
 }
 
 const initialState: SessionStoreState = {
-  gameId: "game-boot",
+  sessionId: "game-boot",
   sessionPhase: "boot",
   paused: false,
   startedAtMs: null,
@@ -41,7 +41,7 @@ export const sessionSlice = createSlice({
   name: "session",
   initialState,
   reducers: {
-    setGameId: (state, action: PayloadAction<string | undefined>) => {
+    setSessionId: (state, action: PayloadAction<string | undefined>) => {
       let newId;
 
       if (!action.payload || action.payload === "game-boot") {
@@ -50,7 +50,7 @@ export const sessionSlice = createSlice({
         newId = action.payload;
       }
 
-      state.gameId = newId;
+      state.sessionId = newId;
     },
     setSessionPhase: (state, action: PayloadAction<SessionPhase>) => {
       state.sessionPhase = action.payload;
@@ -79,7 +79,7 @@ export const sessionSlice = createSlice({
 export const sessionReducer = sessionSlice.reducer;
 
 export const {
-  setGameId,
+  setSessionId,
   setSessionPhase,
   setPaused,
   setStartedAtMs,
@@ -89,8 +89,8 @@ export const {
 } = sessionSlice.actions;
 
 // Selectors
-export const selectGameId = (state: { session: SessionStoreState }) =>
-  state.session.gameId;
+export const selectSessionId = (state: { session: SessionStoreState }) =>
+  state.session.sessionId;
 
 export const selectSessionPhase = (state: { session: SessionStoreState }) =>
   state.session.sessionPhase;

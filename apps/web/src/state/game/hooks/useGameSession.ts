@@ -2,10 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
 import { selectSeed, setStatus } from "@/state/game/gameSlice";
-import {
-  setUndosUsed,
-  startSession as startSession_new
-} from "@/state/game/gameSlice";
+import { setUndosUsed, startGame } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
@@ -13,8 +10,8 @@ import {
   setSessionPhase,
   setStartedAtMs,
   setEndedAtMs,
-  setGameId,
-  selectGameId,
+  setSessionId,
+  selectSessionId,
   setTimeElapsedMs,
   setCheckpoint
 } from "@/state/session/sessionSlice";
@@ -47,7 +44,7 @@ export function useGameSession({
   // Seed/gameId are now owned by the RTK store.
   // Keep deterministic placeholders to avoid hydration mismatches.
   const seed = useSelector(selectSeed);
-  const gameId = useSelector(selectGameId);
+  const gameId = useSelector(selectSessionId);
   const dispatch = useDispatch<AppDispatch>();
 
   // Prevent duplicate bootstraps (can happen due to hydration remounts in dev/prod).
@@ -75,7 +72,7 @@ export function useGameSession({
       }
 
       dispatch(
-        startSession_new({
+        startGame({
           rules,
           seed: nextSeed,
           ...(nextGameId ? { gameId: nextGameId } : {})
@@ -86,7 +83,7 @@ export function useGameSession({
       dispatch(setPaused(false));
       dispatch(setStartedAtMs(null));
       dispatch(setEndedAtMs(null));
-      dispatch(setGameId(nextGameId));
+      dispatch(setSessionId(nextGameId));
       dispatch(setTimeElapsedMs(0));
 
       dispatch(setStatus(null));
@@ -122,7 +119,7 @@ export function useGameSession({
   }, [dispatch, rules, seed, gameId]);
 
   const startNewDealSession = useCallback(() => {
-    dispatch(startSession_new({ rules }));
+    dispatch(startGame({ rules }));
 
     dispatch(setSessionPhase("ready"));
     dispatch(setPaused(false));

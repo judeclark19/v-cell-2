@@ -27,13 +27,13 @@ import { selectSessionPhase } from "@/state/session/sessionSlice";
 type Params = {
   uid: string | null;
   currentSeed: string;
-  currentGameId: string;
+  currentSessionId: string;
 };
 
 export function useLoginReconcileInProgressGame({
   uid,
   currentSeed,
-  currentGameId
+  currentSessionId
 }: Params) {
   const didReconcileOnLoginRef = useRef<string | null>(null);
   const lastSwitchedSessionRef = useRef<string | null>(null);
@@ -85,12 +85,12 @@ export function useLoginReconcileInProgressGame({
       if (cloudDocInProgressGame) {
         // Cloud wins: hydrate local, then switch the running session to it.
         const raw = cloudDocInProgressGame.data() as PersistedGame;
-        const cloudGameId =
-          (raw.gameId as string | undefined) ?? cloudDocInProgressGame.id;
+        const cloudSessionId =
+          (raw.sessionId as string | undefined) ?? cloudDocInProgressGame.id;
 
         const payload: PersistedGame = {
           ...(raw as PersistedGame),
-          gameId: cloudGameId,
+          sessionId: cloudSessionId,
           deviceId,
           userId: uid
         };
@@ -100,9 +100,12 @@ export function useLoginReconcileInProgressGame({
 
         if (cancelled) return;
 
-        const sessionKey = `${payload.seed}:${payload.gameId}`;
+        const sessionKey = `${payload.seed}:${payload.sessionId}`;
 
-        if (payload.seed === currentSeed && payload.gameId === currentGameId) {
+        if (
+          payload.seed === currentSeed &&
+          payload.sessionId === currentSessionId
+        ) {
           console.debug("[login reconcile] noop; already on winning session", {
             sessionKey
           });
@@ -111,7 +114,7 @@ export function useLoginReconcileInProgressGame({
 
         console.debug("[login reconcile] cloud wins; switching session", {
           seed: payload.seed,
-          gameId: payload.gameId
+          sessionId: payload.sessionId
         });
 
         if (lastSwitchedSessionRef.current !== sessionKey) {
@@ -119,7 +122,7 @@ export function useLoginReconcileInProgressGame({
           dispatch(
             ensureSessionStarted({
               seed: payload.seed,
-              gameId: payload.gameId,
+              sessionId: payload.sessionId,
               rules: payload.rules
             })
           );
@@ -149,7 +152,7 @@ export function useLoginReconcileInProgressGame({
       if (cancelled) return;
 
       // Push ONCE on login (your per-second persistence does not write to Firestore).
-      await setDoc(doc(db, "users", uid, "games", payload.gameId), payload, {
+      await setDoc(doc(db, "users", uid, "games", payload.sessionId), payload, {
         merge: true
       });
     })().catch((err) => {
@@ -159,5 +162,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, currentSeed, currentGameId, dispatch, sessionPhase]);
+  }, [uid, currentSeed, currentSessionId, dispatch, sessionPhase]);
 }

@@ -4,7 +4,7 @@ import type { GameState, Move } from "@vcell/engine";
 
 export type PersistedGame = {
   // identity
-  gameId: string;
+  sessionId: string;
   deviceId: string; // analytics / “one per device” key
   userId?: string; // if not playing as guest
   seed: string;
@@ -32,5 +32,5 @@ export type PersistedGame = {
   updatedAtMs: number;
 
   // optional pointer
-  lastCompletedGameId?: string;
+  lastCompletedsessionId?: string;
 };

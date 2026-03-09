@@ -28,7 +28,7 @@ import {
 import {
   selectSessionPhase,
   selectStartedAtMs,
-  selectGameId
+  selectSessionId
 } from "../session/sessionSlice";
 import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
@@ -52,7 +52,7 @@ type GameContextValue = {
   showTimer: boolean;
   setShowTimer: (next: boolean) => void;
   moveCount: number;
-  gameId: string;
+  sessionId: string;
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -71,7 +71,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     useGameSettings();
 
   const rules = useSelector(selectRules);
-  const gameId = useSelector(selectGameId);
+  const sessionId = useSelector(selectSessionId);
 
   // ---------------------------------------------------------------------------
   // History / engine state
@@ -103,7 +103,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const sessionPhase = useSelector(selectSessionPhase);
 
   // ---------------------------------------------------------------------------
-  // Session (seed/gameId + init/reseed choreography)
+  // Session (seed/sessionId + init/reseed choreography)
   // ---------------------------------------------------------------------------
   const { seed, startNewDealSession, replaySeed } = useGameSession({
     rules
@@ -131,7 +131,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useLoginReconcileInProgressGame({
     uid,
     currentSeed: seed,
-    currentGameId: gameId
+    currentSessionId: sessionId
   });
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
@@ -164,7 +164,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     history,
 
     seed,
-    gameId,
+    sessionId,
     rules,
     undoLimit,
     uid,
@@ -177,7 +177,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Snapshot logging
   // ---------------------------------------------------------------------------
   useGameSnapshotLogger({
-    gameId,
+    sessionId,
     seed,
     state: history.present,
     moveCount,
@@ -202,14 +202,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     showTimer,
     setShowTimer,
     moveCount,
-    gameId
+    sessionId
   };
 
   return (
     <GameContext.Provider value={value}>
       <SessionTimerDriver />
       <InProgressPersistenceDriver
-        readyToHydrate={!!gameId && !!seed}
+        readyToHydrate={!!sessionId && !!seed}
         uid={uid}
         seed={seed}
         rules={rules}

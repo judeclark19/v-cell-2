@@ -6,7 +6,7 @@ import { Rules } from "@vcell/engine";
 
 type Args = {
   seed: string;
-  gameId: string;
+  sessionId: string;
   rules: Rules;
 };
 
@@ -18,9 +18,9 @@ export const ensureSessionStarted = createAsyncThunk<
   { state: RootState }
 >(
   "session/ensureSessionStarted",
-  async ({ seed, gameId, rules }, { getState, dispatch }) => {
+  async ({ seed, sessionId, rules }, { getState, dispatch }) => {
     const res = await transitionSession(
-      { seed, gameId, rules },
+      { seed, sessionId, rules },
       { getState, dispatch }
     );
 

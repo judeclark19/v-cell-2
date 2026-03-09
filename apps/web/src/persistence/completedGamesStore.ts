@@ -40,7 +40,7 @@ export async function upsertCompletedGame(
   source: string
 ): Promise<void> {
   if (typeof window === "undefined") return;
-  console.log("upserting completed game called by", source, game.gameId);
+  console.log("upserting completed game called by", source, game.sessionId);
 
   const db = await openVCellDb();
 
