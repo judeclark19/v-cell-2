@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { gameReducer } from "./game";
 import { sessionReducer } from "./session";
+import { recordsReducer } from "./records/recordsSlice";
 
 export const reduxStore = configureStore({
   reducer: {
     game: gameReducer,
-    session: sessionReducer
+    session: sessionReducer,
+    records: recordsReducer
   }
 });
 

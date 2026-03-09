@@ -7,19 +7,20 @@ import {
 } from "../completedGamesStore";
 import { deleteInProgressGameForDevice } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
-import type { PersistedGame } from "../types";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectCompletedGames,
+  setCompletedGames
+} from "@/state/records/recordsSlice";
 
 type Params = {
   uid: string | null;
-  completedGames: PersistedGame[];
-  setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
 };
 
-export function useCompletedGamesPersistence({
-  uid,
-  completedGames,
-  setCompletedGames
-}: Params) {
+export function useCompletedGamesPersistence({ uid }: Params) {
+  const dispatch = useDispatch();
+  const completedGames = useSelector(selectCompletedGames);
+
   const completedGamesHydratedRef = useRef<boolean>(false);
   const persistedCompletedGameIdsRef = useRef<Set<string>>(new Set());
 
@@ -39,7 +40,7 @@ export function useCompletedGamesPersistence({
           persisted.map((g) => g.gameId)
         );
 
-        setCompletedGames(persisted);
+        dispatch(setCompletedGames(persisted));
       } catch (err) {
         completedGamesHydratedRef.current = true;
         console.error("Failed to hydrate completed games from IndexedDB", err);
@@ -49,7 +50,7 @@ export function useCompletedGamesPersistence({
     return () => {
       cancelled = true;
     };
-  }, [setCompletedGames]);
+  }, [dispatch]);
 
   // ---------------------------------------------------------------------------
   // Append newly completed games (IndexedDB)
@@ -107,7 +108,7 @@ export function useCompletedGamesPersistence({
           persisted.map((g) => g.gameId)
         );
 
-        setCompletedGames(persisted);
+        dispatch(setCompletedGames(persisted));
       } catch (err) {
         console.error(
           "Failed to re-hydrate completed games from IndexedDB after session change",
@@ -119,5 +120,5 @@ export function useCompletedGamesPersistence({
     return () => {
       cancelled = true;
     };
-  }, [uid, setCompletedGames]);
+  }, [uid, dispatch]);
 }

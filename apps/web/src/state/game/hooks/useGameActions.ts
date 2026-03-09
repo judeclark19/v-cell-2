@@ -26,6 +26,10 @@ import {
   setEndedAtMs,
   selectEndedAtMs
 } from "@/state/session/sessionSlice";
+import {
+  selectCompletedGames,
+  setCompletedGames
+} from "@/state/records/recordsSlice";
 
 export type UseGameActionsParams = {
   // Core state
@@ -40,9 +44,6 @@ export type UseGameActionsParams = {
   setCheckpoint: React.Dispatch<
     React.SetStateAction<{ at: number; state: GameState } | null>
   >;
-
-  // Completed games archive (Phase A)
-  setCompletedGames: React.Dispatch<React.SetStateAction<PersistedGame[]>>;
 
   // Session transition
   startNewDealSession: () => void;
@@ -72,7 +73,6 @@ export function useGameActions({
   undoLimit,
 
   setCheckpoint,
-  setCompletedGames,
 
   startNewDealSession,
   replaySeed
@@ -84,6 +84,7 @@ export function useGameActions({
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
+  const completedGames = useSelector(selectCompletedGames);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -156,10 +157,9 @@ export function useGameActions({
           ...(uid ? { userId: uid } : {})
         };
 
-        setCompletedGames((prev) => {
-          if (prev.some((g) => g.gameId === gameId)) return prev;
-          return [...prev, completed];
-        });
+        if (completedGames.some((g) => g.gameId === gameId)) return;
+
+        dispatch(setCompletedGames([...completedGames, completed]));
 
         if (uid) {
           setDoc(doc(db, "users", uid, "games", gameId), completed, {
@@ -188,7 +188,6 @@ export function useGameActions({
       moves,
       gameId,
       seed,
-      setCompletedGames,
       startedAtMs,
       undosUsed,
       undoLimit,
@@ -196,7 +195,8 @@ export function useGameActions({
       uid,
       history.present,
       dispatch,
-      endedAtMs
+      endedAtMs,
+      completedGames
     ]
   );
 
@@ -258,10 +258,9 @@ export function useGameActions({
           ...(uid ? { userId: uid } : {})
         };
 
-        setCompletedGames((prev) => {
-          if (prev.some((g) => g.gameId === gameId)) return prev;
-          return [...prev, completed];
-        });
+        if (completedGames.some((g) => g.gameId === gameId)) return;
+
+        dispatch(setCompletedGames([...completedGames, completed]));
 
         if (uid) {
           setDoc(doc(db, "users", uid, "games", gameId), completed, {
@@ -286,14 +285,14 @@ export function useGameActions({
       startedAtMs,
       endedAtMs,
       status,
-      setCompletedGames,
       gameId,
       seed,
       history.present.rules,
       undosUsed,
       cursor,
       moves,
-      uid
+      uid,
+      completedGames
     ]
   );
 

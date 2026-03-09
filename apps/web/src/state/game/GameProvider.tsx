@@ -14,7 +14,6 @@ import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useGameSettings } from "./hooks/useGameSettings";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
-import type { PersistedGame } from "@/persistence/types";
 import { useSession } from "@/state/session/SessionProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
@@ -55,7 +54,6 @@ type GameContextValue = {
   setShowTimer: (next: boolean) => void;
   moveCount: number;
   gameId: string;
-  completedGames: PersistedGame[];
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -96,11 +94,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const { uid } = useSession();
 
-  const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
+  // const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
   useCompletedGamesPersistence({
-    uid,
-    completedGames,
-    setCompletedGames
+    uid
   });
 
   // ---------------------------------------------------------------------------
@@ -181,7 +177,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     uid,
 
     setCheckpoint,
-    setCompletedGames,
 
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
@@ -217,8 +212,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     showTimer,
     setShowTimer,
     moveCount,
-    gameId,
-    completedGames
+    gameId
   };
 
   return (
