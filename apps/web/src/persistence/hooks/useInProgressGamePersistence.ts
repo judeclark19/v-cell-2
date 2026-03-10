@@ -173,7 +173,7 @@ export function useInProgressGamePersistence({
         moves,
         cursor,
         status: "in_progress" as GameStatus,
-        timeElapsedMs,
+        timeElapsedMs: snapshot.timeElapsedMs,
         paused,
         moveCount,
         undosUsed,
@@ -183,7 +183,7 @@ export function useInProgressGamePersistence({
         endedAtMs
       };
     },
-    [sessionId, seed, rules, uid, timeElapsedMs, startedAtMs, endedAtMs]
+    [sessionId, seed, rules, uid, startedAtMs, endedAtMs]
   );
 
   // IMPORTANT: When the active session/sessionId changes, React state in the game layer may
@@ -324,10 +324,14 @@ export function useInProgressGamePersistence({
     const deviceId = getOrCreateDeviceId();
 
     const id = window.setInterval(() => {
-      upsertInProgressGame(
-        buildInProgressPayload(deviceId, Date.now(), snapshotRef.current)
-      ).catch((err) => {
-        console.error("[in-progress persist] write failed (1s)", err);
+      const payload = buildInProgressPayload(
+        deviceId,
+        Date.now(),
+        snapshotRef.current
+      );
+
+      upsertInProgressGame(payload).catch((err) => {
+        console.error("[in-progress persist] write failed", err);
       });
     }, 1000);
 

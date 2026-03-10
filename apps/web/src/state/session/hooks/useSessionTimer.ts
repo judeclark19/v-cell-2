@@ -8,7 +8,6 @@ import {
   selectTimeElapsedMs,
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
-import { upsertInProgressGame } from "@/persistence/inProgressGamesStore";
 
 /**
  * Drives the game timer while the game is active and the tab is visible.
@@ -27,8 +26,29 @@ export function useSessionTimer() {
   const paused = useSelector(selectPaused);
   const sessionPhase = useSelector(selectSessionPhase);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const prevDepsRef = useRef<{
+    paused: boolean;
+    sessionPhase: string;
+    startedAtMs: number | null;
+    status: string | null;
+  } | null>(null);
+
+  const timeElapsedRef = useRef(timeElapsedMs);
 
   useEffect(() => {
+    timeElapsedRef.current = timeElapsedMs;
+  }, [timeElapsedMs]);
+
+  useEffect(() => {
+    const nextDeps = {
+      paused,
+      sessionPhase,
+      startedAtMs,
+      status
+    };
+
+    prevDepsRef.current = nextDeps;
+
     const isFinished = status === "won" || status === "abandoned";
 
     function clearTimerInterval() {
@@ -48,7 +68,7 @@ export function useSessionTimer() {
         const deltaMs = lastTickAt == null ? 0 : now - lastTickAt;
 
         if (lastTickAt != null) {
-          dispatch(setTimeElapsedMs(timeElapsedMs + deltaMs));
+          dispatch(setTimeElapsedMs(timeElapsedRef.current + deltaMs));
         }
 
         lastTickAtRef.current = now;
@@ -112,5 +132,5 @@ export function useSessionTimer() {
       window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [paused, sessionPhase, startedAtMs, status, dispatch, timeElapsedMs]);
+  }, [paused, sessionPhase, startedAtMs, status, dispatch]);
 }
