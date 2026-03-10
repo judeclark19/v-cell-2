@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { GameState } from "@vcell/engine";
+import { safeRandomId } from "../utils";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
 export interface SessionStoreState {
@@ -10,21 +11,6 @@ export interface SessionStoreState {
   endedAtMs: number | null;
   timeElapsedMs: number;
   checkpoint: { at: number; state: GameState } | null;
-}
-
-// TODO: move this somewhere else
-function safeRandomId(): string {
-  const c = globalThis.crypto as Crypto | undefined;
-  const maybeUUID = c?.randomUUID;
-  if (typeof maybeUUID === "function") return maybeUUID.call(c);
-
-  if (c?.getRandomValues) {
-    const bytes = new Uint8Array(16);
-    c.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 const initialState: SessionStoreState = {

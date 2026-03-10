@@ -4,6 +4,8 @@
  * Keep this layer browser-only (no React imports). The engine remains pure.
  */
 
+import { safeRandomId } from "@/state/utils";
+
 export const VCELL_DB_NAME = "vcell";
 export const VCELL_DB_VERSION = 65;
 
@@ -15,23 +17,6 @@ export const STORES = {
 export type StoreName = (typeof STORES)[keyof typeof STORES];
 
 const DEVICE_ID_KEY = "vcell.deviceId";
-
-function safeRandomId(): string {
-  // Prefer the native UUID if available
-  const c = globalThis.crypto as Crypto | undefined;
-  const maybeUUID = c?.randomUUID;
-  if (typeof maybeUUID === "function") return maybeUUID.call(c);
-
-  // Fallback: 16 random bytes -> hex (not a UUID, but plenty unique for IDs/seeds)
-  if (c?.getRandomValues) {
-    const bytes = new Uint8Array(16);
-    c.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  // Last-ditch fallback (worst uniqueness, but avoids crashing)
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
 
 export function getOrCreateDeviceId(): string {
   if (typeof window === "undefined") return "server";
