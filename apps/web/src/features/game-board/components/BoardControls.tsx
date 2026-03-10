@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { UndoLimit } from "@vcell/engine";
 import { useDispatch, useSelector } from "react-redux";
-import { selectRules } from "@/state/game/gameSlice";
+import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
 import { useSession } from "@/state/session/SessionProvider";
-
-type BoardControlsProps = {
-  onNewDeal: () => void;
-  startBySeed: (seed: string) => void;
-};
+import { selectStartedAtMs } from "@/state/session/sessionSlice";
+import { requestConfirmation } from "@/state/ui/requestConfirmation";
+import { useBoardController } from "../hooks/useBoardController";
+import { useGame } from "@/state/game/GameProvider";
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
   const n = Number(value);
@@ -24,14 +23,48 @@ const parseUndoLimit = (value: string): UndoLimit => {
   return "unlimited";
 };
 
-export default function BoardControls({
-  onNewDeal,
-  startBySeed
-}: BoardControlsProps) {
-  const dispatch = useDispatch<AppDispatch>();
+export default function BoardControls() {
+  // old stuff
   const { uid } = useSession();
   const [seedInput, setSeedInput] = useState("");
+  const game = useGame();
+  const vm = useBoardController(game);
+
+  const dispatch = useDispatch<AppDispatch>();
+  // Game state
   const rules = useSelector(selectRules);
+  const status = useSelector(selectStatus);
+
+  // Session state
+  const startedAtMs = useSelector(selectStartedAtMs);
+
+  const onNewDeal = async () => {
+    const ok =
+      !(startedAtMs && status === "in_progress") ||
+      (await requestConfirmation(dispatch, {
+        title: "Start a new deal?",
+        bodyText: "Starting a new deal will abandon your current game.",
+        confirmLabel: "New deal",
+        cancelLabel: "Cancel"
+      }));
+    if (!ok) return;
+
+    vm.newDealWithCelebration();
+  };
+
+  const startBySeed = async (seed: string) => {
+    const ok =
+      !(startedAtMs && status === "in_progress") ||
+      (await requestConfirmation(dispatch, {
+        title: "Start a seeded deal?",
+        bodyText: "Starting this seeded deal will abandon your current game.",
+        confirmLabel: "Start",
+        cancelLabel: "Cancel"
+      }));
+    if (!ok) return;
+
+    vm.startBySeed(seed);
+  };
 
   return (
     <>

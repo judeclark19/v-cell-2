@@ -11,23 +11,16 @@ import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  selectSessionPhase,
-  selectStartedAtMs
-} from "@/state/session/sessionSlice";
+import { selectSessionPhase } from "@/state/session/sessionSlice";
 import { AppDispatch } from "@/state/reduxStore";
 
 import {
   selectCanUndo,
   selectRules,
-  selectStatus,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
 
-import {
-  requestConfirmation,
-  dismissConfirmation
-} from "@/state/ui/requestConfirmation";
+import { dismissConfirmation } from "@/state/ui/requestConfirmation";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,9 +28,7 @@ function Board() {
   const rules = useSelector(selectRules);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
-  const status = useSelector(selectStatus);
   // Session state
-  const startedAtMs = useSelector(selectStartedAtMs);
   const sessionPhase = useSelector(selectSessionPhase);
   const confirmReq = useSelector(selectConfirmReq);
   // UI state
@@ -162,35 +153,7 @@ function Board() {
           "(unknown)"
         )}
       </p>
-      <BoardControls
-        onNewDeal={async () => {
-          const ok =
-            !(startedAtMs && status === "in_progress") ||
-            (await requestConfirmation(dispatch, {
-              title: "Start a new deal?",
-              bodyText: "Starting a new deal will abandon your current game.",
-              confirmLabel: "New deal",
-              cancelLabel: "Cancel"
-            }));
-          if (!ok) return;
-
-          vm.newDealWithCelebration();
-        }}
-        startBySeed={async (seed: string) => {
-          const ok =
-            !(startedAtMs && status === "in_progress") ||
-            (await requestConfirmation(dispatch, {
-              title: "Start a seeded deal?",
-              bodyText:
-                "Starting this seeded deal will abandon your current game.",
-              confirmLabel: "Start",
-              cancelLabel: "Cancel"
-            }));
-          if (!ok) return;
-
-          vm.startBySeed(seed);
-        }}
-      />
+      <BoardControls />
     </>
   );
 }
