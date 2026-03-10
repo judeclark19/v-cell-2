@@ -94,6 +94,7 @@ export function usePointerDragController<TCardItem>(args: {
       resetDrag();
 
       requestAnimationFrame(() => {
+        // TODO: this is throwing a time violation sometimes
         const el = cardId
           ? (document.querySelector(
               `[data-card-id="${cardId}"][data-kb-focusable="true"]`

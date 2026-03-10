@@ -18,7 +18,6 @@ type FoundationProps = {
   i: number;
   foundationIndex: number;
   card: EngineCard | null;
-  foundations?: Array<{ cards: EngineCard[] }>;
   kbCarrying: boolean;
   kbFlight?: DragState<{ card: EngineCard }>["kbFlight"];
   vm: ReturnType<typeof useBoardController>;
@@ -28,7 +27,6 @@ function Foundation({
   i,
   foundationIndex,
   card,
-  foundations,
   kbCarrying,
   kbFlight,
   vm
@@ -44,7 +42,7 @@ function Foundation({
     drag.source?.type === "foundation" &&
     drag.source.index === foundationIndex;
 
-  const pile = foundations?.[foundationIndex];
+  const pile = vm.state.foundations?.[foundationIndex];
 
   const displayIndex = pile
     ? pile.cards.length - 1 - (isDraggingFromThisFoundation ? 1 : 0)
@@ -173,7 +171,6 @@ function Foundations({
             i={foundationIndex}
             foundationIndex={foundationIndex}
             card={card}
-            foundations={vm.state.foundations}
             kbCarrying={kbCarrying}
             kbFlight={kbFlight}
             vm={vm}

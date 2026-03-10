@@ -66,6 +66,7 @@ export function useFoundationDrainAutoComplete(
     maxSteps
   } = args;
 
+  // session state
   const paused = useSelector(selectPaused);
 
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);

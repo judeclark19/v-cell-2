@@ -4,9 +4,10 @@ import type {
   DropTarget,
   DragState
 } from "@/features/game-board/animations/dragTypes";
+import { useSelector } from "react-redux";
+import { selectLegalMoves } from "@/state/game/gameSlice";
 
 type UseBoardDropArgs = {
-  legalMoves: Move[];
   dispatchMove: (move: Move) => void;
 };
 
@@ -273,7 +274,10 @@ export function commitBoardDrop<TCardItem>({
  * - tableau/freecell -> foundation: single-card only\n
  * - tableau -> freecell: single-card only\n
  */
-export function useBoardDrop({ legalMoves, dispatchMove }: UseBoardDropArgs) {
+export function useBoardDrop({ dispatchMove }: UseBoardDropArgs) {
+  // Game state
+  const legalMoves = useSelector(selectLegalMoves);
+
   return useCallback(
     <TCardItem>({ drag, dropTarget }: OnDropArgs<TCardItem>) => {
       return commitBoardDrop({

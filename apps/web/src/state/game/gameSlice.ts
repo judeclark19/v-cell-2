@@ -1,6 +1,6 @@
 // Redux Toolkit
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { FaceDownCount } from "@vcell/engine";
+import { createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { FaceDownCount, getLegalMoves, getPlayableMask } from "@vcell/engine";
 import {
   applyMove,
   createGame,
@@ -9,6 +9,7 @@ import {
   Rules,
   UndoLimit
 } from "@vcell/engine";
+import { create } from "domain";
 
 export type HistoryState = {
   present: GameState;
@@ -276,3 +277,15 @@ export const selectCanUndo = (state: { game: GameStoreState }) => {
 };
 export const selectStatus = (state: { game: GameStoreState }) =>
   state.game.status;
+
+export const selectIsFullyCollected = createSelector(
+  [selectHistory],
+  (history) => history.present.foundations.every((f) => f.cards.length === 13)
+);
+export const selectPlayableMask = createSelector([selectHistory], (history) =>
+  getPlayableMask(history.present)
+);
+
+export const selectLegalMoves = createSelector([selectHistory], (history) =>
+  getLegalMoves(history.present)
+);

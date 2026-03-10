@@ -9,7 +9,6 @@ import { useBoardKeyboardSystem } from "@/features/game-board/keyboard/useBoardK
 import { useAutoFoundation } from "@/features/game-board/hooks/useAutoFoundation";
 import { useAutoFreeCell } from "@/features/game-board/hooks/useAutoFreeCell";
 import { useBoardAutoComplete } from "@/features/game-board/hooks/useBoardAutoComplete";
-import { useBoardDerived } from "@/features/game-board/hooks/useBoardDerived";
 import { useBoardDomMapping } from "@/features/game-board/hooks/useBoardDomMapping";
 import { useBoardDrop } from "@/features/game-board/hooks/useBoardDrop";
 import { useBoardMovePolicy } from "@/features/game-board/hooks/useBoardMovePolicy";
@@ -17,7 +16,11 @@ import { useNoFlipResets } from "@/features/game-board/hooks/useNoFlipResets";
 import { useWinState } from "@/features/game-board/hooks/useWinState";
 import { useGame } from "@/state/game/GameProvider";
 import { useSelector } from "react-redux";
-import { selectPaused } from "@/state/session/sessionSlice";
+import {
+  selectIsFullyCollected,
+  selectLegalMoves,
+  selectPlayableMask
+} from "@/state/game/gameSlice";
 
 export type UseBoardControllerParams = ReturnType<typeof useGame>;
 
@@ -34,11 +37,12 @@ export function useBoardController(params: UseBoardControllerParams) {
     moveCount
   } = params;
 
-  const paused = useSelector(selectPaused);
+  // Game state
+  const isFullyCollected = useSelector(selectIsFullyCollected);
+  const playable = useSelector(selectPlayableMask);
+  const legalMoves = useSelector(selectLegalMoves);
 
-  const { playable, legalMoves, isFullyCollected } = useBoardDerived(state);
-
-  const onDrop = useBoardDrop({ legalMoves, dispatchMove });
+  const onDrop = useBoardDrop({ dispatchMove });
 
   const commitMoveFromPointerDropRef = useRef<
     ((...args: Parameters<typeof onDrop>) => boolean) | null
@@ -63,8 +67,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     showAcp
   } = useWinState({
     seed: state.seed,
-    isFullyCollected,
-    isAnyModalOpenBase: paused // TODO: need a boolean for whether a modal is open, probably in UI domain
+    isFullyCollected
   });
 
   const {

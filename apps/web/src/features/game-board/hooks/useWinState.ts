@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useWinEffects } from "@/features/game-board/effects/winEffects";
 import { useSelector } from "react-redux";
 import { selectStatus } from "@/state/game/gameSlice";
+import { selectPaused } from "@/state/session/sessionSlice";
 
 export type UseWinStateArgs = {
   /** Current deal seed */
@@ -9,9 +10,6 @@ export type UseWinStateArgs = {
 
   /** True when all 52 cards are in foundations. */
   isFullyCollected: boolean;
-
-  /** Base modal-open state from other modals (pause/settings/etc). */
-  isAnyModalOpenBase: boolean;
 };
 
 export type UseWinStateResult = {
@@ -48,8 +46,7 @@ export type UseWinStateResult = {
  */
 export function useWinState({
   seed,
-  isFullyCollected,
-  isAnyModalOpenBase
+  isFullyCollected
 }: UseWinStateArgs): UseWinStateResult {
   const [dismissedWinSeed, setDismissedWinSeed] = useState<string | null>(null);
   const [celebratedWinSeed, setCelebratedWinSeed] = useState<string | null>(
@@ -59,6 +56,9 @@ export function useWinState({
   // ACP policy: show once won, with an escape hatch override.
   const [showAcpOverride, setShowAcpOverride] = useState(false);
 
+  // Session state
+  const paused = useSelector(selectPaused);
+  // Game State
   const status = useSelector(selectStatus);
 
   const showAcp = useMemo(() => {
@@ -91,8 +91,8 @@ export function useWinState({
   });
 
   const isAnyModalOpen = useMemo(() => {
-    return isAnyModalOpenBase || shouldShowWinModal;
-  }, [isAnyModalOpenBase, shouldShowWinModal]);
+    return paused || shouldShowWinModal;
+  }, [paused, shouldShowWinModal]);
 
   return {
     showAcp,
