@@ -1,4 +1,3 @@
-import type React from "react";
 import { useContext } from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
@@ -12,21 +11,17 @@ import {
   selectStartedAtMs,
   selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
+import { useBoardController } from "../hooks/useBoardController";
+import { selectShowTimer } from "@/state/ui/uiSlice";
 
 type FoundationProps = {
   i: number;
   foundationIndex: number;
   card: EngineCard | null;
   foundations?: Array<{ cards: EngineCard[] }>;
-  drag?: DragState<{ card: EngineCard }>;
-  playableFoundations: boolean[];
   kbCarrying: boolean;
   kbFlight?: DragState<{ card: EngineCard }>["kbFlight"];
-  setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
-  handleFoundationPointerDown?: (
-    e: React.PointerEvent<HTMLDivElement>,
-    index: number
-  ) => void;
+  vm: ReturnType<typeof useBoardController>;
 };
 
 function Foundation({
@@ -34,13 +29,12 @@ function Foundation({
   foundationIndex,
   card,
   foundations,
-  drag,
-  playableFoundations,
   kbCarrying,
   kbFlight,
-  setFoundationRef,
-  handleFoundationPointerDown
+  vm
 }: FoundationProps) {
+  const { drag, playable, setFoundationRef, handleFoundationPointerDown } = vm;
+
   const rules = useSelector(selectRules);
   const pullbackDisabled = !rules.allowFoundationPullback;
 
@@ -109,9 +103,9 @@ function Foundation({
           <Card
             card={effectiveCard}
             className={`pile-card${pullbackDisabled ? " is-pullback-disabled" : ""}`}
-            playable={playableFoundations[foundationIndex]} // -3 accounts for spacers
+            playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
             data-kb-focusable={
-              playableFoundations[foundationIndex] ? "true" : "false"
+              playable.foundations[foundationIndex] ? "true" : "false"
             }
             onPointerDownCard={
               pullbackDisabled
@@ -126,38 +120,24 @@ function Foundation({
   );
 }
 
-type FoundationsProps = {
-  foundationCards: Array<EngineCard | null>;
-  foundations?: Array<{ cards: EngineCard[] }>;
-  drag?: DragState<{ card: EngineCard }>;
-  playableFoundations: boolean[];
-  showTimer: boolean;
-  setFoundationRef: (index: number, el: HTMLDivElement | null) => void;
-  handleFoundationPointerDown?: (
-    e: React.PointerEvent<HTMLDivElement>,
-    index: number
-  ) => void;
-  isAbandoned: boolean;
-};
-
 function Foundations({
-  foundationCards,
-  foundations,
-  drag,
-  playableFoundations,
-  showTimer,
-  setFoundationRef,
-  handleFoundationPointerDown,
-  isAbandoned
-}: FoundationsProps) {
+  boardController
+}: {
+  boardController: ReturnType<typeof useBoardController>;
+}) {
+  const vm = boardController;
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = drag?.kbFlight;
+  const kbFlight = vm?.drag?.kbFlight;
 
-  const startedAtMs = useSelector(selectStartedAtMs);
-  const status = useSelector(selectStatus);
-  const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const dispatch = useDispatch();
+  // session state
+  const startedAtMs = useSelector(selectStartedAtMs);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  // Game state
+  const status = useSelector(selectStatus);
+  // UI state
+  const showTimer = useSelector(selectShowTimer);
 
   return (
     <div className="board-top" aria-label="Foundations">
@@ -171,7 +151,9 @@ function Foundations({
             aria-label="Pause timer"
             type="button"
             onClick={() => dispatch(setPaused(true))}
-            disabled={!startedAtMs || status === "won" || isAbandoned}
+            disabled={
+              !startedAtMs || status === "won" || status === "abandoned"
+            }
           >
             <svg
               width="16"
@@ -185,19 +167,16 @@ function Foundations({
             </svg>
           </button>
         </div>
-        {foundationCards.map((card, foundationIndex) => (
+        {vm.foundationCards.map((card, foundationIndex) => (
           <Foundation
             key={`foundation-${foundationIndex}`}
             i={foundationIndex}
             foundationIndex={foundationIndex}
             card={card}
-            foundations={foundations}
-            drag={drag}
-            playableFoundations={playableFoundations}
+            foundations={vm.state.foundations}
             kbCarrying={kbCarrying}
             kbFlight={kbFlight}
-            setFoundationRef={setFoundationRef}
-            handleFoundationPointerDown={handleFoundationPointerDown}
+            vm={vm}
           />
         ))}
       </div>

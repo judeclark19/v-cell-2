@@ -2,7 +2,7 @@ import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-import { selectShowTimer } from "@/state/ui/uiSlice";
+
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -26,12 +26,10 @@ function Board() {
   const canUndo = useSelector(selectCanUndo);
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
-  // UI state
-  const showTimer = useSelector(selectShowTimer);
 
   const game = useGame();
-  const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
-    useBoardController(game);
+  const boardController = useBoardController(game);
+  const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } = boardController;
 
   return (
     <>
@@ -61,16 +59,7 @@ function Board() {
             {sessionPhase === "ready" ? (
               <>
                 {/* Foundations on top */}
-                <Foundations
-                  foundationCards={vm.foundationCards}
-                  foundations={vm.state.foundations}
-                  drag={vm.drag}
-                  playableFoundations={vm.playable.foundations}
-                  showTimer={showTimer}
-                  setFoundationRef={vm.setFoundationRef}
-                  handleFoundationPointerDown={vm.handleFoundationPointerDown}
-                  isAbandoned={false}
-                />
+                <Foundations boardController={boardController} />
 
                 {/* Tableau in the middle */}
                 <Tableau
