@@ -1,44 +1,43 @@
 import { useCallback } from "react";
-import { applyMove, areAllCardsUnlocked, createGame } from "@vcell/engine";
-import type { GameState, Move, Rules, UndoLimit } from "@vcell/engine";
+import { createGame } from "@vcell/engine";
+import type { Move, Rules, UndoLimit } from "@vcell/engine";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
-import type { PersistedGame } from "@/persistence/types";
-import { db } from "@/lib/firebaseClient";
-import { doc, setDoc } from "firebase/firestore";
+
 import {
   applyMoveToHistory,
   hydrateHistory,
-  HistoryState,
   undoHistory,
   resetTimeline,
+  setUndosUsed,
+  setStatus,
   selectCursor,
   selectMoves,
-  setUndosUsed,
   selectUndosUsed,
   selectStatus,
-  setStatus
+  selectHistory,
+  selectSeed
 } from "@/state/game/gameSlice";
+
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectStartedAtMs,
   setStartedAtMs,
   setEndedAtMs,
   selectEndedAtMs,
-  setCheckpoint
+  setCheckpoint,
+  selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
-import {
-  selectCompletedGames,
-  setCompletedGames
-} from "@/state/records/recordsSlice";
+
+import { AppDispatch } from "@/state/reduxStore";
+import { archiveCompletedGame as archiveCompletedGameThunk } from "@/state/records/thunks/archiveCompletedGame";
+
+import { computePostMoveResult } from "@/state/game/utils";
+import { useSession } from "@/state/session/SessionProvider";
 
 export type UseGameActionsParams = {
-  // Core state
-  history: HistoryState;
   // Session identity + rules
-  seed: string;
   sessionId: string;
-  uid: string | null;
   rules: Rules;
   undoLimit: UndoLimit;
 
@@ -62,24 +61,29 @@ export type UseGameActionsResult = {
  * This is intentionally a mechanical extraction from GameProvider.
  */
 export function useGameActions({
-  history,
-  seed,
   sessionId,
-  uid,
   rules,
   undoLimit,
 
   startNewDealSession,
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
-  const dispatch = useDispatch();
-  const moves = useSelector(selectMoves);
-  const cursor = useSelector(selectCursor);
+  const { uid } = useSession();
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Session state
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
+
+  // Game state
+  const seed = useSelector(selectSeed);
+  const moves = useSelector(selectMoves);
+  const cursor = useSelector(selectCursor);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
-  const completedGames = useSelector(selectCompletedGames);
+  const history = useSelector(selectHistory);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -91,84 +95,64 @@ export function useGameActions({
         dispatch(setStartedAtMs(Date.now()));
       }
 
-      let nextCursor = cursor;
-      let nextMoves = moves;
-
-      if (status !== "won") {
-        dispatch(setEndedAtMs(null));
-        dispatch(setStatus("in_progress"));
-
-        // For archive/checkpoint bookkeeping, compute the post-move timeline values.
-        const truncated = moves.slice(0, cursor);
-        nextMoves = [...truncated, move];
-        nextCursor = cursor + 1;
-      }
-
-      let next: GameState;
+      let resolved: ReturnType<
+        typeof import("@/state/game/utils").computePostMoveResult
+      >;
       try {
-        next = applyMove(history.present, move);
+        resolved = computePostMoveResult({
+          moveToApply: move,
+          currentCursor: cursor,
+          currentMoves: moves,
+          currentStatus: status,
+          currentPresent: history.present
+        });
       } catch (err) {
         console.warn("[dispatchMove] applyMove rejected move; dropping move", {
           err,
           move,
           sessionId,
           seed,
-          endedAtMs,
-          cursor: nextCursor
+          cursor
         });
         return;
       }
 
-      // If this move produces a win, stamp `endedAtMs` exactly once.
-      if (status !== "won" && areAllCardsUnlocked(next)) {
-        if (endedAtMs == null) {
-          dispatch(setEndedAtMs(Date.now()));
-        }
-        dispatch(setStatus("won"));
+      const { next, nextMoves, nextCursor, didWin, shouldCheckpoint } =
+        resolved;
 
-        const archivedCursor = nextCursor;
-        const archivedMoves = nextMoves;
+      const endedAtMs = didWin ? Date.now() : null;
 
-        const completed: PersistedGame = {
-          sessionId,
-          deviceId: getOrCreateDeviceId(),
-          seed,
-          rules: next.rules,
-          kind: "freeplay",
-
-          status: "won",
-
-          startedAtMs,
-          endedAtMs: Date.now(),
-          timeElapsedMs: 0,
-          paused: false,
-
-          moveCount: archivedCursor,
-          undosUsed,
-          moves: archivedMoves,
-          cursor: archivedCursor,
-
-          updatedAtMs: Date.now(),
-          ...(uid ? { userId: uid } : {})
-        };
-
-        if (completedGames.some((g) => g.sessionId === sessionId)) return;
-
-        dispatch(setCompletedGames([...completedGames, completed]));
-
-        if (uid) {
-          setDoc(doc(db, "users", uid, "games", sessionId), completed, {
-            merge: true
-          }).catch((err) => {
-            console.warn(
-              "[game actions] failed to write completed game to Firestore",
-              err
-            );
-          });
-        }
+      if (status !== "won") {
+        dispatch(setEndedAtMs(null));
+        dispatch(setStatus("in_progress"));
       }
 
-      if (nextCursor > 0 && nextCursor % 20 === 0) {
+      if (didWin) {
+        if (endedAtMs != null) {
+          dispatch(setEndedAtMs(endedAtMs));
+        }
+
+        dispatch(setStatus("won"));
+
+        dispatch(
+          archiveCompletedGameThunk({
+            sessionId,
+            deviceId: getOrCreateDeviceId(),
+            seed,
+            rules: next.rules,
+            finalStatus: "won",
+            cursor: nextCursor,
+            moves: nextMoves,
+            startedAtMs,
+            endedAtMs: endedAtMs ?? Date.now(),
+            timeElapsedMs,
+            undosUsed,
+            uid
+          })
+        );
+      }
+
+      if (shouldCheckpoint) {
         dispatch(setCheckpoint({ at: nextCursor, state: next }));
       }
 
@@ -184,13 +168,12 @@ export function useGameActions({
       sessionId,
       seed,
       startedAtMs,
-      undosUsed,
       undoLimit,
-      uid,
       history.present,
       dispatch,
-      endedAtMs,
-      completedGames
+      timeElapsedMs,
+      undosUsed,
+      uid
     ]
   );
 
@@ -219,48 +202,28 @@ export function useGameActions({
 
       if (startedAtMs && !isFinished) {
         dispatch(setStatus("abandoned"));
-        dispatch(setEndedAtMs(Date.now()));
+        const endedAtMs = Date.now();
+        dispatch(setEndedAtMs(endedAtMs));
 
         const archivedCursor = cursor;
         const archivedMoves = moves;
 
-        const completed: PersistedGame = {
-          sessionId,
-          deviceId: getOrCreateDeviceId(),
-          seed,
-          rules: history.present.rules,
-          kind: "freeplay",
-
-          status: "abandoned",
-
-          startedAtMs,
-          endedAtMs: Date.now(),
-          timeElapsedMs: 0,
-          paused: false,
-
-          moveCount: archivedCursor,
-          undosUsed,
-          moves: archivedMoves,
-          cursor: archivedCursor,
-
-          updatedAtMs: Date.now(),
-          ...(uid ? { userId: uid } : {})
-        };
-
-        if (completedGames.some((g) => g.sessionId === sessionId)) return;
-
-        dispatch(setCompletedGames([...completedGames, completed]));
-
-        if (uid) {
-          setDoc(doc(db, "users", uid, "games", sessionId), completed, {
-            merge: true
-          }).catch((err) => {
-            console.warn(
-              "[game actions] failed to write completed game to Firestore",
-              err
-            );
-          });
-        }
+        dispatch(
+          archiveCompletedGameThunk({
+            sessionId,
+            deviceId: getOrCreateDeviceId(),
+            seed,
+            rules: history.present.rules,
+            finalStatus: "abandoned",
+            cursor: archivedCursor,
+            moves: archivedMoves,
+            startedAtMs,
+            endedAtMs,
+            timeElapsedMs,
+            undosUsed,
+            uid
+          })
+        );
 
         start();
         return;
@@ -274,14 +237,14 @@ export function useGameActions({
       startedAtMs,
       endedAtMs,
       status,
-      sessionId,
-      seed,
       history.present.rules,
-      undosUsed,
       cursor,
       moves,
+      timeElapsedMs,
+      undosUsed,
       uid,
-      completedGames
+      seed,
+      sessionId
     ]
   );
 

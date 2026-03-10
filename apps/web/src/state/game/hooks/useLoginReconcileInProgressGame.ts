@@ -21,25 +21,26 @@ import {
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { selectSessionPhase } from "@/state/session/sessionSlice";
+import {
+  selectSessionId,
+  selectSessionPhase
+} from "@/state/session/sessionSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
-import { hydrateFromPersisted } from "../gameSlice";
+import { hydrateFromPersisted, selectSeed } from "../gameSlice";
+import { useSession } from "@/state/session/SessionProvider";
 
-type Params = {
-  uid: string | null;
-  currentSeed: string;
-  currentSessionId: string;
-};
-
-export function useLoginReconcileInProgressGame({
-  uid,
-  currentSeed,
-  currentSessionId
-}: Params) {
+export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
   const lastSwitchedSessionRef = useRef<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+
+  const { uid } = useSession();
+  // sessioon state
   const sessionPhase = useSelector(selectSessionPhase);
+  const currentSessionId = useSelector(selectSessionId);
+
+  // game state
+  const currentSeed = useSelector(selectSeed);
 
   useEffect(() => {
     if (sessionPhase !== "ready") return;

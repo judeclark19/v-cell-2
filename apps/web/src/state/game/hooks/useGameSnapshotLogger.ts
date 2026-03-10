@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectCanUndo, selectUndosUsed } from "../gameSlice";
+import { selectCanUndo, selectSeed, selectUndosUsed } from "../gameSlice";
 import {
   selectPaused,
   selectEndedAtMs,
@@ -36,11 +36,8 @@ function diffKeys(prev: GameSnapshot | null, next: GameSnapshot): string[] {
 
 export type UseGameSnapshotLoggerParams = {
   sessionId: string;
-  seed: string;
   state: GameState;
-
   moveCount: number;
-
   moves: Move[];
   cursor: number;
 };
@@ -52,13 +49,16 @@ export type UseGameSnapshotLoggerParams = {
  * from the change signature so timer ticks don't flood the console.
  */
 export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
+  // session state
   const endedAtMs = useSelector(selectEndedAtMs);
-  const undosUsed = useSelector(selectUndosUsed);
-  const canUndo = useSelector(selectCanUndo);
   const paused = useSelector(selectPaused);
   const checkpoint = useSelector(selectCheckpoint);
+  // game state
+  const seed = useSelector(selectSeed);
+  const undosUsed = useSelector(selectUndosUsed);
+  const canUndo = useSelector(selectCanUndo);
 
-  const { sessionId, seed, state, moveCount, moves, cursor } = params;
+  const { sessionId, state, moveCount, moves, cursor } = params;
 
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({

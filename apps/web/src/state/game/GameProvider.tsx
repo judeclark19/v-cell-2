@@ -94,9 +94,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const { uid } = useSession();
 
   // const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
-  useCompletedGamesPersistence({
-    uid
-  });
+  useCompletedGamesPersistence();
 
   // ---------------------------------------------------------------------------
   // Undo analytics
@@ -133,11 +131,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     uiResetsRef.current = handlers;
   }, []);
 
-  useLoginReconcileInProgressGame({
-    uid,
-    currentSeed: seed,
-    currentSessionId: sessionId
-  });
+  useLoginReconcileInProgressGame();
 
   // When the user logs out, reset to a fresh guest deal ONCE (on uid transition).
   // IMPORTANT: Don't key off `uid === null && startedAtMs` because `startedAtMs` becomes true
@@ -166,14 +160,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Actions
   // ---------------------------------------------------------------------------
   const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
-    history,
-
-    seed,
     sessionId,
     rules,
     undoLimit,
-    uid,
-
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
@@ -183,7 +172,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   useGameSnapshotLogger({
     sessionId,
-    seed,
     state: history.present,
     moveCount,
     moves,
@@ -213,8 +201,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       {uid == null && (
         <InProgressPersistenceDriver
           readyToHydrate={!!sessionId && !!seed}
-          uid={uid}
-          seed={seed}
           rules={rules}
           moves={moves}
           cursor={cursor}

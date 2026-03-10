@@ -64,3 +64,4 @@ export const {
 } = gameSlice.actions;
 
 export const gameReducer = gameSlice.reducer;
+export * from "./selectors";

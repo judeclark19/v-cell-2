@@ -12,12 +12,11 @@ import {
   selectCompletedGames,
   setCompletedGames
 } from "@/state/records/recordsSlice";
+import { useSession } from "@/state/session/SessionProvider";
 
-type Params = {
-  uid: string | null;
-};
+export function useCompletedGamesPersistence() {
+  const { uid } = useSession();
 
-export function useCompletedGamesPersistence({ uid }: Params) {
   const dispatch = useDispatch();
   const completedGames = useSelector(selectCompletedGames);
 

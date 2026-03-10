@@ -22,10 +22,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
 import {
   GameStatus,
-  selectStatus,
-  selectUndosUsed,
   setStatus,
-  setUndosUsed
+  setUndosUsed,
+  selectStatus,
+  selectUndosUsed
 } from "@/state/game/gameSlice";
 import {
   selectPaused,

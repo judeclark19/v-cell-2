@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
-import { selectSeed, setStatus } from "@/state/game/gameSlice";
-import { setUndosUsed } from "@/state/game/gameSlice";
+import { selectSeed, setStatus, setUndosUsed } from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
