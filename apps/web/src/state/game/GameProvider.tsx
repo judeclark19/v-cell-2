@@ -198,15 +198,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   return (
     <GameContext.Provider value={value}>
       <SessionTimerDriver />
-      {uid == null && (
-        <InProgressPersistenceDriver
-          readyToHydrate={!!sessionId && !!seed}
-          rules={rules}
-          moves={moves}
-          cursor={cursor}
-          moveCount={moveCount}
-        />
-      )}
+      <InProgressPersistenceDriver
+        readyToHydrate={!!sessionId && !!seed}
+        rules={rules}
+        moves={moves}
+        cursor={cursor}
+        moveCount={moveCount}
+        uid={uid}
+        seed={seed}
+      />
       {children}
     </GameContext.Provider>
   );

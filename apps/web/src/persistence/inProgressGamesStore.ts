@@ -39,6 +39,7 @@ export async function upsertInProgressGame(
   game: InProgressGame
 ): Promise<void> {
   if (typeof window === "undefined") return;
+  console.log("upsertInProgressGame", game);
   const db = await openVCellDb();
 
   return new Promise((resolve, reject) => {

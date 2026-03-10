@@ -1,8 +1,5 @@
 import { useInProgressGamePersistence } from "@/persistence/hooks/useInProgressGamePersistence";
 import { Move, Rules } from "@vcell/engine";
-import { useSession } from "../session/SessionProvider";
-import { useSelector } from "react-redux";
-import { selectSeed } from "./gameSlice";
 
 function InProgressPersistenceDriver(props: {
   readyToHydrate: boolean;
@@ -10,16 +7,10 @@ function InProgressPersistenceDriver(props: {
   moves: Move[];
   cursor: number;
   moveCount: number;
+  uid: string | null;
+  seed: string;
 }) {
-  const { uid } = useSession();
-
-  // game state
-  const seed = useSelector(selectSeed);
-  useInProgressGamePersistence({
-    uid,
-    seed,
-    ...props
-  });
+  useInProgressGamePersistence(props);
   return null;
 }
 

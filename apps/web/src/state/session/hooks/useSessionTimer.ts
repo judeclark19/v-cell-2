@@ -8,6 +8,7 @@ import {
   selectTimeElapsedMs,
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
+import { upsertInProgressGame } from "@/persistence/inProgressGamesStore";
 
 /**
  * Drives the game timer while the game is active and the tab is visible.
