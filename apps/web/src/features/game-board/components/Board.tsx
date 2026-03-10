@@ -16,19 +16,18 @@ import {
   selectStartedAtMs
 } from "@/state/session/sessionSlice";
 import { AppDispatch } from "@/state/reduxStore";
-import { Rules } from "@vcell/engine";
+
 import {
   selectCanUndo,
   selectRules,
   selectStatus,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
-import { useSession } from "@/state/session/SessionProvider";
+
 import {
   requestConfirmation,
   dismissConfirmation
 } from "@/state/ui/requestConfirmation";
-import { requestRulesChange as requestRulesChangeThunk } from "@/state/session/thunks/requestRulesChange";
 
 function Board() {
   const dispatch = useDispatch<AppDispatch>();
@@ -44,7 +43,6 @@ function Board() {
   // UI state
   const showTimer = useSelector(selectShowTimer);
 
-  const { uid } = useSession();
   const game = useGame();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } =
     useBoardController(game);
@@ -191,9 +189,6 @@ function Board() {
           if (!ok) return;
 
           vm.startBySeed(seed);
-        }}
-        requestRulesChange={async (patch: Rules) => {
-          await dispatch(requestRulesChangeThunk({ patch, uid })).unwrap();
         }}
       />
     </>

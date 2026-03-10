@@ -97,6 +97,7 @@ export const gameSlice = createSlice({
       state.status = null;
     },
     hydrateHistory: (
+      // TODO: wtap these hydrate functions into transitionGameAndSession?
       state,
       action: PayloadAction<{ present: GameState; past: GameState[] }>
     ) => {

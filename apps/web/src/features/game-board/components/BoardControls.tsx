@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { UndoLimit } from "@vcell/engine";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectRules } from "@/state/game/gameSlice";
-import { Rules } from "@vcell/engine";
+import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
+import { AppDispatch } from "@/state/reduxStore";
+import { useSession } from "@/state/session/SessionProvider";
 
 type BoardControlsProps = {
   onNewDeal: () => void;
   startBySeed: (seed: string) => void;
-
-  requestRulesChange: (rules: Rules) => Promise<void>;
 };
 
 const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
@@ -26,11 +26,13 @@ const parseUndoLimit = (value: string): UndoLimit => {
 
 export default function BoardControls({
   onNewDeal,
-  startBySeed,
-  requestRulesChange
+  startBySeed
 }: BoardControlsProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { uid } = useSession();
   const [seedInput, setSeedInput] = useState("");
   const rules = useSelector(selectRules);
+
   return (
     <>
       <section className="control" aria-label="Start a new game">
@@ -125,7 +127,12 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
                 if (next === rules.faceDownCount) return;
-                await requestRulesChange({ ...rules, faceDownCount: next });
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, faceDownCount: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="0">0 (all face-up)</option>
@@ -148,7 +155,12 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
                 if (next === rules.undoLimit) return;
-                await requestRulesChange({ ...rules, undoLimit: next });
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, undoLimit: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="0">0</option>
@@ -165,6 +177,7 @@ export default function BoardControls({
 
           <label className="field">
             Foundation pullback
+            {/* TODO: when foundation pullback is turned off, the right click/context menu should NOT try auto foundation */}
             <select
               className="control"
               id="foundation-pullback"
@@ -172,10 +185,12 @@ export default function BoardControls({
               onChange={async (e) => {
                 const next = e.target.value === "on";
                 if (next === rules.allowFoundationPullback) return;
-                await requestRulesChange({
-                  ...rules,
-                  allowFoundationPullback: next
-                });
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, allowFoundationPullback: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="on">On (easier)</option>
