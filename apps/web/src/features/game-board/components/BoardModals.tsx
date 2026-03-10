@@ -11,6 +11,11 @@ import {
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
+import { useBoardController } from "../hooks/useBoardController";
+import { selectMoveCount } from "@/state/game/gameSlice";
+import { selectConfirmReq } from "@/state/ui/uiSlice";
+import { dismissConfirmation } from "@/state/ui/requestConfirmation";
+import { AppDispatch } from "@/state/reduxStore";
 
 export type ConfirmRequest = {
   title: string;
@@ -21,32 +26,21 @@ export type ConfirmRequest = {
   onCancel?: () => void;
 };
 
-type BoardModalsProps = {
-  shouldShowWinModal: boolean;
-  onDismissWinModal: () => void;
-
-  moveCount: number;
-
-  confirmReq: ConfirmRequest | null;
-  dismissConfirm: () => void;
-  onNewDealAction: () => void;
-};
-
-export default function BoardModals({
-  shouldShowWinModal,
-  onDismissWinModal,
-  moveCount,
-  confirmReq,
-  dismissConfirm,
-  onNewDealAction
-}: BoardModalsProps) {
+export default function BoardModals() {
   const router = useRouter();
   const game = useGame();
   const { isUser } = useSession();
+  const { shouldShowWinModal, dismissWinModal, newDealWithCelebration } =
+    useBoardController(game);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  // Session state
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const confirmReq = useSelector(selectConfirmReq);
+  // Game state
+  const moveCount = useSelector(selectMoveCount);
+  // Records state
   const completedGames = useSelector(selectCompletedGames);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
@@ -102,12 +96,14 @@ export default function BoardModals({
           overlayAriaLabel="Confirm action"
           title={confirmReq.title}
           buttonAriaLabel="Close confirmation dialog"
-          onClose={dismissConfirm}
+          onClose={() => dismissConfirmation(dispatch, confirmReq)}
           bodyText={confirmReq.bodyText}
           primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
           primaryButtonAction={confirmReq.onConfirm}
           secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
-          secondaryButtonAction={dismissConfirm}
+          secondaryButtonAction={() =>
+            dismissConfirmation(dispatch, confirmReq)
+          }
         />
       )}
 
@@ -127,13 +123,13 @@ export default function BoardModals({
           overlayAriaLabel="Game won"
           title="You won!"
           buttonAriaLabel="Close win dialog"
-          onClose={onDismissWinModal}
+          onClose={dismissWinModal}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
-          primaryButtonAction={onNewDealAction}
+          primaryButtonAction={newDealWithCelebration}
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
-            onDismissWinModal();
+            dismissWinModal();
             if (isUser) {
               router.push("/stats");
             }

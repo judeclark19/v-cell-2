@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { UndoLimit } from "@vcell/engine";
 import { useDispatch, useSelector } from "react-redux";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
@@ -9,28 +8,20 @@ import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardController } from "../hooks/useBoardController";
 import { useGame } from "@/state/game/GameProvider";
-
-const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
-  const n = Number(value);
-  if (n === 0 || n === 7 || n === 14 || n === 21) return n;
-  return 7;
-};
-
-const parseUndoLimit = (value: string): UndoLimit => {
-  if (value === "unlimited") return "unlimited";
-  const n = Number(value);
-  if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
-  return "unlimited";
-};
+import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 
 export default function BoardControls() {
   // old stuff
   const { uid } = useSession();
-  const [seedInput, setSeedInput] = useState("");
   const game = useGame();
   const vm = useBoardController(game);
 
+  // new stuff
   const dispatch = useDispatch<AppDispatch>();
+
+  // component state
+  const [seedInput, setSeedInput] = useState("");
+
   // Game state
   const rules = useSelector(selectRules);
   const status = useSelector(selectStatus);

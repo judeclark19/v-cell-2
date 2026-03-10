@@ -2,7 +2,7 @@ import "../styles/board.css";
 import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
-import { selectConfirmReq, selectShowTimer } from "@/state/ui/uiSlice";
+import { selectShowTimer } from "@/state/ui/uiSlice";
 import Tableau from "./Tableau";
 import Foundations from "./Foundations";
 import FreeCells from "./FreeCells";
@@ -10,9 +10,8 @@ import BoardModals from "./BoardModals";
 import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
-import { AppDispatch } from "@/state/reduxStore";
 
 import {
   selectCanUndo,
@@ -20,17 +19,13 @@ import {
   selectUndosRemaining
 } from "@/state/game/gameSlice";
 
-import { dismissConfirmation } from "@/state/ui/requestConfirmation";
-
 function Board() {
-  const dispatch = useDispatch<AppDispatch>();
   // Game state
   const rules = useSelector(selectRules);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
-  const confirmReq = useSelector(selectConfirmReq);
   // UI state
   const showTimer = useSelector(selectShowTimer);
 
@@ -135,14 +130,7 @@ function Board() {
             )}
           </div>
 
-          <BoardModals
-            shouldShowWinModal={vm.shouldShowWinModal}
-            onDismissWinModal={vm.dismissWinModal}
-            moveCount={vm.moveCount}
-            confirmReq={confirmReq}
-            dismissConfirm={() => dismissConfirmation(dispatch, confirmReq)}
-            onNewDealAction={vm.newDealWithCelebration}
-          />
+          <BoardModals />
         </BoardKbAttrsContext.Provider>
       </div>
       <p className="hint" style={{ textAlign: "center" }}>
