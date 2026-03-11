@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 
 export default function HomePage() {
   const router = useRouter();

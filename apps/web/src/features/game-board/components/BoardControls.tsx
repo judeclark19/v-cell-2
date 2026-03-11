@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardController } from "../hooks/useBoardController";

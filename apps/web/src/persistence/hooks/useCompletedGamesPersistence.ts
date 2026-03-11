@@ -12,7 +12,7 @@ import {
   selectCompletedGames,
   setCompletedGames
 } from "@/state/records/recordsSlice";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 
 export function useCompletedGamesPersistence() {
   const { uid } = useSession();

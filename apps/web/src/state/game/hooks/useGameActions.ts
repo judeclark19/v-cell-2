@@ -33,7 +33,7 @@ import { AppDispatch } from "@/state/reduxStore";
 import { archiveCompletedGame as archiveCompletedGameThunk } from "@/state/records/thunks/archiveCompletedGame";
 
 import { computePostMoveResult } from "@/state/game/utils";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 
 export type UseGameActionsParams = {
   // Session identity + rules

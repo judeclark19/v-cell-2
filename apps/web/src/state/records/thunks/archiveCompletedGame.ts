@@ -6,7 +6,7 @@ import {
   selectCompletedGames,
   setCompletedGames
 } from "@/state/records/recordsSlice";
-import { writeCompletedGameToCloud } from "@/state/persistence/utils";
+import { writeCompletedGameToCloud } from "@/persistence/utils";
 
 export const archiveCompletedGame = createAsyncThunk<
   void,

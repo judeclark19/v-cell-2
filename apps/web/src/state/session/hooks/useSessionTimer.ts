@@ -26,13 +26,6 @@ export function useSessionTimer() {
   const paused = useSelector(selectPaused);
   const sessionPhase = useSelector(selectSessionPhase);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
-  const prevDepsRef = useRef<{
-    paused: boolean;
-    sessionPhase: string;
-    startedAtMs: number | null;
-    status: string | null;
-  } | null>(null);
-
   const timeElapsedRef = useRef(timeElapsedMs);
 
   useEffect(() => {
@@ -40,15 +33,6 @@ export function useSessionTimer() {
   }, [timeElapsedMs]);
 
   useEffect(() => {
-    const nextDeps = {
-      paused,
-      sessionPhase,
-      startedAtMs,
-      status
-    };
-
-    prevDepsRef.current = nextDeps;
-
     const isFinished = status === "won" || status === "abandoned";
 
     function clearTimerInterval() {

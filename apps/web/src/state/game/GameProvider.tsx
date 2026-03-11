@@ -12,7 +12,7 @@ import type { GameState, Move } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 import { useDispatch, useSelector } from "react-redux";

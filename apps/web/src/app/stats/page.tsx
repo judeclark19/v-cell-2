@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { getAllCompletedGames } from "@/persistence/completedGamesStore";
 import type { PersistedGame } from "@/persistence/types";

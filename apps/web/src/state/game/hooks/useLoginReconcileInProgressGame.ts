@@ -27,7 +27,7 @@ import {
 } from "@/state/session/sessionSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 import { hydrateFromPersisted, selectSeed } from "../gameSlice";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/auth/AuthProvider";
 
 export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
