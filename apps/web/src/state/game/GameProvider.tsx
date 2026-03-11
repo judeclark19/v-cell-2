@@ -108,9 +108,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/sessionId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { startNewDealSession, replaySeed } = useGameSession({
-    rules
-  });
+  const { startNewDealSession, replaySeed } = useGameSession();
 
   const startNewDealSessionWithResets = useCallback(() => {
     uiResetsRef.current?.stopAutoComplete?.();
@@ -160,9 +158,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Actions
   // ---------------------------------------------------------------------------
   const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
-    sessionId,
-    rules,
-    undoLimit,
     startNewDealSession: startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
@@ -170,13 +165,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Snapshot logging
   // ---------------------------------------------------------------------------
-  useGameSnapshotLogger({
-    sessionId,
-    state: history.present,
-    moveCount,
-    moves,
-    cursor
-  });
+  useGameSnapshotLogger();
 
   // ---------------------------------------------------------------------------
   // Context value

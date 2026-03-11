@@ -1,12 +1,21 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
 import { useSelector } from "react-redux";
-import { selectCanUndo, selectSeed, selectUndosUsed } from "../gameSlice";
+import {
+  selectCanUndo,
+  selectCursor,
+  selectMoveCount,
+  selectMoves,
+  selectSeed,
+  selectUndosUsed
+} from "../gameSlice";
 import {
   selectPaused,
   selectEndedAtMs,
-  selectCheckpoint
+  selectCheckpoint,
+  selectSessionId
 } from "@/state/session/sessionSlice";
+import { selectRules } from "@/state/session/selectors_new";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 export type GameSnapshot = {
@@ -19,8 +28,6 @@ export type GameSnapshot = {
   undosUsed: number;
   moves: Move[];
   cursor: number;
-  // Keep the full engine state in the snapshot so we can inspect it when debugging.
-  state: GameState;
 };
 
 function diffKeys(prev: GameSnapshot | null, next: GameSnapshot): string[] {
@@ -34,43 +41,37 @@ function diffKeys(prev: GameSnapshot | null, next: GameSnapshot): string[] {
   return changed;
 }
 
-export type UseGameSnapshotLoggerParams = {
-  sessionId: string;
-  state: GameState;
-  moveCount: number;
-  moves: Move[];
-  cursor: number;
-};
-
 /**
  * Dev-only snapshot logger.
  *
  * Keeps a full snapshot ref (including `timeElapsedMs`) but excludes `timeElapsedMs`
  * from the change signature so timer ticks don't flood the console.
  */
-export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
+export function useGameSnapshotLogger() {
   // session state
   const endedAtMs = useSelector(selectEndedAtMs);
   const paused = useSelector(selectPaused);
   const checkpoint = useSelector(selectCheckpoint);
+  const sessionId = useSelector(selectSessionId);
   // game state
   const seed = useSelector(selectSeed);
   const undosUsed = useSelector(selectUndosUsed);
   const canUndo = useSelector(selectCanUndo);
-
-  const { sessionId, state, moveCount, moves, cursor } = params;
+  const rules = useSelector(selectRules);
+  const moveCount = useSelector(selectMoveCount);
+  const moves = useSelector(selectMoves);
+  const cursor = useSelector(selectCursor);
 
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({
       sessionId,
       seed,
-      rules: state.rules,
+      rules,
       canUndo,
       moveCount,
       undosUsed,
       endedAtMs,
       paused,
-      state,
       moves,
       cursor,
       checkpoint
@@ -78,7 +79,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     [
       sessionId,
       seed,
-      state,
+      rules,
       canUndo,
       moveCount,
       undosUsed,
@@ -95,13 +96,12 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     () => ({
       sessionId,
       seed,
-      rules: state.rules,
+      rules,
       paused,
       canUndo,
       moveCount,
       undosUsed,
       endedAtMs,
-      state,
       moves,
       cursor,
       checkpoint
@@ -109,7 +109,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     [
       sessionId,
       seed,
-      state,
+      rules,
       endedAtMs,
       canUndo,
       moveCount,

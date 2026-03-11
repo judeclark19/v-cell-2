@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { Rules } from "@vcell/engine";
-import { selectSeed, setStatus, setUndosUsed } from "@/state/game/gameSlice";
+import {
+  selectRules,
+  selectSeed,
+  setStatus,
+  setUndosUsed
+} from "@/state/game/gameSlice";
 import { bootSession } from "@/state/session/thunks/bootSession";
 import { AppDispatch } from "@/state/reduxStore";
 import {
@@ -16,10 +21,6 @@ type StartSessionMode =
   | { kind: "seed"; seed: string }
   | { kind: "seed+id"; seed: string; sessionId: string };
 
-export type UseGameSessionParams = {
-  rules: Rules;
-};
-
 export type UseGameSessionResult = {
   startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
@@ -32,14 +33,15 @@ export type UseGameSessionResult = {
  * Owns the concept of a "game session": seed + sessionId + readiness, and the
  * choreography that resets all per-session state.
  */
-export function useGameSession({
-  rules
-}: UseGameSessionParams): UseGameSessionResult {
-  // Seed/sessionId are now owned by the RTK store.
-  // Keep deterministic placeholders to avoid hydration mismatches.
-  const seed = useSelector(selectSeed);
-  const sessionId = useSelector(selectSessionId);
+export function useGameSession(): UseGameSessionResult {
   const dispatch = useDispatch<AppDispatch>();
+
+  // Game state
+  const seed = useSelector(selectSeed);
+  const rules = useSelector(selectRules);
+
+  // session state
+  const sessionId = useSelector(selectSessionId);
 
   // Prevent duplicate bootstraps (can happen due to hydration remounts in dev/prod).
   // We guard both per-mount (ref) and per-page-load (global) to avoid double-dispatch.

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { createGame } from "@vcell/engine";
-import type { Move, Rules, UndoLimit } from "@vcell/engine";
+import type { Move, UndoLimit } from "@vcell/engine";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 
@@ -16,7 +16,8 @@ import {
   selectUndosUsed,
   selectStatus,
   selectHistory,
-  selectSeed
+  selectSeed,
+  selectUndoLimit
 } from "@/state/game/gameSlice";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -26,7 +27,8 @@ import {
   setEndedAtMs,
   selectEndedAtMs,
   setCheckpoint,
-  selectTimeElapsedMs
+  selectTimeElapsedMs,
+  selectSessionId
 } from "@/state/session/sessionSlice";
 
 import { AppDispatch } from "@/state/reduxStore";
@@ -34,13 +36,9 @@ import { archiveCompletedGame as archiveCompletedGameThunk } from "@/state/recor
 
 import { computePostMoveResult } from "@/state/game/utils";
 import { useSession } from "@/auth/AuthProvider";
+import { selectRules } from "@/state/session/selectors_new";
 
 export type UseGameActionsParams = {
-  // Session identity + rules
-  sessionId: string;
-  rules: Rules;
-  undoLimit: UndoLimit;
-
   // Session transition
   startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
@@ -61,10 +59,6 @@ export type UseGameActionsResult = {
  * This is intentionally a mechanical extraction from GameProvider.
  */
 export function useGameActions({
-  sessionId,
-  rules,
-  undoLimit,
-
   startNewDealSession,
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
@@ -73,6 +67,7 @@ export function useGameActions({
   const dispatch = useDispatch<AppDispatch>();
 
   // Session state
+  const sessionId = useSelector(selectSessionId);
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
@@ -84,6 +79,8 @@ export function useGameActions({
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
   const history = useSelector(selectHistory);
+  const rules = useSelector(selectRules);
+  const undoLimit = useSelector(selectUndoLimit);
 
   const dispatchMove = useCallback(
     (move: Move) => {
@@ -213,7 +210,7 @@ export function useGameActions({
             sessionId,
             deviceId: getOrCreateDeviceId(),
             seed,
-            rules: history.present.rules,
+            rules,
             finalStatus: "abandoned",
             cursor: archivedCursor,
             moves: archivedMoves,
@@ -237,7 +234,7 @@ export function useGameActions({
       startedAtMs,
       endedAtMs,
       status,
-      history.present.rules,
+      rules,
       cursor,
       moves,
       timeElapsedMs,
