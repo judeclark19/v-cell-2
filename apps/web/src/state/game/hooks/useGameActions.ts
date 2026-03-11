@@ -40,7 +40,7 @@ import { selectRules } from "@/state/session/selectors_new";
 
 export type UseGameActionsParams = {
   // Session transition
-  startNewDealSession: () => void;
+  startNewDealSessionWithResets: () => void;
   replaySeed: (seed: string) => void;
 };
 
@@ -59,7 +59,7 @@ export type UseGameActionsResult = {
  * This is intentionally a mechanical extraction from GameProvider.
  */
 export function useGameActions({
-  startNewDealSession,
+  startNewDealSessionWithResets,
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
   const { uid } = useSession();
@@ -247,9 +247,9 @@ export function useGameActions({
 
   const newDeal = useCallback(() => {
     abandonIfNeededThenStart(() => {
-      startNewDealSession();
+      startNewDealSessionWithResets();
     });
-  }, [abandonIfNeededThenStart, startNewDealSession]);
+  }, [abandonIfNeededThenStart, startNewDealSessionWithResets]);
 
   const startBySeed = useCallback(
     (nextSeed: string) => {

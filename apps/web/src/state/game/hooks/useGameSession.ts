@@ -22,7 +22,6 @@ type StartSessionMode =
   | { kind: "seed+id"; seed: string; sessionId: string };
 
 export type UseGameSessionResult = {
-  startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
 
   // Useful for debugging / future extractions (kept private-ish but returned).
@@ -102,10 +101,6 @@ export function useGameSession(): UseGameSessionResult {
     };
   }, [dispatch, rules, seed, sessionId]);
 
-  const startNewDealSession = useCallback(() => {
-    dispatch(transitionGameAndSession({ rules }));
-  }, [dispatch, rules]);
-
   const replaySeed = useCallback(
     (nextSeed: string) => {
       startSession({ kind: "seed", seed: nextSeed });
@@ -114,7 +109,6 @@ export function useGameSession(): UseGameSessionResult {
   );
 
   return {
-    startNewDealSession,
     replaySeed,
     startSession
   };

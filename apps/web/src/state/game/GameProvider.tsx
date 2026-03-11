@@ -35,6 +35,7 @@ import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 import { AppDispatch } from "../reduxStore";
 import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
+import { transitionGameAndSession } from "../transitionGameAndSession";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -108,13 +109,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/sessionId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { startNewDealSession, replaySeed } = useGameSession();
+  const { replaySeed } = useGameSession();
 
   const startNewDealSessionWithResets = useCallback(() => {
     uiResetsRef.current?.stopAutoComplete?.();
     uiResetsRef.current?.resetDrag?.();
-    startNewDealSession();
-  }, [startNewDealSession]);
+    dispatch(transitionGameAndSession({ rules }));
+  }, [dispatch, rules]);
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
@@ -150,15 +151,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
     queueMicrotask(() => {
-      startNewDealSession();
+      dispatch(transitionGameAndSession({ rules }));
     });
-  }, [uid, sessionPhase, startedAtMs, startNewDealSession]);
+  }, [uid, sessionPhase, startedAtMs, dispatch, rules]);
 
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
   const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
-    startNewDealSession: startNewDealSessionWithResets,
+    startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
 
