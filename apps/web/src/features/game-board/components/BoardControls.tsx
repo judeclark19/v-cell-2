@@ -7,14 +7,15 @@ import { useSession } from "@/auth/AuthProvider";
 import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardController } from "../hooks/useBoardController";
-import { useGame } from "@/state/game/GameProvider";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 
-export default function BoardControls() {
+export default function BoardControls({
+  vm
+}: {
+  vm: ReturnType<typeof useBoardController>;
+}) {
   // old stuff
   const { uid } = useSession();
-  const game = useGame();
-  const vm = useBoardController(game);
 
   // new stuff
   const dispatch = useDispatch<AppDispatch>();

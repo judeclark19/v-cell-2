@@ -62,34 +62,13 @@ function Board() {
                 <Foundations boardController={boardController} />
 
                 {/* Tableau in the middle */}
-                <Tableau
-                  state={vm.state}
-                  playable={vm.playable}
-                  drag={vm.drag}
-                  handleTableauPointerDown={vm.handleTableauPointerDown}
-                  tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
-                  setTableauColRef={vm.setTableauColRef}
-                  tryAutoFreeCellFromEl={vm.tryAutoFreeCellFromEl}
-                  onCardPointerUp={vm.onCardPointerUp}
-                />
+                <Tableau vm={boardController} />
 
                 {/* Drag overlay layer */}
                 <DragLayer drag={vm.drag} resetDrag={vm.resetDrag} />
 
                 {/* Free cells on bottom */}
-                <FreeCells
-                  freeCellsRow={vm.freeCellsRow}
-                  playableFreeCells={vm.playable.freeCells}
-                  tryAutoFoundationFromEl={vm.tryAutoFoundationFromEl}
-                  setFreeCellRef={vm.setFreeCellRef}
-                  drag={vm.drag}
-                  handleFreeCellPointerDown={vm.handleFreeCellPointerDown}
-                  showAcp={vm.showAcp}
-                  isAutoCompleting={vm.isAutoCompleting}
-                  runAutoComplete={vm.runAutoComplete}
-                  stopAutoComplete={vm.stopAutoComplete}
-                  onCardPointerUp={vm.onCardPointerUp}
-                />
+                <FreeCells vm={boardController} />
                 <div
                   className="row"
                   style={{ marginTop: "1em", marginBottom: "0.5em" }}
@@ -119,7 +98,7 @@ function Board() {
             )}
           </div>
 
-          <BoardModals />
+          <BoardModals vm={boardController} sessionId={game.sessionId} />
         </BoardKbAttrsContext.Provider>
       </div>
       <p className="hint" style={{ textAlign: "center" }}>
@@ -130,7 +109,7 @@ function Board() {
           "(unknown)"
         )}
       </p>
-      <BoardControls />
+      <BoardControls vm={boardController} />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
-import { useGame } from "@/state/game/GameProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import { useSession } from "@/auth/AuthProvider";
 import {
@@ -26,12 +25,16 @@ export type ConfirmRequest = {
   onCancel?: () => void;
 };
 
-export default function BoardModals() {
+export default function BoardModals({
+  vm,
+  sessionId
+}: {
+  vm: ReturnType<typeof useBoardController>;
+  sessionId: string;
+}) {
   const router = useRouter();
-  const game = useGame();
   const { isUser } = useSession();
-  const { shouldShowWinModal, dismissWinModal, newDealWithCelebration } =
-    useBoardController(game);
+  const { shouldShowWinModal, dismissWinModal, newDealWithCelebration } = vm;
 
   const dispatch = useDispatch<AppDispatch>();
   // Session state
@@ -69,8 +72,8 @@ export default function BoardModals() {
       .filter((g) => g.status === "won" && Number.isFinite(g.moveCount))
       .sort((a, b) => (a.moveCount as number) - (b.moveCount as number))[0];
 
-    const isNewBestTime = fastest?.sessionId === game.sessionId;
-    const isNewBestMoves = fewestMoves?.sessionId === game.sessionId;
+    const isNewBestTime = fastest?.sessionId === sessionId;
+    const isNewBestMoves = fewestMoves?.sessionId === sessionId;
 
     let bodyText = `Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`;
 

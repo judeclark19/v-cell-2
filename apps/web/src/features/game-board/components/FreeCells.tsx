@@ -1,72 +1,42 @@
-import type { Card as EngineCard } from "@vcell/engine";
 import { useContext } from "react";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
-import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
+import { useBoardController } from "../hooks/useBoardController";
 
-type FreeCellsProps = {
-  freeCellsRow: Array<EngineCard | null | undefined>;
-  playableFreeCells: boolean[];
-  /** Element-based auto-foundation (enables flight animation). Prefer this when provided. */
-  tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
-  setFreeCellRef: (index: number, el: HTMLDivElement | null) => void;
-  drag: ReturnType<typeof useCardDrag>["drag"];
-  handleFreeCellPointerDown: ReturnType<
-    typeof useCardDrag
-  >["handleFreeCellPointerDown"];
-  showAcp: boolean;
-  isAutoCompleting: boolean;
-  runAutoComplete: () => void;
-  stopAutoComplete: () => void;
-  onCardPointerUp?: (e: React.PointerEvent<HTMLDivElement>) => void;
-};
-
-function FreeCells({
-  freeCellsRow,
-  playableFreeCells,
-  tryAutoFoundationFromEl,
-  setFreeCellRef,
-  drag,
-  handleFreeCellPointerDown,
-  showAcp,
-  isAutoCompleting,
-  runAutoComplete,
-  stopAutoComplete,
-  onCardPointerUp
-}: FreeCellsProps) {
+function FreeCells({ vm }: { vm: ReturnType<typeof useBoardController> }) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = drag.kbFlight;
+  const kbFlight = vm.drag.kbFlight;
 
   return (
     <div className="board-bottom" aria-label="Free cells">
       <div
         className={`autocomplete-drawer${
-          showAcp ? " autocomplete-drawer--visible" : ""
+          vm.showAcp ? " autocomplete-drawer--visible" : ""
         }`}
-        aria-hidden={showAcp ? "false" : "true"}
+        aria-hidden={vm.showAcp ? "false" : "true"}
       >
         <button
           type="button"
           className="btn btn--primary"
           onClick={() => {
-            if (isAutoCompleting) stopAutoComplete();
-            else runAutoComplete();
+            if (vm.isAutoCompleting) vm.stopAutoComplete();
+            else vm.runAutoComplete();
           }}
-          disabled={!showAcp}
+          disabled={!vm.showAcp}
         >
-          {isAutoCompleting ? "Stop" : "Autocomplete"}
+          {vm.isAutoCompleting ? "Stop" : "Autocomplete"}
         </button>
       </div>
       <div className="pile-row" aria-label="Free cells">
-        {freeCellsRow.map((card, i) =>
+        {vm.freeCellsRow.map((card, i) =>
           card === undefined ? (
             <div key={i} className="pile-spacer" aria-hidden="true" />
           ) : (
             <div
               key={i}
               className="pile-cell"
-              ref={(el) => setFreeCellRef(i - 1, el)}
+              ref={(el) => vm.setFreeCellRef(i - 1, el)}
               data-kb-focusable={kbCarrying && !card ? "true" : undefined}
               role={kbCarrying && !card ? "button" : undefined}
               aria-label={
@@ -82,9 +52,9 @@ function FreeCells({
                   const freeCellIndex = i - 1;
 
                   const hideForPointerDrag =
-                    drag.active &&
-                    drag.source?.type === "freecell" &&
-                    drag.source.index === freeCellIndex;
+                    vm.drag.active &&
+                    vm.drag.source?.type === "freecell" &&
+                    vm.drag.source.index === freeCellIndex;
 
                   const hideForKbFlightDest =
                     kbFlight.active &&
@@ -100,16 +70,16 @@ function FreeCells({
                   return (
                     <Card
                       card={card}
-                      playable={playableFreeCells[i - 1]} // -1 accounts for spacer
+                      playable={vm.playable.freeCells[i - 1]} // -1 accounts for spacer
                       data-kb-focusable={
-                        playableFreeCells[i - 1] ? "true" : "false"
+                        vm.playable.freeCells[i - 1] ? "true" : "false"
                       }
                       className="pile-card"
-                      onActivate={(el) => tryAutoFoundationFromEl(el)}
+                      onActivate={(el) => vm.tryAutoFoundationFromEl(el)}
                       onPointerDownCard={(e) =>
-                        handleFreeCellPointerDown(e, i - 1)
+                        vm.handleFreeCellPointerDown(e, i - 1)
                       }
-                      onPointerUp={onCardPointerUp}
+                      onPointerUp={vm.onCardPointerUp}
                       style={style}
                     />
                   );
