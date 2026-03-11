@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { Rules } from "@vcell/engine";
 import {
   selectRules,
   selectSeed,
@@ -16,15 +15,15 @@ import {
   setCheckpoint
 } from "@/state/session/sessionSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { safeRandomId } from "@/state/utils";
 
 type StartSessionMode =
   | { kind: "seed"; seed: string }
   | { kind: "seed+id"; seed: string; sessionId: string };
 
 export type UseGameSessionResult = {
+  startNewDealSession: () => void;
   replaySeed: (seed: string) => void;
-
-  // Useful for debugging / future extractions (kept private-ish but returned).
   startSession: (mode: StartSessionMode) => void;
 };
 
@@ -101,6 +100,10 @@ export function useGameSession(): UseGameSessionResult {
     };
   }, [dispatch, rules, seed, sessionId]);
 
+  const startNewDealSession = useCallback(() => {
+    startSession({ kind: "seed", seed: safeRandomId() });
+  }, [startSession]);
+
   const replaySeed = useCallback(
     (nextSeed: string) => {
       startSession({ kind: "seed", seed: nextSeed });
@@ -109,6 +112,7 @@ export function useGameSession(): UseGameSessionResult {
   );
 
   return {
+    startNewDealSession,
     replaySeed,
     startSession
   };

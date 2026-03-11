@@ -3,6 +3,7 @@ import { createGame } from "@vcell/engine";
 import type { Move } from "@vcell/engine";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
+import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGameIfNeeded";
 
 import {
   applyMoveToHistory,
@@ -25,7 +26,6 @@ import {
   selectStartedAtMs,
   setStartedAtMs,
   setEndedAtMs,
-  selectEndedAtMs,
   setCheckpoint,
   selectTimeElapsedMs,
   selectSessionId
@@ -69,7 +69,6 @@ export function useGameActions({
   // Session state
   const sessionId = useSelector(selectSessionId);
   const startedAtMs = useSelector(selectStartedAtMs);
-  const endedAtMs = useSelector(selectEndedAtMs);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
 
   // Game state
@@ -185,82 +184,32 @@ export function useGameActions({
     dispatch(setStatus("in_progress"));
   }, [seed, rules, dispatch]);
 
-  const abandonIfNeededThenStart = useCallback(
+  const transitionAwayFromCurrentGame = useCallback(
     (startNext: () => void) => {
-      // If a game is in progress, abandon it first so it gets archived.
-      const isFinished =
-        status === "won" || status === "abandoned" || endedAtMs != null;
+      dispatch(abandonCurrentGameIfNeeded({ uid }));
 
-      const start = () => {
-        const deviceId = getOrCreateDeviceId();
-        deleteInProgressGameForDevice(deviceId).catch(() => {});
-        startNext();
-      };
+      const deviceId = getOrCreateDeviceId();
+      deleteInProgressGameForDevice(deviceId).catch(() => {});
 
-      if (startedAtMs && !isFinished) {
-        dispatch(setStatus("abandoned"));
-        const endedAtMs = Date.now();
-        dispatch(setEndedAtMs(endedAtMs));
-
-        const archivedCursor = cursor;
-        const archivedMoves = moves;
-
-        dispatch(
-          archiveCompletedGameThunk({
-            sessionId,
-            deviceId: getOrCreateDeviceId(),
-            seed,
-            rules,
-            finalStatus: "abandoned",
-            cursor: archivedCursor,
-            moves: archivedMoves,
-            startedAtMs,
-            endedAtMs,
-            timeElapsedMs,
-            undosUsed,
-            uid
-          })
-        );
-
-        start();
-        return;
-      }
-
-      // Otherwise just start immediately.
-      start();
+      startNext();
     },
-    [
-      dispatch,
-      startedAtMs,
-      endedAtMs,
-      status,
-      rules,
-      cursor,
-      moves,
-      timeElapsedMs,
-      undosUsed,
-      uid,
-      seed,
-      sessionId
-    ]
+    [dispatch, uid]
   );
 
   const newDeal = useCallback(() => {
-    abandonIfNeededThenStart(() => {
-      startNewDealSessionWithResets();
-    });
-  }, [abandonIfNeededThenStart, startNewDealSessionWithResets]);
+    transitionAwayFromCurrentGame(startNewDealSessionWithResets);
+  }, [transitionAwayFromCurrentGame, startNewDealSessionWithResets]);
 
   const startBySeed = useCallback(
     (nextSeed: string) => {
       const normalized = nextSeed.trim();
       if (!normalized) return;
 
-      abandonIfNeededThenStart(() => {
+      transitionAwayFromCurrentGame(() => {
         replaySeed(normalized);
       });
     },
-    [abandonIfNeededThenStart, replaySeed]
+    [transitionAwayFromCurrentGame, replaySeed]
   );
 
   const undo = useCallback(() => {

@@ -106,13 +106,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Session (seed/sessionId + init/reseed choreography)
   // ---------------------------------------------------------------------------
-  const { replaySeed } = useGameSession();
+  const { replaySeed, startNewDealSession } = useGameSession();
 
   const startNewDealSessionWithResets = useCallback(() => {
     uiResetsRef.current?.stopAutoComplete?.();
     uiResetsRef.current?.resetDrag?.();
-    dispatch(transitionGameAndSession({ rules }));
-  }, [dispatch, rules]);
+    startNewDealSession();
+  }, [startNewDealSession]);
 
   const replaySeedWithResets = useCallback(
     (nextSeed: string) => {
