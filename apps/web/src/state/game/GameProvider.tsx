@@ -23,7 +23,6 @@ import {
   selectMoveCount,
   selectRules,
   selectUndosRemaining,
-  selectUndoLimit,
   selectSeed
 } from "./gameSlice";
 import {
@@ -35,7 +34,6 @@ import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 import { AppDispatch } from "../reduxStore";
 import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
-import { transitionGameAndSession } from "../transitionGameAndSession";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -73,7 +71,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     dispatch(initializeSettingsFromStorage());
   }, [dispatch]);
-  const undoLimit = useSelector(selectUndoLimit);
 
   const rules = useSelector(selectRules);
   const sessionId = useSelector(selectSessionId);
@@ -151,9 +148,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     // Defer state updates to avoid synchronous setState-in-effect warnings.
     queueMicrotask(() => {
-      dispatch(transitionGameAndSession({ rules }));
+      startNewDealSessionWithResets();
     });
-  }, [uid, sessionPhase, startedAtMs, dispatch, rules]);
+  }, [uid, sessionPhase, startedAtMs, startNewDealSessionWithResets]);
 
   // ---------------------------------------------------------------------------
   // Actions

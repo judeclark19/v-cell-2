@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { createGame } from "@vcell/engine";
-import type { Move, UndoLimit } from "@vcell/engine";
+import type { Move } from "@vcell/engine";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 
