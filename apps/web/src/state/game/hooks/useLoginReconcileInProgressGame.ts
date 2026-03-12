@@ -81,10 +81,6 @@ export function useLoginReconcileInProgressGame() {
         snap = await getDocs(q);
       }
 
-      console.debug(
-        "[login reconcile] cloud query docs",
-        snap.docs.map((d) => d.id)
-      );
       if (cancelled) return;
 
       const cloudDocInProgressGame = snap.docs[0];
@@ -116,17 +112,12 @@ export function useLoginReconcileInProgressGame() {
           payload.seed === currentSeed &&
           payload.sessionId === currentSessionId
         ) {
-          console.debug("[login reconcile] noop; already on winning session", {
-            sessionKey
-          });
+          // [login reconcile]noop; already on winning session
+
           return;
         }
 
-        console.debug("[login reconcile] cloud wins; switching session", {
-          seed: payload.seed,
-          sessionId: payload.sessionId
-        });
-
+        //  [login reconcile] cloud wins; switching session
         if (lastSwitchedSessionRef.current !== sessionKey) {
           lastSwitchedSessionRef.current = sessionKey;
           await dispatch(

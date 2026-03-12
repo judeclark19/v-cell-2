@@ -122,7 +122,7 @@ export function applyMoveAndFinalizeIfNeeded({ move, uid }: Params): AppThunk {
       applyMoveToHistory({
         move,
         undoLimit,
-        isWon: status === "won"
+        isWon: didWin
       })
     );
   };
