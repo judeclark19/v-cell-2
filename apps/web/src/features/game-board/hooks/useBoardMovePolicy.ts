@@ -9,8 +9,8 @@ export type UseBoardMovePolicyArgs<
   /** Lower-level drop commit function (from useBoardDrop) */
   onDrop: TOnDrop;
 
-  /** Dispatch a move directly (keyboard-driven). */
-  dispatchMove: (move: Move) => void;
+  /** Make a move directly (keyboard-driven). */
+  makeMove: (move: Move) => void;
 
   /** Mark FLIP suppression for the next animation cycle (from useNoFlipResets) */
   suppressFlipOnceNext: () => void;
@@ -62,7 +62,7 @@ export function useBoardMovePolicy<
   TOnDrop extends (...args: never[]) => boolean
 >({
   onDrop,
-  dispatchMove,
+  makeMove,
   suppressFlipOnceNext,
   clearCelebration,
   newDealNoFlip,
@@ -78,9 +78,9 @@ export function useBoardMovePolicy<
 
   const commitMoveFromKeyboard = useCallback(
     (move: Move) => {
-      dispatchMove(move);
+      makeMove(move);
     },
-    [dispatchMove]
+    [makeMove]
   );
 
   const commitMoveFromPointerDrop = useCallback(

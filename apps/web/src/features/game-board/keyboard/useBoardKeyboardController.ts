@@ -25,7 +25,7 @@ type UseBoardKeyboardControllerArgs = {
   setKbCarrying: (next: boolean) => void;
 
   legalMoves: Move[];
-  dispatchMove: (m: Move) => void;
+  makeMove: (m: Move) => void;
   undo: () => void;
   newDeal: () => void;
   restart: () => void;
@@ -65,7 +65,7 @@ export function useBoardKeyboardController({
   kbCarrying,
   setKbCarrying,
   legalMoves,
-  dispatchMove,
+  makeMove,
   undo,
   newDeal,
   restart,
@@ -85,7 +85,7 @@ export function useBoardKeyboardController({
   const actions = useKeyboardActions({
     boardRef,
     legalMoves,
-    dispatchMove,
+    makeMove,
     undo,
     newDeal,
     restart,

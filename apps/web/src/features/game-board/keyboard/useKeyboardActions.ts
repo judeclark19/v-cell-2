@@ -93,7 +93,7 @@ type PileType = "foundation" | "freecell";
 
 export type UseKeyboardActionsArgs = {
   legalMoves: CommitArgs["legalMoves"];
-  dispatchMove: CommitArgs["dispatchMove"];
+  makeMove: CommitArgs["makeMove"];
 
   undo: () => void;
 
@@ -131,7 +131,7 @@ export type UseKeyboardActionsArgs = {
 export function useKeyboardActions(args: UseKeyboardActionsArgs) {
   const {
     legalMoves,
-    dispatchMove,
+    makeMove,
     undo,
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
@@ -171,13 +171,13 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       // Use the same legality logic as mouse drops, but with a no-op dispatcher
       // so this check has no gameplay side effects.
-      const noopDispatch: CommitArgs["dispatchMove"] = (() => {
+      const noopDispatch: CommitArgs["makeMove"] = (() => {
         /* no-op */
-      }) as CommitArgs["dispatchMove"];
+      }) as CommitArgs["makeMove"];
 
       return commitBoardDrop({
         legalMoves,
-        dispatchMove: noopDispatch,
+        makeMove: noopDispatch,
         drag,
         dropTarget
       } as CommitArgs);
@@ -233,7 +233,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       const didForward = commitBoardDrop({
         legalMoves,
-        dispatchMove,
+        makeMove,
         drag,
         dropTarget
       } as CommitArgs);
@@ -277,7 +277,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
 
       return commitBoardDrop({
         legalMoves,
-        dispatchMove,
+        makeMove,
         drag: reverseDrag,
         dropTarget: reverseDropTarget
       } as CommitArgs);
@@ -285,7 +285,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
     [
       buildKbDragFromEl,
       buildKbDropTargetFromEl,
-      dispatchMove,
+      makeMove,
       getCarriedEl,
       getDropTargetEl,
       legalMoves,
@@ -310,7 +310,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       getDropEl: (index: number) => HTMLElement | null;
       tryAutoFromEl: (el: HTMLElement) => boolean;
       legalMoves: CommitArgs["legalMoves"];
-      dispatchMove: CommitArgs["dispatchMove"];
+      makeMove: CommitArgs["makeMove"];
       boardRef: React.RefObject<HTMLElement | null>;
       buildKbDragFromEl: (el: HTMLElement) => KbDragLike | null;
       startKbFlight: UseKeyboardActionsArgs["startKbFlight"];
@@ -322,7 +322,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       getDropEl,
       tryAutoFromEl,
       legalMoves,
-      dispatchMove,
+      makeMove,
       boardRef,
       buildKbDragFromEl,
       startKbFlight,
@@ -371,7 +371,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
           }
         }
 
-        dispatchMove(match);
+        makeMove(match);
         return true;
       }
     }
@@ -392,7 +392,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
         getDropEl: getFoundationDropEl,
         tryAutoFromEl: tryAutoFoundationFromEl,
         legalMoves,
-        dispatchMove,
+        makeMove,
         boardRef,
         buildKbDragFromEl,
         startKbFlight,
@@ -400,7 +400,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       }),
     [
       legalMoves,
-      dispatchMove,
+      makeMove,
       boardRef,
       buildKbDragFromEl,
       startKbFlight,
@@ -416,7 +416,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
         getDropEl: getFreeCellDropEl,
         tryAutoFromEl: tryAutoFreeCellFromEl,
         legalMoves,
-        dispatchMove,
+        makeMove,
         boardRef,
         buildKbDragFromEl,
         startKbFlight,
@@ -424,7 +424,7 @@ export function useKeyboardActions(args: UseKeyboardActionsArgs) {
       }),
     [
       legalMoves,
-      dispatchMove,
+      makeMove,
       boardRef,
       buildKbDragFromEl,
       startKbFlight,

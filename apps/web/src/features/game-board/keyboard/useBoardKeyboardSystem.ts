@@ -29,7 +29,7 @@ export type UseBoardKeyboardSystemArgs = {
   tryAutoFreeCellFromEl: CtrlArgs["tryAutoFreeCellFromEl"];
 
   // controller game actions
-  dispatchMove: CtrlArgs["dispatchMove"]; // you will pass commitMoveFromKeyboard here
+  makeMove: CtrlArgs["makeMove"]; // you will pass commitMoveFromKeyboard here
   undo: CtrlArgs["undo"];
   newDeal: CtrlArgs["newDeal"];
   restart: CtrlArgs["restart"];
@@ -58,7 +58,7 @@ export type UseBoardKeyboardSystemResult = {
   onBoardFocus: React.FocusEventHandler<HTMLDivElement>;
   onBoardPointerDownCapture: React.PointerEventHandler<HTMLDivElement>;
   kbCarrying: boolean;
-  commitMoveFromKeyboard: CtrlArgs["dispatchMove"];
+  commitMoveFromKeyboard: CtrlArgs["makeMove"];
 };
 
 /**
@@ -84,7 +84,7 @@ export function useBoardKeyboardSystem({
   buildKbDropTargetFromEl,
   tryAutoFoundationFromEl,
   tryAutoFreeCellFromEl,
-  dispatchMove,
+  makeMove,
   undo,
   newDeal,
   restart,
@@ -129,7 +129,7 @@ export function useBoardKeyboardSystem({
     legalMoves,
     kbCarrying,
     setKbCarrying,
-    dispatchMove,
+    makeMove,
     undo,
     newDeal,
     restart,
@@ -313,6 +313,6 @@ export function useBoardKeyboardSystem({
     onBoardFocus,
     onBoardPointerDownCapture,
     kbCarrying,
-    commitMoveFromKeyboard: dispatchMove
+    commitMoveFromKeyboard: makeMove
   };
 }

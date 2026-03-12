@@ -42,7 +42,7 @@ type UiResets = {
 
 type GameContextValue = {
   state: GameState;
-  dispatchMove: (move: Move) => void;
+  makeMove: (move: Move) => void;
   registerUiResets: (handlers: UiResets | null) => void;
   restart: () => void;
   newDeal: () => void;
@@ -155,7 +155,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-  const { dispatchMove, restart, newDeal, startBySeed, undo } = useGameActions({
+  const { makeMove, restart, newDeal, startBySeed, undo } = useGameActions({
     startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
@@ -170,7 +170,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const value: GameContextValue = {
     state: history.present,
-    dispatchMove,
+    makeMove,
     registerUiResets,
     restart,
     newDeal,

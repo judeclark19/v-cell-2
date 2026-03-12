@@ -22,12 +22,12 @@ import {
   selectPlayableMask
 } from "@/state/game/gameSlice";
 
-export type UseBoardControllerParams = ReturnType<typeof useGame>;
+export function useBoardController() {
+  const game = useGame();
 
-export function useBoardController(params: UseBoardControllerParams) {
   const {
     state,
-    dispatchMove,
+    makeMove,
     registerUiResets,
     undo,
     newDeal,
@@ -35,14 +35,14 @@ export function useBoardController(params: UseBoardControllerParams) {
     replaySeed,
     startBySeed,
     moveCount
-  } = params;
+  } = game;
 
   // Game state
   const isFullyCollected = useSelector(selectIsFullyCollected);
   const playable = useSelector(selectPlayableMask);
   const legalMoves = useSelector(selectLegalMoves);
 
-  const onDrop = useBoardDrop({ dispatchMove });
+  const onDrop = useBoardDrop({ makeMove });
 
   const commitMoveFromPointerDropRef = useRef<
     ((...args: Parameters<typeof onDrop>) => boolean) | null
@@ -55,8 +55,8 @@ export function useBoardController(params: UseBoardControllerParams) {
     []
   );
 
-  const tryAutoFoundation = useAutoFoundation({ legalMoves, dispatchMove });
-  const tryAutoFreeCell = useAutoFreeCell({ legalMoves, dispatchMove });
+  const tryAutoFoundation = useAutoFoundation({ legalMoves, makeMove });
+  const tryAutoFreeCell = useAutoFreeCell({ legalMoves, makeMove });
 
   const {
     shouldShowWinModal,
@@ -171,12 +171,12 @@ export function useBoardController(params: UseBoardControllerParams) {
           durationMs
         });
 
-        dispatchMove(match);
+        makeMove(match);
         return true;
       }
 
       // Commit the move.
-      dispatchMove(match);
+      makeMove(match);
       return true;
     },
     [
@@ -185,7 +185,7 @@ export function useBoardController(params: UseBoardControllerParams) {
       getFoundationDropEl,
       buildKbDragFromEl,
       startKbFlightFromKeyboard,
-      dispatchMove,
+      makeMove,
       tryAutoFoundation
     ]
   );
@@ -245,7 +245,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     restartWithCelebration
   } = useBoardMovePolicy({
     onDrop,
-    dispatchMove,
+    makeMove,
     suppressFlipOnceNext,
     clearCelebration,
     newDealNoFlip,
@@ -355,7 +355,7 @@ export function useBoardController(params: UseBoardControllerParams) {
     tryAutoFoundationFromEl,
     tryAutoFreeCellFromEl,
 
-    dispatchMove: commitMoveFromKeyboard,
+    makeMove: commitMoveFromKeyboard,
     undo,
 
     newDeal: newDealWithCelebration,

@@ -6,14 +6,11 @@ import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStor
 import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGameIfNeeded";
 
 import {
-  applyMoveToHistory,
   hydrateHistory,
   undoHistory,
   resetTimeline,
   setUndosUsed,
   setStatus,
-  selectCursor,
-  selectMoves,
   selectUndosUsed,
   selectStatus,
   selectHistory,
@@ -22,21 +19,12 @@ import {
 } from "@/state/game/gameSlice";
 
 import { useDispatch, useSelector } from "react-redux";
-import {
-  selectStartedAtMs,
-  setStartedAtMs,
-  setEndedAtMs,
-  setCheckpoint,
-  selectTimeElapsedMs,
-  selectSessionId
-} from "@/state/session/sessionSlice";
+import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
 
 import { AppDispatch } from "@/state/reduxStore";
-import { archiveCompletedGame as archiveCompletedGameThunk } from "@/state/records/thunks/archiveCompletedGame";
-
-import { computePostMoveResult } from "@/state/game/utils";
 import { useSession } from "@/auth/AuthProvider";
 import { selectRules } from "@/state/session/selectors_new";
+import { applyMoveAndFinalizeIfNeeded } from "../thunks/applyMoveAndFinalizeIfNeeded";
 
 export type UseGameActionsParams = {
   // Session transition
@@ -45,7 +33,7 @@ export type UseGameActionsParams = {
 };
 
 export type UseGameActionsResult = {
-  dispatchMove: (move: Move) => void;
+  makeMove: (move: Move) => void;
   restart: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
@@ -66,111 +54,19 @@ export function useGameActions({
 
   const dispatch = useDispatch<AppDispatch>();
 
-  // Session state
-  const sessionId = useSelector(selectSessionId);
-  const startedAtMs = useSelector(selectStartedAtMs);
-  const timeElapsedMs = useSelector(selectTimeElapsedMs);
-
   // Game state
   const seed = useSelector(selectSeed);
-  const moves = useSelector(selectMoves);
-  const cursor = useSelector(selectCursor);
   const undosUsed = useSelector(selectUndosUsed);
   const status = useSelector(selectStatus);
   const history = useSelector(selectHistory);
   const rules = useSelector(selectRules);
   const undoLimit = useSelector(selectUndoLimit);
 
-  const dispatchMove = useCallback(
+  const makeMove = useCallback(
     (move: Move) => {
-      // Ignore moves once a game has ended/abandoned (prevents stale commits during session transitions).
-      if (status === "abandoned") return;
-
-      // First move starts the timer clock.
-      if (startedAtMs == null) {
-        dispatch(setStartedAtMs(Date.now()));
-      }
-
-      let resolved: ReturnType<
-        typeof import("@/state/game/utils").computePostMoveResult
-      >;
-      try {
-        resolved = computePostMoveResult({
-          moveToApply: move,
-          currentCursor: cursor,
-          currentMoves: moves,
-          currentStatus: status,
-          currentPresent: history.present
-        });
-      } catch (err) {
-        console.warn("[dispatchMove] applyMove rejected move; dropping move", {
-          err,
-          move,
-          sessionId,
-          seed,
-          cursor
-        });
-        return;
-      }
-
-      const { next, nextMoves, nextCursor, didWin, shouldCheckpoint } =
-        resolved;
-
-      const endedAtMs = didWin ? Date.now() : null;
-
-      if (status !== "won") {
-        dispatch(setEndedAtMs(null));
-        dispatch(setStatus("in_progress"));
-      }
-
-      if (didWin) {
-        if (endedAtMs != null) {
-          dispatch(setEndedAtMs(endedAtMs));
-        }
-
-        dispatch(setStatus("won"));
-
-        dispatch(
-          archiveCompletedGameThunk({
-            sessionId,
-            deviceId: getOrCreateDeviceId(),
-            seed,
-            rules: next.rules,
-            finalStatus: "won",
-            cursor: nextCursor,
-            moves: nextMoves,
-            startedAtMs,
-            endedAtMs: endedAtMs ?? Date.now(),
-            timeElapsedMs,
-            undosUsed,
-            uid
-          })
-        );
-      }
-
-      if (shouldCheckpoint) {
-        dispatch(setCheckpoint({ at: nextCursor, state: next }));
-      }
-
-      // Update engine history in RTK (present + undo stack).
-      dispatch(
-        applyMoveToHistory({ move, undoLimit, isWon: status === "won" })
-      );
+      dispatch(applyMoveAndFinalizeIfNeeded({ move, uid }));
     },
-    [
-      status,
-      cursor,
-      moves,
-      sessionId,
-      seed,
-      startedAtMs,
-      undoLimit,
-      history.present,
-      dispatch,
-      timeElapsedMs,
-      undosUsed,
-      uid
-    ]
+    [dispatch, uid]
   );
 
   const restart = useCallback(() => {
@@ -228,5 +124,5 @@ export function useGameActions({
     dispatch(undoHistory());
   }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
 
-  return { dispatchMove, restart, newDeal, startBySeed, undo };
+  return { makeMove, restart, newDeal, startBySeed, undo };
 }

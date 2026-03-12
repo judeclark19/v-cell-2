@@ -10,9 +10,9 @@ import { Move } from "@vcell/engine";
  */
 export function useAutoFreeCell(args: {
   legalMoves: Move[];
-  dispatchMove: (m: Move) => void;
+  makeMove: (m: Move) => void;
 }) {
-  const { legalMoves, dispatchMove } = args;
+  const { legalMoves, makeMove } = args;
 
   return useCallback(
     (from: PileRef) => {
@@ -42,9 +42,9 @@ export function useAutoFreeCell(args: {
       const move = candidates[0];
       if (!move) return false;
 
-      dispatchMove(move);
+      makeMove(move);
       return true;
     },
-    [dispatchMove, legalMoves]
+    [makeMove, legalMoves]
   );
 }

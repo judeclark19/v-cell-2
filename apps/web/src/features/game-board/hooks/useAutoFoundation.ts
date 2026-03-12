@@ -3,7 +3,7 @@ import type { Move, PileRef } from "@vcell/engine";
 
 type UseAutoFoundationArgs = {
   legalMoves: Move[];
-  dispatchMove: (move: Move) => void;
+  makeMove: (move: Move) => void;
 };
 
 /**
@@ -12,7 +12,7 @@ type UseAutoFoundationArgs = {
  */
 export function useAutoFoundation({
   legalMoves,
-  dispatchMove
+  makeMove
 }: UseAutoFoundationArgs) {
   return useCallback(
     (from: PileRef) => {
@@ -32,9 +32,9 @@ export function useAutoFoundation({
 
       // Deterministic choice: lowest foundation index.
       candidates.sort((a, b) => a.to.index - b.to.index);
-      dispatchMove(candidates[0]);
+      makeMove(candidates[0]);
       return true;
     },
-    [dispatchMove, legalMoves]
+    [makeMove, legalMoves]
   );
 }

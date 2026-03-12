@@ -1,5 +1,4 @@
 import "../styles/board.css";
-import { useGame } from "@/state/game/GameProvider";
 import { BoardKbAttrsContext } from "@/features/game-board/keyboard/boardKbAttrs";
 import { useBoardController } from "@/features/game-board/hooks/useBoardController";
 
@@ -11,7 +10,10 @@ import DragLayer from "./DragLayer";
 import BoardControls from "./BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
-import { selectSessionPhase } from "@/state/session/sessionSlice";
+import {
+  selectSessionId,
+  selectSessionPhase
+} from "@/state/session/sessionSlice";
 
 import {
   selectCanUndo,
@@ -26,9 +28,9 @@ function Board() {
   const canUndo = useSelector(selectCanUndo);
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
+  const sessionId = useSelector(selectSessionId);
 
-  const game = useGame();
-  const boardController = useBoardController(game);
+  const boardController = useBoardController();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } = boardController;
 
   return (
@@ -98,7 +100,7 @@ function Board() {
             )}
           </div>
 
-          <BoardModals vm={boardController} sessionId={game.sessionId} />
+          <BoardModals vm={boardController} sessionId={sessionId} />
         </BoardKbAttrsContext.Provider>
       </div>
       <p className="hint" style={{ textAlign: "center" }}>

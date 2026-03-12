@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { selectLegalMoves } from "@/state/game/gameSlice";
 
 type UseBoardDropArgs = {
-  dispatchMove: (move: Move) => void;
+  makeMove: (move: Move) => void;
 };
 
 type OnDropArgs<TCardItem> = {
@@ -32,7 +32,7 @@ type CommitBoardDropArgs<TCardItem> = {
   drag: DragLike<TCardItem>;
   dropTarget: DropTarget;
   legalMoves: Move[];
-  dispatchMove: (move: Move) => void;
+  makeMove: (move: Move) => void;
 };
 
 /**
@@ -44,7 +44,7 @@ export function commitBoardDrop<TCardItem>({
   drag,
   dropTarget,
   legalMoves,
-  dispatchMove
+  makeMove
 }: CommitBoardDropArgs<TCardItem>) {
   // Allow tableau stack drops onto tableau. Other targets remain single-card only.
   if (drag.stack.length < 1) return false;
@@ -83,7 +83,7 @@ export function commitBoardDrop<TCardItem>({
       });
 
       if (!stackMove) return false;
-      dispatchMove(stackMove);
+      makeMove(stackMove);
       return true;
     }
 
@@ -101,7 +101,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -119,7 +119,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -137,7 +137,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -161,7 +161,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -179,7 +179,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -198,7 +198,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -221,7 +221,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -238,7 +238,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -256,7 +256,7 @@ export function commitBoardDrop<TCardItem>({
       );
 
       if (!move) return false;
-      dispatchMove(move);
+      makeMove(move);
       return true;
     }
 
@@ -274,7 +274,7 @@ export function commitBoardDrop<TCardItem>({
  * - tableau/freecell -> foundation: single-card only\n
  * - tableau -> freecell: single-card only\n
  */
-export function useBoardDrop({ dispatchMove }: UseBoardDropArgs) {
+export function useBoardDrop({ makeMove }: UseBoardDropArgs) {
   // Game state
   const legalMoves = useSelector(selectLegalMoves);
 
@@ -284,9 +284,9 @@ export function useBoardDrop({ dispatchMove }: UseBoardDropArgs) {
         drag,
         dropTarget,
         legalMoves,
-        dispatchMove
+        makeMove
       });
     },
-    [dispatchMove, legalMoves]
+    [makeMove, legalMoves]
   );
 }
