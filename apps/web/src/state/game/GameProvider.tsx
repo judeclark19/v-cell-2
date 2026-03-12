@@ -154,11 +154,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [uid, sessionPhase, startedAtMs, startNewDealSessionWithResets]);
 
   // ---------------------------------------------------------------------------
-  // Actions
+  // THE NEW STUFF! :)
   // ---------------------------------------------------------------------------
-  const { makeMove } = useGameModel();
+  const { makeMove, undo } = useGameModel();
 
-  const { restart, newDeal, startBySeed, undo } = useGameActions({
+  // --------------------------(NEW STUFF ENDS)---------------------------------
+
+  const { restart, newDeal, startBySeed } = useGameActions({
     startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });

@@ -6,15 +6,10 @@ import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGa
 
 import {
   hydrateHistory,
-  undoHistory,
   resetTimeline,
-  setUndosUsed,
-  setStatus,
-  selectUndosUsed,
-  selectStatus,
-  selectHistory,
   selectSeed,
-  selectUndoLimit
+  setUndosUsed,
+  setStatus
 } from "@/state/game/gameSlice";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -34,7 +29,6 @@ export type UseGameActionsResult = {
   restart: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
-  undo: () => void;
 };
 
 /**
@@ -53,11 +47,7 @@ export function useGameActions({
 
   // Game state
   const seed = useSelector(selectSeed);
-  const undosUsed = useSelector(selectUndosUsed);
-  const status = useSelector(selectStatus);
-  const history = useSelector(selectHistory);
   const rules = useSelector(selectRules);
-  const undoLimit = useSelector(selectUndoLimit);
 
   const restart = useCallback(() => {
     // Restart should reset the deal back to its original position and clear history,
@@ -98,21 +88,5 @@ export function useGameActions({
     [transitionAwayFromCurrentGame, replaySeed]
   );
 
-  const undo = useCallback(() => {
-    // Once the game is won, undo is disabled.
-    if (status === "won") return;
-
-    // Nothing to undo.
-    if (history.past.length === 0) return;
-
-    // Enforce undo limit.
-    if (undoLimit !== "unlimited" && undosUsed >= undoLimit) return;
-
-    // Count a successful undo exactly once (outside the history updater).
-    // dispatch(setUndosUsed(undosUsed + 1));
-
-    dispatch(undoHistory());
-  }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
-
-  return { restart, newDeal, startBySeed, undo };
+  return { restart, newDeal, startBySeed };
 }
