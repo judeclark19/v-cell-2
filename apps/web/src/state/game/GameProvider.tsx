@@ -156,11 +156,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // THE NEW STUFF! :)
   // ---------------------------------------------------------------------------
-  const { makeMove, undo } = useGameModel();
+  const { makeMove, undo, restart } = useGameModel();
 
   // --------------------------(NEW STUFF ENDS)---------------------------------
 
-  const { restart, newDeal, startBySeed } = useGameActions({
+  const { newDeal, startBySeed } = useGameActions({
     startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });

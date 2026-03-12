@@ -1,23 +1,13 @@
 import { useCallback } from "react";
-import { createGame } from "@vcell/engine";
+
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGameIfNeeded";
 
-import {
-  hydrateHistory,
-  resetTimeline,
-  selectSeed,
-  setUndosUsed,
-  setStatus
-} from "@/state/game/gameSlice";
-
-import { useDispatch, useSelector } from "react-redux";
-import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
+import { useDispatch } from "react-redux";
 
 import { AppDispatch } from "@/state/reduxStore";
 import { useSession } from "@/auth/AuthProvider";
-import { selectRules } from "@/state/session/selectors_new";
 
 export type UseGameActionsParams = {
   // Session transition
@@ -26,7 +16,6 @@ export type UseGameActionsParams = {
 };
 
 export type UseGameActionsResult = {
-  restart: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
 };
@@ -44,21 +33,6 @@ export function useGameActions({
   const { uid } = useSession();
 
   const dispatch = useDispatch<AppDispatch>();
-
-  // Game state
-  const seed = useSelector(selectSeed);
-  const rules = useSelector(selectRules);
-
-  const restart = useCallback(() => {
-    // Restart should reset the deal back to its original position and clear history,
-    // but it should NOT affect the timer.
-    dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
-    dispatch(resetTimeline());
-    dispatch(setUndosUsed(0));
-    dispatch(setCheckpoint(null));
-    dispatch(setEndedAtMs(null));
-    dispatch(setStatus("in_progress"));
-  }, [seed, rules, dispatch]);
 
   const transitionAwayFromCurrentGame = useCallback(
     (startNext: () => void) => {
@@ -88,5 +62,5 @@ export function useGameActions({
     [transitionAwayFromCurrentGame, replaySeed]
   );
 
-  return { restart, newDeal, startBySeed };
+  return { newDeal, startBySeed };
 }
