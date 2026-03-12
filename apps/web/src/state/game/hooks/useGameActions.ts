@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { createGame } from "@vcell/engine";
-import type { Move } from "@vcell/engine";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGameIfNeeded";
@@ -24,7 +23,6 @@ import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { useSession } from "@/auth/AuthProvider";
 import { selectRules } from "@/state/session/selectors_new";
-import { applyMoveAndFinalizeIfNeeded } from "../thunks/applyMoveAndFinalizeIfNeeded";
 
 export type UseGameActionsParams = {
   // Session transition
@@ -33,7 +31,6 @@ export type UseGameActionsParams = {
 };
 
 export type UseGameActionsResult = {
-  makeMove: (move: Move) => void;
   restart: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
@@ -61,13 +58,6 @@ export function useGameActions({
   const history = useSelector(selectHistory);
   const rules = useSelector(selectRules);
   const undoLimit = useSelector(selectUndoLimit);
-
-  const makeMove = useCallback(
-    (move: Move) => {
-      dispatch(applyMoveAndFinalizeIfNeeded({ move, uid }));
-    },
-    [dispatch, uid]
-  );
 
   const restart = useCallback(() => {
     // Restart should reset the deal back to its original position and clear history,
@@ -124,5 +114,5 @@ export function useGameActions({
     dispatch(undoHistory());
   }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
 
-  return { makeMove, restart, newDeal, startBySeed, undo };
+  return { restart, newDeal, startBySeed, undo };
 }

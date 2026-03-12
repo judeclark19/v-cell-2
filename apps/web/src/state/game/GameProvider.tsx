@@ -34,6 +34,7 @@ import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 import { AppDispatch } from "../reduxStore";
 import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
+import { useGameModel } from "./hooks/useGameModel";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -155,7 +156,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-  const { makeMove, restart, newDeal, startBySeed, undo } = useGameActions({
+  const { makeMove } = useGameModel();
+
+  const { restart, newDeal, startBySeed, undo } = useGameActions({
     startNewDealSessionWithResets,
     replaySeed: replaySeedWithResets
   });
