@@ -30,26 +30,24 @@ type Params = {
   uid: string | null;
 };
 
-export function abandonCurrentGameIfNeeded({ uid }: Params): AppThunk {
+export function abandonCurrentGame({ uid }: Params): AppThunk {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
-
-    const sessionId = selectSessionId(state);
-    const startedAtMs = selectStartedAtMs(state);
-    const endedAtMs = selectEndedAtMs(state);
-    const timeElapsedMs = selectTimeElapsedMs(state);
-
-    const seed = selectSeed(state);
-    const moves = selectMoves(state);
-    const cursor = selectCursor(state);
-    const undosUsed = selectUndosUsed(state);
     const status = selectStatus(state);
-    const rules = selectRules(state);
-
+    const endedAtMs = selectEndedAtMs(state);
+    const startedAtMs = selectStartedAtMs(state);
     const isFinished =
       status === "won" || status === "abandoned" || endedAtMs != null;
 
     if (!startedAtMs || isFinished) return;
+
+    const sessionId = selectSessionId(state);
+    const timeElapsedMs = selectTimeElapsedMs(state);
+    const seed = selectSeed(state);
+    const moves = selectMoves(state);
+    const cursor = selectCursor(state);
+    const undosUsed = selectUndosUsed(state);
+    const rules = selectRules(state);
 
     dispatch(setStatus("abandoned"));
 

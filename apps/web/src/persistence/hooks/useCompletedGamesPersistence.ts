@@ -12,12 +12,13 @@ import {
   selectCompletedGames,
   setCompletedGames
 } from "@/state/records/recordsSlice";
-import { useSession } from "@/auth/AuthProvider";
+import { selectUid } from "@/state/auth/authSlice";
 
 export function useCompletedGamesPersistence() {
-  const { uid } = useSession();
-
   const dispatch = useDispatch();
+  // auth slice
+  const uid = useSelector(selectUid);
+  // records slice
   const completedGames = useSelector(selectCompletedGames);
 
   const completedGamesHydratedRef = useRef<boolean>(false);

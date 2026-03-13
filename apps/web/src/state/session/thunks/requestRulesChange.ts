@@ -3,7 +3,7 @@ import type { AppDispatch, RootState } from "@/state/reduxStore";
 import type { Rules } from "@vcell/engine";
 import { areRulesEqual } from "@/state/game/utils";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
-import { applyRulesChangeStartNewDeal } from "./applyRulesChange_startNewDeal";
+import { newDealThunk } from "./newDeal";
 
 export const requestRulesChange = createAsyncThunk<
   { kind: "noop" | "cancelled" | "started" },
@@ -37,8 +37,8 @@ export const requestRulesChange = createAsyncThunk<
   }
 
   await dispatch(
-    applyRulesChangeStartNewDeal({
-      newRules,
+    newDealThunk({
+      rules: newRules,
       uid
     })
   );

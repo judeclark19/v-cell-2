@@ -27,15 +27,17 @@ import {
 } from "@/state/session/sessionSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 import { hydrateFromPersisted, selectSeed } from "../gameSlice";
-import { useSession } from "@/auth/AuthProvider";
+import { selectUid } from "@/state/auth/authSlice";
 
 export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
   const lastSwitchedSessionRef = useRef<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
 
-  const { uid } = useSession();
-  // sessioon state
+  // auth state
+  const uid = useSelector(selectUid);
+
+  // session state
   const sessionPhase = useSelector(selectSessionPhase);
   const currentSessionId = useSelector(selectSessionId);
 

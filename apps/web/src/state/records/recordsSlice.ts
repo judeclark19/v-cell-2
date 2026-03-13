@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { PersistedGame } from "@/persistence/types";
+import { RootState } from "../reduxStore";
 
 export interface RecordsState {
   completedGames: PersistedGame[];
@@ -32,5 +33,5 @@ export const { setCompletedGames, addCompletedGame, clearCompletedGames } =
 
 export const recordsReducer = recordsSlice.reducer;
 
-export const selectCompletedGames = (state: { records: RecordsState }) =>
+export const selectCompletedGames = (state: RootState) =>
   state.records.completedGames;

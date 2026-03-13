@@ -15,15 +15,16 @@ import { GameStatus, GameStoreState } from ".";
 export const gameSliceReducers = {
   startNewGame: (
     state,
-    action: PayloadAction<{ rules: Rules; seed?: string }>
+    action: PayloadAction<{ rules?: Rules; seed?: string }>
   ) => {
+    const newGameRules = action.payload.rules ?? state.rules;
     const seed =
       action.payload.seed && action.payload.seed !== "seed-boot"
         ? action.payload.seed
         : safeRandomId();
 
-    const initialGame = createGame(seed, action.payload.rules);
-    state.rules = action.payload.rules;
+    const initialGame = createGame(seed, newGameRules);
+    state.rules = newGameRules;
 
     state.seed = seed;
     state.history.present = initialGame;

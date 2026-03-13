@@ -2,12 +2,12 @@ import { useCallback } from "react";
 
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
-import { abandonCurrentGameIfNeeded } from "@/state/game/thunks/abandonCurrentGameIfNeeded";
+import { abandonCurrentGame } from "@/state/game/thunks/abandonCurrentGame";
 
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { AppDispatch } from "@/state/reduxStore";
-import { useSession } from "@/auth/AuthProvider";
+import { selectUid } from "@/state/auth/authSlice";
 
 export type UseGameActionsParams = {
   // Session transition
@@ -30,13 +30,13 @@ export function useGameActions({
   startNewDealSessionWithResets,
   replaySeed
 }: UseGameActionsParams): UseGameActionsResult {
-  const { uid } = useSession();
-
   const dispatch = useDispatch<AppDispatch>();
+
+  const uid = useSelector(selectUid);
 
   const transitionAwayFromCurrentGame = useCallback(
     (startNext: () => void) => {
-      dispatch(abandonCurrentGameIfNeeded({ uid }));
+      dispatch(abandonCurrentGame({ uid }));
 
       const deviceId = getOrCreateDeviceId();
       deleteInProgressGameForDevice(deviceId).catch(() => {});

@@ -3,6 +3,8 @@
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "@/auth/AuthProvider";
+import { useSelector } from "react-redux";
+import { selectUid } from "@/state/auth/authSlice";
 
 type Props = {
   children: React.ReactNode;
@@ -15,7 +17,8 @@ export function AuthGate({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authReady, uid, profileReady, profileComplete } = useSession();
+  const { authReady, profileReady, profileComplete } = useSession();
+  const uid = useSelector(selectUid);
 
   useEffect(() => {
     // Wait until auth + profile are resolved before making routing decisions.

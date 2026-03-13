@@ -11,8 +11,12 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseClient";
 import Link from "next/link";
+import { selectUid } from "@/state/auth/authSlice";
+import { useSelector } from "react-redux";
 
 export default function LoginClient() {
+  const uid = useSelector(selectUid);
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -21,7 +25,7 @@ export default function LoginClient() {
   const rawNext = searchParams.get("next");
   const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/game";
 
-  const { isUser, hydrated, uid, loginWithGoogle } = useSession();
+  const { isUser, hydrated, loginWithGoogle } = useSession();
 
   const [signupDisplayName, setSignupDisplayName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");

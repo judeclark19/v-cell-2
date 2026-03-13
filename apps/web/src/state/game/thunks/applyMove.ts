@@ -36,7 +36,7 @@ type Params = {
   uid: string | null;
 };
 
-export function applyMoveAndFinalizeIfNeeded({ move, uid }: Params): AppThunk {
+export function applyMoveThunk({ move, uid }: Params): AppThunk {
   return (dispatch: AppDispatch, getState: () => RootState) => {
     const state = getState();
 

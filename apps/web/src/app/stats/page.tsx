@@ -3,19 +3,26 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "@/auth/AuthProvider";
-import { useAuthSession } from "@/lib/useAuthSession";
 import { getAllCompletedGames } from "@/persistence/completedGamesStore";
 import type { PersistedGame } from "@/persistence/types";
 import UserStatsTables from "@/ui/UserStatsTables";
+import { useSelector } from "react-redux";
+import {
+  selectDisplayName,
+  selectEmail,
+  selectUid
+} from "@/state/auth/authSlice";
 
 export default function StatsPage() {
-  const { isUser, uid, hydrated } = useSession();
-  const { user } = useAuthSession();
-  const displayName = user?.displayName ?? user?.email ?? "User";
+  const { isUser, hydrated } = useSession();
 
   const [games, setGames] = useState<PersistedGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // auth slice
+  const displayName = useSelector(selectDisplayName);
+  const uid = useSelector(selectUid);
+  const email = useSelector(selectEmail);
 
   useEffect(() => {
     // Stats are only for logged-in users.
@@ -115,7 +122,7 @@ export default function StatsPage() {
         ) : (
           <>
             <p style={{ opacity: 0.85, marginTop: 0 }}>
-              Signed in as <strong>{displayName}</strong>.
+              Signed in as <strong>{displayName ?? email ?? "User"}</strong>.
             </p>
             {uid && <p style={{ opacity: 0.65 }}>uid: {uid}</p>}
           </>

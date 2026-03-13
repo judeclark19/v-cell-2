@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
-import { useSession } from "@/auth/AuthProvider";
 import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardController } from "../hooks/useBoardController";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
+import { selectUid } from "@/state/auth/authSlice";
 
 export default function BoardControls({
   vm
@@ -15,20 +15,20 @@ export default function BoardControls({
   vm: ReturnType<typeof useBoardController>;
 }) {
   // old stuff
-  const { uid } = useSession();
+  const [seedInput, setSeedInput] = useState("");
 
   // new stuff
   const dispatch = useDispatch<AppDispatch>();
 
-  // component state
-  const [seedInput, setSeedInput] = useState("");
+  // Auth state
+  const uid = useSelector(selectUid);
+
+  // Session state
+  const startedAtMs = useSelector(selectStartedAtMs);
 
   // Game state
   const rules = useSelector(selectRules);
   const status = useSelector(selectStatus);
-
-  // Session state
-  const startedAtMs = useSelector(selectStartedAtMs);
 
   const onNewDeal = async () => {
     const ok =

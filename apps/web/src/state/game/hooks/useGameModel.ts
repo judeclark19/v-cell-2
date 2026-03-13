@@ -12,8 +12,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { createGame } from "@vcell/engine";
 import type { Move } from "@vcell/engine";
 
-import { useSession } from "@/auth/AuthProvider";
-
 import { AppDispatch } from "@/state/reduxStore";
 import {
   undoHistory,
@@ -29,7 +27,8 @@ import {
   selectSeed
 } from "@/state/game/gameSlice";
 import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
-import { applyMoveAndFinalizeIfNeeded } from "../thunks/applyMoveAndFinalizeIfNeeded";
+import { applyMoveThunk } from "../thunks/applyMove";
+import { selectUid } from "@/state/auth/authSlice";
 
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
@@ -38,8 +37,10 @@ export type UseGameModelResult = {
 };
 
 export function useGameModel(): UseGameModelResult {
-  const { uid } = useSession();
   const dispatch = useDispatch<AppDispatch>();
+
+  // Auth state
+  const uid = useSelector(selectUid);
 
   // Game state
   const status = useSelector(selectStatus);
@@ -51,7 +52,7 @@ export function useGameModel(): UseGameModelResult {
 
   const makeMove = useCallback(
     (move: Move) => {
-      dispatch(applyMoveAndFinalizeIfNeeded({ move, uid }));
+      dispatch(applyMoveThunk({ move, uid }));
     },
     [dispatch, uid]
   );

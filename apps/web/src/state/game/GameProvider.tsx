@@ -12,7 +12,6 @@ import type { GameState, Move } from "@vcell/engine";
 import { useGameSession } from "./hooks/useGameSession";
 import { useGameActions } from "./hooks/useGameActions";
 import { useCompletedGamesPersistence } from "../../persistence/hooks/useCompletedGamesPersistence";
-import { useSession } from "@/auth/AuthProvider";
 
 import { useLoginReconcileInProgressGame } from "./hooks/useLoginReconcileInProgressGame";
 import { useDispatch, useSelector } from "react-redux";
@@ -35,6 +34,7 @@ import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 import { AppDispatch } from "../reduxStore";
 import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
 import { useGameModel } from "./hooks/useGameModel";
+import { selectUid } from "../auth/authSlice";
 
 type UiResets = {
   resetDrag?: () => void;
@@ -64,33 +64,29 @@ export function useGame() {
 }
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  // ---------------------------------------------------------------------------
-  // UI settings (localStorage)
-  // ---------------------------------------------------------------------------
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     dispatch(initializeSettingsFromStorage());
   }, [dispatch]);
 
-  const rules = useSelector(selectRules);
+  // Auth state
+  const uid = useSelector(selectUid);
+
+  // Session state
   const sessionId = useSelector(selectSessionId);
+  const startedAtMs = useSelector(selectStartedAtMs);
 
-  // ---------------------------------------------------------------------------
-  // History / engine state
-  // ---------------------------------------------------------------------------
-
+  // Game state
+  const seed = useSelector(selectSeed);
+  const rules = useSelector(selectRules);
   const history = useSelector(selectHistory);
   const moves = useSelector(selectMoves);
   const cursor = useSelector(selectCursor);
   const moveCount = useSelector(selectMoveCount);
-  const startedAtMs = useSelector(selectStartedAtMs);
   const undosRemaining = useSelector(selectUndosRemaining);
-  const seed = useSelector(selectSeed);
 
   const uiResetsRef = useRef<UiResets | null>(null);
-
-  const { uid } = useSession();
 
   // const [completedGames, setCompletedGames] = useState<PersistedGame[]>([]);
   useCompletedGamesPersistence();

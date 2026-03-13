@@ -7,7 +7,7 @@ import { startNewSession } from "./session/sessionSlice";
 type Params = {
   seed?: string;
   sessionId?: string;
-  rules: Rules;
+  rules?: Rules;
 };
 
 export const transitionGameAndSession = createAsyncThunk<
@@ -18,7 +18,6 @@ export const transitionGameAndSession = createAsyncThunk<
   "session/transitionGameAndSession",
   async ({ seed, sessionId, rules }, thunkApi) => {
     const dispatch = thunkApi.dispatch;
-
     dispatch(
       startNewGame({
         seed,

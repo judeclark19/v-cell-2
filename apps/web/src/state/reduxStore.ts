@@ -4,11 +4,13 @@ import { sessionReducer } from "./session/sessionSlice";
 import { recordsReducer } from "./records/recordsSlice";
 import { uiReducer } from "./ui/uiSlice";
 import { settingsListenerMiddleware } from "./ui/settingsListeners";
+import { authReducer } from "./auth/authSlice";
 
 export const reduxStore = configureStore({
   reducer: {
-    game: gameReducer,
+    auth: authReducer,
     session: sessionReducer,
+    game: gameReducer,
     records: recordsReducer,
     ui: uiReducer
   },

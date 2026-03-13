@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { GameState } from "@vcell/engine";
 import { safeRandomId } from "../utils";
+import { RootState } from "../reduxStore";
 
 export type SessionPhase = "boot" | "hydrating" | "ready";
 export interface SessionStoreState {
@@ -85,23 +86,19 @@ export const {
 } = sessionSlice.actions;
 
 // Selectors
-export const selectSessionId = (state: { session: SessionStoreState }) =>
-  state.session.sessionId;
+export const selectSessionId = (state: RootState) => state.session.sessionId;
 
-export const selectSessionPhase = (state: { session: SessionStoreState }) =>
+export const selectSessionPhase = (state: RootState) =>
   state.session.sessionPhase;
 
-export const selectPaused = (state: { session: SessionStoreState }) =>
-  state.session.paused;
+export const selectPaused = (state: RootState) => state.session.paused;
 
-export const selectStartedAtMs = (state: { session: SessionStoreState }) =>
+export const selectStartedAtMs = (state: RootState) =>
   state.session.startedAtMs;
 
-export const selectEndedAtMs = (state: { session: SessionStoreState }) =>
-  state.session.endedAtMs;
+export const selectEndedAtMs = (state: RootState) => state.session.endedAtMs;
 
-export const selectTimeElapsedMs = (state: { session: SessionStoreState }) =>
+export const selectTimeElapsedMs = (state: RootState) =>
   state.session.timeElapsedMs;
 
-export const selectCheckpoint = (state: { session: SessionStoreState }) =>
-  state.session.checkpoint;
+export const selectCheckpoint = (state: RootState) => state.session.checkpoint;
