@@ -1,3 +1,5 @@
+// new-state done
+
 "use client";
 
 import { useEffect } from "react";
@@ -12,6 +14,7 @@ export default function HomePage() {
   const isUser = Boolean(uid);
 
   useEffect(() => {
+    if (!authReady) return; // Wait for auth to resolve before redirecting.
     if (isUser) {
       router.replace("/game");
     } else {
@@ -19,6 +22,5 @@ export default function HomePage() {
     }
   }, [isUser, authReady, router]);
 
-  // Optional: tiny fallback while redirecting
   return <main style={{ padding: 24, opacity: 0.7 }}>Redirecting…</main>;
 }

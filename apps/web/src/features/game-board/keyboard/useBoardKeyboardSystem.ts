@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type BoardKbAttrsContextValue, useBoardKbAttrs } from "./boardKbAttrs";
 import { useBoardKeyboardNav } from "./useBoardKeyboardNav";
 import { useBoardKeyboardController } from "./useBoardKeyboardController";
+import { useKeyboardState } from "../keyboard-control/useKeyboardState";
 
 type NavArgs = Parameters<typeof useBoardKeyboardNav>[0];
 type CtrlArgs = Parameters<typeof useBoardKeyboardController>[0];
@@ -93,7 +94,7 @@ export function useBoardKeyboardSystem({
   getFoundationDropEl,
   getFreeCellDropEl
 }: UseBoardKeyboardSystemArgs): UseBoardKeyboardSystemResult {
-  const [kbCarrying, setKbCarrying] = useState(false);
+  const { kbCarrying, setKbCarrying } = useKeyboardState();
   const lastRestoredFocusStampRef = useRef(0);
 
   // --- navigation (focus math + roving tabindex) ---
@@ -197,7 +198,7 @@ export function useBoardKeyboardSystem({
         clearKbCarryVisuals();
       }
     },
-    [boardRef, clearKbCarryVisuals, hadBoardFocusRef]
+    [boardRef, clearKbCarryVisuals, hadBoardFocusRef, setKbCarrying]
   );
 
   const onBoardFocus = useCallback<React.FocusEventHandler<HTMLDivElement>>(

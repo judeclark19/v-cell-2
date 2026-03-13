@@ -20,6 +20,7 @@ import {
   selectRules,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
+import { useKeyboardState } from "../keyboard-control/useKeyboardState";
 
 function Board() {
   // Game state
@@ -29,6 +30,8 @@ function Board() {
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
   const sessionId = useSelector(selectSessionId);
+
+  // OLD STUFF
 
   const boardController = useBoardController();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } = boardController;
