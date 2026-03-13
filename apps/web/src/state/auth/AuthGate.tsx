@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
 

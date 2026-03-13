@@ -2,11 +2,14 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/auth/AuthProvider";
+import { useSelector } from "react-redux";
+import { selectUid, selectAuthReady } from "@/state/auth/authSlice";
 
 export default function HomePage() {
   const router = useRouter();
-  const { isUser, isGuest } = useSession();
+  const uid = useSelector(selectUid);
+  const authReady = useSelector(selectAuthReady);
+  const isUser = Boolean(uid);
 
   useEffect(() => {
     if (isUser) {
@@ -14,7 +17,7 @@ export default function HomePage() {
     } else {
       router.replace("/login");
     }
-  }, [isUser, isGuest, router]);
+  }, [isUser, authReady, router]);
 
   // Optional: tiny fallback while redirecting
   return <main style={{ padding: 24, opacity: 0.7 }}>Redirecting…</main>;

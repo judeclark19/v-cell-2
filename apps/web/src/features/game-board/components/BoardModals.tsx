@@ -1,7 +1,7 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import {
   selectPaused,
   selectTimeElapsedMs,

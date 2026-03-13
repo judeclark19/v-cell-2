@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
 import { useDispatch, useSelector } from "react-redux";
 import { selectShowTimer, setShowTimer } from "@/state/ui/uiSlice";

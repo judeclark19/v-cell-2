@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import { getAllCompletedGames } from "@/persistence/completedGamesStore";
 import type { PersistedGame } from "@/persistence/types";
 import UserStatsTables from "@/ui/UserStatsTables";

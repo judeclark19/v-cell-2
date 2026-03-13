@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import { FormEvent, useMemo, useState } from "react";
 import {
   createUserWithEmailAndPassword,

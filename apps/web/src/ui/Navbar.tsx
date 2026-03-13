@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "@/auth/AuthProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import "./navbar.css";
 import Image from "next/image";
