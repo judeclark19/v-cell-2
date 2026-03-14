@@ -18,12 +18,14 @@ import {
 import {
   selectCanUndo,
   selectRules,
+  selectSeed,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
-import { useKeyboardState } from "../keyboard-control/useKeyboardState";
+import { useKeyboardControlSystem } from "../board-control/keyboard-control/useKeyboardControlSystem_new";
 
 function Board() {
   // Game state
+  const seed = useSelector(selectSeed);
   const rules = useSelector(selectRules);
   const undosRemaining = useSelector(selectUndosRemaining);
   const canUndo = useSelector(selectCanUndo);
@@ -32,7 +34,6 @@ function Board() {
   const sessionId = useSelector(selectSessionId);
 
   // OLD STUFF
-
   const boardController = useBoardController();
   const { kbCarrying, kbAttrsContextValue, boardRef, ...vm } = boardController;
 
@@ -40,7 +41,7 @@ function Board() {
     <>
       <div
         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
-        key={sessionPhase === "ready" ? vm.state.seed : "loading"}
+        key={sessionPhase === "ready" ? seed : "loading"}
       >
         <BoardKbAttrsContext.Provider value={kbAttrsContextValue}>
           <div
@@ -108,11 +109,7 @@ function Board() {
       </div>
       <p className="hint" style={{ textAlign: "center" }}>
         Current seed:{" "}
-        {vm.state?.seed ? (
-          <SeedButton seed={vm.state?.seed ?? "(unknown)"} />
-        ) : (
-          "(unknown)"
-        )}
+        {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
       </p>
       <BoardControls vm={boardController} />
     </>
