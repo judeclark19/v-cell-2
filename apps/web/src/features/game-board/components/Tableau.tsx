@@ -2,7 +2,7 @@ import { useContext } from "react";
 import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { useSelector } from "react-redux";
-import { selectPlayableMask } from "@/state/game/gameSlice";
+import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
 import { useBoardController } from "../hooks/useBoardController";
 
 function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
@@ -12,11 +12,12 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
 
   // game slice
   const playable = useSelector(selectPlayableMask);
+  const history = useSelector(selectHistory);
 
   return (
     <div className="tableau-scroll" aria-label="Tableau">
       <div className="tableau" aria-label="Tableau grid">
-        {vm.state.tableau.map((col, colIndex) => {
+        {history.present.tableau.map((col, colIndex) => {
           const tableauSource =
             vm.drag.source?.type === "tableau" ? vm.drag.source : null;
 
@@ -56,7 +57,13 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                 aria-hidden={!showEmptySlot}
                 aria-label={`Tableau column ${colIndex + 1} empty slot`}
               >
-                <Card card={null} emptyLabel="K" />
+                <Card
+                  card={null}
+                  emptyLabel="K"
+                  region="tableau"
+                  regionIndex={colIndex}
+                  data-tableauIndex={-1}
+                />
               </div>
 
               {col.map((tc, tcIndex) => {
@@ -71,6 +78,9 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                     <Card
                       key={tc.card.id}
                       card={tc.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={tcIndex}
                       faceDown={tc.faceDown}
                       playable={playable.tableau[colIndex][tcIndex]}
                       className="card--ghost"
@@ -87,6 +97,9 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                     <Card
                       key={tc.card.id}
                       card={tc.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={tcIndex}
                       faceDown={tc.faceDown}
                       playable={playable.tableau[colIndex][tcIndex]}
                       className="card--ghost"
@@ -99,6 +112,9 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                   <Card
                     key={tc.card.id}
                     card={tc.card}
+                    region="tableau"
+                    regionIndex={colIndex}
+                    positionInStack={tcIndex}
                     faceDown={tc.faceDown}
                     playable={playable.tableau[colIndex][tcIndex]}
                     data-kb-focusable={
@@ -126,6 +142,9 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                     <Card
                       key={`tail-anchor-${colIndex}-${tail.card.id}`}
                       card={tail.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={col.length - 1}
                       faceDown={tail.faceDown}
                       playable={false}
                       className="card--ghost"

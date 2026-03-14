@@ -44,7 +44,12 @@ function FreeCells({ vm }: { vm: ReturnType<typeof useBoardController> }) {
               }
             >
               {/* Always show the slot */}
-              <Card card={null} className="pile-slot" />
+              <Card
+                card={null}
+                region="freecell"
+                regionIndex={i}
+                className="pile-slot"
+              />
 
               {/* If a card exists, render it on top of the slot */}
               {card &&
@@ -70,6 +75,8 @@ function FreeCells({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                   return (
                     <Card
                       card={card}
+                      region="freecell"
+                      regionIndex={i}
                       playable={vm.playable.freeCells[i - 1]} // -1 accounts for spacer
                       data-kb-focusable={
                         vm.playable.freeCells[i - 1] ? "true" : "false"

@@ -112,6 +112,7 @@ export function useBoardDomMapping({
   // - foundations are visually in columns 3..6 (row 0)
   const getNodeMeta = useCallback(
     (el: HTMLElement): BoardNodeMeta | null => {
+      console.log("GET NODE META for ", el);
       const t = findTableauSourceForEl(el, tableauColRefs.current, tableau);
       if (t) {
         return {

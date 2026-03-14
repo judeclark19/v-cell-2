@@ -33,6 +33,9 @@ function displayRank(rank: number) {
 
 type CardProps = {
   card?: Card | null;
+  region: "tableau" | "freecell" | "foundation" | "drag-layer";
+  regionIndex?: number; // which tableau col / freecell index / foundation index
+  positionInStack?: number; // -1 represents the empty slot / column container
   faceDown?: boolean;
   playable?: boolean;
   emptyLabel?: string;
@@ -49,6 +52,9 @@ type CardProps = {
 
 function Card({
   card,
+  region,
+  regionIndex,
+  positionInStack,
   faceDown = false,
   playable = false,
   emptyLabel = "",
@@ -57,7 +63,7 @@ function Card({
   onActivate,
   onPointerDownCard,
   onAutoFreeCell,
-  ...divProps
+  ...divProps // TODO: um, what?
 }: CardProps) {
   const isEmpty = !card;
 
@@ -81,6 +87,8 @@ function Card({
         {...restDivProps}
         className={`card-slot ${className}`.trim()}
         style={style}
+        data-region={region}
+        data-region-index={regionIndex}
       >
         {emptyLabel && <span className="empty-label">{emptyLabel}</span>}
       </div>
@@ -91,6 +99,9 @@ function Card({
     <div
       {...restDivProps}
       data-card-id={card.id}
+      data-region={region}
+      data-region-index={regionIndex}
+      data-position-in-stack={positionInStack}
       className={`card ${faceDown ? "face-down" : ""} ${
         playable ? "is-playable" : "is-locked"
       } ${className}`.trim()}

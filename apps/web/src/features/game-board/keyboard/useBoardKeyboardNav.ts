@@ -330,6 +330,7 @@ export function useBoardKeyboardNav<TState, TPlayable>({
         }
       }
 
+      // Default movement by proximity
       for (let i = 0; i < els.length; i++) {
         const el = els[i];
         if (el === fromEl) continue;

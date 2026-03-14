@@ -85,7 +85,13 @@ function Foundation({
       }
     >
       {/* Slot always visible */}
-      <Card card={null} className="pile-slot" emptyLabel="A" />
+      <Card
+        card={null}
+        className="pile-slot"
+        emptyLabel="A"
+        region="foundation"
+        regionIndex={i}
+      />
 
       {/* Card layer (if present) */}
       {effectiveCard && (
@@ -95,11 +101,15 @@ function Foundation({
               card={underlayCard}
               className="pile-card pile-card--underlay"
               playable={false}
+              region="foundation"
+              regionIndex={i}
             />
           )}
 
           <Card
             card={effectiveCard}
+            region="foundation"
+            regionIndex={i}
             className={`pile-card${pullbackDisabled ? " is-pullback-disabled" : ""}`}
             playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
             data-kb-focusable={

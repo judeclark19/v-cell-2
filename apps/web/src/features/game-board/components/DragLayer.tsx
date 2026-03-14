@@ -48,6 +48,7 @@ export default function DragLayer({ drag, resetDrag }: DragLayerProps) {
           <Card
             key={tc.card.id}
             card={tc.card as EngineCard}
+            region="drag-layer"
             faceDown={tc.faceDown}
             playable
             style={{ zIndex: i + 1 }}
