@@ -12,7 +12,7 @@ import {
   selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
 import { useBoardController } from "../hooks/useBoardController";
-import { selectShowTimer } from "@/state/ui/uiSlice";
+import { selectShowTimer, setIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 type FoundationProps = {
   i: number;
@@ -148,7 +148,10 @@ function Foundations({
             className="btn btn--primary"
             aria-label="Pause timer"
             type="button"
-            onClick={() => dispatch(setPaused(true))}
+            onClick={() => {
+              dispatch(setIsAnyModalOpen(true));
+              dispatch(setPaused(true));
+            }}
             disabled={
               !startedAtMs || status === "won" || status === "abandoned"
             }

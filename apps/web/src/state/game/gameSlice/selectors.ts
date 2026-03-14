@@ -42,3 +42,25 @@ export const selectPlayableMask = createSelector([selectHistory], (history) =>
 export const selectLegalMoves = createSelector([selectHistory], (history) =>
   getLegalMoves(history.present)
 );
+export const selectPlayableCardIdSet = createSelector(
+  [selectHistory, selectPlayableMask],
+  (history, playable) => {
+    const ids = new Set<string>();
+
+    history.present.freeCells.forEach((card, index) => {
+      if (card && playable.freeCells[index]) {
+        ids.add(card.id);
+      }
+    });
+
+    history.present.tableau.forEach((column, columnIndex) => {
+      column.forEach((tableauCard, rowIndex) => {
+        if (playable.tableau[columnIndex]?.[rowIndex]) {
+          ids.add(tableauCard.card.id);
+        }
+      });
+    });
+
+    return ids;
+  }
+);

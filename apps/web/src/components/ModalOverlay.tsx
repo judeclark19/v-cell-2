@@ -1,5 +1,7 @@
+import { useDispatch } from "react-redux";
 import "../styles/modal.css";
 import { useEffect, useRef } from "react";
+import { setIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 type ModalOverlayProps = {
   overlayAriaLabel: string;
@@ -27,6 +29,8 @@ export default function ModalOverlay({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const prevFocusedElRef = useRef<HTMLElement | null>(null);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     prevFocusedElRef.current = document.activeElement as HTMLElement | null;
@@ -56,11 +60,16 @@ export default function ModalOverlay({
     };
   }, []);
 
+  const closeModal = () => {
+    dispatch(setIsAnyModalOpen(false));
+    onClose();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
-      onClose();
+      closeModal();
       return;
     }
 
@@ -116,7 +125,7 @@ export default function ModalOverlay({
             type="button"
             className="modal-overlay__close"
             aria-label={buttonAriaLabel}
-            onClick={onClose}
+            onClick={closeModal}
           >
             ✕
           </button>

@@ -33,7 +33,7 @@ export default function BoardControls({
   const onNewDeal = async () => {
     const ok =
       !(startedAtMs && status === "in_progress") ||
-      (await requestConfirmation(dispatch, {
+      (await requestConfirmation({
         title: "Start a new deal?",
         bodyText: "Starting a new deal will abandon your current game.",
         confirmLabel: "New deal",
@@ -47,7 +47,7 @@ export default function BoardControls({
   const startBySeed = async (seed: string) => {
     const ok =
       !(startedAtMs && status === "in_progress") ||
-      (await requestConfirmation(dispatch, {
+      (await requestConfirmation({
         title: "Start a seeded deal?",
         bodyText: "Starting this seeded deal will abandon your current game.",
         confirmLabel: "Start",

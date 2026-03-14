@@ -1,36 +1,27 @@
-import { AppDispatch } from "@/state/reduxStore";
-import { closeConfirm, openConfirm } from "./uiSlice";
-import { ConfirmRequest } from "@/features/game-board/components/BoardModals";
+import { AppDispatch, reduxStore } from "@/state/reduxStore";
+import { openConfirm } from "./uiSlice";
 
-export function requestConfirmation(
-  dispatch: AppDispatch,
-  req: {
-    title: string;
-    bodyText: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-  }
-) {
+const dispatch = reduxStore.dispatch as AppDispatch;
+
+export function requestConfirmation(req: {
+  title: string;
+  bodyText: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+}) {
   return new Promise<boolean>((resolve) => {
     dispatch(
       openConfirm({
         ...req,
         onConfirm: () => {
           resolve(true);
-          dispatch(closeConfirm());
+          // dispatch(closeConfirm());
         },
         onCancel: () => {
           resolve(false);
+          // dispatch(closeConfirm());
         }
       })
     );
   });
-}
-
-export function dismissConfirmation(
-  dispatch: AppDispatch,
-  confirmReq: ConfirmRequest | null
-) {
-  confirmReq?.onCancel?.();
-  dispatch(closeConfirm());
 }

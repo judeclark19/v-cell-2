@@ -5,12 +5,14 @@ export interface UiState {
   confirmReq: ConfirmRequest | null;
   showTimer: boolean;
   settingsHydrated: boolean;
+  isAnyModalOpen: boolean;
 }
 
 const initialState: UiState = {
   confirmReq: null,
   showTimer: true,
-  settingsHydrated: false
+  settingsHydrated: false,
+  isAnyModalOpen: false
 };
 
 const uiSlice = createSlice({
@@ -19,9 +21,14 @@ const uiSlice = createSlice({
   reducers: {
     openConfirm: (state, action: PayloadAction<ConfirmRequest>) => {
       state.confirmReq = action.payload;
+      state.isAnyModalOpen = true;
     },
     closeConfirm: (state) => {
       state.confirmReq = null;
+      state.isAnyModalOpen = false;
+    },
+    setIsAnyModalOpen: (state, action: PayloadAction<boolean>) => {
+      state.isAnyModalOpen = action.payload;
     },
     setShowTimer: (state, action: PayloadAction<boolean>) => {
       state.showTimer = action.payload;
@@ -32,11 +39,18 @@ const uiSlice = createSlice({
   }
 });
 
-export const { openConfirm, closeConfirm, setShowTimer, setSettingsHydrated } =
-  uiSlice.actions;
+export const {
+  openConfirm,
+  closeConfirm,
+  setShowTimer,
+  setSettingsHydrated,
+  setIsAnyModalOpen
+} = uiSlice.actions;
 export const uiReducer = uiSlice.reducer;
 
 export const selectConfirmReq = (state: { ui: UiState }) => state.ui.confirmReq;
 export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;
 export const selectSettingsHydrated = (state: { ui: UiState }) =>
   state.ui.settingsHydrated;
+export const selectIsAnyModalOpen = (state: { ui: UiState }) =>
+  state.ui.isAnyModalOpen;

@@ -13,7 +13,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useBoardController } from "../hooks/useBoardController";
 import { selectMoveCount } from "@/state/game/gameSlice";
 import { selectConfirmReq } from "@/state/ui/uiSlice";
-import { dismissConfirmation } from "@/state/ui/requestConfirmation";
 import { AppDispatch } from "@/state/reduxStore";
 
 export type ConfirmRequest = {
@@ -22,7 +21,7 @@ export type ConfirmRequest = {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 };
 
 export default function BoardModals({
@@ -99,14 +98,12 @@ export default function BoardModals({
           overlayAriaLabel="Confirm action"
           title={confirmReq.title}
           buttonAriaLabel="Close confirmation dialog"
-          onClose={() => dismissConfirmation(dispatch, confirmReq)}
+          onClose={confirmReq.onCancel}
           bodyText={confirmReq.bodyText}
           primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
           primaryButtonAction={confirmReq.onConfirm}
           secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
-          secondaryButtonAction={() =>
-            dismissConfirmation(dispatch, confirmReq)
-          }
+          secondaryButtonAction={confirmReq.onCancel}
         />
       )}
 
