@@ -20,6 +20,8 @@ export interface GameStoreState {
   cursor: number;
   moveCount: number;
   undosUsed: number;
+
+  isAutoCompleting: boolean;
 }
 
 const initialState: GameStoreState = {
@@ -41,7 +43,8 @@ const initialState: GameStoreState = {
   moves: [],
   cursor: 0,
   moveCount: 0,
-  undosUsed: 0
+  undosUsed: 0,
+  isAutoCompleting: false
 };
 
 export const gameSlice = createSlice({
@@ -60,7 +63,8 @@ export const {
   setUndosUsed,
   setUndoLimitRule,
   setFaceDownCountRule,
-  setStatus
+  setStatus,
+  setIsAutoCompleting
 } = gameSlice.actions;
 
 export const gameReducer = gameSlice.reducer;

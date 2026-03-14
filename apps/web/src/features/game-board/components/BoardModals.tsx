@@ -1,7 +1,6 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
-import { useSession } from "@/state/auth/AuthProvider";
 import {
   selectPaused,
   selectTimeElapsedMs,
@@ -12,8 +11,13 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useBoardController } from "../hooks/useBoardController";
 import { selectMoveCount } from "@/state/game/gameSlice";
-import { selectConfirmReq } from "@/state/ui/uiSlice";
+import {
+  closeWinModal,
+  selectConfirmModal,
+  selectWinModal
+} from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
+import { selectUid } from "@/state/auth/authSlice";
 
 export type ConfirmRequest = {
   title: string;
@@ -32,18 +36,23 @@ export default function BoardModals({
   sessionId: string;
 }) {
   const router = useRouter();
-  const { isUser } = useSession();
-  const { shouldShowWinModal, dismissWinModal, newDealWithCelebration } = vm;
+
+  // old stuff here!
+  const { newDealWithCelebration } = vm;
 
   const dispatch = useDispatch<AppDispatch>();
+  // Auth state
+  const isUser = useSelector(selectUid) !== null;
   // Session state
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
-  const confirmReq = useSelector(selectConfirmReq);
+  const confirmReq = useSelector(selectConfirmModal);
   // Game state
   const moveCount = useSelector(selectMoveCount);
   // Records state
   const completedGames = useSelector(selectCompletedGames);
+  // ui state
+  const winModal = useSelector(selectWinModal);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -118,18 +127,18 @@ export default function BoardModals({
         />
       )}
 
-      {shouldShowWinModal && (
+      {winModal && (
         <ModalOverlay
           overlayAriaLabel="Game won"
           title="You won!"
           buttonAriaLabel="Close win dialog"
-          onClose={dismissWinModal}
+          onClose={() => dispatch(closeWinModal())}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
           primaryButtonAction={newDealWithCelebration}
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
-            dismissWinModal();
+            dispatch(closeWinModal());
             if (isUser) {
               router.push("/stats");
             }

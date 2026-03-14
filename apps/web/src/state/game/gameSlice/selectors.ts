@@ -64,3 +64,5 @@ export const selectPlayableCardIdSet = createSelector(
     return ids;
   }
 );
+export const selectIsAutoCompleting = (state: RootState) =>
+  state.game.isAutoCompleting;

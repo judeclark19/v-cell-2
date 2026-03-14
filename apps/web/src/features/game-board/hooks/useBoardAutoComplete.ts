@@ -1,3 +1,5 @@
+// old system
+
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { useFoundationDrainAutoComplete } from "@/features/game-board/hooks/useFoundationDrainAutoComplete";

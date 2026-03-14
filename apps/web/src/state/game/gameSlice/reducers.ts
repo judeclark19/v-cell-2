@@ -161,5 +161,8 @@ export const gameSliceReducers = {
   },
   setStatus: (state, action: PayloadAction<GameStatus | null>) => {
     state.status = action.payload;
+  },
+  setIsAutoCompleting: (state, action: PayloadAction<boolean>) => {
+    state.isAutoCompleting = action.payload;
   }
 } satisfies SliceCaseReducers<GameStoreState>;
