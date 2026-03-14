@@ -24,7 +24,7 @@ export const requestRulesChange = createAsyncThunk<
 
   const ok =
     !(startedAtMs && status === "in_progress") ||
-    (await requestConfirmation(dispatch, {
+    (await requestConfirmation({
       title: "Change gameplay setting?",
       bodyText:
         "Changing this will start a new game and abandon your current one.",

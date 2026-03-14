@@ -21,7 +21,6 @@ import {
   selectSeed,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
-import { useKeyboardControlSystem } from "../board-control/keyboard-control/useKeyboardControlSystem_new";
 
 function Board() {
   // Game state
