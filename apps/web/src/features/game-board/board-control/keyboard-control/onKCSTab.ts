@@ -1,7 +1,7 @@
 export const onKCSTab = (
   e: React.KeyboardEvent<HTMLDivElement>,
   setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>,
-  boardRef: React.RefObject<HTMLDivElement>
+  boardRef: React.RefObject<HTMLDivElement | null>
 ) => {
   console.log("Tab key pressed in onKCSTab");
   setKbCarrying(false);

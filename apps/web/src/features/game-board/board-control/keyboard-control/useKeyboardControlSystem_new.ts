@@ -6,7 +6,13 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 
-export function useKeyboardControlSystem(boardRef) {
+export function useKeyboardControlSystem(
+  boardRef: React.RefObject<HTMLDivElement | null>
+) {
+  if (!boardRef) {
+    throw new Error("useKeyboardControlSystem requires a boardRef");
+  }
+
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
@@ -16,11 +22,11 @@ export function useKeyboardControlSystem(boardRef) {
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (isInputSuppressed) return;
+    if (isInputSuppressed || !boardRef.current) return;
 
     switch (e.key) {
       case "Tab": {
-        onKCSTab(e, setKbCarrying);
+        onKCSTab(e, setKbCarrying, boardRef);
         break;
       }
       case "ArrowLeft": {

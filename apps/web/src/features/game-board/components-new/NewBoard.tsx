@@ -21,8 +21,8 @@ import {
   selectSeed,
   selectUndosRemaining
 } from "@/state/game/gameSlice";
-import { useKeyboardControlSystem } from "../board-control/keyboard-control/useKeyboardControlSystem_new";
 import { useRef } from "react";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
 function Board() {
   const boardRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,8 @@ function Board() {
   const sessionPhase = useSelector(selectSessionPhase);
   const sessionId = useSelector(selectSessionId);
 
-  const boardController = useKeyboardControlSystem();
+  // Board controller (new!)
+  const boardController = useBoardControlSystem(boardRef);
   const { kbCarrying } = boardController;
 
   return (
