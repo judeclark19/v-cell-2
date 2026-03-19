@@ -3,12 +3,16 @@ import Card from "./Card";
 import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { useSelector } from "react-redux";
 import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
-import { useBoardController } from "../hooks/useBoardController";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
-function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
+function Tableau({
+  boardController
+}: {
+  boardController: ReturnType<typeof useBoardControlSystem>;
+}) {
   const kbAttrsCtx = useContext(BoardKbAttrsContext);
   const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = vm.drag.kbFlight;
+  const kbFlight = boardController.kbFlight;
 
   // game slice
   const playable = useSelector(selectPlayableMask);
@@ -19,23 +23,25 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
       <div className="tableau" aria-label="Tableau grid">
         {history.present.tableau.map((col, colIndex) => {
           const tableauSource =
-            vm.drag.source?.type === "tableau" ? vm.drag.source : null;
+            boardController.drag.source?.type === "tableau"
+              ? boardController.drag.source
+              : null;
 
           const isDraggedFromThisCol =
-            vm.drag.active &&
+            boardController.drag.active &&
             tableauSource != null &&
             tableauSource.colIndex === colIndex;
 
           const isKbFlightDestCol =
             kbFlight.active &&
             kbFlight.dropTarget?.type === "tableau" &&
-            kbFlight.dropTarget.colIndex === colIndex;
+            kbFlight.dropTarget.index === colIndex;
 
           const isDraggingEntireColumn =
             isDraggedFromThisCol &&
             tableauSource != null &&
             tableauSource.startIndex === 0 &&
-            vm.drag.stack.length === col.length;
+            boardController.drag.stack.length === col.length;
 
           // Underlay slot is always rendered; label/focusability when the column is empty
           // OR when the entire stack is being dragged out (cards are visually absent).
@@ -46,7 +52,7 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
               key={colIndex}
               className="tableau-col"
               aria-label={`Tableau column ${colIndex + 1}`}
-              ref={(el) => vm.setTableauColRef(colIndex, el)}
+              // ref={(el) => boardController.setTableauColRef(colIndex, el)}
             >
               <div
                 className="tableau-empty-slot"
@@ -71,7 +77,9 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                   isDraggedFromThisCol &&
                   tableauSource != null &&
                   tcIndex >= tableauSource.startIndex &&
-                  tcIndex < tableauSource.startIndex + vm.drag.stack.length;
+                  tcIndex <
+                    tableauSource.startIndex +
+                      boardController.drag.stack.length;
 
                 if (inDraggedRange) {
                   return (
@@ -121,12 +129,20 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                       playable.tableau[colIndex][tcIndex] ? "true" : "false"
                     }
                     style={{ zIndex: tcIndex + 1 }}
-                    onActivate={(el) => vm.tryAutoFoundationFromEl(el)}
-                    onPointerDownCard={(e) =>
-                      vm.handleTableauPointerDown(e, colIndex, tcIndex)
+                    onActivate={(el) =>
+                      boardController.tryAutoFoundationFromEl(el)
                     }
-                    onPointerUp={vm.onCardPointerUp}
-                    onAutoFreeCell={(el) => vm.tryAutoFreeCellFromEl(el)}
+                    onPointerDownCard={(e) =>
+                      boardController.handleTableauPointerDown(
+                        e,
+                        colIndex,
+                        tcIndex
+                      )
+                    }
+                    onPointerUp={boardController.onCardPointerUp}
+                    onAutoFreeCell={(el) =>
+                      boardController.tryAutoFreeCellFromEl(el)
+                    }
                   />
                 );
               })}

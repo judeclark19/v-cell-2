@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
+import { Card } from "@vcell/engine";
 
 type DragSource =
   | { type: "foundation"; index: number }
@@ -13,6 +14,7 @@ type DragState = {
   pending: boolean;
   isReturning: boolean;
   source: DragSource | null;
+  stack: Array<{ card: Card; faceDown: boolean }>;
 };
 
 export function usePointerControlSystem() {
@@ -26,7 +28,8 @@ export function usePointerControlSystem() {
     active: false,
     pending: false,
     isReturning: false,
-    source: null
+    source: null,
+    stack: []
   });
 
   const handleFoundationPointerDown = (
@@ -43,7 +46,13 @@ export function usePointerControlSystem() {
       active: false,
       pending: true,
       isReturning: false,
-      source: { type: "foundation", index }
+      source: { type: "foundation", index },
+      stack: [
+        {
+          card: pile.cards[pile.cards.length - 1],
+          faceDown: false
+        }
+      ]
     });
   };
 
