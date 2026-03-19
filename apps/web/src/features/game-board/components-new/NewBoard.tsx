@@ -61,7 +61,7 @@
 //           onPointerDownCapture={boardController.onKCSPointerDown}
 //           onFocusCapture={boardController.onKCSFocusCapture}
 //           onBlurCapture={boardController.onKCSBlurCapture}
-//           onFocus={boardController.onBoardFocus}
+//           onFocus={boardController.onKCSFocus}
 //         >
 //           {sessionPhase === "ready" ? (
 //             <>

@@ -2,13 +2,13 @@
 import type { KeyboardEvent } from "react";
 import { selectIsAutoCompleting } from "@/state/game/gameSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
-import { clearKbCarryVisuals } from "./kbCarryVisuals";
+import { clearKbCarryVisuals, setKeyboardDropTarget } from "./kbCarryVisuals";
 
 export function useKeyboardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -21,6 +21,11 @@ export function useKeyboardControlSystem(
   const [kbCarrying, setKbCarrying] = useState(false);
   const [activeFocusIndex, setActiveFocusIndex] = useState(0);
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
+
+  // Refs for tracking focus and carry state without causing re-renders
+  const lastFocusPointRef = useRef<{ x: number; y: number } | null>(null);
+  const kbCarriedElRef = useRef<HTMLElement | null>(null); // if you have this concept
+  const kbDropTargetElRef = useRef<HTMLElement | null>(null);
 
   // ----- Event handlers -----
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -105,6 +110,38 @@ export function useKeyboardControlSystem(
     if (!root.contains(e.relatedTarget as Node | null)) {
       setKbCarrying(false);
       clearKbCarryVisuals(root);
+      kbCarriedElRef.current = null;
+      kbDropTargetElRef.current = null;
+    }
+  };
+
+  const onKCSFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+    const root = boardRef.current;
+    if (!root) return;
+
+    const els = getKbFocusables(root);
+    const target = e.target as HTMLElement;
+    const idx = els.indexOf(target);
+
+    if (idx < 0) return;
+
+    // Sync index (safe to duplicate)
+    setActiveFocusIndex(idx);
+
+    // Track spatial position
+    const r = target.getBoundingClientRect();
+    lastFocusPointRef.current = {
+      x: r.left + r.width / 2,
+      y: r.top + r.height / 2
+    };
+
+    // Carry mode behavior
+    if (kbCarrying) {
+      if (target !== kbCarriedElRef.current) {
+        setKeyboardDropTarget(target, kbDropTargetElRef);
+      } else {
+        setKeyboardDropTarget(null, kbDropTargetElRef);
+      }
     }
   };
 
@@ -115,6 +152,7 @@ export function useKeyboardControlSystem(
     onKCSKeydown,
     onKCSPointerDown,
     onKCSFocusCapture,
-    onKCSBlurCapture
+    onKCSBlurCapture,
+    onKCSFocus
   };
 }

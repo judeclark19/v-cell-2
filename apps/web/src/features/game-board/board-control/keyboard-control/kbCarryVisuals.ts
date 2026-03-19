@@ -11,3 +11,20 @@ export const clearKbCarryVisuals = (root: HTMLElement | null) => {
       el.classList.remove(DROP_TARGET_CLASS);
     });
 };
+
+export const setKeyboardDropTarget = (
+  el: HTMLElement | null,
+  dropTargetElRef: React.RefObject<HTMLElement | null>
+) => {
+  const DROP_TARGET_CLASS = "is-drop-target";
+
+  if (dropTargetElRef.current && dropTargetElRef.current !== el) {
+    dropTargetElRef.current.classList.remove(DROP_TARGET_CLASS);
+  }
+
+  dropTargetElRef.current = el;
+
+  if (dropTargetElRef.current) {
+    dropTargetElRef.current.classList.add(DROP_TARGET_CLASS);
+  }
+};
