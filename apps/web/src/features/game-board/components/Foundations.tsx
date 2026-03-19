@@ -133,10 +133,9 @@ function Foundations({
 }: {
   boardController: ReturnType<typeof useBoardController>;
 }) {
-  const vm = boardController;
-  const kbAttrsCtx = useContext(BoardKbAttrsContext);
-  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = vm?.drag?.kbFlight;
+  // const kbAttrsCtx = useContext(BoardKbAttrsContext);
+  // const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
+  // const kbFlight = vm?.drag?.kbFlight;
 
   const dispatch = useDispatch();
   // session state
@@ -178,13 +177,13 @@ function Foundations({
             </svg>
           </button>
         </div>
-        {vm.foundationCards.map((card, foundationIndex) => (
+        {boardController.foundationCards.map((card, foundationIndex) => (
           <Foundation
             key={`foundation-${foundationIndex}`}
             i={foundationIndex}
             foundationIndex={foundationIndex}
             card={card}
-            kbCarrying={kbCarrying}
+            kbCarrying={boardController.kbCarrying}
             kbFlight={kbFlight}
             vm={vm}
           />

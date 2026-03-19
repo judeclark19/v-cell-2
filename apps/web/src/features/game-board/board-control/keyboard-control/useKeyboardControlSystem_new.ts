@@ -10,6 +10,17 @@ import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
 import { clearKbCarryVisuals, setKeyboardDropTarget } from "./kbCarryVisuals";
 
+type KbFlightDropTarget =
+  | { type: "foundation"; index: number }
+  | { type: "tableau"; index: number }
+  | { type: "freecell"; index: number };
+
+type KbFlightState = {
+  active: boolean;
+  cardIds: string[];
+  dropTarget: KbFlightDropTarget | null;
+};
+
 export function useKeyboardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
 ) {
@@ -20,12 +31,38 @@ export function useKeyboardControlSystem(
   // keyboard control system state
   const [kbCarrying, setKbCarrying] = useState(false);
   const [activeFocusIndex, setActiveFocusIndex] = useState(0);
+  const [kbFlight, setKbFlight] = useState<KbFlightState>({
+    active: false,
+    cardIds: [],
+    dropTarget: null
+  });
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
   // Refs for tracking focus and carry state without causing re-renders
   const lastFocusPointRef = useRef<{ x: number; y: number } | null>(null);
   const kbCarriedElRef = useRef<HTMLElement | null>(null); // if you have this concept
   const kbDropTargetElRef = useRef<HTMLElement | null>(null);
+
+  // flight animation helpers
+
+  const startKbFlight = (args: {
+    cardIds: string[];
+    dropTarget: KbFlightDropTarget;
+  }) => {
+    setKbFlight({
+      active: true,
+      cardIds: args.cardIds,
+      dropTarget: args.dropTarget
+    });
+  };
+
+  const clearKbFlight = () => {
+    setKbFlight({
+      active: false,
+      cardIds: [],
+      dropTarget: null
+    });
+  };
 
   // ----- Event handlers -----
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -110,6 +147,7 @@ export function useKeyboardControlSystem(
     if (!root.contains(e.relatedTarget as Node | null)) {
       setKbCarrying(false);
       clearKbCarryVisuals(root);
+      clearKbFlight();
       kbCarriedElRef.current = null;
       kbDropTargetElRef.current = null;
     }
@@ -148,6 +186,9 @@ export function useKeyboardControlSystem(
   return {
     kbCarrying,
     setKbCarrying,
+    kbFlight,
+    startKbFlight,
+    clearKbFlight,
     isInputSuppressed,
     onKCSKeydown,
     onKCSPointerDown,
