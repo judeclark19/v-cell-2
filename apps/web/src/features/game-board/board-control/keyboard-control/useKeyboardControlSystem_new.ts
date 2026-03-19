@@ -6,6 +6,8 @@ import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
+import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
+import { getKbFocusables } from "./getKbFocusables";
 
 export function useKeyboardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -17,58 +19,12 @@ export function useKeyboardControlSystem(
   // keyboard control system state
   const [kbCarrying, setKbCarrying] = useState(false);
   const [activeFocusIndex, setActiveFocusIndex] = useState(0);
-  const kbFocusablesRef = useRef<HTMLElement[]>([]);
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
 
-  const refreshKbFocusables = () => {
-    const root = boardRef.current;
-    if (!root) return;
-
-    const selector = '[data-kb-focusable="true"]';
-
-    const els = Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
-      (el) =>
-        !el.hasAttribute("disabled") &&
-        el.getAttribute("aria-disabled") !== "true"
-    );
-
-    kbFocusablesRef.current = els;
-  };
-
-  const refreshAndGetFocusables = () => {
-    refreshKbFocusables();
-    return kbFocusablesRef.current;
-  };
-
-  const focusIndex = (index: number, els: HTMLElement[]) => {
-    const clamped = Math.max(0, Math.min(index, els.length - 1));
-    const el = els[clamped];
-    if (!el) return false;
-
-    setActiveFocusIndex(clamped);
-    requestAnimationFrame(() => el.focus());
-    return true;
-  };
-
-  const focusFirstPlayable = () => {
-    const els = refreshAndGetFocusables();
-    if (els.length === 0) return false;
-    return focusIndex(0, els);
-  };
-
-  const focusElIfFocusable = (el: HTMLElement | null) => {
-    const els = refreshAndGetFocusables();
-    if (!el) return false;
-
-    const idx = els.indexOf(el);
-    if (idx < 0) return false;
-
-    return focusIndex(idx, els);
-  };
-
+  // ----- Event handlers -----
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (isInputSuppressed || !boardRef.current) return;
-    const els = refreshAndGetFocusables();
+    const els = getKbFocusables(boardRef.current);
     if (els.length === 0) return;
 
     if (e.key === "Tab") {
@@ -100,7 +56,11 @@ export function useKeyboardControlSystem(
 
     const target = e.target as HTMLElement | null;
     if (!target) {
-      focusFirstPlayable();
+      // focusFirstPlayable(refreshAndGetFocusables, setActiveFocusIndex);
+      focusFirstPlayable(
+        () => getKbFocusables(boardRef.current),
+        setActiveFocusIndex
+      );
       return;
     }
 
@@ -109,8 +69,32 @@ export function useKeyboardControlSystem(
         "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
       ) as HTMLElement | null) || target;
 
-    const focused = focusElIfFocusable(candidate);
+    const focused = focusElIfFocusable(
+      candidate,
+      () => getKbFocusables(boardRef.current),
+      setActiveFocusIndex
+    );
     if (!focused) return;
+  };
+
+  const onKCSFocusCapture = (e: React.FocusEvent<HTMLDivElement>) => {
+    const els = getKbFocusables(boardRef.current);
+    if (els.length === 0) return;
+
+    // Board container focused (empty click) => do nothing
+    if (e.target === e.currentTarget) return;
+
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    // Ignore focus outside our system
+    const idx = els.indexOf(target);
+    if (idx < 0) return;
+
+    // Sync active index
+    if (idx !== activeFocusIndex) {
+      setActiveFocusIndex(idx);
+    }
   };
 
   return {
@@ -118,6 +102,7 @@ export function useKeyboardControlSystem(
     setKbCarrying,
     isInputSuppressed,
     onKCSKeydown,
-    onKCSPointerDown
+    onKCSPointerDown,
+    onKCSFocusCapture
   };
 }

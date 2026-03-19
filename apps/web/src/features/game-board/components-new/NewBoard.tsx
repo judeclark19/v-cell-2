@@ -1,123 +1,123 @@
-import "../styles/board.css";
+// import "../styles/board.css";
 
-import Tableau from "../components/Tableau";
-import Foundations from "../components/Foundations";
-import FreeCells from "../components/FreeCells";
-import BoardModals from "../components/BoardModals";
-import DragLayer from "../components/DragLayer";
-import BoardControls from "../components/BoardControls";
-import SeedButton from "@/ui/SeedButton";
-import { useSelector } from "react-redux";
-import {
-  selectSessionId,
-  selectSessionPhase
-} from "@/state/session/sessionSlice";
+// import Tableau from "../components/Tableau";
+// import Foundations from "../components/Foundations";
+// import FreeCells from "../components/FreeCells";
+// import BoardModals from "../components/BoardModals";
+// import DragLayer from "../components/DragLayer";
+// import BoardControls from "../components/BoardControls";
+// import SeedButton from "@/ui/SeedButton";
+// import { useSelector } from "react-redux";
+// import {
+//   selectSessionId,
+//   selectSessionPhase
+// } from "@/state/session/sessionSlice";
 
-import {
-  selectCanUndo,
-  selectRules,
-  selectSeed,
-  selectUndosRemaining
-} from "@/state/game/gameSlice";
-import { useRef } from "react";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+// import {
+//   selectCanUndo,
+//   selectRules,
+//   selectSeed,
+//   selectUndosRemaining
+// } from "@/state/game/gameSlice";
+// import { useRef } from "react";
+// import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
-function Board() {
-  const boardRef = useRef<HTMLDivElement>(null);
+// function Board() {
+//   const boardRef = useRef<HTMLDivElement>(null);
 
-  // Game state
-  const seed = useSelector(selectSeed);
-  const rules = useSelector(selectRules);
-  const undosRemaining = useSelector(selectUndosRemaining);
-  const canUndo = useSelector(selectCanUndo);
-  // Session state
-  const sessionPhase = useSelector(selectSessionPhase);
-  const sessionId = useSelector(selectSessionId);
+//   // Game state
+//   const seed = useSelector(selectSeed);
+//   const rules = useSelector(selectRules);
+//   const undosRemaining = useSelector(selectUndosRemaining);
+//   const canUndo = useSelector(selectCanUndo);
+//   // Session state
+//   const sessionPhase = useSelector(selectSessionPhase);
+//   const sessionId = useSelector(selectSessionId);
 
-  // Board controller (new!)
-  const boardController = useBoardControlSystem(boardRef);
-  const { kbCarrying } = boardController;
+//   // Board controller (new!)
+//   const boardController = useBoardControlSystem(boardRef);
+//   const { kbCarrying } = boardController;
 
-  return (
-    <>
-      <div
-        className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
-        key={sessionPhase === "ready" ? seed : "loading"}
-      >
-        {/* <BoardKbAttrsContext.Provider value={kbAttrsContextValue}> */}
-        <div
-          className="board"
-          aria-label="Game board"
-          ref={boardRef}
-          tabIndex={boardController.isInputSuppressed ? -1 : 0}
-          onKeyDown={(e) => {
-            if (boardController.isInputSuppressed) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-            boardController.onKCSKeydown(e);
-          }}
-          onPointerDownCapture={boardController.onKCSPointerDown}
-          onFocusCapture={boardController.onBoardFocusCapture}
-          onBlurCapture={boardController.onBoardBlurCapture}
-          onFocus={boardController.onBoardFocus}
-        >
-          {sessionPhase === "ready" ? (
-            <>
-              {/* Foundations on top */}
-              <Foundations boardController={boardController} />
+//   return (
+//     <>
+//       <div
+//         className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
+//         key={sessionPhase === "ready" ? seed : "loading"}
+//       >
+//         {/* <BoardKbAttrsContext.Provider value={kbAttrsContextValue}> */}
+//         <div
+//           className="board"
+//           aria-label="Game board"
+//           ref={boardRef}
+//           tabIndex={boardController.isInputSuppressed ? -1 : 0}
+//           onKeyDown={(e) => {
+//             if (boardController.isInputSuppressed) {
+//               e.preventDefault();
+//               e.stopPropagation();
+//               return;
+//             }
+//             boardController.onKCSKeydown(e);
+//           }}
+//           onPointerDownCapture={boardController.onKCSPointerDown}
+//           onFocusCapture={boardController.onKCSFocusCapture}
+//           onBlurCapture={boardController.onBoardBlurCapture}
+//           onFocus={boardController.onBoardFocus}
+//         >
+//           {sessionPhase === "ready" ? (
+//             <>
+//               {/* Foundations on top */}
+//               <Foundations boardController={boardController} />
 
-              {/* Tableau in the middle */}
-              <Tableau vm={boardController} />
+//               {/* Tableau in the middle */}
+//               <Tableau vm={boardController} />
 
-              {/* Drag overlay layer */}
-              <DragLayer
-                drag={boardController.drag}
-                resetDrag={boardController.resetDrag}
-              />
+//               {/* Drag overlay layer */}
+//               <DragLayer
+//                 drag={boardController.drag}
+//                 resetDrag={boardController.resetDrag}
+//               />
 
-              {/* Free cells on bottom */}
-              <FreeCells vm={boardController} />
-              <div
-                className="row"
-                style={{ marginTop: "1em", marginBottom: "0.5em" }}
-              >
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={boardController.restartWithCelebration}
-                >
-                  Restart deal
-                </button>
+//               {/* Free cells on bottom */}
+//               <FreeCells vm={boardController} />
+//               <div
+//                 className="row"
+//                 style={{ marginTop: "1em", marginBottom: "0.5em" }}
+//               >
+//                 <button
+//                   type="button"
+//                   className="btn btn--secondary"
+//                   onClick={boardController.restartWithCelebration}
+//                 >
+//                   Restart deal
+//                 </button>
 
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  onClick={boardController.undo}
-                  disabled={!canUndo}
-                >
-                  {rules.undoLimit === "unlimited" || rules.undoLimit === 0
-                    ? "Undo"
-                    : `Undo (${undosRemaining})`}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="board-loading" aria-label="Loading deal" />
-          )}
-        </div>
+//                 <button
+//                   type="button"
+//                   className="btn btn--secondary"
+//                   onClick={boardController.undo}
+//                   disabled={!canUndo}
+//                 >
+//                   {rules.undoLimit === "unlimited" || rules.undoLimit === 0
+//                     ? "Undo"
+//                     : `Undo (${undosRemaining})`}
+//                 </button>
+//               </div>
+//             </>
+//           ) : (
+//             <div className="board-loading" aria-label="Loading deal" />
+//           )}
+//         </div>
 
-        <BoardModals vm={boardController} sessionId={sessionId} />
-        {/* </BoardKbAttrsContext.Provider> */}
-      </div>
-      <p className="hint" style={{ textAlign: "center" }}>
-        Current seed:{" "}
-        {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
-      </p>
-      <BoardControls vm={boardController} />
-    </>
-  );
-}
+//         <BoardModals vm={boardController} sessionId={sessionId} />
+//         {/* </BoardKbAttrsContext.Provider> */}
+//       </div>
+//       <p className="hint" style={{ textAlign: "center" }}>
+//         Current seed:{" "}
+//         {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
+//       </p>
+//       <BoardControls vm={boardController} />
+//     </>
+//   );
+// }
 
-export default Board;
+// export default Board;

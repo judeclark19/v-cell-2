@@ -4,6 +4,31 @@ export type BoardNodeMeta = {
   positionInStack: number | undefined; // -1 represents the empty slot / column container
 };
 
+const getCenter = (el: HTMLElement) => {
+  const r = el.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+};
+
+const getNodeMeta = (el: HTMLElement): BoardNodeMeta | null => {
+  const region = el.dataset.region;
+
+  if (
+    region !== "tableau" &&
+    region !== "foundation" &&
+    region !== "freecell"
+  ) {
+    return null;
+  }
+
+  return {
+    region,
+    regionIndex: Number(el.dataset.regionIndex),
+    positionInStack: el.dataset.positionInStack
+      ? Number(el.dataset.positionInStack)
+      : undefined
+  };
+};
+
 export const moveKbFocus = (
   e: React.KeyboardEvent<HTMLDivElement>,
   direction: "left" | "right" | "up" | "down",
@@ -26,32 +51,6 @@ export const moveKbFocus = (
     );
   };
 
-  const getCenter = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  };
-
-  const getNodeMeta = (el: HTMLElement): BoardNodeMeta | null => {
-    const region = el.dataset.region;
-
-    if (
-      region !== "tableau" &&
-      region !== "foundation" &&
-      region !== "freecell"
-    ) {
-      return null;
-    }
-
-    // otherwise, get data from el dataset
-    return {
-      region,
-      regionIndex: Number(el.dataset.regionIndex),
-      positionInStack: el.dataset.positionInStack
-        ? Number(el.dataset.positionInStack)
-        : undefined
-    };
-  };
-
   const focusOn = (index: number) => {
     setActiveFocusIndex(index);
     const nextEl =
@@ -62,7 +61,7 @@ export const moveKbFocus = (
     });
   };
 
-  // ----------------------------
+  // ----- Resolve current focus -----
 
   // FROM: el, center, meta
   const from = {
@@ -78,6 +77,7 @@ export const moveKbFocus = (
   let bestIdx = -1;
   let bestScore = Number.POSITIVE_INFINITY;
 
+  // ----- Vertical (down) logic -----
   // Special case: when pressing DOWN from the bottom of a tableau column,
   // prefer entering the free-cells row rather than jumping to a longer neighboring column.
   if (direction === "down" && from.meta?.region === "tableau") {
@@ -161,6 +161,7 @@ export const moveKbFocus = (
 
   if (!from.meta) return;
 
+  // ----- Horizontal tableau logic -----
   if (
     (direction === "left" || direction === "right") &&
     from.meta.region === "tableau"
@@ -235,6 +236,7 @@ export const moveKbFocus = (
     }
   }
 
+  // ----- Fallback spatial navigation -----
   // Default movement by proximity -
   // check all kbFocusableEls for most proximate
   for (let i = 0; i < kbFocusableEls.length; i++) {
