@@ -2,12 +2,13 @@
 import type { KeyboardEvent } from "react";
 import { selectIsAutoCompleting } from "@/state/game/gameSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
+import { clearKbCarryVisuals } from "./kbCarryVisuals";
 
 export function useKeyboardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -97,12 +98,23 @@ export function useKeyboardControlSystem(
     }
   };
 
+  const onKCSBlurCapture = (e: React.FocusEvent<HTMLDivElement>) => {
+    const root = boardRef.current;
+    if (!root) return;
+
+    if (!root.contains(e.relatedTarget as Node | null)) {
+      setKbCarrying(false);
+      clearKbCarryVisuals(root);
+    }
+  };
+
   return {
     kbCarrying,
     setKbCarrying,
     isInputSuppressed,
     onKCSKeydown,
     onKCSPointerDown,
-    onKCSFocusCapture
+    onKCSFocusCapture,
+    onKCSBlurCapture
   };
 }
