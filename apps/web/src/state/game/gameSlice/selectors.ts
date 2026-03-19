@@ -35,6 +35,11 @@ export const selectIsFullyCollected = createSelector(
   [selectHistory],
   (history) => history.present.foundations.every((f) => f.cards.length === 13)
 );
+export const selectFoundationCards = createSelector(
+  [(state: RootState) => state.game.history.present.foundations],
+  (foundations) =>
+    foundations.map((pile) => pile.cards[pile.cards.length - 1] ?? null)
+);
 export const selectPlayableMask = createSelector([selectHistory], (history) =>
   getPlayableMask(history.present)
 );

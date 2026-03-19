@@ -1,39 +1,45 @@
-import { useContext } from "react";
 import type { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
-import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
-import { DragState } from "../animations/dragTypes";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
-import { selectRules, selectStatus } from "@/state/game/gameSlice";
+import {
+  selectFoundationCards,
+  selectPlayableMask,
+  selectRules,
+  selectStatus
+} from "@/state/game/gameSlice";
 import {
   setPaused,
   selectStartedAtMs,
   selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
-import { useBoardController } from "../hooks/useBoardController";
 import { selectShowTimer, setIsAnyModalOpen } from "@/state/ui/uiSlice";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { RootState } from "@/state/reduxStore";
 
 type FoundationProps = {
   i: number;
   foundationIndex: number;
   card: EngineCard | null;
-  kbCarrying: boolean;
-  kbFlight?: DragState<{ card: EngineCard }>["kbFlight"];
-  vm: ReturnType<typeof useBoardController>;
+  boardController: ReturnType<typeof useBoardControlSystem>;
 };
 
 function Foundation({
   i,
   foundationIndex,
   card,
-  kbCarrying,
-  kbFlight,
-  vm
+  boardController
 }: FoundationProps) {
-  const { drag, playable, setFoundationRef, handleFoundationPointerDown } = vm;
+  const { kbCarrying, kbFlight, drag, handleFoundationPointerDown } =
+    boardController;
 
   const rules = useSelector(selectRules);
+  const pile = useSelector(
+    (state: RootState) =>
+      state.game.history.present.foundations[foundationIndex]
+  );
+  const playable = useSelector(selectPlayableMask);
+
   const pullbackDisabled = !rules.allowFoundationPullback;
 
   const isDraggingFromThisFoundation =
@@ -41,8 +47,6 @@ function Foundation({
     (drag.active || drag.pending || drag.isReturning) &&
     drag.source?.type === "foundation" &&
     drag.source.index === foundationIndex;
-
-  const pile = vm.state.foundations?.[foundationIndex];
 
   const displayIndex = pile
     ? pile.cards.length - 1 - (isDraggingFromThisFoundation ? 1 : 0)
@@ -75,7 +79,6 @@ function Foundation({
     <div
       key={i}
       className="pile-cell"
-      ref={(el) => setFoundationRef(foundationIndex, el)}
       data-kb-focusable={kbCarrying && isEmptySlot ? "true" : undefined}
       role={kbCarrying && isEmptySlot ? "button" : undefined}
       aria-label={
@@ -131,18 +134,15 @@ function Foundation({
 function Foundations({
   boardController
 }: {
-  boardController: ReturnType<typeof useBoardController>;
+  boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  // const kbAttrsCtx = useContext(BoardKbAttrsContext);
-  // const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  // const kbFlight = vm?.drag?.kbFlight;
-
   const dispatch = useDispatch();
   // session state
   const startedAtMs = useSelector(selectStartedAtMs);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
   // Game state
   const status = useSelector(selectStatus);
+  const foundationCards = useSelector(selectFoundationCards);
   // UI state
   const showTimer = useSelector(selectShowTimer);
 
@@ -177,15 +177,13 @@ function Foundations({
             </svg>
           </button>
         </div>
-        {boardController.foundationCards.map((card, foundationIndex) => (
+        {foundationCards.map((card, foundationIndex) => (
           <Foundation
             key={`foundation-${foundationIndex}`}
             i={foundationIndex}
             foundationIndex={foundationIndex}
             card={card}
-            kbCarrying={boardController.kbCarrying}
-            kbFlight={kbFlight}
-            vm={vm}
+            boardController={boardController}
           />
         ))}
       </div>
