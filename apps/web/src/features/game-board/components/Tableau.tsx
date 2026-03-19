@@ -129,9 +129,7 @@ function Tableau({
                       playable.tableau[colIndex][tcIndex] ? "true" : "false"
                     }
                     style={{ zIndex: tcIndex + 1 }}
-                    onActivate={(el) =>
-                      boardController.tryAutoFoundationFromEl(el)
-                    }
+                    onActivate={(el) => boardController.tryAutoFoundation(el)}
                     onPointerDownCard={(e) =>
                       boardController.handleTableauPointerDown(
                         e,

@@ -3,17 +3,13 @@ import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
 import { Card } from "@vcell/engine";
-
-type DragSource =
-  | { type: "foundation"; index: number }
-  | { type: "tableau"; colIndex: number; startIndex: number }
-  | { type: "freecell"; index: number };
+import { BoardSource } from "../useBoardControlSystem_new";
 
 type DragState = {
   active: boolean;
   pending: boolean;
   isReturning: boolean;
-  source: DragSource | null;
+  source: BoardSource | null;
   stack: Array<{ card: Card; faceDown: boolean }>;
 };
 
