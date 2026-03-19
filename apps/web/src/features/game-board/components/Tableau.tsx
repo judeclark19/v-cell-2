@@ -62,7 +62,7 @@ function Tableau({ vm }: { vm: ReturnType<typeof useBoardController> }) {
                   emptyLabel="K"
                   region="tableau"
                   regionIndex={colIndex}
-                  data-tableauIndex={-1}
+                  data-tableauindex={-1}
                 />
               </div>
 

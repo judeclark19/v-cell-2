@@ -10,10 +10,6 @@ import { moveKbFocus } from "./moveKbFocus";
 export function useKeyboardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
 ) {
-  if (!boardRef) {
-    throw new Error("useKeyboardControlSystem requires a boardRef");
-  }
-
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
@@ -31,15 +27,49 @@ export function useKeyboardControlSystem(
     const selector = '[data-kb-focusable="true"]';
 
     const els = Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
-      (el) => !el.hasAttribute("disabled") && !el.getAttribute("aria-disabled")
+      (el) =>
+        !el.hasAttribute("disabled") &&
+        el.getAttribute("aria-disabled") !== "true"
     );
 
     kbFocusablesRef.current = els;
   };
 
+  const refreshAndGetFocusables = () => {
+    refreshKbFocusables();
+    return kbFocusablesRef.current;
+  };
+
+  const focusIndex = (index: number, els: HTMLElement[]) => {
+    const clamped = Math.max(0, Math.min(index, els.length - 1));
+    const el = els[clamped];
+    if (!el) return false;
+
+    setActiveFocusIndex(clamped);
+    requestAnimationFrame(() => el.focus());
+    return true;
+  };
+
+  const focusFirstPlayable = () => {
+    const els = refreshAndGetFocusables();
+    if (els.length === 0) return false;
+    return focusIndex(0, els);
+  };
+
+  const focusElIfFocusable = (el: HTMLElement | null) => {
+    const els = refreshAndGetFocusables();
+    if (!el) return false;
+
+    const idx = els.indexOf(el);
+    if (idx < 0) return false;
+
+    return focusIndex(idx, els);
+  };
+
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (isInputSuppressed || !boardRef.current) return;
-    refreshKbFocusables();
+    const els = refreshAndGetFocusables();
+    if (els.length === 0) return;
 
     if (e.key === "Tab") {
       onKCSTab(e, setKbCarrying, boardRef);
@@ -57,7 +87,7 @@ export function useKeyboardControlSystem(
       moveKbFocus(
         e,
         directionMap[e.key],
-        kbFocusablesRef,
+        els,
         activeFocusIndex,
         setActiveFocusIndex
       );
@@ -65,10 +95,29 @@ export function useKeyboardControlSystem(
     }
   };
 
+  const onKCSPointerDown = (e: React.PointerEvent) => {
+    if (isInputSuppressed) return;
+
+    const target = e.target as HTMLElement | null;
+    if (!target) {
+      focusFirstPlayable();
+      return;
+    }
+
+    const candidate =
+      (target.closest(
+        "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
+      ) as HTMLElement | null) || target;
+
+    const focused = focusElIfFocusable(candidate);
+    if (!focused) return;
+  };
+
   return {
     kbCarrying,
     setKbCarrying,
     isInputSuppressed,
-    onKCSKeydown
+    onKCSKeydown,
+    onKCSPointerDown
   };
 }

@@ -7,15 +7,12 @@ export type BoardNodeMeta = {
 export const moveKbFocus = (
   e: React.KeyboardEvent<HTMLDivElement>,
   direction: "left" | "right" | "up" | "down",
-  kbFocusablesRef: React.RefObject<HTMLElement[]>,
+  kbFocusableEls: HTMLElement[],
   activeFocusIndex: number,
   setActiveFocusIndex: React.Dispatch<React.SetStateAction<number>>
 ) => {
   e.preventDefault();
 
-  //
-
-  const kbFocusableEls = kbFocusablesRef.current;
   if (!kbFocusableEls || kbFocusableEls.length === 0) return;
 
   //   Helper functions
@@ -108,18 +105,20 @@ export const moveKbFocus = (
           meta: getNodeMeta(el)
         };
 
-        if (to.meta!.regionIndex !== from.meta.regionIndex) continue;
+        if (!to.meta) continue;
+
+        if (to.meta.regionIndex !== from.meta.regionIndex) continue;
         if (
-          to.meta!.positionInStack &&
-          to.meta!.positionInStack <= effectiveFromRow
+          to.meta.positionInStack !== undefined &&
+          to.meta.positionInStack <= effectiveFromRow
         )
           continue;
 
         if (
-          to.meta!.positionInStack &&
-          to.meta!.positionInStack < bestSameColRow
+          to.meta.positionInStack !== undefined &&
+          to.meta.positionInStack < bestSameColRow
         ) {
-          bestSameColRow = to.meta!.positionInStack;
+          bestSameColRow = to.meta.positionInStack;
           bestSameColIdx = i;
         }
       }
@@ -141,7 +140,8 @@ export const moveKbFocus = (
           meta: getNodeMeta(el)
         };
 
-        // const c = getCenter(el);
+        if (!to.meta || to.meta.region !== "freecell") continue;
+
         const dx = Math.abs(to.center.x - from.center.x);
 
         if (dx < bestDx) {
@@ -158,19 +158,22 @@ export const moveKbFocus = (
   }
   // Tableau-specific rule: Left/Right should ALWAYS change columns.
   // Geometry-based dx checks can accidentally treat a slightly-offset lower card as “right”.
+
+  if (!from.meta) return;
+
   if (
     (direction === "left" || direction === "right") &&
-    from.meta!.region === "tableau"
+    from.meta.region === "tableau"
   ) {
     if (
-      typeof from.meta!.regionIndex === "number" &&
-      typeof from.meta!.positionInStack === "number"
+      typeof from.meta.regionIndex === "number" &&
+      typeof from.meta.positionInStack === "number"
     ) {
       // If focused on an empty slot/container (-1), treat it as the bottom of the column.
       const effectiveFromRow =
-        from.meta!.regionIndex === -1
+        from.meta.positionInStack === -1
           ? Number.POSITIVE_INFINITY
-          : from.meta!.regionIndex;
+          : from.meta.positionInStack;
 
       let bestIdx = -1;
       let bestColDelta = Number.POSITIVE_INFINITY;
@@ -193,21 +196,21 @@ export const moveKbFocus = (
           typeof to.meta.positionInStack !== "number"
         )
           continue;
-        if (to.meta.regionIndex === from.meta!.regionIndex) continue; // L/R must change columns
+        if (to.meta.regionIndex === from.meta.regionIndex) continue; // L/R must change columns
 
         // Enforce direction by column index (not by pixel geometry).
         if (
           direction === "right" &&
-          to.meta!.regionIndex <= from.meta!.regionIndex
+          to.meta.regionIndex <= from.meta.regionIndex
         )
           continue;
         if (
           direction === "left" &&
-          to.meta!.regionIndex >= from.meta!.regionIndex
+          to.meta.regionIndex >= from.meta.regionIndex
         )
           continue;
 
-        const colDelta = Math.abs(to.meta.regionIndex - from.meta!.regionIndex);
+        const colDelta = Math.abs(to.meta.regionIndex - from.meta.regionIndex);
         const effectiveToRow =
           to.meta.positionInStack === -1
             ? Number.POSITIVE_INFINITY
