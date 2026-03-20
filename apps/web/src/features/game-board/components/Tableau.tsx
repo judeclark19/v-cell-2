@@ -1,6 +1,4 @@
-import { useContext } from "react";
 import Card from "./Card";
-import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
 import { useSelector } from "react-redux";
 import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
@@ -10,9 +8,7 @@ function Tableau({
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  const kbAttrsCtx = useContext(BoardKbAttrsContext);
-  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = boardController.kbFlight;
+  const { kbCarrying, kbFlight } = boardController;
 
   // game slice
   const playable = useSelector(selectPlayableMask);
