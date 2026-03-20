@@ -88,13 +88,47 @@ export function useBoardControlSystem(
     },
     [dispatch, keyboard, legalMoves, uid]
   );
+
   const pointer = usePointerControlSystem({
     onCardDoubleTap: tryAutoFoundation
   });
 
+  const tryAutoFreeCell = useCallback(
+    (el: HTMLElement) => {
+      // 1. Resolve the board source from the element.
+      const from = resolveBoardSourceFromEl(el);
+      if (!from) return false;
+
+      // 2. Find legal single-card moves from this source to a free cell.
+      const candidates = legalMoves
+        .filter((m) => {
+          if (m.kind !== "single") return false;
+          if (m.to.type !== "freecell") return false;
+
+          if (from.type === "tableau") {
+            return m.from.type === "tableau" && m.from.index === from.index;
+          }
+
+          return m.from.type === from.type && m.from.index === from.index;
+        })
+        .sort((a, b) => a.to.index - b.to.index);
+
+      const move = candidates[0];
+      if (!move) return false;
+
+      // 3. Commit the move.
+      dispatch(applyMoveThunk({ move, uid }));
+
+      // 4. Return whether a move was made.
+      return true;
+    },
+    [dispatch, legalMoves, uid]
+  );
+
   return {
     ...keyboard,
     ...pointer,
-    tryAutoFoundation
+    tryAutoFoundation,
+    tryAutoFreeCell
   };
 }

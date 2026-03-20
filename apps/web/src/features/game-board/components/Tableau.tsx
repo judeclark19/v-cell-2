@@ -30,7 +30,7 @@ function Tableau({
           const isDraggedFromThisCol =
             boardController.drag.active &&
             tableauSource != null &&
-            tableauSource.colIndex === colIndex;
+            tableauSource.index === colIndex;
 
           const isKbFlightDestCol =
             kbFlight.active &&
@@ -138,9 +138,7 @@ function Tableau({
                       )
                     }
                     onPointerUp={boardController.handleCardDoubleTap}
-                    onAutoFreeCell={(el) =>
-                      boardController.tryAutoFreeCellFromEl(el)
-                    }
+                    onAutoFreeCell={(el) => boardController.tryAutoFreeCell(el)}
                   />
                 );
               })}
