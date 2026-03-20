@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
-import { Card } from "@vcell/engine";
+import type { Card } from "@vcell/engine";
 import { BoardSource } from "../useBoardControlSystem_new";
 
 type DragState = {
@@ -11,6 +11,10 @@ type DragState = {
   isReturning: boolean;
   source: BoardSource | null;
   stack: Array<{ card: Card; faceDown: boolean }>;
+  baseLeft: number;
+  baseTop: number;
+  x: number;
+  y: number;
 };
 
 type UsePointerControlSystemArgs = {
@@ -34,7 +38,11 @@ export function usePointerControlSystem({
     pending: false,
     isReturning: false,
     source: null,
-    stack: []
+    stack: [],
+    baseLeft: 0,
+    baseTop: 0,
+    x: 0,
+    y: 0
   });
   const lastTapRef = useRef<{
     t: number;
@@ -63,7 +71,11 @@ export function usePointerControlSystem({
           card: pile.cards[pile.cards.length - 1],
           faceDown: false
         }
-      ]
+      ],
+      baseLeft: e.currentTarget.getBoundingClientRect().left,
+      baseTop: e.currentTarget.getBoundingClientRect().top,
+      x: 0,
+      y: 0
     });
   };
 
@@ -105,7 +117,11 @@ export function usePointerControlSystem({
       pending: true,
       isReturning: false,
       source: { type: "tableau", index, startIndex: tcIndex },
-      stack
+      stack,
+      baseLeft: e.currentTarget.getBoundingClientRect().left,
+      baseTop: e.currentTarget.getBoundingClientRect().top,
+      x: 0,
+      y: 0
     });
     // (later)
     // 5. Optionally handle pointer-specific stuff (capture, coords, etc.)

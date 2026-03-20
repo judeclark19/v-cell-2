@@ -1,34 +1,23 @@
 import { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
-type DragLayerProps = {
-  drag: {
-    active: boolean;
-    pending: boolean;
-    isReturning: boolean;
-    stack: Array<{ card: { id: string }; faceDown?: boolean }>;
-    baseLeft: number;
-    baseTop: number;
-    x: number;
-    y: number;
-    kbFlight?: {
-      active: boolean;
-      durationMs?: number;
-    };
-  };
-  resetDrag: () => void;
-};
+export default function DragLayer({
+  boardController
+}: {
+  boardController: ReturnType<typeof useBoardControlSystem>;
+}) {
+  const { drag, resetDrag, cardFlight } = boardController;
 
-export default function DragLayer({ drag, resetDrag }: DragLayerProps) {
   if (!(drag.active || drag.pending) || drag.stack.length === 0) return null;
 
   return (
     <div
       className={`drag-layer ${drag.isReturning ? "is-returning" : ""} ${
-        drag.kbFlight?.active ? "is-kb-flight" : ""
+        cardFlight?.active ? "is-kb-flight" : ""
       }`}
       onTransitionEnd={() => {
-        if (drag.isReturning || drag.kbFlight?.active) resetDrag();
+        if (drag.isReturning || cardFlight?.active) resetDrag();
       }}
       style={{
         left: 0,
@@ -37,8 +26,8 @@ export default function DragLayer({ drag, resetDrag }: DragLayerProps) {
           drag.baseTop + drag.y
         }px, 0)`,
         transitionDuration:
-          drag.kbFlight?.active && drag.kbFlight.durationMs != null
-            ? `${drag.kbFlight.durationMs}ms`
+          cardFlight?.active && cardFlight.durationMs != null
+            ? `${cardFlight.durationMs}ms`
             : undefined
       }}
       aria-hidden="true"

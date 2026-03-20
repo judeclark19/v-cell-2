@@ -8,7 +8,7 @@ function Tableau({
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  const { kbCarrying, kbFlight } = boardController;
+  const { kbCarrying, cardFlight } = boardController;
 
   // game slice
   const playable = useSelector(selectPlayableMask);
@@ -29,9 +29,9 @@ function Tableau({
             tableauSource.index === colIndex;
 
           const isKbFlightDestCol =
-            kbFlight.active &&
-            kbFlight.dropTarget?.type === "tableau" &&
-            kbFlight.dropTarget.index === colIndex;
+            cardFlight.active &&
+            cardFlight.dropTarget?.type === "tableau" &&
+            cardFlight.dropTarget.index === colIndex;
 
           const isDraggingEntireColumn =
             isDraggedFromThisCol &&
@@ -94,7 +94,7 @@ function Tableau({
                 }
 
                 const isSuppressedByKbFlight =
-                  isKbFlightDestCol && kbFlight.cardIds.includes(tc.card.id);
+                  isKbFlightDestCol && cardFlight.cardIds.includes(tc.card.id);
 
                 if (isSuppressedByKbFlight) {
                   return (

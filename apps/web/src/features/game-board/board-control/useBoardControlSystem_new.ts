@@ -6,12 +6,23 @@ import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
   | { type: "tableau"; index: number; startIndex: number }
   | { type: "freecell"; index: number };
+
+type CardFlightDropTarget =
+  | { type: "foundation"; index: number }
+  | { type: "tableau"; index: number }
+  | { type: "freecell"; index: number };
+
+type CardFlightState = {
+  active: boolean;
+  cardIds: string[];
+  dropTarget: CardFlightDropTarget | null;
+};
 
 export function useBoardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -20,7 +31,35 @@ export function useBoardControlSystem(
   const uid = useSelector(selectUid);
   const legalMoves = useSelector(selectLegalMoves);
 
-  const keyboard = useKeyboardControlSystem(boardRef);
+  const [cardFlight, setCardFlight] = useState<CardFlightState>({
+    active: false,
+    cardIds: [],
+    dropTarget: null
+  });
+
+  const startCardFlight = useCallback(
+    (args: { cardIds: string[]; dropTarget: CardFlightDropTarget }) => {
+      setCardFlight({
+        active: true,
+        cardIds: args.cardIds,
+        dropTarget: args.dropTarget
+      });
+    },
+    []
+  );
+
+  const clearCardFlight = useCallback(() => {
+    setCardFlight({
+      active: false,
+      cardIds: [],
+      dropTarget: null
+    });
+  }, []);
+
+  const keyboard = useKeyboardControlSystem({
+    boardRef,
+    clearCardFlight
+  });
 
   const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
     const region = el.dataset.region;
@@ -74,7 +113,7 @@ export function useBoardControlSystem(
       const toIndex = match.to.index;
 
       if (cardId) {
-        keyboard.startKbFlight({
+        startCardFlight({
           cardIds: [cardId],
           dropTarget: { type: "foundation", index: toIndex }
         });
@@ -86,7 +125,7 @@ export function useBoardControlSystem(
       // 5. Return whether a move was made.
       return true;
     },
-    [dispatch, keyboard, legalMoves, uid]
+    [dispatch, startCardFlight, legalMoves, uid]
   );
 
   const pointer = usePointerControlSystem({
@@ -128,6 +167,9 @@ export function useBoardControlSystem(
   return {
     ...keyboard,
     ...pointer,
+    cardFlight,
+    startCardFlight,
+    clearCardFlight,
     tryAutoFoundation,
     tryAutoFreeCell
   };

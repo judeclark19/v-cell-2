@@ -69,16 +69,13 @@ function Board() {
               <Foundations boardController={boardController} />
 
               {/* Tableau in the middle */}
-              <Tableau vm={boardController} />
+              <Tableau boardController={boardController} />
 
               {/* Drag overlay layer */}
-              <DragLayer
-                drag={boardController.drag}
-                resetDrag={boardController.resetDrag}
-              />
+              <DragLayer boardController={boardController} />
 
               {/* Free cells on bottom */}
-              <FreeCells vm={boardController} />
+              <FreeCells boardController={boardController} />
               <div
                 className="row"
                 style={{ marginTop: "1em", marginBottom: "0.5em" }}
