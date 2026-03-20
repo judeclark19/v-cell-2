@@ -19,6 +19,9 @@ export function usePointerControlSystem() {
   const foundations = useSelector(
     (state: RootState) => state.game.history.present.foundations
   );
+  const tableau = useSelector(
+    (state: RootState) => state.game.history.present.tableau
+  );
 
   const [drag, setDrag] = useState<DragState>({
     active: false,
@@ -52,9 +55,54 @@ export function usePointerControlSystem() {
     });
   };
 
+  const handleTableauPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    index: number,
+    tcIndex: number
+  ) => {
+    // 1. If this card is not playable, return
+    if (!playable.tableau[index][tcIndex]) return;
+
+    // 2. Get the tableau column from redux state
+    const column = tableau[index];
+    if (!column) return;
+
+    // 3. Compute the pickup stack starting at tcIndex
+    //    - include cards until:
+    //      - faceDown OR
+    //      - not playable
+
+    const mask = playable.tableau[index];
+    if (!mask) return;
+
+    let end = tcIndex;
+
+    while (end < column.length) {
+      const item = column[end];
+      if (item.faceDown) break;
+      if (!mask[end]) break;
+      end++;
+    }
+
+    const stack = column.slice(tcIndex, end);
+    if (stack.length === 0) return;
+
+    // 4. Set drag state
+    setDrag({
+      active: false,
+      pending: true,
+      isReturning: false,
+      source: { type: "tableau", index, startIndex: tcIndex },
+      stack
+    });
+    // (later)
+    // 5. Optionally handle pointer-specific stuff (capture, coords, etc.)
+  };
+
   return {
     drag,
     setDrag,
-    handleFoundationPointerDown
+    handleFoundationPointerDown,
+    handleTableauPointerDown
   };
 }
