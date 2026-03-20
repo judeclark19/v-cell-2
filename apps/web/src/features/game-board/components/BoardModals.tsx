@@ -3,13 +3,13 @@ import { PersistedGame } from "@/persistence/types";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import {
   selectPaused,
+  selectSessionId,
   selectTimeElapsedMs,
   setPaused
 } from "@/state/session/sessionSlice";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { useBoardController } from "../hooks/useBoardController";
 import { selectMoveCount } from "@/state/game/gameSlice";
 import {
   closeWinModal,
@@ -18,6 +18,7 @@ import {
 } from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { selectUid } from "@/state/auth/authSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 
 export type ConfirmRequest = {
   title: string;
@@ -28,22 +29,14 @@ export type ConfirmRequest = {
   onCancel: () => void;
 };
 
-export default function BoardModals({
-  vm,
-  sessionId
-}: {
-  vm: ReturnType<typeof useBoardController>;
-  sessionId: string;
-}) {
+export default function BoardModals() {
   const router = useRouter();
-
-  // old stuff here!
-  const { newDealWithCelebration } = vm;
 
   const dispatch = useDispatch<AppDispatch>();
   // Auth state
   const isUser = useSelector(selectUid) !== null;
   // Session state
+  const sessionId = useSelector(selectSessionId);
   const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const confirmReq = useSelector(selectConfirmModal);
@@ -135,7 +128,10 @@ export default function BoardModals({
           onClose={() => dispatch(closeWinModal())}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
-          primaryButtonAction={newDealWithCelebration}
+          primaryButtonAction={() => {
+            dispatch(closeWinModal());
+            dispatch(transitionGameAndSession({}));
+          }}
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
             dispatch(closeWinModal());

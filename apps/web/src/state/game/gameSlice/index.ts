@@ -55,6 +55,7 @@ export const gameSlice = createSlice({
 
 export const {
   startNewGame,
+  restartCurrentGame,
   hydrateHistory,
   hydrateFromPersisted,
   applyMoveToHistory,

@@ -36,6 +36,18 @@ export const gameSliceReducers = {
     state.undosUsed = 0;
     state.status = null;
   },
+  restartCurrentGame: (state) => {
+    const initialGame = createGame(state.seed, state.rules);
+    state.history.present = initialGame;
+    state.history.past = [];
+
+    state.moves = [];
+    state.cursor = 0;
+    // TODO: Have dad decide whether resetting moveCount and undosUsed on restart is desirable.
+    // state.moveCount = 0;
+    // state.undosUsed = 0;
+    state.status = "in_progress";
+  },
   hydrateHistory: (
     // TODO: wtap these hydrate functions into transitionGameAndSession?
     state,

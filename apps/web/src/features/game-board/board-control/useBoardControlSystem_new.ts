@@ -2,11 +2,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem_new";
 import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem_new";
-import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
+import { selectLegalMoves } from "@/state/game/gameSlice";
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
 import { useCallback, useState } from "react";
+import { useGameModel } from "@/state/game/hooks/useGameModel";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -29,7 +30,10 @@ export function useBoardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
 ) {
   const dispatch = useDispatch<AppDispatch>();
+  // auth slice
   const uid = useSelector(selectUid);
+
+  // game slice
   const legalMoves = useSelector(selectLegalMoves);
 
   const [cardFlight, setCardFlight] = useState<CardFlightState>({
@@ -56,11 +60,6 @@ export function useBoardControlSystem(
       dropTarget: null
     });
   }, []);
-
-  const keyboard = useKeyboardControlSystem({
-    boardRef,
-    clearCardFlight
-  });
 
   const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
     const region = el.dataset.region;
@@ -129,10 +128,6 @@ export function useBoardControlSystem(
     [dispatch, startCardFlight, legalMoves, uid]
   );
 
-  const pointer = usePointerControlSystem({
-    onCardDoubleTap: tryAutoFoundation
-  });
-
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement) => {
       // 1. Resolve the board source from the element.
@@ -165,9 +160,22 @@ export function useBoardControlSystem(
     [dispatch, legalMoves, uid]
   );
 
+  // Hooks
+  const keyboard = useKeyboardControlSystem({
+    boardRef,
+    clearCardFlight
+  });
+
+  const pointer = usePointerControlSystem({
+    onCardDoubleTap: tryAutoFoundation
+  });
+
+  const gameModel = useGameModel();
+
   return {
     ...keyboard,
     ...pointer,
+    ...gameModel,
     cardFlight,
     startCardFlight,
     clearCardFlight,

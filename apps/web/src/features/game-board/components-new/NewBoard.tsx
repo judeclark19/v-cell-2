@@ -8,10 +8,7 @@ import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
-import {
-  selectSessionId,
-  selectSessionPhase
-} from "@/state/session/sessionSlice";
+import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 import {
   selectCanUndo,
@@ -23,7 +20,9 @@ import { useRef } from "react";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
 function Board() {
+  // Board controller (new!)
   const boardRef = useRef<HTMLDivElement>(null);
+  const boardController = useBoardControlSystem(boardRef);
 
   // Game state
   const seed = useSelector(selectSeed);
@@ -32,19 +31,13 @@ function Board() {
   const canUndo = useSelector(selectCanUndo);
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
-  const sessionId = useSelector(selectSessionId);
-
-  // Board controller (new!)
-  const boardController = useBoardControlSystem(boardRef);
-  const { kbCarrying } = boardController;
 
   return (
     <>
       <div
-        className={`board-border ${kbCarrying ? "is-kb-carrying" : ""}`}
+        className={`board-border ${boardController.kbCarrying ? "is-kb-carrying" : ""}`}
         key={sessionPhase === "ready" ? seed : "loading"}
       >
-        {/* <BoardKbAttrsContext.Provider value={kbAttrsContextValue}> */}
         <div
           className="board"
           aria-label="Game board"
@@ -83,7 +76,7 @@ function Board() {
                 <button
                   type="button"
                   className="btn btn--secondary"
-                  onClick={boardController.restartWithCelebration}
+                  onClick={boardController.restartDeal}
                 >
                   Restart deal
                 </button>
@@ -105,14 +98,13 @@ function Board() {
           )}
         </div>
 
-        <BoardModals vm={boardController} sessionId={sessionId} />
-        {/* </BoardKbAttrsContext.Provider> */}
+        <BoardModals />
       </div>
       <p className="hint" style={{ textAlign: "center" }}>
         Current seed:{" "}
         {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
       </p>
-      <BoardControls vm={boardController} />
+      <BoardControls boardController={boardController} />
     </>
   );
 }

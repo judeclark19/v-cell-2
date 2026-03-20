@@ -24,16 +24,19 @@ import {
   setUndosUsed,
   setStatus,
   selectRules,
-  selectSeed
+  selectSeed,
+  restartCurrentGame
 } from "@/state/game/gameSlice";
 import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
 import { applyMoveThunk } from "../thunks/applyMove";
 import { selectUid } from "@/state/auth/authSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
   undo: () => void;
   restart: () => void;
+  restartDeal: () => void;
 };
 
 export function useGameModel(): UseGameModelResult {
@@ -70,7 +73,7 @@ export function useGameModel(): UseGameModelResult {
     dispatch(undoHistory());
   }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
 
-  const restart = useCallback(() => {
+  const restartDeleteMe = useCallback(() => {
     // Restart should reset the deal back to its original position and clear history,
     // but it should NOT affect the timer.
     dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
@@ -81,5 +84,22 @@ export function useGameModel(): UseGameModelResult {
     dispatch(setStatus("in_progress"));
   }, [seed, rules, dispatch]);
 
-  return { makeMove, undo, restart };
+  const restartDeal = useCallback(() => {
+    if (status === "won") {
+      dispatch(
+        transitionGameAndSession({
+          seed,
+          rules
+        })
+      );
+      return;
+    }
+
+    if (status === "in_progress") {
+      dispatch(restartCurrentGame());
+      return;
+    }
+  }, [dispatch, seed, rules, status]);
+
+  return { makeMove, undo, restart: restartDeleteMe, restartDeal };
 }
