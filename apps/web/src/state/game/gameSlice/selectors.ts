@@ -40,6 +40,10 @@ export const selectFoundationCards = createSelector(
   (foundations) =>
     foundations.map((pile) => pile.cards[pile.cards.length - 1] ?? null)
 );
+export const selectFreeCellCards = createSelector(
+  [(state: RootState) => state.game.history.present.freeCells],
+  (freeCells) => freeCells.map((card) => card ?? null)
+);
 export const selectPlayableMask = createSelector([selectHistory], (history) =>
   getPlayableMask(history.present)
 );
@@ -71,3 +75,8 @@ export const selectPlayableCardIdSet = createSelector(
 );
 export const selectIsAutoCompleting = (state: RootState) =>
   state.game.isAutoCompleting;
+
+export const selectShowAcp = createSelector(
+  [selectStatus, selectIsFullyCollected],
+  (status, isFullyCollected) => status === "won" && !isFullyCollected
+);

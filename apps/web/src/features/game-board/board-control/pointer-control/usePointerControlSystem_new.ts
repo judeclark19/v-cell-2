@@ -32,6 +32,9 @@ export function usePointerControlSystem({
   const tableau = useSelector(
     (state: RootState) => state.game.history.present.tableau
   );
+  const freeCells = useSelector(
+    (state: RootState) => state.game.history.present.freeCells
+  );
 
   const [drag, setDrag] = useState<DragState>({
     active: false,
@@ -188,12 +191,34 @@ export function usePointerControlSystem({
     });
   };
 
+  const handleFreeCellPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    const card = freeCells[index];
+    if (!card) return;
+    if (!playable.freeCells[index]) return;
+
+    setDrag({
+      active: false,
+      pending: true,
+      isReturning: false,
+      source: { type: "freecell", index },
+      stack: [{ card, faceDown: false }],
+      baseLeft: e.currentTarget.getBoundingClientRect().left,
+      baseTop: e.currentTarget.getBoundingClientRect().top,
+      x: 0,
+      y: 0
+    });
+  };
+
   return {
     drag,
     setDrag,
     handleFoundationPointerDown,
     handleTableauPointerDown,
     handleCardDoubleTap,
+    handleFreeCellPointerDown,
     resetDrag
   };
 }

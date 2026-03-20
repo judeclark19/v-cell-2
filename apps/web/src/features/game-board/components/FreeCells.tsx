@@ -1,34 +1,48 @@
 import Card from "./Card";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import {
+  selectFreeCellCards,
+  selectIsAutoCompleting,
+  selectPlayableMask,
+  selectShowAcp
+} from "@/state/game/gameSlice/selectors";
+import { useSelector } from "react-redux";
 
 function FreeCells({
   boardController
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
+  // game slice
+  const freeCellCards = useSelector(selectFreeCellCards);
+  const showAcp = useSelector(selectShowAcp);
+  const isAutoCompleting = useSelector(selectIsAutoCompleting);
+  const playable = useSelector(selectPlayableMask);
+
+  const { kbCarrying, cardFlight } = boardController;
+
   return (
     <div className="board-bottom" aria-label="Free cells">
       <div
         className={`autocomplete-drawer${
-          boardController.showAcp ? " autocomplete-drawer--visible" : ""
+          showAcp ? " autocomplete-drawer--visible" : ""
         }`}
-        aria-hidden={boardController.showAcp ? "false" : "true"}
+        aria-hidden={showAcp ? "false" : "true"}
       >
         <button
           type="button"
           className="btn btn--primary"
           onClick={() => {
-            if (boardController.isAutoCompleting)
-              boardController.stopAutoComplete();
+            if (isAutoCompleting) boardController.stopAutoComplete();
             else boardController.runAutoComplete();
           }}
-          disabled={!boardController.showAcp}
+          disabled={!showAcp}
         >
-          {boardController.isAutoCompleting ? "Stop" : "Autocomplete"}
+          {isAutoCompleting ? "Stop" : "Autocomplete"}
         </button>
       </div>
       <div className="pile-row" aria-label="Free cells">
-        {boardController.freeCellsRow.map((card, i) =>
+        {freeCellCards.map((card, i) =>
           card === undefined ? (
             <div key={i} className="pile-spacer" aria-hidden="true" />
           ) : (
@@ -60,14 +74,14 @@ function FreeCells({
                     boardController.drag.source?.type === "freecell" &&
                     boardController.drag.source.index === freeCellIndex;
 
-                  const hideForKbFlightDest =
-                    kbFlight.active &&
-                    kbFlight.dropTarget?.type === "freecell" &&
-                    kbFlight.dropTarget.index === freeCellIndex &&
-                    kbFlight.cardIds.includes(card.id);
+                  const hideForCardFlightDest =
+                    cardFlight.active &&
+                    cardFlight.dropTarget?.type === "freecell" &&
+                    cardFlight.dropTarget.index === freeCellIndex &&
+                    cardFlight.cardIds.includes(card.id);
 
                   const style =
-                    hideForPointerDrag || hideForKbFlightDest
+                    hideForPointerDrag || hideForCardFlightDest
                       ? ({ visibility: "hidden" } as const)
                       : undefined;
 
@@ -76,16 +90,12 @@ function FreeCells({
                       card={card}
                       region="freecell"
                       regionIndex={i}
-                      playable={boardController.playable.freeCells[i - 1]} // -1 accounts for spacer
+                      playable={playable.freeCells[i - 1]} // -1 accounts for spacer
                       data-kb-focusable={
-                        boardController.playable.freeCells[i - 1]
-                          ? "true"
-                          : "false"
+                        playable.freeCells[i - 1] ? "true" : "false"
                       }
                       className="pile-card"
-                      onActivate={(el) =>
-                        boardController.tryAutoFoundationFromEl(el)
-                      }
+                      onActivate={(el) => boardController.tryAutoFoundation(el)}
                       onPointerDownCard={(e) =>
                         boardController.handleFreeCellPointerDown(e, i - 1)
                       }
