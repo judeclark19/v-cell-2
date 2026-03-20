@@ -137,7 +137,7 @@ function Tableau({
                         tcIndex
                       )
                     }
-                    onPointerUp={boardController.onCardPointerUp}
+                    onPointerUp={boardController.handleCardDoubleTap}
                     onAutoFreeCell={(el) =>
                       boardController.tryAutoFreeCellFromEl(el)
                     }

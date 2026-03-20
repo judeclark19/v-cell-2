@@ -6,6 +6,7 @@ import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
+import { useCallback } from "react";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -20,7 +21,6 @@ export function useBoardControlSystem(
   const legalMoves = useSelector(selectLegalMoves);
 
   const keyboard = useKeyboardControlSystem(boardRef);
-  const pointer = usePointerControlSystem();
 
   const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
     const region = el.dataset.region;
@@ -52,39 +52,45 @@ export function useBoardControlSystem(
     return null;
   };
 
-  const tryAutoFoundation = (el: HTMLElement) => {
-    // 1. Resolve the board source from the element.
-    const from = resolveBoardSourceFromEl(el);
-    if (!from) return false;
+  const tryAutoFoundation = useCallback(
+    (el: HTMLElement) => {
+      // 1. Resolve the board source from the element.
+      const from = resolveBoardSourceFromEl(el);
+      if (!from) return false;
 
-    // 2. Find the matching legal single-card move to a foundation.
-    const match = legalMoves.find(
-      (m) =>
-        m.kind === "single" &&
-        m.from.type === from.type &&
-        m.from.index === from.index &&
-        m.to.type === "foundation"
-    );
+      // 2. Find the matching legal single-card move to a foundation.
+      const match = legalMoves.find(
+        (m) =>
+          m.kind === "single" &&
+          m.from.type === from.type &&
+          m.from.index === from.index &&
+          m.to.type === "foundation"
+      );
 
-    if (!match) return false;
+      if (!match) return false;
 
-    // 3. If flight data is available, start kb flight.
-    const cardId = el.dataset.cardId;
-    const toIndex = match.to.index;
+      // 3. If flight data is available, start kb flight.
+      const cardId = el.dataset.cardId;
+      const toIndex = match.to.index;
 
-    if (cardId) {
-      keyboard.startKbFlight({
-        cardIds: [cardId],
-        dropTarget: { type: "foundation", index: toIndex }
-      });
-    }
+      if (cardId) {
+        keyboard.startKbFlight({
+          cardIds: [cardId],
+          dropTarget: { type: "foundation", index: toIndex }
+        });
+      }
 
-    // 4. Commit the move.
-    dispatch(applyMoveThunk({ move: match, uid }));
+      // 4. Commit the move.
+      dispatch(applyMoveThunk({ move: match, uid }));
 
-    // 5. Return whether a move was made.
-    return true;
-  };
+      // 5. Return whether a move was made.
+      return true;
+    },
+    [dispatch, keyboard, legalMoves, uid]
+  );
+  const pointer = usePointerControlSystem({
+    onCardDoubleTap: tryAutoFoundation
+  });
 
   return {
     ...keyboard,

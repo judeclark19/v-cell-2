@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
@@ -13,7 +13,13 @@ type DragState = {
   stack: Array<{ card: Card; faceDown: boolean }>;
 };
 
-export function usePointerControlSystem() {
+type UsePointerControlSystemArgs = {
+  onCardDoubleTap: (el: HTMLElement) => void;
+};
+
+export function usePointerControlSystem({
+  onCardDoubleTap
+}: UsePointerControlSystemArgs) {
   const playable = useSelector(selectPlayableMask);
   const rules = useSelector(selectRules);
   const foundations = useSelector(
@@ -30,6 +36,12 @@ export function usePointerControlSystem() {
     source: null,
     stack: []
   });
+  const lastTapRef = useRef<{
+    t: number;
+    x: number;
+    y: number;
+    cardId: string;
+  } | null>(null);
 
   const handleFoundationPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -99,10 +111,57 @@ export function usePointerControlSystem() {
     // 5. Optionally handle pointer-specific stuff (capture, coords, etc.)
   };
 
+  const handleCardDoubleTap = (e: React.PointerEvent<HTMLDivElement>) => {
+    // 1. Ignore mouse — dblclick handles desktop
+    if (e.pointerType === "mouse") return;
+
+    // 2. Extract card identity from the element
+    const el = e.currentTarget as HTMLElement;
+    const cardId = el.dataset.cardId;
+    if (!cardId) return;
+
+    const now = performance.now();
+    const x = e.clientX;
+    const y = e.clientY;
+
+    const processTap = () => {
+      const last = lastTapRef.current;
+
+      // 3. Double-tap detection thresholds
+      const MAX_DT_MS = 300;
+      const MAX_DIST_PX = 12;
+
+      if (last) {
+        const dt = now - last.t;
+        const dist = Math.hypot(x - last.x, y - last.y);
+        const sameCard = last.cardId === cardId;
+
+        // 4. If valid double-tap → trigger board-level action
+        if (dt <= MAX_DT_MS && dist <= MAX_DIST_PX && sameCard) {
+          lastTapRef.current = null;
+          onCardDoubleTap(el);
+          return;
+        }
+      }
+
+      // 5. Otherwise store this tap for the next comparison
+      lastTapRef.current = { t: now, x, y, cardId };
+    };
+
+    // 6. If a drag is still pending, defer so drag cleanup runs first
+    if (drag.pending) {
+      queueMicrotask(processTap);
+      return;
+    }
+
+    processTap();
+  };
+
   return {
     drag,
     setDrag,
     handleFoundationPointerDown,
-    handleTableauPointerDown
+    handleTableauPointerDown,
+    handleCardDoubleTap
   };
 }
