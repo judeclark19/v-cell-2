@@ -30,7 +30,7 @@ function Foundation({
   card,
   boardController
 }: FoundationProps) {
-  const { kbCarrying, kbFlight, drag, handleFoundationPointerDown } =
+  const { kbCarrying, cardFlight, drag, handleFoundationPointerDown } =
     boardController;
 
   const rules = useSelector(selectRules);
@@ -64,12 +64,12 @@ function Foundation({
   const isEmptySlot = !effectiveCard;
 
   const hideForKbFlightDest =
-    !!kbFlight &&
-    kbFlight.active &&
-    kbFlight.dropTarget?.type === "foundation" &&
-    kbFlight.dropTarget.index === foundationIndex &&
+    !!cardFlight &&
+    cardFlight.active &&
+    cardFlight.dropTarget?.type === "foundation" &&
+    cardFlight.dropTarget.index === foundationIndex &&
     !!effectiveCard &&
-    kbFlight.cardIds.includes(effectiveCard.id);
+    cardFlight.cardIds.includes(effectiveCard.id);
 
   const cardStyle = hideForKbFlightDest
     ? ({ visibility: "hidden" } as const)

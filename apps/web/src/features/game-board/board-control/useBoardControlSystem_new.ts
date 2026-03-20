@@ -22,6 +22,7 @@ type CardFlightState = {
   active: boolean;
   cardIds: string[];
   dropTarget: CardFlightDropTarget | null;
+  durationMs?: number;
 };
 
 export function useBoardControlSystem(

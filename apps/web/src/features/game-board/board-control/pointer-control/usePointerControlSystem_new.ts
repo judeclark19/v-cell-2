@@ -173,11 +173,27 @@ export function usePointerControlSystem({
     processTap();
   };
 
+  const resetDrag = () => {
+    if (!drag.active && !drag.pending) return;
+    setDrag({
+      active: false,
+      pending: false,
+      isReturning: false,
+      source: null,
+      stack: [],
+      baseLeft: 0,
+      baseTop: 0,
+      x: 0,
+      y: 0
+    });
+  };
+
   return {
     drag,
     setDrag,
     handleFoundationPointerDown,
     handleTableauPointerDown,
-    handleCardDoubleTap
+    handleCardDoubleTap,
+    resetDrag
   };
 }
