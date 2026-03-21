@@ -1,5 +1,5 @@
 import { AppDispatch, reduxStore } from "@/state/reduxStore";
-import { openConfirmModal } from "./uiSlice";
+import { closeConfirmModal, openConfirmModal } from "./uiSlice";
 
 const dispatch = reduxStore.dispatch as AppDispatch;
 
@@ -14,12 +14,14 @@ export function requestConfirmation(req: {
       openConfirmModal({
         ...req,
         onConfirm: () => {
+          console.log("confirming!");
           resolve(true);
-          // dispatch(closeConfirm());
+          dispatch(closeConfirmModal());
         },
         onCancel: () => {
+          console.log("cancelling!");
           resolve(false);
-          // dispatch(closeConfirm());
+          dispatch(closeConfirmModal());
         }
       })
     );

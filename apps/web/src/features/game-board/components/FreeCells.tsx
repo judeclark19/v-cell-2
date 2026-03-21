@@ -45,71 +45,65 @@ function FreeCells({
         </button>
       </div>
       <div className="pile-row" aria-label="Free cells">
-        {freeCellCards.map((card, i) =>
-          card === undefined ? (
-            <div key={i} className="pile-spacer" aria-hidden="true" />
-          ) : (
-            <div
-              key={i}
-              className="pile-cell"
-              // ref={(el) => boardController.setFreeCellRef(i - 1, el)}
-              data-kb-focusable={kbCarrying && !card ? "true" : undefined}
-              role={kbCarrying && !card ? "button" : undefined}
-              aria-label={
-                !card ? `Free cell ${i} empty slot` : `Free cell ${i}`
-              }
-            >
-              {/* Always show the slot */}
-              <Card
-                card={null}
-                region="freecell"
-                regionIndex={i}
-                className="pile-slot"
-              />
+        <div className="pile-spacer" aria-hidden="true" />
+        {freeCellCards.map((card, i) => (
+          <div
+            key={i}
+            className="pile-cell"
+            // ref={(el) => boardController.setFreeCellRef(i - 1, el)}
+            data-kb-focusable={kbCarrying && !card ? "true" : undefined}
+            role={kbCarrying && !card ? "button" : undefined}
+            aria-label={!card ? `Free cell ${i} empty slot` : `Free cell ${i}`}
+          >
+            {/* Always show the slot */}
+            <Card
+              card={null}
+              region="freecell"
+              regionIndex={i}
+              className="pile-slot"
+            />
 
-              {/* If a card exists, render it on top of the slot */}
-              {card &&
-                (() => {
-                  const freeCellIndex = i - 1;
+            {/* If a card exists, render it on top of the slot */}
+            {card &&
+              (() => {
+                const freeCellIndex = i;
 
-                  const hideForPointerDrag =
-                    boardController.drag.active &&
-                    boardController.drag.source?.type === "freecell" &&
-                    boardController.drag.source.index === freeCellIndex;
+                const hideForPointerDrag =
+                  boardController.drag.active &&
+                  boardController.drag.source?.type === "freecell" &&
+                  boardController.drag.source.index === freeCellIndex;
 
-                  const hideForCardFlightDest =
-                    cardFlight.active &&
-                    cardFlight.dropTarget?.type === "freecell" &&
-                    cardFlight.dropTarget.index === freeCellIndex &&
-                    cardFlight.cardIds.includes(card.id);
+                const hideForCardFlightDest =
+                  cardFlight.active &&
+                  cardFlight.dropTarget?.type === "freecell" &&
+                  cardFlight.dropTarget.index === freeCellIndex &&
+                  cardFlight.cardIds.includes(card.id);
 
-                  const style =
-                    hideForPointerDrag || hideForCardFlightDest
-                      ? ({ visibility: "hidden" } as const)
-                      : undefined;
+                const style =
+                  hideForPointerDrag || hideForCardFlightDest
+                    ? ({ visibility: "hidden" } as const)
+                    : undefined;
 
-                  return (
-                    <Card
-                      card={card}
-                      region="freecell"
-                      regionIndex={i}
-                      playable={playable.freeCells[i - 1]} // -1 accounts for spacer
-                      data-kb-focusable={
-                        playable.freeCells[i - 1] ? "true" : "false"
-                      }
-                      className="pile-card"
-                      onActivate={(el) => boardController.tryAutoFoundation(el)}
-                      onPointerDownCard={(e) =>
-                        boardController.handleFreeCellPointerDown(e, i - 1)
-                      }
-                      onPointerUp={boardController.handleCardDoubleTap}
-                      style={style}
-                    />
-                  );
-                })()}
-            </div>
-          )
-        )}
+                return (
+                  <Card
+                    card={card}
+                    region="freecell"
+                    regionIndex={i}
+                    playable={playable.freeCells[i]} // -1 accounts for spacer
+                    data-kb-focusable={playable.freeCells[i] ? "true" : "false"}
+                    className="pile-card"
+                    onActivate={(el) => boardController.tryAutoFoundation(el)}
+                    onPointerDownCard={(e) =>
+                      boardController.handleFreeCellPointerDown(e, i)
+                    }
+                    onPointerUp={boardController.handleCardDoubleTap}
+                    style={style}
+                  />
+                );
+              })()}
+          </div>
+        ))}
+        <div className="pile-spacer" aria-hidden="true" />
       </div>
     </div>
   );

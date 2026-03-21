@@ -10,7 +10,7 @@ export function usePointerDragController<TCardItem>(args: {
   active: boolean;
   pending: boolean;
 
-  dragRef: React.MutableRefObject<DragState<TCardItem>>;
+  dragRef: React.RefObject<DragState<TCardItem>>;
   setDrag: React.Dispatch<React.SetStateAction<DragState<TCardItem>>>;
   dropHover: DropHover;
 
@@ -45,7 +45,9 @@ export function usePointerDragController<TCardItem>(args: {
     rafRef.current = window.requestAnimationFrame(() => {
       rafRef.current = null;
       const cur = dragRef.current;
-      setDrag({ ...cur, x: latestXYRef.current.x, y: latestXYRef.current.y });
+      if (cur) {
+        setDrag({ ...cur, x: latestXYRef.current.x, y: latestXYRef.current.y });
+      }
     });
   };
 

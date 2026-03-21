@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
@@ -15,6 +15,9 @@ type DragState = {
   baseTop: number;
   x: number;
   y: number;
+  startX: number;
+  startY: number;
+  pointerId: number | null;
 };
 
 type UsePointerControlSystemArgs = {
@@ -45,7 +48,10 @@ export function usePointerControlSystem({
     baseLeft: 0,
     baseTop: 0,
     x: 0,
-    y: 0
+    y: 0,
+    startX: 0,
+    startY: 0,
+    pointerId: null
   });
   const lastTapRef = useRef<{
     t: number;
@@ -53,6 +59,11 @@ export function usePointerControlSystem({
     y: number;
     cardId: string;
   } | null>(null);
+  const dragRef = useRef(drag);
+
+  useEffect(() => {
+    dragRef.current = drag;
+  }, [drag]);
 
   const handleFoundationPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -78,7 +89,10 @@ export function usePointerControlSystem({
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
       x: 0,
-      y: 0
+      y: 0,
+      startX: e.clientX,
+      startY: e.clientY,
+      pointerId: e.pointerId
     });
   };
 
@@ -124,7 +138,10 @@ export function usePointerControlSystem({
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
       x: 0,
-      y: 0
+      y: 0,
+      startX: e.clientX,
+      startY: e.clientY,
+      pointerId: e.pointerId
     });
     // (later)
     // 5. Optionally handle pointer-specific stuff (capture, coords, etc.)
@@ -176,7 +193,7 @@ export function usePointerControlSystem({
     processTap();
   };
 
-  const resetDrag = () => {
+  const resetDrag = useCallback(() => {
     if (!drag.active && !drag.pending) return;
     setDrag({
       active: false,
@@ -187,9 +204,12 @@ export function usePointerControlSystem({
       baseLeft: 0,
       baseTop: 0,
       x: 0,
-      y: 0
+      y: 0,
+      startX: 0,
+      startY: 0,
+      pointerId: null
     });
-  };
+  }, [setDrag, drag.active, drag.pending]);
 
   const handleFreeCellPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -208,9 +228,68 @@ export function usePointerControlSystem({
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
       x: 0,
-      y: 0
+      y: 0,
+      startX: e.clientX,
+      startY: e.clientY,
+      pointerId: e.pointerId
     });
   };
+
+  useEffect(() => {
+    if (!drag.pending && !drag.active) return;
+
+    const DRAG_THRESHOLD_PX = 6;
+
+    const onGlobalPointerMove = (e: PointerEvent) => {
+      const cur = dragRef.current;
+      if (!cur.active && !cur.pending) return;
+      if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
+      if (cur.isReturning) return;
+
+      const nextX = e.clientX - cur.startX;
+      const nextY = e.clientY - cur.startY;
+
+      if (cur.pending && !cur.active) {
+        const dist = Math.hypot(nextX, nextY);
+        if (dist < DRAG_THRESHOLD_PX) return;
+
+        setDrag({
+          ...cur,
+          pending: false,
+          active: true,
+          x: nextX,
+          y: nextY
+        });
+        return;
+      }
+
+      setDrag({
+        ...cur,
+        x: nextX,
+        y: nextY
+      });
+    };
+
+    const onGlobalPointerUp = (e: PointerEvent) => {
+      const cur = dragRef.current;
+      if (!cur.active && !cur.pending) return;
+      if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
+
+      // For now: always reset on pointer up.
+      // Later this is where drop resolution will go.
+      resetDrag();
+    };
+
+    window.addEventListener("pointermove", onGlobalPointerMove);
+    window.addEventListener("pointerup", onGlobalPointerUp);
+    window.addEventListener("pointercancel", onGlobalPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onGlobalPointerMove);
+      window.removeEventListener("pointerup", onGlobalPointerUp);
+      window.removeEventListener("pointercancel", onGlobalPointerUp);
+    };
+  }, [drag.pending, drag.active, resetDrag]);
 
   return {
     drag,
