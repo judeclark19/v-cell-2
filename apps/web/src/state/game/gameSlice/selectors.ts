@@ -80,3 +80,34 @@ export const selectShowAcp = createSelector(
   [selectStatus, selectIsFullyCollected],
   (status, isFullyCollected) => status === "won" && !isFullyCollected
 );
+
+export const selectAutoCompleteCandidates = createSelector(
+  [selectLegalMoves],
+  (legalMoves) => {
+    const seen = new Set<string>();
+    const candidates: Array<
+      { type: "freecell"; index: number } | { type: "tableau"; index: number }
+    > = [];
+
+    for (const m of legalMoves) {
+      if (m.kind !== "single") continue;
+      if (m.to.type !== "foundation") continue;
+      if (m.from.type !== "freecell" && m.from.type !== "tableau") continue;
+
+      const key = `${m.from.type}:${m.from.index}`;
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      candidates.push(m.from);
+    }
+
+    candidates.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === "freecell" ? -1 : 1;
+      }
+      return a.index - b.index;
+    });
+
+    return candidates;
+  }
+);

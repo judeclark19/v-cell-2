@@ -1,10 +1,5 @@
 /* 
-	•	read the Redux-backed game/session state you want UI to use
-	•	expose domain actions the UI can call
-	•	internally delegate to old hooks/thunks for now
-	•	gradually absorb more ownership over time
-    
-    TODO: restart, newDeal, startBySeed
+new stuff!
     */
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +32,8 @@ export type UseGameModelResult = {
   undo: () => void;
   restart: () => void;
   restartDeal: () => void;
+  newDeal: () => void;
+  startBySeed: (seed: string) => void;
 };
 
 export function useGameModel(): UseGameModelResult {
@@ -101,5 +98,23 @@ export function useGameModel(): UseGameModelResult {
     }
   }, [dispatch, seed, rules, status]);
 
-  return { makeMove, undo, restart: restartDeleteMe, restartDeal };
+  const newDeal = useCallback(() => {
+    dispatch(transitionGameAndSession({}));
+  }, [dispatch]);
+
+  const startBySeed = useCallback(
+    (seed: string) => {
+      dispatch(transitionGameAndSession({ seed }));
+    },
+    [dispatch]
+  );
+
+  return {
+    makeMove,
+    undo,
+    restart: restartDeleteMe,
+    restartDeal,
+    newDeal,
+    startBySeed
+  };
 }

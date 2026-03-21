@@ -6,13 +6,16 @@ import {
   selectPlayableMask,
   selectShowAcp
 } from "@/state/game/gameSlice/selectors";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setIsAutoCompleting } from "@/state/game/gameSlice";
 
 function FreeCells({
   boardController
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
+  const dispacth = useDispatch();
+
   // game slice
   const freeCellCards = useSelector(selectFreeCellCards);
   const showAcp = useSelector(selectShowAcp);
@@ -33,7 +36,7 @@ function FreeCells({
           type="button"
           className="btn btn--primary"
           onClick={() => {
-            if (isAutoCompleting) boardController.stopAutoComplete();
+            if (isAutoCompleting) dispacth(setIsAutoCompleting(false));
             else boardController.runAutoComplete();
           }}
           disabled={!showAcp}
@@ -49,7 +52,7 @@ function FreeCells({
             <div
               key={i}
               className="pile-cell"
-              ref={(el) => boardController.setFreeCellRef(i - 1, el)}
+              // ref={(el) => boardController.setFreeCellRef(i - 1, el)}
               data-kb-focusable={kbCarrying && !card ? "true" : undefined}
               role={kbCarrying && !card ? "button" : undefined}
               aria-label={
@@ -99,7 +102,7 @@ function FreeCells({
                       onPointerDownCard={(e) =>
                         boardController.handleFreeCellPointerDown(e, i - 1)
                       }
-                      onPointerUp={boardController.onCardPointerUp}
+                      onPointerUp={boardController.handleCardDoubleTap}
                       style={style}
                     />
                   );

@@ -2,12 +2,20 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem_new";
 import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem_new";
-import { selectLegalMoves } from "@/state/game/gameSlice";
+import {
+  selectHistory,
+  selectIsAutoCompleting,
+  selectLegalMoves,
+  selectStatus,
+  setIsAutoCompleting
+} from "@/state/game/gameSlice";
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
 import { useCallback, useState } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel";
+import { selectPaused } from "@/state/session/sessionSlice";
+import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -33,8 +41,17 @@ export function useBoardControlSystem(
   // auth slice
   const uid = useSelector(selectUid);
 
+  // session slice
+  const paused = useSelector(selectPaused);
+
   // game slice
   const legalMoves = useSelector(selectLegalMoves);
+  const isAutoCompleting = useSelector(selectIsAutoCompleting);
+  const status = useSelector(selectStatus);
+  const history = useSelector(selectHistory);
+
+  // ui slice
+  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
 
   const [cardFlight, setCardFlight] = useState<CardFlightState>({
     active: false,
@@ -89,6 +106,20 @@ export function useBoardControlSystem(
     }
 
     return null;
+  };
+
+  const getCardIdForBoardSource = (from: {
+    type: "tableau" | "freecell";
+    index: number;
+  }) => {
+    if (from.type === "freecell") {
+      return history.present.freeCells[from.index]?.id ?? null;
+    }
+
+    const column = history.present.tableau[from.index];
+    if (!column || column.length === 0) return null;
+
+    return column[column.length - 1]?.card.id ?? null;
   };
 
   const tryAutoFoundation = useCallback(
@@ -160,6 +191,28 @@ export function useBoardControlSystem(
     [dispatch, legalMoves, uid]
   );
 
+  const runAutoComplete = useCallback(async () => {
+    // Don’t start if we’re already running or if UI/game state blocks it.
+    if (isAutoCompleting) return;
+    if (paused) return;
+    if (isAnyModalOpen) return;
+    if (status !== "won") return;
+
+    dispatch(setIsAutoCompleting(true));
+
+    try {
+      while (true) {
+        // TODO: implement this
+        // 1. collect candidate source elements
+        // 2. try foundation moves in preferred order
+        // 3. if no move happened, break
+        // 4. await one animation/frame boundary
+      }
+    } finally {
+      dispatch(setIsAutoCompleting(false));
+    }
+  }, [isAutoCompleting, paused, isAnyModalOpen, status, dispatch]);
+
   // Hooks
   const keyboard = useKeyboardControlSystem({
     boardRef,
@@ -180,6 +233,7 @@ export function useBoardControlSystem(
     startCardFlight,
     clearCardFlight,
     tryAutoFoundation,
-    tryAutoFreeCell
+    tryAutoFreeCell,
+    runAutoComplete
   };
 }

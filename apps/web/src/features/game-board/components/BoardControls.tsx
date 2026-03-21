@@ -5,14 +5,14 @@ import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
 import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
-import { useBoardController } from "../hooks/useBoardController";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { selectUid } from "@/state/auth/authSlice";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
 
 export default function BoardControls({
-  vm
+  boardController
 }: {
-  vm: ReturnType<typeof useBoardController>;
+  boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
   // old stuff
   const [seedInput, setSeedInput] = useState("");
@@ -41,7 +41,7 @@ export default function BoardControls({
       }));
     if (!ok) return;
 
-    vm.newDealWithCelebration();
+    boardController.newDeal();
   };
 
   const startBySeed = async (seed: string) => {
@@ -55,7 +55,7 @@ export default function BoardControls({
       }));
     if (!ok) return;
 
-    vm.startBySeed(seed);
+    boardController.startBySeed(seed);
   };
 
   return (
