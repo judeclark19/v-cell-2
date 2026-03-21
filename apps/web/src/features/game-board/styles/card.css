@@ -147,6 +147,7 @@
   place-items: center;
 
   .empty-label {
+    pointer-events: none;
     color: var(--muted);
     font-size: 80cqw;
   }

@@ -2,23 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
-import type { Card } from "@vcell/engine";
-import { BoardSource } from "../useBoardControlSystem_new";
-
-type DragState = {
-  active: boolean;
-  pending: boolean;
-  isReturning: boolean;
-  source: BoardSource | null;
-  stack: Array<{ card: Card; faceDown: boolean }>;
-  baseLeft: number;
-  baseTop: number;
-  x: number;
-  y: number;
-  startX: number;
-  startY: number;
-  pointerId: number | null;
-};
+import { useHandleCardDoubleTap } from "./handleCardDoubleTap";
+import { DragState, emptyDragState } from "./dragState";
+import { useGlobalPointerDrag } from "./useGlobalPointerDrag";
 
 type UsePointerControlSystemArgs = {
   onCardDoubleTap: (el: HTMLElement) => void;
@@ -39,27 +25,13 @@ export function usePointerControlSystem({
     (state: RootState) => state.game.history.present.freeCells
   );
 
-  const [drag, setDrag] = useState<DragState>({
-    active: false,
-    pending: false,
-    isReturning: false,
-    source: null,
-    stack: [],
-    baseLeft: 0,
-    baseTop: 0,
-    x: 0,
-    y: 0,
-    startX: 0,
-    startY: 0,
-    pointerId: null
-  });
-  const lastTapRef = useRef<{
-    t: number;
-    x: number;
-    y: number;
-    cardId: string;
-  } | null>(null);
+  const [drag, setDrag] = useState<DragState>(emptyDragState());
+
   const dragRef = useRef(drag);
+  const { handleCardDoubleTap } = useHandleCardDoubleTap(
+    onCardDoubleTap,
+    drag.pending
+  );
 
   useEffect(() => {
     dragRef.current = drag;
@@ -80,6 +52,7 @@ export function usePointerControlSystem({
       pending: true,
       isReturning: false,
       source: { type: "foundation", index },
+      captureEl: e.currentTarget as HTMLDivElement,
       stack: [
         {
           card: pile.cards[pile.cards.length - 1],
@@ -112,7 +85,6 @@ export function usePointerControlSystem({
     //    - include cards until:
     //      - faceDown OR
     //      - not playable
-
     const mask = playable.tableau[index];
     if (!mask) return;
 
@@ -134,6 +106,7 @@ export function usePointerControlSystem({
       pending: true,
       isReturning: false,
       source: { type: "tableau", index, startIndex: tcIndex },
+      captureEl: e.currentTarget as HTMLDivElement,
       stack,
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
@@ -147,69 +120,17 @@ export function usePointerControlSystem({
     // 5. Optionally handle pointer-specific stuff (capture, coords, etc.)
   };
 
-  const handleCardDoubleTap = (e: React.PointerEvent<HTMLDivElement>) => {
-    // 1. Ignore mouse — dblclick handles desktop
-    if (e.pointerType === "mouse") return;
-
-    // 2. Extract card identity from the element
-    const el = e.currentTarget as HTMLElement;
-    const cardId = el.dataset.cardId;
-    if (!cardId) return;
-
-    const now = performance.now();
-    const x = e.clientX;
-    const y = e.clientY;
-
-    const processTap = () => {
-      const last = lastTapRef.current;
-
-      // 3. Double-tap detection thresholds
-      const MAX_DT_MS = 300;
-      const MAX_DIST_PX = 12;
-
-      if (last) {
-        const dt = now - last.t;
-        const dist = Math.hypot(x - last.x, y - last.y);
-        const sameCard = last.cardId === cardId;
-
-        // 4. If valid double-tap → trigger board-level action
-        if (dt <= MAX_DT_MS && dist <= MAX_DIST_PX && sameCard) {
-          lastTapRef.current = null;
-          onCardDoubleTap(el);
-          return;
-        }
-      }
-
-      // 5. Otherwise store this tap for the next comparison
-      lastTapRef.current = { t: now, x, y, cardId };
-    };
-
-    // 6. If a drag is still pending, defer so drag cleanup runs first
-    if (drag.pending) {
-      queueMicrotask(processTap);
-      return;
-    }
-
-    processTap();
-  };
-
   const resetDrag = useCallback(() => {
     if (!drag.active && !drag.pending) return;
-    setDrag({
-      active: false,
-      pending: false,
-      isReturning: false,
-      source: null,
-      stack: [],
-      baseLeft: 0,
-      baseTop: 0,
-      x: 0,
-      y: 0,
-      startX: 0,
-      startY: 0,
-      pointerId: null
-    });
+    setDrag(emptyDragState());
   }, [setDrag, drag.active, drag.pending]);
+
+  useGlobalPointerDrag({
+    drag,
+    dragRef,
+    setDrag,
+    resetDrag
+  });
 
   const handleFreeCellPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -223,6 +144,7 @@ export function usePointerControlSystem({
       active: false,
       pending: true,
       isReturning: false,
+      captureEl: e.currentTarget as HTMLDivElement,
       source: { type: "freecell", index },
       stack: [{ card, faceDown: false }],
       baseLeft: e.currentTarget.getBoundingClientRect().left,
@@ -234,62 +156,6 @@ export function usePointerControlSystem({
       pointerId: e.pointerId
     });
   };
-
-  useEffect(() => {
-    if (!drag.pending && !drag.active) return;
-
-    const DRAG_THRESHOLD_PX = 6;
-
-    const onGlobalPointerMove = (e: PointerEvent) => {
-      const cur = dragRef.current;
-      if (!cur.active && !cur.pending) return;
-      if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
-      if (cur.isReturning) return;
-
-      const nextX = e.clientX - cur.startX;
-      const nextY = e.clientY - cur.startY;
-
-      if (cur.pending && !cur.active) {
-        const dist = Math.hypot(nextX, nextY);
-        if (dist < DRAG_THRESHOLD_PX) return;
-
-        setDrag({
-          ...cur,
-          pending: false,
-          active: true,
-          x: nextX,
-          y: nextY
-        });
-        return;
-      }
-
-      setDrag({
-        ...cur,
-        x: nextX,
-        y: nextY
-      });
-    };
-
-    const onGlobalPointerUp = (e: PointerEvent) => {
-      const cur = dragRef.current;
-      if (!cur.active && !cur.pending) return;
-      if (cur.pointerId == null || e.pointerId !== cur.pointerId) return;
-
-      // For now: always reset on pointer up.
-      // Later this is where drop resolution will go.
-      resetDrag();
-    };
-
-    window.addEventListener("pointermove", onGlobalPointerMove);
-    window.addEventListener("pointerup", onGlobalPointerUp);
-    window.addEventListener("pointercancel", onGlobalPointerUp);
-
-    return () => {
-      window.removeEventListener("pointermove", onGlobalPointerMove);
-      window.removeEventListener("pointerup", onGlobalPointerUp);
-      window.removeEventListener("pointercancel", onGlobalPointerUp);
-    };
-  }, [drag.pending, drag.active, resetDrag]);
 
   return {
     drag,
