@@ -6,8 +6,14 @@ import type {
   FreeCellIndex,
   FoundationIndex
 } from "@vcell/engine";
+import { applyMoveThunk } from "@/state/game/thunks/applyMove";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/state/reduxStore";
+import { resolveDropMove } from "../resolveDropMove";
+import { selectUid } from "@/state/auth/authSlice";
+import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 
-type Args = {
+type GlobalPointerDragArgs = {
   drag: DragState;
   dragRef: React.RefObject<DragState>;
   setDrag: React.Dispatch<React.SetStateAction<DragState>>;
@@ -39,7 +45,10 @@ export function useGlobalPointerDrag({
   dragRef,
   setDrag,
   resetDrag
-}: Args) {
+}: GlobalPointerDragArgs) {
+  const dispatch = useDispatch<AppDispatch>();
+  const uid = useSelector(selectUid);
+  const legalMoves = useSelector(selectLegalMoves);
   useEffect(() => {
     if (!drag.pending && !drag.active) return;
 
@@ -110,9 +119,16 @@ export function useGlobalPointerDrag({
         return;
       }
 
-      const pileRef = getPileRefFromDropTarget(dropTarget);
+      const dropPileRef = getPileRefFromDropTarget(dropTarget);
 
-      console.log("dropPileRef", pileRef); // RESUME HERE!
+      console.log("dropPileRef", dropPileRef);
+      console.log("cur.source", cur.source);
+      console.log("legalMoves", legalMoves);
+      const move = resolveDropMove(cur, dropPileRef, legalMoves);
+
+      if (move) {
+        dispatch(applyMoveThunk({ move, uid }));
+      }
 
       resetDrag();
     };
@@ -126,5 +142,14 @@ export function useGlobalPointerDrag({
       window.removeEventListener("pointerup", onGlobalPointerUp);
       window.removeEventListener("pointercancel", onGlobalPointerUp);
     };
-  }, [drag.pending, drag.active, resetDrag, setDrag, dragRef]);
+  }, [
+    drag.pending,
+    drag.active,
+    resetDrag,
+    setDrag,
+    dragRef,
+    dispatch,
+    uid,
+    legalMoves
+  ]);
 }
