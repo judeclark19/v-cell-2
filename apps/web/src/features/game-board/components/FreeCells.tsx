@@ -69,7 +69,9 @@ function FreeCells({
                 const freeCellIndex = i;
 
                 const hideForPointerDrag =
-                  boardController.drag.active &&
+                  (boardController.drag.active ||
+                    boardController.drag.pending ||
+                    boardController.drag.isReturning) &&
                   boardController.drag.source?.type === "freecell" &&
                   boardController.drag.source.index === freeCellIndex;
 

@@ -4,7 +4,7 @@ import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
 import { useHandleCardDoubleTap } from "./handleCardDoubleTap";
 import { DragState, emptyDragState } from "./dragState";
-import { useGlobalPointerDrag } from "./useGlobalPointerDrag";
+import { useGlobalPointerDrag } from "./useGlobalPointerDrag_new";
 
 type UsePointerControlSystemArgs = {
   onCardDoubleTap: (el: HTMLElement) => void;
@@ -121,9 +121,10 @@ export function usePointerControlSystem({
   };
 
   const resetDrag = useCallback(() => {
-    if (!drag.active && !drag.pending) return;
+    const cur = dragRef.current;
+    if (!cur.active && !cur.pending && !cur.isReturning) return;
     setDrag(emptyDragState());
-  }, [setDrag, drag.active, drag.pending]);
+  }, [setDrag]);
 
   useGlobalPointerDrag({
     drag,

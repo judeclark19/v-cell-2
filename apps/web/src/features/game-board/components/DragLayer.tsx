@@ -9,8 +9,11 @@ export default function DragLayer({
 }) {
   const { drag, resetDrag, cardFlight } = boardController;
 
-  if (!(drag.active || drag.pending) || drag.stack.length === 0) return null;
-
+  if (
+    !(drag.active || drag.pending || drag.isReturning) ||
+    drag.stack.length === 0
+  )
+    return null;
   return (
     <div
       className={`drag-layer ${drag.isReturning ? "is-returning" : ""} ${

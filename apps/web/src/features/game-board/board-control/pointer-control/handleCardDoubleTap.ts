@@ -12,8 +12,6 @@ export function useHandleCardDoubleTap(
   } | null>(null);
 
   const handleCardDoubleTap = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "mouse") return;
-
     const el = e.currentTarget as HTMLElement;
     const cardId = el.dataset.cardId;
     if (!cardId) return;

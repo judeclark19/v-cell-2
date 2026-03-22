@@ -120,17 +120,24 @@ export function useGlobalPointerDrag({
       }
 
       const dropPileRef = getPileRefFromDropTarget(dropTarget);
-
-      console.log("dropPileRef", dropPileRef);
-      console.log("cur.source", cur.source);
-      console.log("legalMoves", legalMoves);
       const move = resolveDropMove(cur, dropPileRef, legalMoves);
 
+      // if legal move, apply it
       if (move) {
         dispatch(applyMoveThunk({ move, uid }));
+        resetDrag();
+        return;
       }
 
-      resetDrag();
+      // otherwise, let card fly back to origin
+      setDrag({
+        ...cur,
+        active: false,
+        pending: false,
+        isReturning: true,
+        x: 0,
+        y: 0
+      });
     };
 
     window.addEventListener("pointermove", onGlobalPointerMove);

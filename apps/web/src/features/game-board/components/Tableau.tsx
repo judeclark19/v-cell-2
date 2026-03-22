@@ -24,7 +24,9 @@ function Tableau({
               : null;
 
           const isDraggedFromThisCol =
-            boardController.drag.active &&
+            (boardController.drag.active ||
+              boardController.drag.pending ||
+              boardController.drag.isReturning) &&
             tableauSource != null &&
             tableauSource.index === colIndex;
 

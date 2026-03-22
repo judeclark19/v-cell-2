@@ -48,7 +48,6 @@ export function useBoardControlSystem(
   const legalMoves = useSelector(selectLegalMoves);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const status = useSelector(selectStatus);
-  const history = useSelector(selectHistory);
 
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
@@ -108,20 +107,6 @@ export function useBoardControlSystem(
     return null;
   };
 
-  const getCardIdForBoardSource = (from: {
-    type: "tableau" | "freecell";
-    index: number;
-  }) => {
-    if (from.type === "freecell") {
-      return history.present.freeCells[from.index]?.id ?? null;
-    }
-
-    const column = history.present.tableau[from.index];
-    if (!column || column.length === 0) return null;
-
-    return column[column.length - 1]?.card.id ?? null;
-  };
-
   const tryAutoFoundation = useCallback(
     (el: HTMLElement) => {
       // 1. Resolve the board source from the element.
@@ -152,11 +137,14 @@ export function useBoardControlSystem(
 
       // 4. Commit the move.
       dispatch(applyMoveThunk({ move: match, uid }));
+      requestAnimationFrame(() => {
+        clearCardFlight();
+      });
 
       // 5. Return whether a move was made.
       return true;
     },
-    [dispatch, startCardFlight, legalMoves, uid]
+    [dispatch, startCardFlight, legalMoves, uid, clearCardFlight]
   );
 
   const tryAutoFreeCell = useCallback(
