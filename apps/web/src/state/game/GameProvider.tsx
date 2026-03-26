@@ -33,7 +33,7 @@ import SessionTimerDriver from "./SessionTimerDriver";
 import InProgressPersistenceDriver from "./InProgressPersistenceDriver";
 import { AppDispatch } from "../reduxStore";
 import { initializeSettingsFromStorage } from "../ui/thunks/initializeSettingsFromStorage";
-import { useGameModel } from "./hooks/useGameModel";
+import { useGameModel } from "./hooks/useGameModel_new";
 import { selectUid } from "../auth/authSlice";
 
 type UiResets = {

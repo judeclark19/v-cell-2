@@ -10,27 +10,17 @@ import {
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
-import { useCallback, useState } from "react";
-import { useGameModel } from "@/state/game/hooks/useGameModel";
+import { useCallback } from "react";
+import { useGameModel } from "@/state/game/hooks/useGameModel_new";
 import { selectPaused } from "@/state/session/sessionSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
+import { useCardFlight } from "./useCardFlight";
+import { useTryAutoFoundation } from "./useTryAutoFoundation";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
   | { type: "tableau"; index: number; startIndex: number }
   | { type: "freecell"; index: number };
-
-type CardFlightDropTarget =
-  | { type: "foundation"; index: number }
-  | { type: "tableau"; index: number }
-  | { type: "freecell"; index: number };
-
-type CardFlightState = {
-  active: boolean;
-  cardIds: string[];
-  dropTarget: CardFlightDropTarget | null;
-  durationMs?: number;
-};
 
 export function useBoardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -49,31 +39,6 @@ export function useBoardControlSystem(
 
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
-
-  const [cardFlight, setCardFlight] = useState<CardFlightState>({
-    active: false,
-    cardIds: [],
-    dropTarget: null
-  });
-
-  const startCardFlight = useCallback(
-    (args: { cardIds: string[]; dropTarget: CardFlightDropTarget }) => {
-      setCardFlight({
-        active: true,
-        cardIds: args.cardIds,
-        dropTarget: args.dropTarget
-      });
-    },
-    []
-  );
-
-  const clearCardFlight = useCallback(() => {
-    setCardFlight({
-      active: false,
-      cardIds: [],
-      dropTarget: null
-    });
-  }, []);
 
   const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
     const region = el.dataset.region;
@@ -105,45 +70,22 @@ export function useBoardControlSystem(
     return null;
   };
 
-  const tryAutoFoundation = useCallback(
-    (el: HTMLElement) => {
-      // 1. Resolve the board source from the element.
-      const from = resolveBoardSourceFromEl(el);
-      if (!from) return false;
+  const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
 
-      // 2. Find the matching legal single-card move to a foundation.
-      const match = legalMoves.find(
-        (m) =>
-          m.kind === "single" &&
-          m.from.type === from.type &&
-          m.from.index === from.index &&
-          m.to.type === "foundation"
-      );
-
-      if (!match) return false;
-
-      // 3. If flight data is available, start kb flight.
-      const cardId = el.dataset.cardId;
-      const toIndex = match.to.index;
-
-      if (cardId) {
-        startCardFlight({
-          cardIds: [cardId],
-          dropTarget: { type: "foundation", index: toIndex }
-        });
-      }
-
-      // 4. Commit the move.
-      dispatch(applyMoveThunk({ move: match, uid }));
-      requestAnimationFrame(() => {
-        clearCardFlight();
-      });
-
-      // 5. Return whether a move was made.
-      return true;
-    },
-    [dispatch, startCardFlight, legalMoves, uid, clearCardFlight]
-  );
+  function getFoundationDropEl(index: number): HTMLElement | null {
+    // find the destination foundation element
+    // maybe from refs, maybe from DOM query
+    return null;
+  }
+  const { tryAutoFoundation } = useTryAutoFoundation({
+    legalMoves,
+    uid,
+    dispatch,
+    getFoundationDropEl,
+    startCardFlight,
+    clearCardFlight,
+    resolveBoardSourceFromEl
+  });
 
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement) => {
