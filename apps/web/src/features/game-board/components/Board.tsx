@@ -17,7 +17,7 @@ import {
   selectUndosRemaining
 } from "@/state/game/gameSlice";
 import { useRef } from "react";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 
 function Board() {
   // Board controller (new!)

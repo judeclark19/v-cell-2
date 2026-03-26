@@ -1,9 +1,7 @@
-// new-state
 import { useDispatch, useSelector } from "react-redux";
-import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem_new";
+import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem";
 import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem_new";
 import {
-  selectHistory,
   selectIsAutoCompleting,
   selectLegalMoves,
   selectStatus,

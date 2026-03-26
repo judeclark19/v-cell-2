@@ -1,5 +1,5 @@
 import Card from "./Card";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 import {
   selectFreeCellCards,
   selectIsAutoCompleting,
@@ -70,7 +70,6 @@ function FreeCells({
 
                 const hideForPointerDrag =
                   (boardController.drag.active ||
-                    boardController.drag.pending ||
                     boardController.drag.isReturning) &&
                   boardController.drag.source?.type === "freecell" &&
                   boardController.drag.source.index === freeCellIndex;

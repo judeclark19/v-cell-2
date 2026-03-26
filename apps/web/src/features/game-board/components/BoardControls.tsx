@@ -7,17 +7,13 @@ import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { selectUid } from "@/state/auth/authSlice";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 
 export default function BoardControls({
   boardController
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  // old stuff
-  const [seedInput, setSeedInput] = useState("");
-
-  // new stuff
   const dispatch = useDispatch<AppDispatch>();
 
   // Auth state
@@ -29,6 +25,9 @@ export default function BoardControls({
   // Game state
   const rules = useSelector(selectRules);
   const status = useSelector(selectStatus);
+
+  // local state
+  const [seedInput, setSeedInput] = useState("");
 
   const onNewDeal = async () => {
     const ok =

@@ -1,6 +1,6 @@
 import { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 
 export default function DragLayer({
   boardController

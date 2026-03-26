@@ -1,7 +1,7 @@
 import Card from "./Card";
 import { useSelector } from "react-redux";
 import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
-import { useBoardControlSystem } from "../board-control/useBoardControlSystem_new";
+import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 
 function Tableau({
   boardController

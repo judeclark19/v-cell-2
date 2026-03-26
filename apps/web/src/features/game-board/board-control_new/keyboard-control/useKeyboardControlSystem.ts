@@ -1,4 +1,3 @@
-// new-state
 import type { KeyboardEvent } from "react";
 import { selectIsAutoCompleting } from "@/state/game/gameSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";

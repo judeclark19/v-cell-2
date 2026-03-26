@@ -1,4 +1,3 @@
-// new stuff
 import type { Move, PileRef } from "@vcell/engine";
 import { DragState } from "./pointer-control/dragState";
 

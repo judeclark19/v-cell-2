@@ -1,5 +1,5 @@
 import type { Card } from "@vcell/engine";
-import type { BoardSource } from "../useBoardControlSystem_new";
+import type { BoardSource } from "../useBoardControlSystem";
 
 export type DragState = {
   active: boolean;
