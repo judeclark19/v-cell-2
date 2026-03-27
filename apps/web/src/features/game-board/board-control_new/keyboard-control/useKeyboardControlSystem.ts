@@ -7,7 +7,11 @@ import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
-import { clearKbCarryVisuals, setKeyboardDropTarget } from "./kbCarryVisuals";
+import {
+  startKbCarrying,
+  stopKbCarrying,
+  setKeyboardDropTarget
+} from "./keyboardCarrying";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
@@ -15,8 +19,7 @@ type UseKeyboardControlSystemArgs = {
 };
 
 export function useKeyboardControlSystem({
-  boardRef,
-  clearCardFlight
+  boardRef
 }: UseKeyboardControlSystemArgs) {
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
@@ -38,11 +41,38 @@ export function useKeyboardControlSystem({
     const els = getKbFocusables(boardRef.current);
     if (els.length === 0) return;
 
+    // Tab: focus exists the board
     if (e.key === "Tab") {
       onKCSTab(e, setKbCarrying, boardRef);
       return;
     }
 
+    // Space: toggle kbCarrying
+    if (e.key === " ") {
+      e.preventDefault();
+
+      if (kbCarrying) {
+        stopKbCarrying(
+          boardRef.current,
+          kbCarriedElRef,
+          kbDropTargetElRef,
+          setKbCarrying
+        );
+      } else {
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (!activeEl) return;
+
+        startKbCarrying(
+          boardRef.current,
+          activeEl,
+          kbCarriedElRef,
+          setKbCarrying
+        );
+      }
+      return;
+    }
+
+    // Arrow keys: move focus within the board
     const directionMap: Record<string, "left" | "right" | "up" | "down"> = {
       ArrowLeft: "left",
       ArrowRight: "right",
@@ -113,11 +143,7 @@ export function useKeyboardControlSystem({
     if (!root) return;
 
     if (!root.contains(e.relatedTarget as Node | null)) {
-      setKbCarrying(false);
-      clearKbCarryVisuals(root);
-      clearCardFlight();
-      kbCarriedElRef.current = null;
-      kbDropTargetElRef.current = null;
+      stopKbCarrying(root, kbCarriedElRef, kbDropTargetElRef, setKbCarrying);
     }
   };
 
@@ -153,7 +179,7 @@ export function useKeyboardControlSystem({
 
   return {
     kbCarrying,
-    setKbCarrying,
+    stopKbCarrying,
     isInputSuppressed,
     onKCSKeydown,
     onKCSPointerDown,
