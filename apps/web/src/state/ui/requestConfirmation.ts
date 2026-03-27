@@ -14,12 +14,10 @@ export function requestConfirmation(req: {
       openConfirmModal({
         ...req,
         onConfirm: () => {
-          console.log("confirming!");
           resolve(true);
           dispatch(closeConfirmModal());
         },
         onCancel: () => {
-          console.log("cancelling!");
           resolve(false);
           dispatch(closeConfirmModal());
         }

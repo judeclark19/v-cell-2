@@ -76,10 +76,7 @@ export function useCompletedGamesPersistence() {
             }
           );
           const gameToPersist = uid ? { ...g, userId: uid } : g;
-          await upsertCompletedGame(
-            gameToPersist,
-            "useCompletedGamesPersistence effect"
-          );
+          await upsertCompletedGame(gameToPersist);
           persistedIds.add(g.sessionId);
 
           const deviceId = getOrCreateDeviceId();
