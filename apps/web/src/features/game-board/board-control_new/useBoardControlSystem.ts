@@ -120,8 +120,7 @@ export function useBoardControlSystem(
   });
 
   const keyboard = useKeyboardControlSystem({
-    boardRef,
-    clearCardFlight
+    boardRef
   });
 
   const pointer = usePointerControlSystem({

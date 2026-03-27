@@ -1,15 +1,9 @@
 import { useEffect } from "react";
 import type { DragState } from "./dragState";
-import type {
-  PileRef,
-  TableauIndex,
-  FreeCellIndex,
-  FoundationIndex
-} from "@vcell/engine";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { resolveDropMove } from "../resolveDropMove";
+import { getPileRefFromDropTarget, resolveDropMove } from "../resolveDropMove";
 import { selectUid } from "@/state/auth/authSlice";
 import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 
@@ -18,26 +12,6 @@ type GlobalPointerDragArgs = {
   dragRef: React.RefObject<DragState>;
   setDrag: React.Dispatch<React.SetStateAction<DragState>>;
   resetDrag: () => void;
-};
-
-const getPileRefFromDropTarget = (dropTarget: HTMLElement): PileRef | null => {
-  if (!dropTarget.dataset.region || !dropTarget.dataset.regionIndex)
-    return null;
-
-  const region = dropTarget.dataset.region;
-  const regionIndex = parseInt(dropTarget.dataset.regionIndex, 10);
-
-  if (region === "tableau") {
-    return { type: "tableau", index: regionIndex as TableauIndex };
-  }
-  if (region === "freecell") {
-    return { type: "freecell", index: regionIndex as FreeCellIndex };
-  }
-  if (region === "foundation") {
-    return { type: "foundation", index: regionIndex as FoundationIndex };
-  }
-
-  return null;
 };
 
 export function useGlobalPointerDrag({

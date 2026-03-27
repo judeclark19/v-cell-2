@@ -17,6 +17,7 @@ export const stopKbCarrying = (
     });
 
   kbCarriedElRef.current = null;
+
   kbDropTargetElRef.current = null;
   setKbCarrying(false);
 };
@@ -27,7 +28,6 @@ export const startKbCarrying = (
   kbCarriedElRef: React.RefObject<HTMLElement | null>,
   setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
-  console.log("startKbCarrying called with el:", el);
   if (!root) return;
 
   // Clear old carried element

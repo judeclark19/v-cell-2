@@ -15,7 +15,6 @@ import {
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
-  clearCardFlight: () => void;
 };
 
 export function useKeyboardControlSystem({
@@ -52,6 +51,12 @@ export function useKeyboardControlSystem({
       e.preventDefault();
 
       if (kbCarrying) {
+        // resume here
+        console.log(
+          "check for legal move between ",
+          kbCarriedElRef.current,
+          kbDropTargetElRef.current
+        );
         stopKbCarrying(
           boardRef.current,
           kbCarriedElRef,

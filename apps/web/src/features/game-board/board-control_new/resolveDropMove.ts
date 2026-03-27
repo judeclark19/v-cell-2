@@ -1,5 +1,33 @@
-import type { Move, PileRef } from "@vcell/engine";
+import type {
+  Move,
+  PileRef,
+  TableauIndex,
+  FreeCellIndex,
+  FoundationIndex
+} from "@vcell/engine";
 import { DragState } from "./pointer-control/dragState";
+
+export const getPileRefFromDropTarget = (
+  dropTarget: HTMLElement
+): PileRef | null => {
+  if (!dropTarget.dataset.region || !dropTarget.dataset.regionIndex)
+    return null;
+
+  const region = dropTarget.dataset.region;
+  const regionIndex = parseInt(dropTarget.dataset.regionIndex, 10);
+
+  if (region === "tableau") {
+    return { type: "tableau", index: regionIndex as TableauIndex };
+  }
+  if (region === "freecell") {
+    return { type: "freecell", index: regionIndex as FreeCellIndex };
+  }
+  if (region === "foundation") {
+    return { type: "foundation", index: regionIndex as FoundationIndex };
+  }
+
+  return null;
+};
 
 export const resolveDropMove = (
   drag: DragState,
