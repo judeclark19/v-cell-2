@@ -7,7 +7,7 @@ export type DragState = {
   isReturning: boolean;
   captureEl: HTMLDivElement | null;
   source: BoardSource | null;
-  stack: Array<{ card: Card; faceDown: boolean }>;
+  stack: Array<Card>;
   baseLeft: number;
   baseTop: number;
   x: number;

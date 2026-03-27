@@ -20,12 +20,20 @@ import {
   setStatus,
   selectRules,
   selectSeed,
-  restartCurrentGame
+  restartCurrentGame,
+  selectIsAutoCompleting,
+  setIsAutoCompleting
 } from "@/state/game/gameSlice";
-import { setEndedAtMs, setCheckpoint } from "@/state/session/sessionSlice";
+import {
+  setEndedAtMs,
+  setCheckpoint,
+  selectPaused
+} from "@/state/session/sessionSlice";
 import { applyMoveThunk } from "../thunks/applyMove";
 import { selectUid } from "@/state/auth/authSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { newDealThunk } from "@/state/session/thunks/newDeal";
+import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
@@ -34,6 +42,7 @@ export type UseGameModelResult = {
   restartDeal: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
+  runAutoComplete: () => void;
 };
 
 export function useGameModel(): UseGameModelResult {
@@ -42,13 +51,20 @@ export function useGameModel(): UseGameModelResult {
   // Auth state
   const uid = useSelector(selectUid);
 
-  // Game state
+  // session slice
+  const paused = useSelector(selectPaused);
+
+  // Game slice
   const status = useSelector(selectStatus);
   const seed = useSelector(selectSeed);
   const history = useSelector(selectHistory);
   const undoLimit = useSelector(selectUndoLimit);
   const undosUsed = useSelector(selectUndosUsed);
   const rules = useSelector(selectRules);
+  const isAutoCompleting = useSelector(selectIsAutoCompleting);
+
+  // ui slice
+  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
 
   const makeMove = useCallback(
     (move: Move) => {
@@ -80,6 +96,7 @@ export function useGameModel(): UseGameModelResult {
     dispatch(setEndedAtMs(null));
     dispatch(setStatus("in_progress"));
   }, [seed, rules, dispatch]);
+  // TODO: why is this called delete me lol
 
   const restartDeal = useCallback(() => {
     if (status === "won") {
@@ -99,8 +116,8 @@ export function useGameModel(): UseGameModelResult {
   }, [dispatch, seed, rules, status]);
 
   const newDeal = useCallback(() => {
-    dispatch(transitionGameAndSession({}));
-  }, [dispatch]);
+    dispatch(newDealThunk({ rules, uid }));
+  }, [dispatch, rules, uid]);
 
   const startBySeed = useCallback(
     (seed: string) => {
@@ -109,12 +126,35 @@ export function useGameModel(): UseGameModelResult {
     [dispatch]
   );
 
+  const runAutoComplete = useCallback(async () => {
+    // Don’t start if we’re already running or if UI/game state blocks it.
+    if (isAutoCompleting) return;
+    if (paused) return;
+    if (isAnyModalOpen) return;
+    if (status !== "won") return;
+
+    dispatch(setIsAutoCompleting(true));
+
+    try {
+      while (true) {
+        // TODO: implement this
+        // 1. collect candidate source elements
+        // 2. try foundation moves in preferred order
+        // 3. if no move happened, break
+        // 4. await one animation/frame boundary
+      }
+    } finally {
+      dispatch(setIsAutoCompleting(false));
+    }
+  }, [isAutoCompleting, paused, isAnyModalOpen, status, dispatch]);
+
   return {
     makeMove,
     undo,
     restart: restartDeleteMe,
     restartDeal,
     newDeal,
-    startBySeed
+    startBySeed,
+    runAutoComplete
   };
 }

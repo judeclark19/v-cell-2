@@ -1,41 +1,86 @@
+import { Card } from "@vcell/engine";
 import { useCallback, useState } from "react";
 
-export type CardFlightDropTarget =
+export type DropTarget =
   | { type: "foundation"; index: number }
   | { type: "tableau"; index: number }
   | { type: "freecell"; index: number };
 
-type CardFlightState = {
+export type CardFlightState = {
   active: boolean;
-  cardIds: string[];
-  dropTarget: CardFlightDropTarget | null;
+  baseLeft: number;
+  baseTop: number;
+  x: number;
+  y: number;
+  stack: Card[];
+  dropTarget: DropTarget | null;
   durationMs?: number;
 };
 
-export function useCardFlight() {
-  const [cardFlight, setCardFlight] = useState<CardFlightState>({
+function emptyCardFlight(): CardFlightState {
+  return {
     active: false,
-    cardIds: [],
+    baseLeft: 0,
+    baseTop: 0,
+    x: 0,
+    y: 0,
+    stack: [],
     dropTarget: null
-  });
+  };
+}
+
+export function useCardFlight() {
+  const [cardFlight, setCardFlight] =
+    useState<CardFlightState>(emptyCardFlight());
 
   const startCardFlight = useCallback(
-    (args: { cardIds: string[]; dropTarget: CardFlightDropTarget }) => {
+    ({
+      fromEl,
+      toEl,
+      stack,
+      dropTarget,
+      durationMs
+    }: {
+      fromEl: HTMLElement;
+      toEl: HTMLElement;
+      stack: Card[];
+      dropTarget: DropTarget;
+      durationMs?: number;
+    }) => {
+      const fromRect = fromEl.getBoundingClientRect();
+      const toRect = toEl.getBoundingClientRect();
+
+      const dx = toRect.left - fromRect.left;
+      const dy = toRect.top - fromRect.top;
+
       setCardFlight({
         active: true,
-        cardIds: args.cardIds,
-        dropTarget: args.dropTarget
+        baseLeft: fromRect.left,
+        baseTop: fromRect.top,
+        x: 0,
+        y: 0,
+        stack,
+        dropTarget,
+        durationMs
+      });
+
+      requestAnimationFrame(() => {
+        setCardFlight((cur) => {
+          if (!cur.active) return cur;
+
+          return {
+            ...cur,
+            x: dx,
+            y: dy
+          };
+        });
       });
     },
     []
   );
 
   const clearCardFlight = useCallback(() => {
-    setCardFlight({
-      active: false,
-      cardIds: [],
-      dropTarget: null
-    });
+    setCardFlight(emptyCardFlight());
   }, []);
 
   return { cardFlight, startCardFlight, clearCardFlight };

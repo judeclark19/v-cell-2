@@ -2,18 +2,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem";
 import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem_new";
 import {
-  selectIsAutoCompleting,
+  selectFoundationCards,
+  selectFreeCellCards,
   selectLegalMoves,
-  selectStatus,
-  setIsAutoCompleting
+  selectTableauCards
 } from "@/state/game/gameSlice";
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel_new";
-import { selectPaused } from "@/state/session/sessionSlice";
-import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
 
@@ -29,17 +27,14 @@ export function useBoardControlSystem(
   // auth slice
   const uid = useSelector(selectUid);
 
-  // session slice
-  const paused = useSelector(selectPaused);
-
   // game slice
   const legalMoves = useSelector(selectLegalMoves);
-  const isAutoCompleting = useSelector(selectIsAutoCompleting);
-  const status = useSelector(selectStatus);
+  const foundationCards = useSelector(selectFoundationCards);
+  const tableauCards = useSelector(selectTableauCards);
+  const freeCellCards = useSelector(selectFreeCellCards);
+  const foundationRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  // ui slice
-  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
-
+  // Functions=========================================================
   const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
     const region = el.dataset.region;
     const indexRaw = el.dataset.regionIndex;
@@ -69,23 +64,6 @@ export function useBoardControlSystem(
 
     return null;
   };
-
-  const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
-
-  function getFoundationDropEl(index: number): HTMLElement | null {
-    // find the destination foundation element
-    // maybe from refs, maybe from DOM query
-    return null;
-  }
-  const { tryAutoFoundation } = useTryAutoFoundation({
-    legalMoves,
-    uid,
-    dispatch,
-    getFoundationDropEl,
-    startCardFlight,
-    clearCardFlight,
-    resolveBoardSourceFromEl
-  });
 
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement) => {
@@ -119,29 +97,28 @@ export function useBoardControlSystem(
     [dispatch, legalMoves, uid]
   );
 
-  const runAutoComplete = useCallback(async () => {
-    // Don’t start if we’re already running or if UI/game state blocks it.
-    if (isAutoCompleting) return;
-    if (paused) return;
-    if (isAnyModalOpen) return;
-    if (status !== "won") return;
+  const setFoundationRef = useCallback(
+    (index: number, el: HTMLDivElement | null) => {
+      foundationRefs.current[index] = el;
+    },
+    []
+  );
 
-    dispatch(setIsAutoCompleting(true));
+  // Hooks ============================================================
+  const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
 
-    try {
-      while (true) {
-        // TODO: implement this
-        // 1. collect candidate source elements
-        // 2. try foundation moves in preferred order
-        // 3. if no move happened, break
-        // 4. await one animation/frame boundary
-      }
-    } finally {
-      dispatch(setIsAutoCompleting(false));
-    }
-  }, [isAutoCompleting, paused, isAnyModalOpen, status, dispatch]);
+  const { tryAutoFoundation } = useTryAutoFoundation({
+    legalMoves,
+    uid,
+    dispatch,
+    startCardFlight,
+    resolveBoardSourceFromEl,
+    foundationCards,
+    foundationRefs,
+    tableauCards,
+    freeCellCards
+  });
 
-  // Hooks
   const keyboard = useKeyboardControlSystem({
     boardRef,
     clearCardFlight
@@ -160,8 +137,8 @@ export function useBoardControlSystem(
     cardFlight,
     startCardFlight,
     clearCardFlight,
+    setFoundationRef,
     tryAutoFoundation,
-    tryAutoFreeCell,
-    runAutoComplete
+    tryAutoFreeCell
   };
 }

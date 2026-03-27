@@ -114,7 +114,7 @@
 }
 
 /* While a card is actively being dragged/returned, don't apply overlap via this rule */
-.tableau-col > :is(.card.is-dragging, .card.is-returning) {
+.tableau-col > :is(.card.is-dragging, .card.is-auto-moving) {
   margin-top: 0;
 }
 
@@ -147,7 +147,7 @@
   transition: none;
 }
 
-.drag-layer.is-returning {
+.drag-layer.is-auto-moving {
   transition: transform 180ms ease;
 }
 
@@ -225,7 +225,7 @@
 /* -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .drag-layer.is-returning {
+  .drag-layer.is-auto-moving {
     transition: none;
   }
 

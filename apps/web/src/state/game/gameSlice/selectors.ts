@@ -40,6 +40,18 @@ export const selectFoundationCards = createSelector(
   (foundations) =>
     foundations.map((pile) => pile.cards[pile.cards.length - 1] ?? null)
 );
+
+export const selectTableauCards = createSelector(
+  [(state: RootState) => state.game.history.present.tableau],
+  (tableau) =>
+    tableau.map((column) =>
+      column.map((tableauCard) => ({
+        card: tableauCard.card,
+        faceDown: tableauCard.faceDown
+      }))
+    )
+);
+
 export const selectFreeCellCards = createSelector(
   [(state: RootState) => state.game.history.present.freeCells],
   (freeCells) => freeCells.map((card) => card ?? null)

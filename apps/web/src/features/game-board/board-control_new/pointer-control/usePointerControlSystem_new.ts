@@ -53,12 +53,7 @@ export function usePointerControlSystem({
       isReturning: false,
       source: { type: "foundation", index },
       captureEl: e.currentTarget as HTMLDivElement,
-      stack: [
-        {
-          card: pile.cards[pile.cards.length - 1],
-          faceDown: false
-        }
-      ],
+      stack: [pile.cards[pile.cards.length - 1]],
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
       x: 0,
@@ -97,7 +92,7 @@ export function usePointerControlSystem({
       end++;
     }
 
-    const stack = column.slice(tcIndex, end);
+    const stack = column.slice(tcIndex, end).map((tc) => tc.card);
     if (stack.length === 0) return;
 
     // 4. Set drag state
@@ -147,7 +142,7 @@ export function usePointerControlSystem({
       isReturning: false,
       captureEl: e.currentTarget as HTMLDivElement,
       source: { type: "freecell", index },
-      stack: [{ card, faceDown: false }],
+      stack: [card],
       baseLeft: e.currentTarget.getBoundingClientRect().left,
       baseTop: e.currentTarget.getBoundingClientRect().top,
       x: 0,

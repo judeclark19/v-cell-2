@@ -63,13 +63,15 @@ function Foundation({
 
   const isEmptySlot = !effectiveCard;
 
+  const flyingCardIds = cardFlight.stack.map((card) => card.id);
+
   const hideForKbFlightDest =
     !!cardFlight &&
     cardFlight.active &&
     cardFlight.dropTarget?.type === "foundation" &&
     cardFlight.dropTarget.index === foundationIndex &&
     !!effectiveCard &&
-    cardFlight.cardIds.includes(effectiveCard.id);
+    flyingCardIds.includes(effectiveCard.id);
 
   const cardStyle = hideForKbFlightDest
     ? ({ visibility: "hidden" } as const)
@@ -77,6 +79,7 @@ function Foundation({
 
   return (
     <div
+      ref={(el) => boardController.setFoundationRef(foundationIndex, el)}
       key={i}
       className="pile-cell"
       data-kb-focusable={kbCarrying && isEmptySlot ? "true" : undefined}

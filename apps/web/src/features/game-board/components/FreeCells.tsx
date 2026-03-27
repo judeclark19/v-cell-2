@@ -74,11 +74,13 @@ function FreeCells({
                   boardController.drag.source?.type === "freecell" &&
                   boardController.drag.source.index === freeCellIndex;
 
+                const flyingCardIds = cardFlight.stack.map((c) => c.id);
+
                 const hideForCardFlightDest =
                   cardFlight.active &&
                   cardFlight.dropTarget?.type === "freecell" &&
                   cardFlight.dropTarget.index === freeCellIndex &&
-                  cardFlight.cardIds.includes(card.id);
+                  flyingCardIds.includes(card.id);
 
                 const style =
                   hideForPointerDrag || hideForCardFlightDest

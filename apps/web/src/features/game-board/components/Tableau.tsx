@@ -95,8 +95,9 @@ function Tableau({
                   );
                 }
 
+                const flyingCardIds = cardFlight.stack.map((c) => c.id);
                 const isSuppressedByKbFlight =
-                  isKbFlightDestCol && cardFlight.cardIds.includes(tc.card.id);
+                  isKbFlightDestCol && flyingCardIds.includes(tc.card.id);
 
                 if (isSuppressedByKbFlight) {
                   return (

@@ -1,6 +1,6 @@
 import { AppDispatch } from "@/state/reduxStore";
-import { Move } from "@vcell/engine";
-import { CardFlightDropTarget } from "./useCardFlight";
+import { Card, Move } from "@vcell/engine";
+import { DropTarget } from "./useCardFlight";
 import { useCallback } from "react";
 import { BoardSource } from "./useBoardControlSystem";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
@@ -9,22 +9,56 @@ export function useTryAutoFoundation({
   legalMoves,
   uid,
   dispatch,
-  getFoundationDropEl,
   startCardFlight,
-  clearCardFlight,
-  resolveBoardSourceFromEl
+  resolveBoardSourceFromEl,
+  foundationCards,
+  foundationRefs,
+  tableauCards,
+  freeCellCards
 }: {
   legalMoves: Move[];
   uid: string | null;
   dispatch: AppDispatch;
-  getFoundationDropEl: (index: number) => HTMLElement | null;
   startCardFlight: (args: {
-    cardIds: string[];
-    dropTarget: CardFlightDropTarget;
+    fromEl: HTMLElement;
+    toEl: HTMLElement;
+    stack: Card[];
+    dropTarget: DropTarget;
+    durationMs?: number;
   }) => void;
-  clearCardFlight: () => void;
   resolveBoardSourceFromEl: (el: HTMLElement) => BoardSource | null;
+  foundationCards: Array<Card | null>;
+  foundationRefs: React.RefObject<Array<HTMLDivElement | null>>;
+  tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>;
+  freeCellCards: Array<Card | null>;
 }) {
+  const getCardForSingleMove = useCallback(
+    (move: Move): Card | null => {
+      if (move.kind !== "single") return null;
+
+      if (move.from.type === "tableau") {
+        const column = tableauCards[move.from.index];
+        return column?.[column.length - 1]?.card ?? null;
+      }
+
+      if (move.from.type === "freecell") {
+        return freeCellCards[move.from.index] ?? null;
+      }
+
+      if (move.from.type === "foundation") {
+        return foundationCards[move.from.index] ?? null;
+      }
+
+      return null;
+    },
+    [tableauCards, foundationCards, freeCellCards]
+  );
+
+  const getFoundationDropEl = useCallback(
+    (index: number) => foundationRefs.current[index] ?? null,
+    [foundationRefs]
+  );
+
   const tryAutoFoundation = useCallback(
     (el: HTMLElement) => {
       // 1. Resolve the board source from the element.
@@ -42,22 +76,21 @@ export function useTryAutoFoundation({
 
       if (!match) return false;
 
-      // 3. If flight data is available, start kb flight.
-      const cardId = el.dataset.cardId;
+      // 3. If flight data is available, start card flight.
       const toIndex = match.to.index;
 
-      if (cardId) {
+      const toEl = getFoundationDropEl(toIndex);
+      const card = getCardForSingleMove(match);
+      if (card && toEl) {
         startCardFlight({
-          cardIds: [cardId],
+          fromEl: el,
+          toEl,
+          stack: [card],
           dropTarget: { type: "foundation", index: toIndex }
         });
       }
-
       // 4. Commit the move.
       dispatch(applyMoveThunk({ move: match, uid }));
-      requestAnimationFrame(() => {
-        clearCardFlight();
-      });
 
       // 5. Return whether a move was made.
       return true;
@@ -67,8 +100,9 @@ export function useTryAutoFoundation({
       startCardFlight,
       legalMoves,
       uid,
-      clearCardFlight,
-      resolveBoardSourceFromEl
+      resolveBoardSourceFromEl,
+      getCardForSingleMove,
+      getFoundationDropEl
     ]
   );
 

@@ -129,7 +129,7 @@
 }
 
 .card.is-dragging,
-.card.is-returning {
+.card.is-auto-moving {
   margin-top: 0;
 }
 
