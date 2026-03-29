@@ -7,33 +7,29 @@ import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
-import {
-  startKbCarrying,
-  stopKbCarrying,
-  setKeyboardDropTarget
-} from "./keyboardCarrying";
-import {
-  getPileRefFromDropTarget,
-  resolveBoardSourceFromEl,
-  resolveMoveAttempt
-} from "../resolveMoveAttempt";
+import { stopKbCarrying, setKeyboardDropTarget } from "./keyboardCarrying";
 import { Card, Move } from "@vcell/engine";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
+import { onKCSSpace } from "./onKCSSpace";
+import { getPileRefFromElement } from "../resolveMoveAttempt";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
   tableauCards: { card: Card; faceDown: boolean }[][];
   legalMoves: Move[];
+  tryAutoFreeCell: (el: HTMLElement) => void;
 };
 
 export function useKeyboardControlSystem({
   boardRef,
   tableauCards,
-  legalMoves
+  legalMoves,
+  tryAutoFreeCell
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
+
+  // auth slice
   const uid = useSelector(selectUid);
 
   // ui slice
@@ -53,6 +49,7 @@ export function useKeyboardControlSystem({
   // ----- Event handlers -----
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (isInputSuppressed || !boardRef.current) return;
+
     const els = getKbFocusables(boardRef.current);
     if (els.length === 0) return;
 
@@ -64,58 +61,37 @@ export function useKeyboardControlSystem({
 
     // Space: toggle kbCarrying
     if (e.key === " ") {
-      e.preventDefault();
-
-      if (kbCarrying) {
-        // check if legal move
-        const source = resolveBoardSourceFromEl(kbCarriedElRef.current!);
-        const movedCardId = kbCarriedElRef.current?.dataset.cardId ?? null;
-        const move = resolveMoveAttempt({
-          source,
-          stackLength:
-            source?.type === "tableau"
-              ? tableauCards[source.index]?.length - source.startIndex
-              : source
-                ? 1
-                : 0,
-          dropPileRef: getPileRefFromDropTarget(kbDropTargetElRef.current!),
-          legalMoves
-        });
-
-        if (move) {
-          // apply the move
-          dispatch(applyMoveThunk({ move, uid }));
-
-          // focus the moved card in its new position after the board re-renders
-          requestAnimationFrame(() => {
-            if (!movedCardId || !boardRef.current) return;
-
-            const movedCardEl = boardRef.current.querySelector<HTMLElement>(
-              `[data-card-id="${movedCardId}"]`
-            );
-
-            movedCardEl?.focus({ preventScroll: true });
-          });
-        }
-
-        stopKbCarrying(
-          boardRef.current,
-          kbCarriedElRef,
-          kbDropTargetElRef,
-          setKbCarrying
-        );
-      } else {
-        const activeEl = document.activeElement as HTMLElement | null;
-        if (!activeEl) return;
-
-        startKbCarrying(
-          boardRef.current,
-          activeEl,
-          kbCarriedElRef,
-          setKbCarrying
-        );
-      }
+      onKCSSpace(
+        e,
+        boardRef,
+        kbCarrying,
+        setKbCarrying,
+        kbCarriedElRef,
+        tableauCards,
+        kbDropTargetElRef,
+        legalMoves,
+        dispatch,
+        uid
+      );
       return;
+    }
+
+    // Esc: stop carrying
+    if (e.key === "Escape") {
+      stopKbCarrying(
+        boardRef.current,
+        kbCarriedElRef,
+        kbDropTargetElRef,
+        setKbCarrying
+      );
+      return;
+    }
+
+    // C: tryAutoFreeCell
+    if (e.key.toLowerCase() === "c") {
+      const sourcePileRef = getPileRefFromElement(els[activeFocusIndex]);
+      if (!sourcePileRef) return;
+      tryAutoFreeCell(els[activeFocusIndex]);
     }
 
     // Arrow keys: move focus within the board

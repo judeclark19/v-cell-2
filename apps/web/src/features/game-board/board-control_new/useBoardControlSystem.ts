@@ -93,7 +93,8 @@ export function useBoardControlSystem(
   const keyboard = useKeyboardControlSystem({
     boardRef,
     tableauCards,
-    legalMoves
+    legalMoves,
+    tryAutoFreeCell
   });
 
   const pointer = usePointerControlSystem({

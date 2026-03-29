@@ -334,6 +334,8 @@
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
 
+/* TODO: some day make reduced motion a user preference w UI toggle, make sure flip and flight do not fire when it is enabled */
+
 @media (prefers-reduced-motion: reduce) {
   .card {
     transition: none;

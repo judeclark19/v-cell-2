@@ -5,7 +5,6 @@ import type {
   FreeCellIndex,
   FoundationIndex
 } from "@vcell/engine";
-import { DragState } from "./pointer-control/dragState";
 import { BoardSource } from "./useBoardControlSystem";
 
 export const resolveBoardSourceFromEl = (
@@ -40,7 +39,7 @@ export const resolveBoardSourceFromEl = (
   return null;
 };
 
-export const getPileRefFromDropTarget = (
+export const getPileRefFromElement = (
   dropTarget: HTMLElement
 ): PileRef | null => {
   if (

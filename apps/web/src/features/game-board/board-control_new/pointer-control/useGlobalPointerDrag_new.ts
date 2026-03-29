@@ -4,7 +4,7 @@ import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
 import {
-  getPileRefFromDropTarget,
+  getPileRefFromElement,
   resolveMoveAttempt
 } from "../resolveMoveAttempt";
 import { selectUid } from "@/state/auth/authSlice";
@@ -96,7 +96,7 @@ export function useGlobalPointerDrag({
         return;
       }
 
-      const dropPileRef = getPileRefFromDropTarget(dropTarget);
+      const dropPileRef = getPileRefFromElement(dropTarget);
       const move = resolveMoveAttempt({
         source: cur.source,
         stackLength: cur.stack.length,

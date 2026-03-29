@@ -156,10 +156,61 @@ export const moveKbFocus = (
       }
     }
   }
-  // Tableau-specific rule: Left/Right should ALWAYS change columns.
-  // Geometry-based dx checks can accidentally treat a slightly-offset lower card as “right”.
-
   if (!from.meta) return;
+
+  // ----- Horizontal same-region logic for freecells/foundations -----
+  if (
+    (direction === "left" || direction === "right") &&
+    (from.meta.region === "freecell" || from.meta.region === "foundation")
+  ) {
+    let bestSameRegionIdx = -1;
+    let bestRegionDelta = Number.POSITIVE_INFINITY;
+    let bestDx = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < kbFocusableEls.length; i++) {
+      const el = kbFocusableEls[i];
+      if (el === from.el) continue;
+
+      const to = {
+        el,
+        center: getCenter(el),
+        meta: getNodeMeta(el)
+      };
+
+      if (!to.meta || to.meta.region !== from.meta.region) continue;
+
+      if (
+        direction === "right" &&
+        to.meta.regionIndex <= from.meta.regionIndex
+      ) {
+        continue;
+      }
+
+      if (
+        direction === "left" &&
+        to.meta.regionIndex >= from.meta.regionIndex
+      ) {
+        continue;
+      }
+
+      const regionDelta = Math.abs(to.meta.regionIndex - from.meta.regionIndex);
+      const dx = Math.abs(to.center.x - from.center.x);
+
+      if (
+        regionDelta < bestRegionDelta ||
+        (regionDelta === bestRegionDelta && dx < bestDx)
+      ) {
+        bestRegionDelta = regionDelta;
+        bestDx = dx;
+        bestSameRegionIdx = i;
+      }
+    }
+
+    if (bestSameRegionIdx >= 0) {
+      focusOn(bestSameRegionIdx);
+      return;
+    }
+  }
 
   // ----- Horizontal tableau logic -----
   if (
