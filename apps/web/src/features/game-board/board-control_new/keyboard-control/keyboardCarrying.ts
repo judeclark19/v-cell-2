@@ -1,11 +1,12 @@
+import { KBCarryRefs, KBCarryState } from "./useKeyboardControlSystem";
+
 const CARRYING_CLASS = "is-kb-carried";
 const DROP_TARGET_CLASS = "is-drop-target";
 
 export const stopKbCarrying = (
   root: HTMLElement | null,
-  kbCarriedElRef: React.RefObject<HTMLElement | null>,
-  kbDropTargetElRef: React.RefObject<HTMLElement | null>,
-  setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>
+  kbCarryRefs: React.RefObject<KBCarryRefs>,
+  setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>
 ) => {
   if (!root) return;
 
@@ -16,44 +17,46 @@ export const stopKbCarrying = (
       el.classList.remove(DROP_TARGET_CLASS);
     });
 
-  kbCarriedElRef.current = null;
-
-  kbDropTargetElRef.current = null;
-  setKbCarrying(false);
+  kbCarryRefs.current.carriedEl = null;
+  kbCarryRefs.current.dropTargetEl = null;
+  setKbState((prev) => ({ ...prev, carrying: false }));
 };
 
 export const startKbCarrying = (
   root: HTMLElement | null,
   el: HTMLElement | null,
-  kbCarriedElRef: React.RefObject<HTMLElement | null>,
-  setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>
+  kbCarryRefs: React.RefObject<KBCarryRefs>,
+  setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>
 ) => {
   if (!root) return;
 
   // Clear old carried element
-  if (kbCarriedElRef.current && kbCarriedElRef.current !== el) {
-    kbCarriedElRef.current.classList.remove(CARRYING_CLASS);
+  if (kbCarryRefs.current.carriedEl && kbCarryRefs.current.carriedEl !== el) {
+    kbCarryRefs.current.carriedEl.classList.remove(CARRYING_CLASS);
   }
 
-  kbCarriedElRef.current = el;
-  if (kbCarriedElRef.current) {
-    kbCarriedElRef.current.classList.add(CARRYING_CLASS);
+  kbCarryRefs.current.carriedEl = el;
+  if (kbCarryRefs.current.carriedEl) {
+    kbCarryRefs.current.carriedEl.classList.add(CARRYING_CLASS);
   }
 
-  setKbCarrying(true);
+  setKbState((prev) => ({ ...prev, carrying: true }));
 };
 
 export const setKeyboardDropTarget = (
   el: HTMLElement | null,
-  dropTargetElRef: React.RefObject<HTMLElement | null>
+  kbCarryRefs: React.RefObject<KBCarryRefs>
 ) => {
-  if (dropTargetElRef.current && dropTargetElRef.current !== el) {
-    dropTargetElRef.current.classList.remove(DROP_TARGET_CLASS);
+  if (
+    kbCarryRefs.current.dropTargetEl &&
+    kbCarryRefs.current.dropTargetEl !== el
+  ) {
+    kbCarryRefs.current.dropTargetEl.classList.remove(DROP_TARGET_CLASS);
   }
 
-  dropTargetElRef.current = el;
+  kbCarryRefs.current.dropTargetEl = el;
 
-  if (dropTargetElRef.current) {
-    dropTargetElRef.current.classList.add(DROP_TARGET_CLASS);
+  if (kbCarryRefs.current.dropTargetEl) {
+    kbCarryRefs.current.dropTargetEl.classList.add(DROP_TARGET_CLASS);
   }
 };

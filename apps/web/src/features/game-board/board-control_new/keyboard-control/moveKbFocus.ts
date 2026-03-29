@@ -1,3 +1,5 @@
+import { KBCarryState } from "./useKeyboardControlSystem";
+
 export type BoardNodeMeta = {
   region: "tableau" | "freecell" | "foundation";
   regionIndex: number; // which tableau col
@@ -33,8 +35,8 @@ export const moveKbFocus = (
   e: React.KeyboardEvent<HTMLDivElement>,
   direction: "left" | "right" | "up" | "down",
   kbFocusableEls: HTMLElement[],
-  activeFocusIndex: number,
-  setActiveFocusIndex: React.Dispatch<React.SetStateAction<number>>
+  kbState: KBCarryState,
+  setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>
 ) => {
   e.preventDefault();
 
@@ -46,13 +48,16 @@ export const moveKbFocus = (
     if (activeEl && kbFocusableEls.includes(activeEl)) return activeEl;
     return (
       kbFocusableEls[
-        Math.max(0, Math.min(activeFocusIndex, kbFocusableEls.length - 1))
+        Math.max(
+          0,
+          Math.min(kbState.activeFocusIndex, kbFocusableEls.length - 1)
+        )
       ] ?? null
     );
   };
 
   const focusOn = (index: number) => {
-    setActiveFocusIndex(index);
+    setKbState((prev) => ({ ...prev, activeFocusIndex: index }));
     const nextEl =
       kbFocusableEls[Math.max(0, Math.min(index, kbFocusableEls.length - 1))];
     if (!nextEl) return;

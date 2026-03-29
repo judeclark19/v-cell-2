@@ -35,7 +35,7 @@ function Board() {
   return (
     <>
       <div
-        className={`board-border ${boardController.kbCarrying ? "is-kb-carrying" : ""}`}
+        className={`board-border ${boardController.kbState.carrying ? "is-kb-carrying" : ""}`}
         key={sessionPhase === "ready" ? seed : "loading"}
       >
         <div

@@ -30,7 +30,7 @@ function Foundation({
   card,
   boardController
 }: FoundationProps) {
-  const { kbCarrying, cardFlight, drag, handleFoundationPointerDown } =
+  const { kbState, cardFlight, drag, handleFoundationPointerDown } =
     boardController;
 
   const rules = useSelector(selectRules);
@@ -82,8 +82,8 @@ function Foundation({
       ref={(el) => boardController.setFoundationRef(foundationIndex, el)}
       key={i}
       className="pile-cell"
-      data-kb-focusable={kbCarrying && isEmptySlot ? "true" : undefined}
-      role={kbCarrying && isEmptySlot ? "button" : undefined}
+      data-kb-focusable={kbState.carrying && isEmptySlot ? "true" : undefined}
+      role={kbState.carrying && isEmptySlot ? "button" : undefined}
       aria-label={
         isEmptySlot
           ? `Foundation ${foundationIndex + 1} empty slot`

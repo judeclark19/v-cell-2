@@ -7,38 +7,44 @@ import {
 import { startKbCarrying, stopKbCarrying } from "./keyboardCarrying";
 import { AppDispatch } from "@/state/reduxStore";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
+import { KBCarryRefs, KBCarryState } from "./useKeyboardControlSystem";
+import { RefObject } from "react";
 
 export const onKCSSpace = (
   e: React.KeyboardEvent<HTMLDivElement>,
   boardRef: React.RefObject<HTMLDivElement | null>,
-  kbCarrying: boolean,
-  setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>,
-  kbCarriedElRef: React.RefObject<HTMLElement | null>,
+  kbState: KBCarryState,
+  setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,
+  kbCarryRefs: RefObject<KBCarryRefs>,
   tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>,
-  kbDropTargetElRef: React.RefObject<HTMLElement | null>,
   legalMoves: Move[],
   dispatch: AppDispatch,
   uid: string | null
 ) => {
   e.preventDefault();
 
-  if (kbCarrying) {
+  const { carrying } = kbState;
+  const { carriedEl, dropTargetEl } = kbCarryRefs.current!;
+
+  if (carrying && carriedEl) {
     // check if legal move
-    const source = resolveBoardSourceFromEl(kbCarriedElRef.current!);
-    const move = resolveMoveAttempt({
-      source,
-      stackLength:
-        source?.type === "tableau"
-          ? tableauCards[source.index]?.length - source.startIndex
-          : source
-            ? 1
-            : 0,
-      dropPileRef: getPileRefFromElement(kbDropTargetElRef.current!),
-      legalMoves
-    });
+    const source = resolveBoardSourceFromEl(carriedEl);
+    const move = dropTargetEl
+      ? resolveMoveAttempt({
+          source,
+          stackLength:
+            source?.type === "tableau"
+              ? tableauCards[source.index]?.length - source.startIndex
+              : source
+                ? 1
+                : 0,
+          dropPileRef: getPileRefFromElement(dropTargetEl),
+          legalMoves
+        })
+      : false;
 
     if (move) {
-      const movedCardId = kbCarriedElRef.current?.dataset.cardId ?? null;
+      const movedCardId = carriedEl?.dataset.cardId ?? null;
 
       // apply the move
       dispatch(applyMoveThunk({ move, uid }));
@@ -54,25 +60,18 @@ export const onKCSSpace = (
         movedCardEl?.focus({ preventScroll: true });
       });
     } else {
-      const carriedCardEl = kbCarriedElRef.current;
-
       requestAnimationFrame(() => {
         // focus back on original card if move was not successful
-        carriedCardEl?.focus({ preventScroll: true });
+        carriedEl?.focus({ preventScroll: true });
       });
     }
 
-    stopKbCarrying(
-      boardRef.current,
-      kbCarriedElRef,
-      kbDropTargetElRef,
-      setKbCarrying
-    );
+    stopKbCarrying(boardRef.current, kbCarryRefs, setKbState);
   } else {
     const activeEl = document.activeElement as HTMLElement | null;
-    if (!activeEl) return;
+    if (!activeEl || !activeEl.classList.contains("is-playable")) return;
 
-    startKbCarrying(boardRef.current, activeEl, kbCarriedElRef, setKbCarrying);
+    startKbCarrying(boardRef.current, activeEl, kbCarryRefs, setKbState);
   }
   return;
 };

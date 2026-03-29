@@ -22,7 +22,7 @@ function FreeCells({
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const playable = useSelector(selectPlayableMask);
 
-  const { kbCarrying, cardFlight } = boardController;
+  const { kbState, cardFlight } = boardController;
 
   return (
     <div className="board-bottom" aria-label="Free cells">
@@ -50,9 +50,7 @@ function FreeCells({
           <div
             key={i}
             className="pile-cell"
-            // ref={(el) => boardController.setFreeCellRef(i - 1, el)}
-            data-kb-focusable={kbCarrying && !card ? "true" : undefined}
-            role={kbCarrying && !card ? "button" : undefined}
+            role={kbState.carrying && !card ? "button" : undefined}
             aria-label={!card ? `Free cell ${i} empty slot` : `Free cell ${i}`}
           >
             {/* Always show the slot */}
@@ -61,6 +59,8 @@ function FreeCells({
               region="freecell"
               regionIndex={i}
               className="pile-slot"
+              data-kb-focusable={kbState.carrying && !card ? "true" : undefined}
+              tabIndex={kbState.carrying && !card ? -1 : undefined}
             />
 
             {/* If a card exists, render it on top of the slot */}
@@ -92,8 +92,8 @@ function FreeCells({
                     card={card}
                     region="freecell"
                     regionIndex={i}
-                    playable={playable.freeCells[i]} // -1 accounts for spacer
-                    data-kb-focusable={playable.freeCells[i] ? "true" : "false"}
+                    playable={playable.freeCells[i]}
+                    data-kb-focusable={true}
                     className="pile-card"
                     onActivate={(el) => boardController.tryAutoFoundation(el)}
                     onPointerDownCard={(e) =>

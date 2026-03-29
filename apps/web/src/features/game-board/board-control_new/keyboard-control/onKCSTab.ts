@@ -1,10 +1,12 @@
+import { KBCarryState } from "./useKeyboardControlSystem";
+
 export const onKCSTab = (
   e: React.KeyboardEvent<HTMLDivElement>,
-  setKbCarrying: React.Dispatch<React.SetStateAction<boolean>>,
+  setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,
   boardRef: React.RefObject<HTMLDivElement | null>
 ) => {
   console.log("Tab key pressed in onKCSTab");
-  setKbCarrying(false);
+  setKbState((prev) => ({ ...prev, carrying: false }));
   // TODO: visuals.clearKbCarryVisuals();
 
   // Forward Tab can use the browser's normal traversal.

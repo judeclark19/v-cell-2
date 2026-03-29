@@ -8,7 +8,7 @@ function Tableau({
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  const { kbCarrying, cardFlight } = boardController;
+  const { kbState, cardFlight } = boardController;
 
   // game slice
   const playable = useSelector(selectPlayableMask);
@@ -55,7 +55,7 @@ function Tableau({
               <div
                 className="tableau-empty-slot"
                 data-kb-focusable={
-                  kbCarrying && showEmptySlot ? "true" : "false"
+                  kbState.carrying && showEmptySlot ? "true" : "false"
                 }
                 role="button"
                 aria-hidden={!showEmptySlot}
