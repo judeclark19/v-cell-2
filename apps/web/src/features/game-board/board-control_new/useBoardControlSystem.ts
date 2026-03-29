@@ -14,6 +14,7 @@ import { useCallback, useRef } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel_new";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
+import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -35,35 +36,6 @@ export function useBoardControlSystem(
   const foundationRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   // Functions=========================================================
-  const resolveBoardSourceFromEl = (el: HTMLElement): BoardSource | null => {
-    const region = el.dataset.region;
-    const indexRaw = el.dataset.regionIndex;
-
-    if (!region || indexRaw == null) return null;
-
-    const index = Number(indexRaw);
-    if (Number.isNaN(index)) return null;
-
-    if (region === "tableau") {
-      const startIndexRaw = el.dataset.positionInStack;
-      if (startIndexRaw == null) return null;
-
-      const startIndex = Number(startIndexRaw);
-      if (Number.isNaN(startIndex)) return null;
-
-      return { type: "tableau", index, startIndex };
-    }
-
-    if (region === "freecell") {
-      return { type: "freecell", index };
-    }
-
-    if (region === "foundation") {
-      return { type: "foundation", index };
-    }
-
-    return null;
-  };
 
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement) => {
@@ -112,7 +84,6 @@ export function useBoardControlSystem(
     uid,
     dispatch,
     startCardFlight,
-    resolveBoardSourceFromEl,
     foundationCards,
     foundationRefs,
     tableauCards,
@@ -120,7 +91,9 @@ export function useBoardControlSystem(
   });
 
   const keyboard = useKeyboardControlSystem({
-    boardRef
+    boardRef,
+    tableauCards,
+    legalMoves
   });
 
   const pointer = usePointerControlSystem({

@@ -2,7 +2,7 @@ import type { KeyboardEvent } from "react";
 import { selectIsAutoCompleting } from "@/state/game/gameSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
 import { useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 import { moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
@@ -12,14 +12,30 @@ import {
   stopKbCarrying,
   setKeyboardDropTarget
 } from "./keyboardCarrying";
+import {
+  getPileRefFromDropTarget,
+  resolveBoardSourceFromEl,
+  resolveMoveAttempt
+} from "../resolveMoveAttempt";
+import { Card, Move } from "@vcell/engine";
+import { applyMoveThunk } from "@/state/game/thunks/applyMove";
+import { selectUid } from "@/state/auth/authSlice";
+import { AppDispatch } from "@/state/reduxStore";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
+  tableauCards: { card: Card; faceDown: boolean }[][];
+  legalMoves: Move[];
 };
 
 export function useKeyboardControlSystem({
-  boardRef
+  boardRef,
+  tableauCards,
+  legalMoves
 }: UseKeyboardControlSystemArgs) {
+  const dispatch = useDispatch<AppDispatch>();
+  const uid = useSelector(selectUid);
+
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
@@ -51,12 +67,37 @@ export function useKeyboardControlSystem({
       e.preventDefault();
 
       if (kbCarrying) {
-        // resume here
-        console.log(
-          "check for legal move between ",
-          kbCarriedElRef.current,
-          kbDropTargetElRef.current
-        );
+        // check if legal move
+        const source = resolveBoardSourceFromEl(kbCarriedElRef.current!);
+        const movedCardId = kbCarriedElRef.current?.dataset.cardId ?? null;
+        const move = resolveMoveAttempt({
+          source,
+          stackLength:
+            source?.type === "tableau"
+              ? tableauCards[source.index]?.length - source.startIndex
+              : source
+                ? 1
+                : 0,
+          dropPileRef: getPileRefFromDropTarget(kbDropTargetElRef.current!),
+          legalMoves
+        });
+
+        if (move) {
+          // apply the move
+          dispatch(applyMoveThunk({ move, uid }));
+
+          // focus the moved card in its new position after the board re-renders
+          requestAnimationFrame(() => {
+            if (!movedCardId || !boardRef.current) return;
+
+            const movedCardEl = boardRef.current.querySelector<HTMLElement>(
+              `[data-card-id="${movedCardId}"]`
+            );
+
+            movedCardEl?.focus({ preventScroll: true });
+          });
+        }
+
         stopKbCarrying(
           boardRef.current,
           kbCarriedElRef,

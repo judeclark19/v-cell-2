@@ -3,7 +3,10 @@ import type { DragState } from "./dragState";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
-import { getPileRefFromDropTarget, resolveDropMove } from "../resolveDropMove";
+import {
+  getPileRefFromDropTarget,
+  resolveMoveAttempt
+} from "../resolveMoveAttempt";
 import { selectUid } from "@/state/auth/authSlice";
 import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 
@@ -94,7 +97,12 @@ export function useGlobalPointerDrag({
       }
 
       const dropPileRef = getPileRefFromDropTarget(dropTarget);
-      const move = resolveDropMove(cur, dropPileRef, legalMoves);
+      const move = resolveMoveAttempt({
+        source: cur.source,
+        stackLength: cur.stack.length,
+        dropPileRef,
+        legalMoves
+      });
 
       // if legal move, apply it
       if (move) {

@@ -2,15 +2,14 @@ import { AppDispatch } from "@/state/reduxStore";
 import { Card, Move } from "@vcell/engine";
 import { DropTarget } from "./useCardFlight";
 import { useCallback } from "react";
-import { BoardSource } from "./useBoardControlSystem";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
+import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
 
 export function useTryAutoFoundation({
   legalMoves,
   uid,
   dispatch,
   startCardFlight,
-  resolveBoardSourceFromEl,
   foundationCards,
   foundationRefs,
   tableauCards,
@@ -26,7 +25,6 @@ export function useTryAutoFoundation({
     dropTarget: DropTarget;
     durationMs?: number;
   }) => void;
-  resolveBoardSourceFromEl: (el: HTMLElement) => BoardSource | null;
   foundationCards: Array<Card | null>;
   foundationRefs: React.RefObject<Array<HTMLDivElement | null>>;
   tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>;
@@ -100,7 +98,6 @@ export function useTryAutoFoundation({
       startCardFlight,
       legalMoves,
       uid,
-      resolveBoardSourceFromEl,
       getCardForSingleMove,
       getFoundationDropEl
     ]

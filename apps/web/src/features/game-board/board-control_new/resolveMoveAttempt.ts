@@ -6,11 +6,48 @@ import type {
   FoundationIndex
 } from "@vcell/engine";
 import { DragState } from "./pointer-control/dragState";
+import { BoardSource } from "./useBoardControlSystem";
+
+export const resolveBoardSourceFromEl = (
+  el: HTMLElement
+): BoardSource | null => {
+  const region = el.dataset.region;
+  const indexRaw = el.dataset.regionIndex;
+
+  if (!region || indexRaw == null) return null;
+
+  const index = Number(indexRaw);
+  if (Number.isNaN(index)) return null;
+
+  if (region === "tableau") {
+    const startIndexRaw = el.dataset.positionInStack;
+    if (startIndexRaw == null) return null;
+
+    const startIndex = Number(startIndexRaw);
+    if (Number.isNaN(startIndex)) return null;
+
+    return { type: "tableau", index, startIndex };
+  }
+
+  if (region === "freecell") {
+    return { type: "freecell", index };
+  }
+
+  if (region === "foundation") {
+    return { type: "foundation", index };
+  }
+
+  return null;
+};
 
 export const getPileRefFromDropTarget = (
   dropTarget: HTMLElement
 ): PileRef | null => {
-  if (!dropTarget.dataset.region || !dropTarget.dataset.regionIndex)
+  if (
+    !dropTarget ||
+    !dropTarget.dataset.region ||
+    !dropTarget.dataset.regionIndex
+  )
     return null;
 
   const region = dropTarget.dataset.region;
@@ -29,20 +66,25 @@ export const getPileRefFromDropTarget = (
   return null;
 };
 
-export const resolveDropMove = (
-  drag: DragState,
-  dropPileRef: PileRef | null,
-  legalMoves: Move[]
-): Move | null => {
-  if (!drag.source || !dropPileRef) return null;
+type MoveResolutionArgs = {
+  source: BoardSource | null;
+  stackLength: number;
+  dropPileRef: PileRef | null;
+  legalMoves: Move[];
+};
 
-  const source = drag.source;
+export function resolveMoveAttempt({
+  source,
+  stackLength,
+  dropPileRef,
+  legalMoves
+}: MoveResolutionArgs): Move | null {
+  if (!source || !dropPileRef) return null;
 
-  // Multi-card tableau drag onto tableau
   if (
     source.type === "tableau" &&
     dropPileRef.type === "tableau" &&
-    drag.stack.length > 1
+    stackLength > 1
   ) {
     return (
       legalMoves.find(
@@ -55,7 +97,6 @@ export const resolveDropMove = (
     );
   }
 
-  // Everything else is a single-card move
   return (
     legalMoves.find(
       (m) =>
@@ -66,4 +107,4 @@ export const resolveDropMove = (
         m.to.index === dropPileRef.index
     ) ?? null
   );
-};
+}
