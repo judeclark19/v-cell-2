@@ -60,7 +60,7 @@ function FreeCells({
               regionIndex={i}
               className="pile-slot"
               data-kb-focusable={kbState.carrying && !card ? "true" : undefined}
-              tabIndex={kbState.carrying && !card ? -1 : undefined}
+              tabIndex={-1}
             />
 
             {/* If a card exists, render it on top of the slot */}

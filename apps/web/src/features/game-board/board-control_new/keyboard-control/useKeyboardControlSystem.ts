@@ -1,14 +1,17 @@
 import type { KeyboardEvent } from "react";
-import { selectIsAutoCompleting } from "@/state/game/gameSlice";
+import {
+  selectIsAutoCompleting,
+  selectMoveCount
+} from "@/state/game/gameSlice";
 import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
-import { moveKbFocus } from "./moveKbFocus";
+import { focusOnPileRef, moveKbFocus } from "./moveKbFocus";
 import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
 import { stopKbCarrying, setKeyboardDropTarget } from "./keyboardCarrying";
-import { Card, Move } from "@vcell/engine";
+import { Card, Move, PileRef } from "@vcell/engine";
 import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { onKCSSpace } from "./onKCSSpace";
@@ -18,7 +21,8 @@ type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
   tableauCards: { card: Card; faceDown: boolean }[][];
   legalMoves: Move[];
-  tryAutoFreeCell: (el: HTMLElement) => void;
+  tryAutoFreeCell: (el: HTMLElement) => boolean;
+  tryAutoFoundation: (el: HTMLElement) => boolean;
 };
 
 export type KBCarryState = {
@@ -31,13 +35,15 @@ export type KBCarryRefs = {
   lastFocusPoint: { x: number; y: number } | null;
   carriedEl: HTMLElement | null;
   dropTargetEl: HTMLElement | null;
+  pendingFocusPileRef: PileRef | null;
 };
 
 export function useKeyboardControlSystem({
   boardRef,
   tableauCards,
   legalMoves,
-  tryAutoFreeCell
+  tryAutoFreeCell,
+  tryAutoFoundation
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -47,6 +53,7 @@ export function useKeyboardControlSystem({
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
+  const moveCount = useSelector(selectMoveCount);
 
   // local state and refs
   const [kbState, setKbState] = useState<KBCarryState>({
@@ -55,14 +62,23 @@ export function useKeyboardControlSystem({
     activeFocusIndex: 0
   });
 
-  const kbCarryRefs = useRef<KBCarryRefs>({
+  const kbRefs = useRef<KBCarryRefs>({
     lastFocusPoint: null,
     carriedEl: null,
-    dropTargetEl: null
+    dropTargetEl: null,
+    pendingFocusPileRef: null
   });
 
   // derived
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
+
+  useEffect(() => {
+    if (!kbRefs.current.pendingFocusPileRef) return;
+
+    focusOnPileRef(kbRefs.current.pendingFocusPileRef);
+    kbRefs.current.pendingFocusPileRef = null;
+    console.log("pending focus pile ref effect ran");
+  }, [moveCount]);
 
   // ----- Event handlers -----
   const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -84,7 +100,7 @@ export function useKeyboardControlSystem({
         boardRef,
         kbState,
         setKbState,
-        kbCarryRefs,
+        kbRefs,
         tableauCards,
         legalMoves,
         dispatch,
@@ -95,17 +111,33 @@ export function useKeyboardControlSystem({
 
     // Esc: stop carrying
     if (e.key === "Escape") {
-      stopKbCarrying(boardRef.current, kbCarryRefs, setKbState);
+      stopKbCarrying(boardRef.current, kbRefs, setKbState);
       return;
     }
 
+    // const sourcePileRef = getPileRefFromElement(els[kbState.activeFocusIndex]);
+
     // C: tryAutoFreeCell
     if (e.key.toLowerCase() === "c") {
-      const sourcePileRef = getPileRefFromElement(
-        els[kbState.activeFocusIndex]
-      );
-      if (!sourcePileRef) return;
-      tryAutoFreeCell(els[kbState.activeFocusIndex]);
+      // if (!sourcePileRef) return;
+      const didMove = tryAutoFreeCell(els[kbState.activeFocusIndex]);
+      if (didMove) {
+        kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
+          els[kbState.activeFocusIndex]
+        );
+      }
+    }
+
+    // F: tryAutoFoundation
+    if (e.key.toLowerCase() === "f") {
+      const didMove = tryAutoFoundation(els[kbState.activeFocusIndex]);
+
+      if (didMove) {
+        console.log("did autofoundation F ");
+        kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
+          els[kbState.activeFocusIndex]
+        );
+      }
     }
 
     // Arrow keys: move focus within the board
@@ -169,7 +201,7 @@ export function useKeyboardControlSystem({
     if (!root) return;
 
     if (!root.contains(e.relatedTarget as Node | null)) {
-      stopKbCarrying(root, kbCarryRefs, setKbState);
+      stopKbCarrying(root, kbRefs, setKbState);
     }
   };
 
@@ -188,23 +220,24 @@ export function useKeyboardControlSystem({
 
     // Track spatial position
     const r = target.getBoundingClientRect();
-    kbCarryRefs.current.lastFocusPoint = {
+    kbRefs.current.lastFocusPoint = {
       x: r.left + r.width / 2,
       y: r.top + r.height / 2
     };
 
     // Carry mode behavior
     if (kbState.carrying) {
-      if (target !== kbCarryRefs.current.carriedEl) {
-        setKeyboardDropTarget(target, kbCarryRefs);
+      if (target !== kbRefs.current.carriedEl) {
+        setKeyboardDropTarget(target, kbRefs);
       } else {
-        setKeyboardDropTarget(null, kbCarryRefs);
+        setKeyboardDropTarget(null, kbRefs);
       }
     }
   };
 
   return {
     kbState,
+    kbRefs,
     stopKbCarrying,
     isInputSuppressed,
     onKCSKeydown,

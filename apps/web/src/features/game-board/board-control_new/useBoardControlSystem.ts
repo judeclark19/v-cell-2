@@ -38,7 +38,7 @@ export function useBoardControlSystem(
   // Functions=========================================================
 
   const tryAutoFreeCell = useCallback(
-    (el: HTMLElement) => {
+    (el: HTMLElement): boolean => {
       // 1. Resolve the board source from the element.
       const from = resolveBoardSourceFromEl(el);
       if (!from) return false;
@@ -94,7 +94,8 @@ export function useBoardControlSystem(
     boardRef,
     tableauCards,
     legalMoves,
-    tryAutoFreeCell
+    tryAutoFreeCell,
+    tryAutoFoundation
   });
 
   const pointer = usePointerControlSystem({

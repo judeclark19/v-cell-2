@@ -50,13 +50,9 @@ function Tableau({
               key={colIndex}
               className="tableau-col"
               aria-label={`Tableau column ${colIndex + 1}`}
-              // ref={(el) => boardController.setTableauColRef(colIndex, el)}
             >
               <div
                 className="tableau-empty-slot"
-                data-kb-focusable={
-                  kbState.carrying && showEmptySlot ? "true" : "false"
-                }
                 role="button"
                 aria-hidden={!showEmptySlot}
                 aria-label={`Tableau column ${colIndex + 1} empty slot`}
@@ -66,7 +62,11 @@ function Tableau({
                   emptyLabel="K"
                   region="tableau"
                   regionIndex={colIndex}
-                  data-tableauindex={-1}
+                  positionInStack={-1}
+                  data-kb-focusable={
+                    kbState.carrying && showEmptySlot ? "true" : undefined
+                  }
+                  tabIndex={kbState.carrying && showEmptySlot ? -1 : undefined}
                 />
               </div>
 

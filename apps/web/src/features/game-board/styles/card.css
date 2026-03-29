@@ -110,6 +110,10 @@
   outline: none;
 }
 
+.card-slot:focus {
+    box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset),
+    var(--card-shadow-hover);
+}
 .card:focus .card-face--front,
 .card:focus-visible .card-face--front {
   background-color: color-mix(

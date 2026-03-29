@@ -58,7 +58,7 @@ export function useTryAutoFoundation({
   );
 
   const tryAutoFoundation = useCallback(
-    (el: HTMLElement) => {
+    (el: HTMLElement): boolean => {
       // 1. Resolve the board source from the element.
       const from = resolveBoardSourceFromEl(el);
       if (!from) return false;

@@ -89,6 +89,8 @@ function Card({
         style={style}
         data-region={region}
         data-region-index={regionIndex}
+        data-position-in-stack={positionInStack}
+        tabIndex={restDivProps.tabIndex ?? -1}
       >
         {emptyLabel && <span className="empty-label">{emptyLabel}</span>}
       </div>

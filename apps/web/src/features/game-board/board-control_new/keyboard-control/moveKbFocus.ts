@@ -1,3 +1,4 @@
+import { PileRef } from "@vcell/engine";
 import { KBCarryState } from "./useKeyboardControlSystem";
 
 export type BoardNodeMeta = {
@@ -31,6 +32,41 @@ const getNodeMeta = (el: HTMLElement): BoardNodeMeta | null => {
   };
 };
 
+const getFreeCellCardCandidates = () =>
+  Array.from(
+    document.querySelectorAll<HTMLElement>(`[data-region="freecell"][data-card-id]`)
+  );
+
+export const focusOnPileRef = (ref: PileRef) => {
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      `[data-region="${ref.type}"][data-region-index="${ref.index}"].card-slot, ` +
+        `[data-region="${ref.type}"][data-region-index="${ref.index}"].is-playable`
+    )
+  );
+
+  if (!candidates || candidates.length === 0) return;
+  const el = candidates[candidates.length - 1];
+
+  requestAnimationFrame(() => {
+    el.focus();
+    console.log(
+      "focused?",
+      document.activeElement === el,
+      el,
+      document.activeElement
+    );
+  });
+
+  setTimeout(() => {
+    console.log(
+      "focused after delay?",
+
+      document.activeElement
+    );
+  }, 500);
+};
+
 export const moveKbFocus = (
   e: React.KeyboardEvent<HTMLDivElement>,
   direction: "left" | "right" | "up" | "down",
@@ -45,7 +81,7 @@ export const moveKbFocus = (
   //   Helper functions
   const getActiveFocusableEl = () => {
     const activeEl = document.activeElement as HTMLElement | null;
-    if (activeEl && kbFocusableEls.includes(activeEl)) return activeEl;
+    if (activeEl && getNodeMeta(activeEl)) return activeEl;
     return (
       kbFocusableEls[
         Math.max(
@@ -163,10 +199,66 @@ export const moveKbFocus = (
   }
   if (!from.meta) return;
 
-  // ----- Horizontal same-region logic for freecells/foundations -----
+  // ----- Horizontal freecell logic -----
   if (
     (direction === "left" || direction === "right") &&
-    (from.meta.region === "freecell" || from.meta.region === "foundation")
+    from.meta.region === "freecell"
+  ) {
+    const freeCellCards = getFreeCellCardCandidates();
+    let bestSameRegionIdx = -1;
+    let bestRegionDelta = Number.POSITIVE_INFINITY;
+    let bestDx = Number.POSITIVE_INFINITY;
+
+    for (const el of freeCellCards) {
+      if (el === from.el) continue;
+
+      const to = {
+        el,
+        center: getCenter(el),
+        meta: getNodeMeta(el)
+      };
+
+      if (!to.meta) continue;
+
+      if (
+        direction === "right" &&
+        to.meta.regionIndex <= from.meta.regionIndex
+      ) {
+        continue;
+      }
+
+      if (
+        direction === "left" &&
+        to.meta.regionIndex >= from.meta.regionIndex
+      ) {
+        continue;
+      }
+
+      const regionDelta = Math.abs(to.meta.regionIndex - from.meta.regionIndex);
+      const dx = Math.abs(to.center.x - from.center.x);
+
+      if (
+        regionDelta < bestRegionDelta ||
+        (regionDelta === bestRegionDelta && dx < bestDx)
+      ) {
+        bestRegionDelta = regionDelta;
+        bestDx = dx;
+        bestSameRegionIdx = kbFocusableEls.indexOf(el);
+      }
+    }
+
+    if (bestSameRegionIdx >= 0) {
+      focusOn(bestSameRegionIdx);
+      return;
+    }
+
+    return;
+  }
+
+  // ----- Horizontal foundation logic -----
+  if (
+    (direction === "left" || direction === "right") &&
+    from.meta.region === "foundation"
   ) {
     let bestSameRegionIdx = -1;
     let bestRegionDelta = Number.POSITIVE_INFINITY;
