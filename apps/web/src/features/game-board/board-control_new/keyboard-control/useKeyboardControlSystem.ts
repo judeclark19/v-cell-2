@@ -16,13 +16,17 @@ import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { onKCSSpace } from "./onKCSSpace";
 import { getPileRefFromElement } from "../resolveMoveAttempt";
+import { StartCardFlightArgs } from "../useCardFlight";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
+  foundationCards: Array<Card | null>;
   tableauCards: { card: Card; faceDown: boolean }[][];
+  freeCellCards: Array<Card | null>;
   legalMoves: Move[];
   tryAutoFreeCell: (el: HTMLElement) => boolean;
   tryAutoFoundation: (el: HTMLElement) => boolean;
+  startCardFlight: (args: StartCardFlightArgs) => void;
 };
 
 export type KBCarryState = {
@@ -40,10 +44,13 @@ export type KBCarryRefs = {
 
 export function useKeyboardControlSystem({
   boardRef,
+  foundationCards,
   tableauCards,
+  freeCellCards,
   legalMoves,
   tryAutoFreeCell,
-  tryAutoFoundation
+  tryAutoFoundation,
+  startCardFlight
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -101,7 +108,10 @@ export function useKeyboardControlSystem({
         kbState,
         setKbState,
         kbRefs,
+        startCardFlight,
+        foundationCards,
         tableauCards,
+        freeCellCards,
         legalMoves,
         dispatch,
         uid

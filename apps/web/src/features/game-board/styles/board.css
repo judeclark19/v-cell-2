@@ -108,6 +108,12 @@
   z-index: 1;
 }
 
+/* Locked tableau cards are purely visual, so don't let them block the
+   exposed playable card beneath when the stack overlaps. */
+.tableau-col > .card.is-locked {
+  pointer-events: none;
+}
+
 /* Tableau stack overlap */
 .tableau-col > :is(.card, .card-slot) + :is(.card, .card-slot) {
   margin-top: -107%;

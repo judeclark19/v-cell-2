@@ -81,10 +81,13 @@ export function useBoardControlSystem(
 
   const keyboard = useKeyboardControlSystem({
     boardRef,
+    foundationCards,
     tableauCards,
+    freeCellCards,
     legalMoves,
     tryAutoFreeCell,
-    tryAutoFoundation
+    tryAutoFoundation,
+    startCardFlight
   });
 
   const pointer = usePointerControlSystem({

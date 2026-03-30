@@ -41,6 +41,8 @@ export function usePointerControlSystem({
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
     if (!rules.allowFoundationPullback) return;
 
     const pile = foundations[index];
@@ -69,6 +71,8 @@ export function usePointerControlSystem({
     index: number,
     tcIndex: number
   ) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
     // 1. If this card is not playable, return
     if (!playable.tableau[index][tcIndex]) return;
 
@@ -132,6 +136,8 @@ export function usePointerControlSystem({
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
     const card = freeCells[index];
     if (!card) return;
     if (!playable.freeCells[index]) return;

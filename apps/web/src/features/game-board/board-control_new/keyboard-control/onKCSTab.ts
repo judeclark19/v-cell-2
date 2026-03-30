@@ -7,7 +7,6 @@ export const onKCSTab = (
 ) => {
   console.log("Tab key pressed in onKCSTab");
   setKbState((prev) => ({ ...prev, carrying: false }));
-  // TODO: visuals.clearKbCarryVisuals();
 
   // Forward Tab can use the browser's normal traversal.
   if (!e.shiftKey) return;

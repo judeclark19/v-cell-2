@@ -17,6 +17,14 @@ export type CardFlightState = {
   durationMs?: number;
 };
 
+export type StartCardFlightArgs = {
+  fromEl: HTMLElement;
+  toEl: HTMLElement;
+  stack: Card[];
+  dropTarget: DropTarget;
+  durationMs?: number;
+};
+
 function emptyCardFlight(): CardFlightState {
   return {
     active: false,
@@ -40,13 +48,7 @@ export function useCardFlight() {
       stack,
       dropTarget,
       durationMs
-    }: {
-      fromEl: HTMLElement;
-      toEl: HTMLElement;
-      stack: Card[];
-      dropTarget: DropTarget;
-      durationMs?: number;
-    }) => {
+    }: StartCardFlightArgs) => {
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
 

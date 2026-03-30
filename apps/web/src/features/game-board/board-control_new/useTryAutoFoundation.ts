@@ -1,6 +1,6 @@
 import { AppDispatch } from "@/state/reduxStore";
 import { Card, Move } from "@vcell/engine";
-import { DropTarget } from "./useCardFlight";
+import { StartCardFlightArgs } from "./useCardFlight";
 import { useCallback } from "react";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
@@ -17,13 +17,7 @@ export function useTryAutoFoundation({
   legalMoves: Move[];
   uid: string | null;
   dispatch: AppDispatch;
-  startCardFlight: (args: {
-    fromEl: HTMLElement;
-    toEl: HTMLElement;
-    stack: Card[];
-    dropTarget: DropTarget;
-    durationMs?: number;
-  }) => void;
+  startCardFlight: (args: StartCardFlightArgs) => void;
   foundationCards: Array<Card | null>;
   tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>;
   freeCellCards: Array<Card | null>;
@@ -70,7 +64,6 @@ export function useTryAutoFoundation({
       // 3. If flight data is available, start card flight.
       const toIndex = match.to.index;
 
-      // const toEl = getFoundationDropEl(toIndex);
       const toEl = document.querySelector(
         `.pile-slot[data-region="foundation"][data-region-index="${toIndex}"]`
       ) as HTMLDivElement | null;

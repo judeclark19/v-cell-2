@@ -74,6 +74,13 @@ function Card({
 
   const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     onPointerDownFromProps?.(e);
+
+    // Preserve native right-click/context-menu behavior for the card itself.
+    // Dragging should only begin from the primary mouse button (or touch/pen).
+    if (e.pointerType === "mouse" && e.button !== 0) {
+      return;
+    }
+
     // Card is a pure view: it never drags itself. Board-level drag (via onPointerDownCard)
     // is the only drag implementation.
     if (onPointerDownCard) {
@@ -123,9 +130,17 @@ function Card({
       }}
       onContextMenu={(e) => {
         e.preventDefault();
+        console.log("Right-click on card", {
+          card,
+          faceDown,
+          canActivate,
+          onActivate,
+          onAutoFreeCell
+        });
 
         // Right-click: try foundation first (onActivate). If that fails, fall back to free cell.
         if (!card || faceDown) return;
+
         if (!onActivate && !onAutoFreeCell) return;
 
         const activated =
