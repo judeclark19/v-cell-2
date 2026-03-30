@@ -79,7 +79,6 @@ function Foundation({
 
   return (
     <div
-      ref={(el) => boardController.setFoundationRef(foundationIndex, el)}
       key={i}
       className="pile-cell"
       data-kb-focusable={kbState.carrying && isEmptySlot ? "true" : undefined}

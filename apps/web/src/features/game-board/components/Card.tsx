@@ -123,6 +123,7 @@ function Card({
       }}
       onContextMenu={(e) => {
         e.preventDefault();
+
         // Right-click: try foundation first (onActivate). If that fails, fall back to free cell.
         if (!card || faceDown) return;
         if (!onActivate && !onAutoFreeCell) return;

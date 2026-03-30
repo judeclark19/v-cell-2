@@ -10,7 +10,7 @@ import {
 import { selectUid } from "@/state/auth/authSlice";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel_new";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
@@ -33,9 +33,6 @@ export function useBoardControlSystem(
   const foundationCards = useSelector(selectFoundationCards);
   const tableauCards = useSelector(selectTableauCards);
   const freeCellCards = useSelector(selectFreeCellCards);
-  const foundationRefs = useRef<Array<HTMLDivElement | null>>([]);
-
-  // Functions=========================================================
 
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement): boolean => {
@@ -69,13 +66,6 @@ export function useBoardControlSystem(
     [dispatch, legalMoves, uid]
   );
 
-  const setFoundationRef = useCallback(
-    (index: number, el: HTMLDivElement | null) => {
-      foundationRefs.current[index] = el;
-    },
-    []
-  );
-
   // Hooks ============================================================
   const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
 
@@ -85,7 +75,6 @@ export function useBoardControlSystem(
     dispatch,
     startCardFlight,
     foundationCards,
-    foundationRefs,
     tableauCards,
     freeCellCards
   });
@@ -111,7 +100,6 @@ export function useBoardControlSystem(
     cardFlight,
     startCardFlight,
     clearCardFlight,
-    setFoundationRef,
     tryAutoFoundation,
     tryAutoFreeCell
   };

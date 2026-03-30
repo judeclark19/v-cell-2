@@ -11,7 +11,6 @@ export function useTryAutoFoundation({
   dispatch,
   startCardFlight,
   foundationCards,
-  foundationRefs,
   tableauCards,
   freeCellCards
 }: {
@@ -26,7 +25,6 @@ export function useTryAutoFoundation({
     durationMs?: number;
   }) => void;
   foundationCards: Array<Card | null>;
-  foundationRefs: React.RefObject<Array<HTMLDivElement | null>>;
   tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>;
   freeCellCards: Array<Card | null>;
 }) {
@@ -52,11 +50,6 @@ export function useTryAutoFoundation({
     [tableauCards, foundationCards, freeCellCards]
   );
 
-  const getFoundationDropEl = useCallback(
-    (index: number) => foundationRefs.current[index] ?? null,
-    [foundationRefs]
-  );
-
   const tryAutoFoundation = useCallback(
     (el: HTMLElement): boolean => {
       // 1. Resolve the board source from the element.
@@ -77,7 +70,11 @@ export function useTryAutoFoundation({
       // 3. If flight data is available, start card flight.
       const toIndex = match.to.index;
 
-      const toEl = getFoundationDropEl(toIndex);
+      // const toEl = getFoundationDropEl(toIndex);
+      const toEl = document.querySelector(
+        `.pile-slot[data-region="foundation"][data-region-index="${toIndex}"]`
+      ) as HTMLDivElement | null;
+
       const card = getCardForSingleMove(match);
       if (card && toEl) {
         startCardFlight({
@@ -98,8 +95,8 @@ export function useTryAutoFoundation({
       startCardFlight,
       legalMoves,
       uid,
-      getCardForSingleMove,
-      getFoundationDropEl
+      getCardForSingleMove
+      // getFoundationDropEl
     ]
   );
 

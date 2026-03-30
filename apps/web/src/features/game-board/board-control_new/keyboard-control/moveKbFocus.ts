@@ -34,7 +34,9 @@ const getNodeMeta = (el: HTMLElement): BoardNodeMeta | null => {
 
 const getFreeCellCardCandidates = () =>
   Array.from(
-    document.querySelectorAll<HTMLElement>(`[data-region="freecell"][data-card-id]`)
+    document.querySelectorAll<HTMLElement>(
+      `[data-region="freecell"][data-card-id]`
+    )
   );
 
 export const focusOnPileRef = (ref: PileRef) => {
@@ -46,25 +48,11 @@ export const focusOnPileRef = (ref: PileRef) => {
   );
 
   if (!candidates || candidates.length === 0) return;
-  const el = candidates[candidates.length - 1];
 
+  // focus on the last candidate (the top card in the pile)
   requestAnimationFrame(() => {
-    el.focus();
-    console.log(
-      "focused?",
-      document.activeElement === el,
-      el,
-      document.activeElement
-    );
+    candidates[candidates.length - 1].focus();
   });
-
-  setTimeout(() => {
-    console.log(
-      "focused after delay?",
-
-      document.activeElement
-    );
-  }, 500);
 };
 
 export const moveKbFocus = (
