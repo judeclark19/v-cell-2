@@ -115,15 +115,6 @@ export default function BoardModals() {
           overlayAriaLabel="Game paused"
           title="Paused"
           buttonAriaLabel="Resume game"
-          onOverlayKeyDown={(e) => {
-            // pressing P to resume while pause modal is open is allowed
-            if (e.key.toLowerCase() !== "p") return;
-
-            e.preventDefault();
-            e.stopPropagation();
-            dispatch(closePauseModal());
-            dispatch(setPaused(false));
-          }}
           onClose={() => {
             dispatch(closePauseModal());
             dispatch(setPaused(false));

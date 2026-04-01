@@ -1,5 +1,6 @@
 import { PileRef } from "@vcell/engine";
 import { KBCarryState } from "./useKeyboardControlSystem";
+// import { KbEventLike } from "./onKCSTab";
 
 export type BoardNodeMeta = {
   region: "tableau" | "freecell" | "foundation";
@@ -56,7 +57,7 @@ export const focusOnPileRef = (ref: PileRef) => {
 };
 
 export const moveKbFocus = (
-  e: React.KeyboardEvent<HTMLDivElement>,
+  e: React.KeyboardEvent,
   direction: "left" | "right" | "up" | "down",
   kbFocusableEls: HTMLElement[],
   kbState: KBCarryState,

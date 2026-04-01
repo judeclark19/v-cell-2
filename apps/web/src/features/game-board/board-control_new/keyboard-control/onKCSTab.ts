@@ -1,7 +1,7 @@
 import { KBCarryState } from "./useKeyboardControlSystem";
 
 export const onKCSTab = (
-  e: React.KeyboardEvent<HTMLDivElement>,
+  e: React.KeyboardEvent,
   setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,
   boardRef: React.RefObject<HTMLDivElement | null>
 ) => {

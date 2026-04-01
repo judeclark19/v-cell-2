@@ -10,6 +10,7 @@ import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { KBCarryRefs, KBCarryState } from "./useKeyboardControlSystem";
 import { RefObject } from "react";
 import { StartCardFlightArgs } from "../useCardFlight";
+import { KbEventLike } from "./onKCSTab";
 
 function findTableauTailAnchorEl(
   root: HTMLElement | null,
@@ -25,7 +26,7 @@ function findTableauTailAnchorEl(
 }
 
 export const onKCSSpace = (
-  e: React.KeyboardEvent<HTMLDivElement>,
+  e: KbEventLike,
   boardRef: React.RefObject<HTMLDivElement | null>,
   kbState: KBCarryState,
   setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,

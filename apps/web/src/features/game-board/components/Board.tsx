@@ -44,9 +44,6 @@ function Board() {
           aria-label="Game board"
           ref={boardRef}
           tabIndex={boardController.isInputSuppressed ? -1 : 0}
-          onKeyDown={(e) => {
-            boardController.onKCSKeydown(e);
-          }}
           onPointerDownCapture={boardController.onKCSPointerDown}
           onFocusCapture={boardController.onKCSFocusCapture}
           onBlurCapture={boardController.onKCSBlurCapture}

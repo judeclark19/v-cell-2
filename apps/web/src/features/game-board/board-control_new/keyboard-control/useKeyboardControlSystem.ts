@@ -1,15 +1,14 @@
-import type { KeyboardEvent } from "react";
 import {
   selectIsAutoCompleting,
   selectMoveCount,
   selectStatus
 } from "@/state/game/gameSlice";
 import {
+  closePauseModal,
   openPauseModal,
-  selectIsAnyModalOpen,
-  selectPauseModal
+  selectIsAnyModalOpen
 } from "@/state/ui/uiSlice";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
 import { focusOnPileRef, moveKbFocus } from "./moveKbFocus";
@@ -98,6 +97,19 @@ export function useKeyboardControlSystem({
 
   // derived
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
+
+  const isTypingTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+
+    const tag = target.tagName;
+    return (
+      tag === "INPUT" ||
+      tag === "TEXTAREA" ||
+      tag === "SELECT" ||
+      target.isContentEditable
+    );
+  };
+
   useEffect(() => {
     if (!kbRefs.current.pendingFocusPileRef) return;
 
@@ -107,7 +119,23 @@ export function useKeyboardControlSystem({
   }, [moveCount]);
 
   // ----- Event handlers -----
-  const onKCSKeydown = async (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleGameKeydown = useCallback(async (e: KeyboardEvent) => {
+    if (e.defaultPrevented) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (isTypingTarget(e.target)) return;
+
+    if (e.key.toLowerCase() === "p") {
+      e.preventDefault();
+      if (paused && isAnyModalOpen) {
+        dispatch(closePauseModal());
+        dispatch(setPaused(false));
+      } else if (!paused) {
+        dispatch(openPauseModal());
+        dispatch(setPaused(true));
+      }
+      return;
+    }
+
     if (isInputSuppressed || !boardRef.current) return;
     const els = getKbFocusables(boardRef.current);
     if (els.length === 0) return;
@@ -155,15 +183,7 @@ export function useKeyboardControlSystem({
         }));
       if (!ok) return;
       newDeal();
-    }
-
-    // P: pause
-    if (e.key.toLowerCase() === "p") {
-      console.log("kcs p");
-      if (!paused) {
-        dispatch(openPauseModal());
-        dispatch(setPaused(true));
-      }
+      return;
     }
 
     // C: tryAutoFreeCell
@@ -201,7 +221,39 @@ export function useKeyboardControlSystem({
       moveKbFocus(e, directionMap[e.key], els, kbState, setKbState);
       return;
     }
-  };
+  }, [
+    boardRef,
+    dispatch,
+    foundationCards,
+    freeCellCards,
+    isAnyModalOpen,
+    isInputSuppressed,
+    kbState,
+    legalMoves,
+    newDeal,
+    paused,
+    startedAtMs,
+    startCardFlight,
+    status,
+    tableauCards,
+    tryAutoFoundation,
+    tryAutoFreeCell,
+    uid
+  ]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleGameKeydown);
+    return () => {
+      window.removeEventListener("keydown", handleGameKeydown);
+    };
+  }, [handleGameKeydown]);
+
+  const onKCSKeydown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      void handleGameKeydown(e.nativeEvent);
+    },
+    [handleGameKeydown]
+  );
 
   const onKCSPointerDown = (e: React.PointerEvent) => {
     if (isInputSuppressed) return;
