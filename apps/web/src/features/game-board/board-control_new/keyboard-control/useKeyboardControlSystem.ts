@@ -31,7 +31,7 @@ type UseKeyboardControlSystemArgs = {
 
 export type KBCarryState = {
   carrying: boolean;
-  carryingLabel: string;
+  carryingLabel: string | null;
   activeFocusIndex: number;
 };
 
@@ -65,7 +65,7 @@ export function useKeyboardControlSystem({
   // local state and refs
   const [kbState, setKbState] = useState<KBCarryState>({
     carrying: false,
-    carryingLabel: "",
+    carryingLabel: null,
     activeFocusIndex: 0
   });
 

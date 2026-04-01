@@ -6,7 +6,7 @@ export const onKCSTab = (
   boardRef: React.RefObject<HTMLDivElement | null>
 ) => {
   console.log("Tab key pressed in onKCSTab");
-  setKbState((prev) => ({ ...prev, carrying: false }));
+  setKbState((prev) => ({ ...prev, carrying: false, carryingLabel: null }));
 
   // Forward Tab can use the browser's normal traversal.
   if (!e.shiftKey) return;

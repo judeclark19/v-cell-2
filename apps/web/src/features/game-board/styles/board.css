@@ -210,7 +210,7 @@
 }
 
 .board-border.is-kb-carrying::after {
-  content: "Carrying — choose a target";
+   content: attr(data-carrying-label);
   position: absolute;
   top: 6px;
   left: 50%;
