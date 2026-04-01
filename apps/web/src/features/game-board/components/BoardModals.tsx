@@ -2,7 +2,6 @@ import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import {
-  selectPaused,
   selectSessionId,
   selectTimeElapsedMs,
   setPaused
@@ -12,8 +11,10 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { selectMoveCount } from "@/state/game/gameSlice";
 import {
+  closePauseModal,
   closeWinModal,
   selectConfirmModal,
+  selectPauseModal,
   selectWinModal
 } from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
@@ -37,7 +38,6 @@ export default function BoardModals() {
   const isUser = useSelector(selectUid) !== null;
   // Session state
   const sessionId = useSelector(selectSessionId);
-  const paused = useSelector(selectPaused);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const confirmReq = useSelector(selectConfirmModal);
   // Game state
@@ -46,6 +46,7 @@ export default function BoardModals() {
   const completedGames = useSelector(selectCompletedGames);
   // ui state
   const winModal = useSelector(selectWinModal);
+  const pauseModal = useSelector(selectPauseModal);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -109,12 +110,24 @@ export default function BoardModals() {
         />
       )}
 
-      {paused && (
+      {pauseModal && (
         <ModalOverlay
           overlayAriaLabel="Game paused"
           title="Paused"
           buttonAriaLabel="Resume game"
-          onClose={() => dispatch(setPaused(false))}
+          onOverlayKeyDown={(e) => {
+            // pressing P to resume while pause modal is open is allowed
+            if (e.key.toLowerCase() !== "p") return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            dispatch(closePauseModal());
+            dispatch(setPaused(false));
+          }}
+          onClose={() => {
+            dispatch(closePauseModal());
+            dispatch(setPaused(false));
+          }}
           bodyText="Timer is paused. Gameplay is disabled until you resume."
           primaryButtonLabel="Resume"
         />

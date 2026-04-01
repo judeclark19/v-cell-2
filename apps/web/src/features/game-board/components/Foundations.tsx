@@ -13,7 +13,7 @@ import {
   selectStartedAtMs,
   selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
-import { selectShowTimer, setIsAnyModalOpen } from "@/state/ui/uiSlice";
+import { openPauseModal, selectShowTimer } from "@/state/ui/uiSlice";
 import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
 import { RootState } from "@/state/reduxStore";
 
@@ -160,7 +160,7 @@ function Foundations({
             aria-label="Pause timer"
             type="button"
             onClick={() => {
-              dispatch(setIsAnyModalOpen(true));
+              dispatch(openPauseModal());
               dispatch(setPaused(true));
             }}
             disabled={

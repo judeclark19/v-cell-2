@@ -13,6 +13,7 @@ type ModalOverlayProps = {
   primaryButtonAction?: () => void;
   secondaryButtonLabel?: string;
   secondaryButtonAction?: () => void;
+  onOverlayKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
 };
 
 export default function ModalOverlay({
@@ -24,7 +25,8 @@ export default function ModalOverlay({
   primaryButtonLabel,
   primaryButtonAction = onClose,
   secondaryButtonLabel,
-  secondaryButtonAction = onClose
+  secondaryButtonAction = onClose,
+  onOverlayKeyDown
 }: ModalOverlayProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -66,6 +68,9 @@ export default function ModalOverlay({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    onOverlayKeyDown?.(e);
+    if (e.defaultPrevented) return;
+
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();

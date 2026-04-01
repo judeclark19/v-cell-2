@@ -6,6 +6,7 @@ export interface UiState {
   settingsHydrated: boolean;
   confirmModal: ConfirmRequest | null;
   winModal: boolean;
+  pauseModal: boolean;
   isAnyModalOpen: boolean;
 }
 
@@ -14,6 +15,7 @@ const initialState: UiState = {
   settingsHydrated: false,
   confirmModal: null,
   winModal: false,
+  pauseModal: false,
   isAnyModalOpen: false
 };
 
@@ -37,8 +39,22 @@ const uiSlice = createSlice({
       state.winModal = false;
       state.isAnyModalOpen = false;
     },
+    openPauseModal: (state) => {
+      state.pauseModal = true;
+      state.isAnyModalOpen = true;
+    },
+    closePauseModal: (state) => {
+      state.pauseModal = false;
+      state.isAnyModalOpen = false;
+    },
     setIsAnyModalOpen: (state, action: PayloadAction<boolean>) => {
       state.isAnyModalOpen = action.payload;
+
+      if (!action.payload) {
+        state.confirmModal = null;
+        state.winModal = false;
+        state.pauseModal = false;
+      }
     },
     setShowTimer: (state, action: PayloadAction<boolean>) => {
       state.showTimer = action.payload;
@@ -54,6 +70,8 @@ export const {
   closeConfirmModal,
   openWinModal,
   closeWinModal,
+  openPauseModal,
+  closePauseModal,
   setShowTimer,
   setSettingsHydrated,
   setIsAnyModalOpen
@@ -68,3 +86,4 @@ export const selectSettingsHydrated = (state: { ui: UiState }) =>
 export const selectIsAnyModalOpen = (state: { ui: UiState }) =>
   state.ui.isAnyModalOpen;
 export const selectWinModal = (state: { ui: UiState }) => state.ui.winModal;
+export const selectPauseModal = (state: { ui: UiState }) => state.ui.pauseModal;

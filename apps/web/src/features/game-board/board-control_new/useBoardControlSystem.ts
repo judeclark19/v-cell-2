@@ -79,6 +79,8 @@ export function useBoardControlSystem(
     freeCellCards
   });
 
+  const gameModel = useGameModel();
+
   const keyboard = useKeyboardControlSystem({
     boardRef,
     foundationCards,
@@ -87,14 +89,13 @@ export function useBoardControlSystem(
     legalMoves,
     tryAutoFreeCell,
     tryAutoFoundation,
-    startCardFlight
+    startCardFlight,
+    newDeal: gameModel.newDeal
   });
 
   const pointer = usePointerControlSystem({
     onCardDoubleTap: tryAutoFoundation
   });
-
-  const gameModel = useGameModel();
 
   return {
     ...keyboard,

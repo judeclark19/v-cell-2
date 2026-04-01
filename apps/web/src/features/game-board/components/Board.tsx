@@ -45,11 +45,6 @@ function Board() {
           ref={boardRef}
           tabIndex={boardController.isInputSuppressed ? -1 : 0}
           onKeyDown={(e) => {
-            if (boardController.isInputSuppressed) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
             boardController.onKCSKeydown(e);
           }}
           onPointerDownCapture={boardController.onKCSPointerDown}

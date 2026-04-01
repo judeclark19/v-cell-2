@@ -1,9 +1,14 @@
 import type { KeyboardEvent } from "react";
 import {
   selectIsAutoCompleting,
-  selectMoveCount
+  selectMoveCount,
+  selectStatus
 } from "@/state/game/gameSlice";
-import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
+import {
+  openPauseModal,
+  selectIsAnyModalOpen,
+  selectPauseModal
+} from "@/state/ui/uiSlice";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { onKCSTab } from "./onKCSTab";
@@ -17,6 +22,12 @@ import { AppDispatch } from "@/state/reduxStore";
 import { onKCSSpace } from "./onKCSSpace";
 import { getPileRefFromElement } from "../resolveMoveAttempt";
 import { StartCardFlightArgs } from "../useCardFlight";
+import {
+  selectPaused,
+  selectStartedAtMs,
+  setPaused
+} from "@/state/session/sessionSlice";
+import { requestConfirmation } from "@/state/ui/requestConfirmation";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
@@ -27,6 +38,7 @@ type UseKeyboardControlSystemArgs = {
   tryAutoFreeCell: (el: HTMLElement) => boolean;
   tryAutoFoundation: (el: HTMLElement) => boolean;
   startCardFlight: (args: StartCardFlightArgs) => void;
+  newDeal: () => void;
 };
 
 export type KBCarryState = {
@@ -50,17 +62,25 @@ export function useKeyboardControlSystem({
   legalMoves,
   tryAutoFreeCell,
   tryAutoFoundation,
-  startCardFlight
+  startCardFlight,
+  newDeal
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
 
   // auth slice
   const uid = useSelector(selectUid);
 
-  // ui slice
-  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
+  // Session slice
+  const startedAtMs = useSelector(selectStartedAtMs);
+  const paused = useSelector(selectPaused);
+
+  // game slice
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const moveCount = useSelector(selectMoveCount);
+  const status = useSelector(selectStatus);
+
+  // ui slice
+  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
 
   // local state and refs
   const [kbState, setKbState] = useState<KBCarryState>({
@@ -78,7 +98,6 @@ export function useKeyboardControlSystem({
 
   // derived
   const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
-
   useEffect(() => {
     if (!kbRefs.current.pendingFocusPileRef) return;
 
@@ -88,9 +107,8 @@ export function useKeyboardControlSystem({
   }, [moveCount]);
 
   // ----- Event handlers -----
-  const onKCSKeydown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const onKCSKeydown = async (e: KeyboardEvent<HTMLDivElement>) => {
     if (isInputSuppressed || !boardRef.current) return;
-
     const els = getKbFocusables(boardRef.current);
     if (els.length === 0) return;
 
@@ -125,7 +143,28 @@ export function useKeyboardControlSystem({
       return;
     }
 
-    // const sourcePileRef = getPileRefFromElement(els[kbState.activeFocusIndex]);
+    // N: new deal (with confirm first)
+    if (e.key.toLowerCase() === "n") {
+      const ok =
+        !(startedAtMs && status === "in_progress") ||
+        (await requestConfirmation({
+          title: "Start a new deal?",
+          bodyText: "Starting a new deal will abandon your current game.",
+          confirmLabel: "New deal",
+          cancelLabel: "Cancel"
+        }));
+      if (!ok) return;
+      newDeal();
+    }
+
+    // P: pause
+    if (e.key.toLowerCase() === "p") {
+      console.log("kcs p");
+      if (!paused) {
+        dispatch(openPauseModal());
+        dispatch(setPaused(true));
+      }
+    }
 
     // C: tryAutoFreeCell
     if (e.key.toLowerCase() === "c") {
