@@ -8,13 +8,13 @@ import {
   selectTableauCards
 } from "@/state/game/gameSlice";
 import { selectUid } from "@/state/auth/authSlice";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { AppDispatch } from "@/state/reduxStore";
 import { useCallback } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel_new";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
-import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
+import { Card, Move } from "@vcell/engine";
+import { useTryAutoFreeCell } from "./useTryAutoFreeCell";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -34,49 +34,45 @@ export function useBoardControlSystem(
   const tableauCards = useSelector(selectTableauCards);
   const freeCellCards = useSelector(selectFreeCellCards);
 
-  const tryAutoFreeCell = useCallback(
-    (el: HTMLElement): boolean => {
-      // 1. Resolve the board source from the element.
-      const from = resolveBoardSourceFromEl(el);
-      if (!from) return false;
+  const getCardForSingleMove = useCallback(
+    (move: Move): Card | null => {
+      if (move.kind !== "single") return null;
 
-      // 2. Find legal single-card moves from this source to a free cell.
-      const candidates = legalMoves
-        .filter((m) => {
-          if (m.kind !== "single") return false;
-          if (m.to.type !== "freecell") return false;
+      if (move.from.type === "tableau") {
+        const column = tableauCards[move.from.index];
+        return column?.[column.length - 1]?.card ?? null;
+      }
 
-          if (from.type === "tableau") {
-            return m.from.type === "tableau" && m.from.index === from.index;
-          }
+      if (move.from.type === "freecell") {
+        return freeCellCards[move.from.index] ?? null;
+      }
 
-          return m.from.type === from.type && m.from.index === from.index;
-        })
-        .sort((a, b) => a.to.index - b.to.index);
+      if (move.from.type === "foundation") {
+        return foundationCards[move.from.index] ?? null;
+      }
 
-      const move = candidates[0];
-      if (!move) return false;
-
-      // 3. Commit the move.
-      dispatch(applyMoveThunk({ move, uid }));
-
-      // 4. Return whether a move was made.
-      return true;
+      return null;
     },
-    [dispatch, legalMoves, uid]
+    [tableauCards, foundationCards, freeCellCards]
   );
 
   // Hooks ============================================================
   const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
+
+  const { tryAutoFreeCell } = useTryAutoFreeCell({
+    legalMoves,
+    startCardFlight,
+    getCardForSingleMove,
+    dispatch,
+    uid
+  });
 
   const { tryAutoFoundation } = useTryAutoFoundation({
     legalMoves,
     uid,
     dispatch,
     startCardFlight,
-    foundationCards,
-    tableauCards,
-    freeCellCards
+    getCardForSingleMove
   });
 
   const gameModel = useGameModel();
@@ -90,7 +86,8 @@ export function useBoardControlSystem(
     tryAutoFreeCell,
     tryAutoFoundation,
     startCardFlight,
-    newDeal: gameModel.newDeal
+    newDeal: gameModel.newDeal,
+    restart: gameModel.restart
   });
 
   const pointer = usePointerControlSystem({

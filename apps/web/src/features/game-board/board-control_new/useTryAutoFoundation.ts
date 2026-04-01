@@ -10,40 +10,14 @@ export function useTryAutoFoundation({
   uid,
   dispatch,
   startCardFlight,
-  foundationCards,
-  tableauCards,
-  freeCellCards
+  getCardForSingleMove
 }: {
   legalMoves: Move[];
   uid: string | null;
   dispatch: AppDispatch;
   startCardFlight: (args: StartCardFlightArgs) => void;
-  foundationCards: Array<Card | null>;
-  tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>;
-  freeCellCards: Array<Card | null>;
+  getCardForSingleMove: (move: Move) => Card | null;
 }) {
-  const getCardForSingleMove = useCallback(
-    (move: Move): Card | null => {
-      if (move.kind !== "single") return null;
-
-      if (move.from.type === "tableau") {
-        const column = tableauCards[move.from.index];
-        return column?.[column.length - 1]?.card ?? null;
-      }
-
-      if (move.from.type === "freecell") {
-        return freeCellCards[move.from.index] ?? null;
-      }
-
-      if (move.from.type === "foundation") {
-        return foundationCards[move.from.index] ?? null;
-      }
-
-      return null;
-    },
-    [tableauCards, foundationCards, freeCellCards]
-  );
-
   const tryAutoFoundation = useCallback(
     (el: HTMLElement): boolean => {
       // 1. Resolve the board source from the element.
@@ -83,14 +57,7 @@ export function useTryAutoFoundation({
       // 5. Return whether a move was made.
       return true;
     },
-    [
-      dispatch,
-      startCardFlight,
-      legalMoves,
-      uid,
-      getCardForSingleMove
-      // getFoundationDropEl
-    ]
+    [dispatch, startCardFlight, legalMoves, uid, getCardForSingleMove]
   );
 
   return { tryAutoFoundation };

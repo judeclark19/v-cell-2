@@ -38,6 +38,7 @@ type UseKeyboardControlSystemArgs = {
   tryAutoFoundation: (el: HTMLElement) => boolean;
   startCardFlight: (args: StartCardFlightArgs) => void;
   newDeal: () => void;
+  restart: () => void;
 };
 
 export type KBCarryState = {
@@ -62,7 +63,8 @@ export function useKeyboardControlSystem({
   tryAutoFreeCell,
   tryAutoFoundation,
   startCardFlight,
-  newDeal
+  newDeal,
+  restart
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -119,127 +121,135 @@ export function useKeyboardControlSystem({
   }, [moveCount]);
 
   // ----- Event handlers -----
-  const handleGameKeydown = useCallback(async (e: KeyboardEvent) => {
-    if (e.defaultPrevented) return;
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
-    if (isTypingTarget(e.target)) return;
+  const handleGameKeydown = useCallback(
+    async (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (isTypingTarget(e.target)) return;
 
-    if (e.key.toLowerCase() === "p") {
-      e.preventDefault();
-      if (paused && isAnyModalOpen) {
-        dispatch(closePauseModal());
-        dispatch(setPaused(false));
-      } else if (!paused) {
-        dispatch(openPauseModal());
-        dispatch(setPaused(true));
+      if (e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        if (paused && isAnyModalOpen) {
+          dispatch(closePauseModal());
+          dispatch(setPaused(false));
+        } else if (!paused) {
+          dispatch(openPauseModal());
+          dispatch(setPaused(true));
+        }
+        return;
       }
-      return;
-    }
 
-    if (isInputSuppressed || !boardRef.current) return;
-    const els = getKbFocusables(boardRef.current);
-    if (els.length === 0) return;
+      if (isInputSuppressed || !boardRef.current) return;
+      const els = getKbFocusables(boardRef.current);
+      if (els.length === 0) return;
 
-    // Tab: focus exists the board
-    if (e.key === "Tab") {
-      onKCSTab(e, setKbState, boardRef);
-      return;
-    }
+      // Tab: focus exists the board
+      if (e.key === "Tab") {
+        onKCSTab(e, setKbState, boardRef);
+        return;
+      }
 
-    // Space: toggle kbCarrying
-    if (e.key === " ") {
-      onKCSSpace(
-        e,
-        boardRef,
-        kbState,
-        setKbState,
-        kbRefs,
-        startCardFlight,
-        foundationCards,
-        tableauCards,
-        freeCellCards,
-        legalMoves,
-        dispatch,
-        uid
-      );
-      return;
-    }
-
-    // Esc: stop carrying
-    if (e.key === "Escape") {
-      stopKbCarrying(boardRef.current, kbRefs, setKbState);
-      return;
-    }
-
-    // N: new deal (with confirm first)
-    if (e.key.toLowerCase() === "n") {
-      const ok =
-        !(startedAtMs && status === "in_progress") ||
-        (await requestConfirmation({
-          title: "Start a new deal?",
-          bodyText: "Starting a new deal will abandon your current game.",
-          confirmLabel: "New deal",
-          cancelLabel: "Cancel"
-        }));
-      if (!ok) return;
-      newDeal();
-      return;
-    }
-
-    // C: tryAutoFreeCell
-    if (e.key.toLowerCase() === "c") {
-      // if (!sourcePileRef) return;
-      const didMove = tryAutoFreeCell(els[kbState.activeFocusIndex]);
-      if (didMove) {
-        kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
-          els[kbState.activeFocusIndex]
+      // Space: toggle kbCarrying
+      if (e.key === " ") {
+        onKCSSpace(
+          e,
+          boardRef,
+          kbState,
+          setKbState,
+          kbRefs,
+          startCardFlight,
+          foundationCards,
+          tableauCards,
+          freeCellCards,
+          legalMoves,
+          dispatch,
+          uid
         );
+        return;
       }
-    }
 
-    // F: tryAutoFoundation
-    if (e.key.toLowerCase() === "f") {
-      const didMove = tryAutoFoundation(els[kbState.activeFocusIndex]);
-
-      if (didMove) {
-        console.log("did autofoundation F ");
-        kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
-          els[kbState.activeFocusIndex]
-        );
+      // Esc: stop carrying
+      if (e.key === "Escape") {
+        stopKbCarrying(boardRef.current, kbRefs, setKbState);
+        return;
       }
-    }
 
-    // Arrow keys: move focus within the board
-    const directionMap: Record<string, "left" | "right" | "up" | "down"> = {
-      ArrowLeft: "left",
-      ArrowRight: "right",
-      ArrowUp: "up",
-      ArrowDown: "down"
-    };
+      // N: new deal (with confirm first)
+      if (e.key.toLowerCase() === "n") {
+        const ok =
+          !(startedAtMs && status === "in_progress") ||
+          (await requestConfirmation({
+            title: "Start a new deal?",
+            bodyText: "Starting a new deal will abandon your current game.",
+            confirmLabel: "New deal",
+            cancelLabel: "Cancel"
+          }));
+        if (!ok) return;
+        newDeal();
+        return;
+      }
 
-    if (directionMap[e.key]) {
-      moveKbFocus(e, directionMap[e.key], els, kbState, setKbState);
-      return;
-    }
-  }, [
-    boardRef,
-    dispatch,
-    foundationCards,
-    freeCellCards,
-    isAnyModalOpen,
-    isInputSuppressed,
-    kbState,
-    legalMoves,
-    newDeal,
-    paused,
-    startedAtMs,
-    startCardFlight,
-    status,
-    tableauCards,
-    tryAutoFoundation,
-    tryAutoFreeCell,
-    uid
-  ]);
+      // R: restart
+      if (e.key.toLowerCase() === "r") {
+        restart();
+      }
+
+      // C: tryAutoFreeCell
+      if (e.key.toLowerCase() === "c") {
+        const didMove = tryAutoFreeCell(els[kbState.activeFocusIndex]);
+        if (didMove) {
+          kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
+            els[kbState.activeFocusIndex]
+          );
+        }
+      }
+
+      // F: tryAutoFoundation
+      if (e.key.toLowerCase() === "f") {
+        const didMove = tryAutoFoundation(els[kbState.activeFocusIndex]);
+
+        if (didMove) {
+          console.log("did autofoundation F ");
+          kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
+            els[kbState.activeFocusIndex]
+          );
+        }
+      }
+
+      // Arrow keys: move focus within the board
+      const directionMap: Record<string, "left" | "right" | "up" | "down"> = {
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        ArrowUp: "up",
+        ArrowDown: "down"
+      };
+
+      if (directionMap[e.key]) {
+        moveKbFocus(e, directionMap[e.key], els, kbState, setKbState);
+        return;
+      }
+    },
+    [
+      boardRef,
+      dispatch,
+      foundationCards,
+      freeCellCards,
+      isAnyModalOpen,
+      isInputSuppressed,
+      kbState,
+      legalMoves,
+      newDeal,
+      restart,
+      paused,
+      startedAtMs,
+      startCardFlight,
+      status,
+      tableauCards,
+      tryAutoFoundation,
+      tryAutoFreeCell,
+      uid
+    ]
+  );
 
   useEffect(() => {
     window.addEventListener("keydown", handleGameKeydown);
