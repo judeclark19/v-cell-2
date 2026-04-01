@@ -95,7 +95,6 @@ function FreeCells({
                     playable={playable.freeCells[i]}
                     data-kb-focusable={true}
                     className="pile-card"
-                    onActivate={(el) => boardController.tryAutoFoundation(el)}
                     onPointerDownCard={(e) =>
                       boardController.handleFreeCellPointerDown(e, i)
                     }

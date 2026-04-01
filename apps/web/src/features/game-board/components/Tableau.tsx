@@ -24,9 +24,7 @@ function Tableau({
               : null;
 
           const isDraggedFromThisCol =
-            (boardController.drag.active ||
-              boardController.drag.pending ||
-              boardController.drag.isReturning) &&
+            (boardController.drag.active || boardController.drag.isReturning) &&
             tableauSource != null &&
             tableauSource.index === colIndex;
 
@@ -71,6 +69,7 @@ function Tableau({
               </div>
 
               {col.map((tc, tcIndex) => {
+                const isTopCard = tcIndex === col.length - 1;
                 const inDraggedRange =
                   isDraggedFromThisCol &&
                   tableauSource != null &&
@@ -128,7 +127,11 @@ function Tableau({
                       playable.tableau[colIndex][tcIndex] ? "true" : "false"
                     }
                     style={{ zIndex: tcIndex + 1 }}
-                    onActivate={(el) => boardController.tryAutoFoundation(el)}
+                    onActivate={
+                      isTopCard
+                        ? (el) => boardController.tryAutoFoundation(el)
+                        : undefined
+                    }
                     onPointerDownCard={(e) =>
                       boardController.handleTableauPointerDown(
                         e,
@@ -136,8 +139,14 @@ function Tableau({
                         tcIndex
                       )
                     }
-                    onPointerUp={boardController.handleCardDoubleTap}
-                    onAutoFreeCell={(el) => boardController.tryAutoFreeCell(el)}
+                    onPointerUp={
+                      isTopCard ? boardController.handleCardDoubleTap : undefined
+                    }
+                    onAutoFreeCell={
+                      isTopCard
+                        ? (el) => boardController.tryAutoFreeCell(el)
+                        : undefined
+                    }
                   />
                 );
               })}
