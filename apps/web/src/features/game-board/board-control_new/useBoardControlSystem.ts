@@ -87,7 +87,8 @@ export function useBoardControlSystem(
     tryAutoFoundation,
     startCardFlight,
     newDeal: gameModel.newDeal,
-    restart: gameModel.restart
+    restart: gameModel.restart,
+    undo: gameModel.undo
   });
 
   const pointer = usePointerControlSystem({

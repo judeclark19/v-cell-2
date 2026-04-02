@@ -39,6 +39,7 @@ type UseKeyboardControlSystemArgs = {
   startCardFlight: (args: StartCardFlightArgs) => void;
   newDeal: () => void;
   restart: () => void;
+  undo: () => void;
 };
 
 export type KBCarryState = {
@@ -64,7 +65,8 @@ export function useKeyboardControlSystem({
   tryAutoFoundation,
   startCardFlight,
   newDeal,
-  restart
+  restart,
+  undo
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -194,6 +196,11 @@ export function useKeyboardControlSystem({
         restart();
       }
 
+      // U: undo
+      if (e.key.toLowerCase() === "u") {
+        undo();
+      }
+
       // C: tryAutoFreeCell
       if (e.key.toLowerCase() === "c") {
         const didMove = tryAutoFreeCell(els[kbState.activeFocusIndex]);
@@ -240,6 +247,7 @@ export function useKeyboardControlSystem({
       legalMoves,
       newDeal,
       restart,
+      undo,
       paused,
       startedAtMs,
       startCardFlight,

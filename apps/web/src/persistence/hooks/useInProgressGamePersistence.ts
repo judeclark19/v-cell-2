@@ -38,6 +38,7 @@ import {
   selectTimeElapsedMs,
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
+import { openPauseModal } from "@/state/ui/uiSlice";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -229,6 +230,9 @@ export function useInProgressGamePersistence({
         dispatch(setUndosUsed(saved.undosUsed));
         dispatch(setStatus(saved.status));
         dispatch(setPaused(saved.paused));
+        if (saved.paused) {
+          dispatch(openPauseModal());
+        }
         onHydrated?.(saved);
         armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
