@@ -119,7 +119,6 @@ export function useKeyboardControlSystem({
 
     focusOnPileRef(kbRefs.current.pendingFocusPileRef);
     kbRefs.current.pendingFocusPileRef = null;
-    console.log("pending focus pile ref effect ran");
   }, [moveCount]);
 
   // ----- Event handlers -----
@@ -216,7 +215,6 @@ export function useKeyboardControlSystem({
         const didMove = tryAutoFoundation(els[kbState.activeFocusIndex]);
 
         if (didMove) {
-          console.log("did autofoundation F ");
           kbRefs.current.pendingFocusPileRef = getPileRefFromElement(
             els[kbState.activeFocusIndex]
           );

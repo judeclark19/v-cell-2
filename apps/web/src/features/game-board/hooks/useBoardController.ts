@@ -37,7 +37,7 @@ export function useBoardController() {
     moveCount
   } = game;
 
-  // Game state
+  // Game slice
   const isFullyCollected = useSelector(selectIsFullyCollected);
   const playable = useSelector(selectPlayableMask);
   const legalMoves = useSelector(selectLegalMoves);

@@ -1,11 +1,11 @@
 /* 
 new stuff!
     */
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { createGame } from "@vcell/engine";
-import type { Move } from "@vcell/engine";
+import { getAutoCompleteMoves } from "@vcell/engine";
+import type { Card, Move, PileRef } from "@vcell/engine";
 
 import { AppDispatch } from "@/state/reduxStore";
 import {
@@ -14,26 +14,22 @@ import {
   selectStatus,
   selectHistory,
   selectUndoLimit,
-  hydrateHistory,
-  resetTimeline,
-  setUndosUsed,
-  setStatus,
   selectRules,
   selectSeed,
   restartCurrentGame,
   selectIsAutoCompleting,
+  selectIsFullyCollected,
   setIsAutoCompleting
 } from "@/state/game/gameSlice";
-import {
-  setEndedAtMs,
-  setCheckpoint,
-  selectPaused
-} from "@/state/session/sessionSlice";
+import { setCheckpoint } from "@/state/session/sessionSlice";
 import { applyMoveThunk } from "../thunks/applyMove";
 import { selectUid } from "@/state/auth/authSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 import { newDealThunk } from "@/state/session/thunks/newDeal";
-import { selectIsAnyModalOpen } from "@/state/ui/uiSlice";
+import {
+  CardFlightState,
+  StartCardFlightArgs
+} from "@/features/game-board/board-control_new/useCardFlight";
 
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
@@ -42,17 +38,18 @@ export type UseGameModelResult = {
   restartDeal: () => void;
   newDeal: () => void;
   startBySeed: (seed: string) => void;
-  runAutoComplete: () => void;
 };
 
-export function useGameModel(): UseGameModelResult {
+export function useGameModel(
+  cardFlight: CardFlightState,
+  startCardFlight: (args: StartCardFlightArgs) => void,
+  getCardForSingleMove: (move: Move) => Card | null,
+  getElFromPileRef: (pileRef: PileRef) => HTMLElement | null
+): UseGameModelResult {
   const dispatch = useDispatch<AppDispatch>();
 
   // Auth state
   const uid = useSelector(selectUid);
-
-  // session slice
-  const paused = useSelector(selectPaused);
 
   // Game slice
   const status = useSelector(selectStatus);
@@ -62,9 +59,52 @@ export function useGameModel(): UseGameModelResult {
   const undosUsed = useSelector(selectUndosUsed);
   const rules = useSelector(selectRules);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
+  const isFullyCollected = useSelector(selectIsFullyCollected);
 
-  // ui slice
-  const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
+  // Autocomplete effect
+  useEffect(() => {
+    if (!isAutoCompleting) return;
+    if (isAutoCompleting && isFullyCollected) {
+      dispatch(setIsAutoCompleting(false));
+      return;
+    }
+    if (isAutoCompleting && !cardFlight?.active) {
+      const move = getAutoCompleteMoves(history.present)[0];
+
+      if (move) {
+        const fromEl = getElFromPileRef(move.from);
+        const toEl = getElFromPileRef(move.to);
+        const cardToMove = getCardForSingleMove(move);
+
+        if (!fromEl || !toEl || !cardToMove) {
+          dispatch(setIsAutoCompleting(false));
+          return;
+        }
+
+        const toIndex = move.to.index;
+        dispatch(applyMoveThunk({ move, uid }));
+        startCardFlight({
+          fromEl,
+          toEl,
+          stack: [cardToMove],
+          dropTarget: { type: "foundation", index: toIndex },
+          durationMs: 50
+        });
+      } else {
+        dispatch(setIsAutoCompleting(false));
+      }
+    }
+  }, [
+    isAutoCompleting,
+    cardFlight?.active,
+    history.present,
+    isFullyCollected,
+    getCardForSingleMove,
+    getElFromPileRef,
+    startCardFlight,
+    dispatch,
+    uid
+  ]);
 
   const makeMove = useCallback(
     (move: Move) => {
@@ -86,17 +126,10 @@ export function useGameModel(): UseGameModelResult {
     dispatch(undoHistory());
   }, [status, history.past.length, undoLimit, undosUsed, dispatch]);
 
-  const restartDeleteMe = useCallback(() => {
-    // Restart should reset the deal back to its original position and clear history,
-    // but it should NOT affect the timer.
-    dispatch(hydrateHistory({ present: createGame(seed, rules), past: [] }));
-    dispatch(resetTimeline());
-    dispatch(setUndosUsed(0));
+  const restart = useCallback(() => {
+    dispatch(restartCurrentGame());
     dispatch(setCheckpoint(null));
-    dispatch(setEndedAtMs(null));
-    dispatch(setStatus("in_progress"));
-  }, [seed, rules, dispatch]);
-  // TODO: why is this called delete me lol
+  }, [dispatch]);
 
   const restartDeal = useCallback(() => {
     if (status === "won") {
@@ -110,10 +143,10 @@ export function useGameModel(): UseGameModelResult {
     }
 
     if (status === "in_progress") {
-      dispatch(restartCurrentGame());
+      restart();
       return;
     }
-  }, [dispatch, seed, rules, status]);
+  }, [dispatch, seed, rules, status, restart]);
 
   const newDeal = useCallback(() => {
     dispatch(newDealThunk({ rules, uid }));
@@ -126,35 +159,12 @@ export function useGameModel(): UseGameModelResult {
     [dispatch]
   );
 
-  const runAutoComplete = useCallback(async () => {
-    // Don’t start if we’re already running or if UI/game state blocks it.
-    if (isAutoCompleting) return;
-    if (paused) return;
-    if (isAnyModalOpen) return;
-    if (status !== "won") return;
-
-    dispatch(setIsAutoCompleting(true));
-
-    try {
-      while (true) {
-        // TODO: implement this
-        // 1. collect candidate source elements
-        // 2. try foundation moves in preferred order
-        // 3. if no move happened, break
-        // 4. await one animation/frame boundary
-      }
-    } finally {
-      dispatch(setIsAutoCompleting(false));
-    }
-  }, [isAutoCompleting, paused, isAnyModalOpen, status, dispatch]);
-
   return {
     makeMove,
     undo,
-    restart: restartDeleteMe,
+    restart,
     restartDeal,
     newDeal,
-    startBySeed,
-    runAutoComplete
+    startBySeed
   };
 }

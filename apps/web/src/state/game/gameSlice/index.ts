@@ -28,13 +28,13 @@ const initialState: GameStoreState = {
   seed: "seed-boot",
   status: null,
   rules: {
-    allowFoundationPullback: false,
+    allowFoundationPullback: true,
     undoLimit: "unlimited",
     faceDownCount: 7
   },
   history: {
     present: createGame("seed-boot", {
-      allowFoundationPullback: false,
+      allowFoundationPullback: true,
       undoLimit: "unlimited",
       faceDownCount: 7
     }),
@@ -64,6 +64,7 @@ export const {
   setUndosUsed,
   setUndoLimitRule,
   setFaceDownCountRule,
+  setAllowFoundationPullbackRule,
   setStatus,
   setIsAutoCompleting
 } = gameSlice.actions;

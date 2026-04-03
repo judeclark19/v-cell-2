@@ -54,7 +54,6 @@ export const startKbCarrying = (
   setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>
 ) => {
   if (!root) return;
-  console.log("carried el", cardIdToAlias(el?.dataset.cardId));
 
   // Clear old carried element
   if (kbCarryRefs.current.carriedEl && kbCarryRefs.current.carriedEl !== el) {

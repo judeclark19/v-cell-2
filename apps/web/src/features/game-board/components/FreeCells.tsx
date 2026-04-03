@@ -14,7 +14,7 @@ function FreeCells({
 }: {
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
-  const dispacth = useDispatch();
+  const dispatch = useDispatch();
 
   // game slice
   const freeCellCards = useSelector(selectFreeCellCards);
@@ -36,8 +36,8 @@ function FreeCells({
           type="button"
           className="btn btn--primary"
           onClick={() => {
-            if (isAutoCompleting) dispacth(setIsAutoCompleting(false));
-            else boardController.runAutoComplete();
+            if (isAutoCompleting) dispatch(setIsAutoCompleting(false));
+            else dispatch(setIsAutoCompleting(true));
           }}
           disabled={!showAcp}
         >

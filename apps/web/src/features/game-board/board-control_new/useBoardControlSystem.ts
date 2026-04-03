@@ -13,7 +13,7 @@ import { useCallback } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel_new";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
-import { Card, Move } from "@vcell/engine";
+import { Card, Move, PileRef } from "@vcell/engine";
 import { useTryAutoFreeCell } from "./useTryAutoFreeCell";
 
 export type BoardSource =
@@ -56,6 +56,23 @@ export function useBoardControlSystem(
     [tableauCards, foundationCards, freeCellCards]
   );
 
+  const getElFromPileRef = useCallback(
+    (pileRef: PileRef): HTMLElement | null => {
+      if (!boardRef.current) return null;
+      const candidates = Array.from(
+        boardRef.current.querySelectorAll<HTMLElement>(
+          `[data-region="${pileRef.type}"][data-region-index="${pileRef.index}"].card-slot, ` +
+            `[data-region="${pileRef.type}"][data-region-index="${pileRef.index}"].is-playable`
+        )
+      );
+
+      if (!candidates || candidates.length === 0) return null;
+
+      return candidates[candidates.length - 1];
+    },
+    [boardRef]
+  );
+
   // Hooks ============================================================
   const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
 
@@ -75,7 +92,12 @@ export function useBoardControlSystem(
     getCardForSingleMove
   });
 
-  const gameModel = useGameModel();
+  const gameModel = useGameModel(
+    cardFlight,
+    startCardFlight,
+    getCardForSingleMove,
+    getElFromPileRef
+  );
 
   const keyboard = useKeyboardControlSystem({
     boardRef,

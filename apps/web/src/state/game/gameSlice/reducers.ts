@@ -40,12 +40,11 @@ export const gameSliceReducers = {
     const initialGame = createGame(state.seed, state.rules);
     state.history.present = initialGame;
     state.history.past = [];
-
     state.moves = [];
     state.cursor = 0;
     // TODO: Have dad decide whether resetting moveCount and undosUsed on restart is desirable.
     // state.moveCount = 0;
-    // state.undosUsed = 0;
+    state.undosUsed = 0;
     state.status = "in_progress";
   },
   hydrateHistory: (
@@ -170,6 +169,9 @@ export const gameSliceReducers = {
   },
   setFaceDownCountRule: (state, action: PayloadAction<FaceDownCount>) => {
     state.rules.faceDownCount = action.payload;
+  },
+  setAllowFoundationPullbackRule: (state, action: PayloadAction<boolean>) => {
+    state.rules.allowFoundationPullback = action.payload;
   },
   setStatus: (state, action: PayloadAction<GameStatus | null>) => {
     state.status = action.payload;

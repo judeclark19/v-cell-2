@@ -152,7 +152,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   // THE NEW STUFF! :)
   // ---------------------------------------------------------------------------
-  const { makeMove, undo, restart } = useGameModel();
+  // const { makeMove, undo, restart } = useGameModel();
 
   // --------------------------(NEW STUFF ENDS)---------------------------------
 
@@ -171,13 +171,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ---------------------------------------------------------------------------
   const value: GameContextValue = {
     state: history.present,
-    makeMove,
+    makeMove: () => {
+      console.log("GameProvider makeMove");
+    },
     registerUiResets,
-    restart,
+    restart: () => {
+      console.log("GameProvider restart");
+    },
     newDeal,
     replaySeed,
     startBySeed,
-    undo,
+    undo: () => {
+      console.log("GameProvider undo");
+    },
     undosRemaining,
     moveCount,
     sessionId
