@@ -30,7 +30,8 @@ import {
   CardFlightState,
   StartCardFlightArgs
 } from "@/features/game-board/board-control_new/useCardFlight";
-
+import { openWinModal } from "@/state/ui/uiSlice";
+import { throwConfetti } from "../utils";
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
   undo: () => void;
@@ -105,6 +106,14 @@ export function useGameModel(
     dispatch,
     uid
   ]);
+
+  // win celebration
+  useEffect(() => {
+    if (status === "won" && isFullyCollected) {
+      dispatch(openWinModal());
+      throwConfetti();
+    }
+  }, [status, isFullyCollected, dispatch]);
 
   const makeMove = useCallback(
     (move: Move) => {
