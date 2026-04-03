@@ -6,12 +6,14 @@ import { AppDispatch } from "@/state/reduxStore";
 import { useCallback } from "react";
 
 export function useTryAutoFreeCell({
+  boardRef,
   legalMoves,
   startCardFlight,
   getCardForSingleMove,
   dispatch,
   uid
 }: {
+  boardRef: React.RefObject<HTMLDivElement | null>;
   legalMoves: Move[];
   startCardFlight: (args: StartCardFlightArgs) => void;
   getCardForSingleMove: (move: Move) => Card | null;
@@ -41,7 +43,7 @@ export function useTryAutoFreeCell({
       const move = candidates[0];
       if (!move) return false;
 
-      const toEl = document.querySelector(
+      const toEl = boardRef.current?.querySelector(
         `.pile-slot[data-region="freecell"][data-region-index="${move.to.index}"]`
       ) as HTMLDivElement | null;
 
@@ -61,7 +63,7 @@ export function useTryAutoFreeCell({
       // 4. Return whether a move was made.
       return true;
     },
-    [dispatch, legalMoves, uid, getCardForSingleMove, startCardFlight]
+    [dispatch, legalMoves, uid, getCardForSingleMove, startCardFlight, boardRef]
   );
 
   return { tryAutoFreeCell };

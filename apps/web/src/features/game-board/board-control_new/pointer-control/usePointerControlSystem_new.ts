@@ -7,10 +7,12 @@ import { DragState, emptyDragState } from "./dragState";
 import { useGlobalPointerDrag } from "./useGlobalPointerDrag_new";
 
 type UsePointerControlSystemArgs = {
+  boardRef: React.RefObject<HTMLDivElement | null>;
   onCardDoubleTap: (el: HTMLElement) => void;
 };
 
 export function usePointerControlSystem({
+  boardRef,
   onCardDoubleTap
 }: UsePointerControlSystemArgs) {
   const playable = useSelector(selectPlayableMask);
@@ -126,6 +128,7 @@ export function usePointerControlSystem({
   }, [setDrag]);
 
   useGlobalPointerDrag({
+    boardRef,
     drag,
     dragRef,
     setDrag,

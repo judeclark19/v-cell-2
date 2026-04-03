@@ -32,16 +32,16 @@ const getNodeMeta = (el: HTMLElement): BoardNodeMeta | null => {
   };
 };
 
-const getFreeCellCardCandidates = () =>
+const getFreeCellCardCandidates = (boardEl: HTMLDivElement) =>
   Array.from(
-    document.querySelectorAll<HTMLElement>(
+    boardEl.querySelectorAll<HTMLElement>(
       `[data-region="freecell"][data-card-id]`
     )
   );
 
-export const focusOnPileRef = (ref: PileRef) => {
+export const focusOnPileRef = (boardEl: HTMLDivElement, ref: PileRef) => {
   const candidates = Array.from(
-    document.querySelectorAll<HTMLElement>(
+    boardEl.querySelectorAll<HTMLElement>(
       `[data-region="${ref.type}"][data-region-index="${ref.index}"].card-slot, ` +
         `[data-region="${ref.type}"][data-region-index="${ref.index}"].is-playable`
     )
@@ -56,6 +56,7 @@ export const focusOnPileRef = (ref: PileRef) => {
 };
 
 export const moveKbFocus = (
+  boardRef: React.RefObject<HTMLDivElement | null>,
   e: KeyboardEvent,
   direction: "left" | "right" | "up" | "down",
   kbFocusableEls: HTMLElement[],
@@ -192,7 +193,7 @@ export const moveKbFocus = (
     (direction === "left" || direction === "right") &&
     from.meta.region === "freecell"
   ) {
-    const freeCellCards = getFreeCellCardCandidates();
+    const freeCellCards = getFreeCellCardCandidates(boardRef.current!);
     let bestSameRegionIdx = -1;
     let bestRegionDelta = Number.POSITIVE_INFINITY;
     let bestDx = Number.POSITIVE_INFINITY;

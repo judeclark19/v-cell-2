@@ -5,7 +5,6 @@ export const onKCSTab = (
   setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,
   boardRef: React.RefObject<HTMLDivElement | null>
 ) => {
-  console.log("Tab key pressed in onKCSTab");
   setKbState((prev) => ({ ...prev, carrying: false, carryingLabel: null }));
 
   // Forward Tab can use the browser's normal traversal.
@@ -18,7 +17,7 @@ export const onKCSTab = (
   if (!boardEl || !activeEl) return;
 
   const focusables = Array.from(
-    document.querySelectorAll<HTMLElement>(
+    boardEl.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
     )
   ).filter((el) => {

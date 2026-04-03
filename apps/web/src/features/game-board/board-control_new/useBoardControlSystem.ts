@@ -77,6 +77,7 @@ export function useBoardControlSystem(
   const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
 
   const { tryAutoFreeCell } = useTryAutoFreeCell({
+    boardRef,
     legalMoves,
     startCardFlight,
     getCardForSingleMove,
@@ -85,6 +86,7 @@ export function useBoardControlSystem(
   });
 
   const { tryAutoFoundation } = useTryAutoFoundation({
+    boardRef,
     legalMoves,
     uid,
     dispatch,
@@ -93,6 +95,7 @@ export function useBoardControlSystem(
   });
 
   const gameModel = useGameModel(
+    boardRef,
     cardFlight,
     startCardFlight,
     getCardForSingleMove,
@@ -114,6 +117,7 @@ export function useBoardControlSystem(
   });
 
   const pointer = usePointerControlSystem({
+    boardRef,
     onCardDoubleTap: tryAutoFoundation
   });
 

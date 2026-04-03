@@ -1,7 +1,7 @@
 /* 
 new stuff!
     */
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { getAutoCompleteMoves } from "@vcell/engine";
@@ -42,6 +42,7 @@ export type UseGameModelResult = {
 };
 
 export function useGameModel(
+  boardRef: React.RefObject<HTMLDivElement | null>,
   cardFlight: CardFlightState,
   startCardFlight: (args: StartCardFlightArgs) => void,
   getCardForSingleMove: (move: Move) => Card | null,
@@ -108,12 +109,18 @@ export function useGameModel(
   ]);
 
   // win celebration
+  const confettiLoadedRef = useRef(false);
   useEffect(() => {
     if (status === "won" && isFullyCollected) {
       dispatch(openWinModal());
-      throwConfetti();
+      if (confettiLoadedRef.current) {
+        throwConfetti(boardRef.current!);
+        confettiLoadedRef.current = false;
+      }
+    } else if (!confettiLoadedRef.current) {
+      confettiLoadedRef.current = true;
     }
-  }, [status, isFullyCollected, dispatch]);
+  }, [status, isFullyCollected, dispatch, boardRef]);
 
   const makeMove = useCallback(
     (move: Move) => {

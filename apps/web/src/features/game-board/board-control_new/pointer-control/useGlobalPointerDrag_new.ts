@@ -11,6 +11,7 @@ import { selectUid } from "@/state/auth/authSlice";
 import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
 
 type GlobalPointerDragArgs = {
+  boardRef: React.RefObject<HTMLDivElement | null>;
   drag: DragState;
   dragRef: React.RefObject<DragState>;
   setDrag: React.Dispatch<React.SetStateAction<DragState>>;
@@ -18,6 +19,7 @@ type GlobalPointerDragArgs = {
 };
 
 export function useGlobalPointerDrag({
+  boardRef,
   drag,
   dragRef,
   setDrag,
@@ -27,6 +29,7 @@ export function useGlobalPointerDrag({
   const uid = useSelector(selectUid);
   const legalMoves = useSelector(selectLegalMoves);
   useEffect(() => {
+    if (!boardRef.current) return;
     if (!drag.pending && !drag.active) return;
 
     const DRAG_THRESHOLD_PX = 6;
@@ -75,7 +78,7 @@ export function useGlobalPointerDrag({
 
         requestAnimationFrame(() => {
           const el = cardId
-            ? (document.querySelector(
+            ? (boardRef.current?.querySelector(
                 `[data-card-id="${cardId}"][data-kb-focusable="true"]`
               ) as HTMLElement | null)
             : null;
@@ -132,6 +135,7 @@ export function useGlobalPointerDrag({
       window.removeEventListener("pointercancel", onGlobalPointerUp);
     };
   }, [
+    boardRef,
     drag.pending,
     drag.active,
     resetDrag,

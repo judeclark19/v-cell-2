@@ -45,10 +45,10 @@ export function computePostMoveResult({
   };
 }
 
-export function throwConfetti() {
+export function throwConfetti(boardEl: HTMLDivElement) {
   const confetti = new JSConfetti();
 
-  const cardEl = document.querySelector<HTMLElement>(".card");
+  const cardEl = boardEl.querySelector<HTMLElement>(".card");
   const cardWidth = cardEl?.getBoundingClientRect().width;
 
   // Derive emoji size from card width (fallback to 24)

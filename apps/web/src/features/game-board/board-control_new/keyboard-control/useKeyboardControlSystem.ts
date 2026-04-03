@@ -117,9 +117,9 @@ export function useKeyboardControlSystem({
   useEffect(() => {
     if (!kbRefs.current.pendingFocusPileRef) return;
 
-    focusOnPileRef(kbRefs.current.pendingFocusPileRef);
+    focusOnPileRef(boardRef.current!, kbRefs.current.pendingFocusPileRef);
     kbRefs.current.pendingFocusPileRef = null;
-  }, [moveCount]);
+  }, [moveCount, status, boardRef]);
 
   // ----- Event handlers -----
   const handleGameKeydown = useCallback(
@@ -230,7 +230,7 @@ export function useKeyboardControlSystem({
       };
 
       if (directionMap[e.key]) {
-        moveKbFocus(e, directionMap[e.key], els, kbState, setKbState);
+        moveKbFocus(boardRef, e, directionMap[e.key], els, kbState, setKbState);
         return;
       }
     },
