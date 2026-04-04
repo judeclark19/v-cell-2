@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseClient";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/state/auth/AuthProvider";
+import { selectUid } from "@/state/auth/authSlice";
+import { useSelector } from "react-redux";
 
 export default function FinishSignupPage() {
   const router = useRouter();
-  const { uid, profileReady, profileComplete, displayName } = useSession();
+  const { profileReady, profileComplete, displayName } = useSession();
+
+  const uid = useSelector(selectUid);
 
   const initialName = useMemo(
     () => displayName ?? auth.currentUser?.displayName ?? "",

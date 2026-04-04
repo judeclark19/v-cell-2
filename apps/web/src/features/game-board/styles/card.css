@@ -2,7 +2,6 @@
   border-radius: var(--card-radius);
   width: 100%;
   aspect-ratio: 2 / 3;
-  border: 1px solid var(--card-front-border);
 
   /* 3D flip container */
   perspective: 900px;
@@ -24,6 +23,7 @@
   position: relative;
   transform-style: preserve-3d;
   transition: transform 220ms ease;
+  will-change: transform;
 }
 
 .card.face-down .card-inner {
@@ -35,6 +35,9 @@
   inset: 0;
   border-radius: var(--card-radius);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  box-sizing: border-box;
 
   display: flex;
   flex-direction: column;
@@ -50,6 +53,7 @@
   padding: 4px;
   transition: background-color 160ms ease, color 160ms ease,
     box-shadow 160ms ease;
+  border: 1px solid var(--card-front-border);
 
   @media (max-width: 600px) {
     padding: 2px;
@@ -72,6 +76,7 @@
   box-shadow: inset 0 0 0 2px
       color-mix(in srgb, var(--card-back-border) 55%, transparent),
     var(--card-shadow);
+  border: 1px solid color-mix(in srgb, var(--card-back-border) 55%, transparent);
 }
 
 .card-suit--small {
@@ -105,6 +110,10 @@
   outline: none;
 }
 
+.card-slot:focus {
+    box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset),
+    var(--card-shadow-hover);
+}
 .card:focus .card-face--front,
 .card:focus-visible .card-face--front {
   background-color: color-mix(
@@ -117,14 +126,14 @@
 }
 
 .card.is-dragging {
-  z-index: 999999;
+  z-index:var(--z-drag);
   cursor: grabbing;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   margin-top: 0; /* prevent tableau overlap margin from affecting fixed drag */
 }
 
 .card.is-dragging,
-.card.is-returning {
+.card.is-auto-moving {
   margin-top: 0;
 }
 
@@ -142,6 +151,7 @@
   place-items: center;
 
   .empty-label {
+    pointer-events: none;
     color: var(--muted);
     font-size: 80cqw;
   }
@@ -327,6 +337,8 @@
 /* -------------------------------------------------------------------------- */
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
+
+/* TODO: some day make reduced motion a user preference w UI toggle, make sure flip and flight do not fire when it is enabled */
 
 @media (prefers-reduced-motion: reduce) {
   .card {

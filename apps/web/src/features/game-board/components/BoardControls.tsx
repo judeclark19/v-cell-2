@@ -1,49 +1,61 @@
 import { useState } from "react";
-import { useGame } from "@/state/game/GameProvider";
-import { UndoLimit } from "@vcell/engine";
-
-type BoardControlsProps = {
-  onNewDeal: () => void;
-  startBySeed: (seed: string) => void;
-  requestConfirm: (
-    req: {
-      title: string;
-      bodyText: string;
-      confirmLabel: string;
-      cancelLabel: string;
-    },
-    onConfirm: () => void
-  ) => void;
-};
-
-const parseFaceDownCount = (value: string): 0 | 7 | 14 | 21 => {
-  const n = Number(value);
-  if (n === 0 || n === 7 || n === 14 || n === 21) return n;
-  return 7;
-};
-
-const parseUndoLimit = (value: string): UndoLimit => {
-  if (value === "unlimited") return "unlimited";
-  const n = Number(value);
-  if (n === 0 || n === 1 || n === 3 || n === 5) return n as UndoLimit;
-  return "unlimited";
-};
+import { useDispatch, useSelector } from "react-redux";
+import { selectRules, selectStatus } from "@/state/game/gameSlice";
+import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
+import { AppDispatch } from "@/state/reduxStore";
+import { selectStartedAtMs } from "@/state/session/sessionSlice";
+import { requestConfirmation } from "@/state/ui/requestConfirmation";
+import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
+import { selectUid } from "@/state/auth/authSlice";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 
 export default function BoardControls({
-  onNewDeal,
-  startBySeed,
-  requestConfirm
-}: BoardControlsProps) {
-  const {
-    allowFoundationPullback,
-    setAllowFoundationPullback,
-    undoLimit,
-    setUndoLimit,
-    faceDownCount,
-    setFaceDownCount
-  } = useGame();
+  boardController
+}: {
+  boardController: ReturnType<typeof useBoardControlSystem>;
+}) {
+  const dispatch = useDispatch<AppDispatch>();
 
+  // Auth state
+  const uid = useSelector(selectUid);
+
+  // Session state
+  const startedAtMs = useSelector(selectStartedAtMs);
+
+  // Game state
+  const rules = useSelector(selectRules);
+  const status = useSelector(selectStatus);
+
+  // local state
   const [seedInput, setSeedInput] = useState("");
+
+  const onNewDeal = async () => {
+    const ok =
+      !(startedAtMs && status === "in_progress") ||
+      (await requestConfirmation({
+        title: "Start a new deal?",
+        bodyText: "Starting a new deal will abandon your current game.",
+        confirmLabel: "New deal",
+        cancelLabel: "Cancel"
+      }));
+    if (!ok) return;
+
+    boardController.newDeal();
+  };
+
+  const startBySeed = async (seed: string) => {
+    const ok =
+      !(startedAtMs && status === "in_progress") ||
+      (await requestConfirmation({
+        title: "Start a seeded deal?",
+        bodyText: "Starting this seeded deal will abandon your current game.",
+        confirmLabel: "Start",
+        cancelLabel: "Cancel"
+      }));
+    if (!ok) return;
+
+    boardController.startBySeed(seed);
+  };
 
   return (
     <>
@@ -135,20 +147,16 @@ export default function BoardControls({
             <select
               className="control"
               id="face-down-cards"
-              value={String(faceDownCount)}
-              onChange={(e) => {
+              value={String(rules.faceDownCount)}
+              onChange={async (e) => {
                 const next = parseFaceDownCount(e.target.value);
-                if (next === faceDownCount) return;
-                requestConfirm(
-                  {
-                    title: "Change face-down cards?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setFaceDownCount(next)
-                );
+                if (next === rules.faceDownCount) return;
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, faceDownCount: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="0">0 (all face-up)</option>
@@ -167,20 +175,16 @@ export default function BoardControls({
             <select
               className="control"
               id="undo-limit"
-              value={String(undoLimit)}
-              onChange={(e) => {
+              value={String(rules.undoLimit)}
+              onChange={async (e) => {
                 const next = parseUndoLimit(e.target.value);
-                if (next === undoLimit) return;
-                requestConfirm(
-                  {
-                    title: "Change undo limit?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setUndoLimit(next)
-                );
+                if (next === rules.undoLimit) return;
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, undoLimit: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="0">0</option>
@@ -197,23 +201,20 @@ export default function BoardControls({
 
           <label className="field">
             Foundation pullback
+            {/* TODO: when foundation pullback is turned off, the right click/context menu should NOT try auto foundation */}
             <select
               className="control"
               id="foundation-pullback"
-              value={allowFoundationPullback ? "on" : "off"}
-              onChange={(e) => {
+              value={rules.allowFoundationPullback ? "on" : "off"}
+              onChange={async (e) => {
                 const next = e.target.value === "on";
-                if (next === allowFoundationPullback) return;
-                requestConfirm(
-                  {
-                    title: "Change foundation pullback?",
-                    bodyText:
-                      "Changing this will start a new game and abandon your current one.",
-                    confirmLabel: "Change",
-                    cancelLabel: "Cancel"
-                  },
-                  () => setAllowFoundationPullback(next)
-                );
+                if (next === rules.allowFoundationPullback) return;
+                await dispatch(
+                  requestRulesChange({
+                    patch: { ...rules, allowFoundationPullback: next },
+                    uid
+                  })
+                ).unwrap();
               }}
             >
               <option value="on">On (easier)</option>

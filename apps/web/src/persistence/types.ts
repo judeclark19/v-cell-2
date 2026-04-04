@@ -1,11 +1,10 @@
 // apps/web/src/persistence/types.ts
+import { GameStatus } from "@/state/game/gameSlice";
 import type { GameState, Move } from "@vcell/engine";
-
-export type GameStatus = "in_progress" | "won" | "abandoned";
 
 export type PersistedGame = {
   // identity
-  gameId: string;
+  sessionId: string;
   deviceId: string; // analytics / “one per device” key
   userId?: string; // if not playing as guest
   seed: string;
@@ -21,7 +20,6 @@ export type PersistedGame = {
 
   // timing + UI meta
   timeElapsedMs: number;
-  hasStarted: boolean;
   startedAtMs: number | null;
   endedAtMs: number | null;
   paused: boolean;
@@ -34,5 +32,5 @@ export type PersistedGame = {
   updatedAtMs: number;
 
   // optional pointer
-  lastCompletedGameId?: string;
+  lastCompletedsessionId?: string;
 };

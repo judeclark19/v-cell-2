@@ -1,9 +1,25 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
-import { useGame } from "@/state/game/GameProvider";
-import { useSession } from "@/state/session/SessionProvider";
+import { selectCompletedGames } from "@/state/records/recordsSlice";
+import {
+  selectSessionId,
+  selectTimeElapsedMs,
+  setPaused
+} from "@/state/session/sessionSlice";
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { selectMoveCount } from "@/state/game/gameSlice";
+import {
+  closePauseModal,
+  closeWinModal,
+  selectConfirmModal,
+  selectPauseModal,
+  selectWinModal
+} from "@/state/ui/uiSlice";
+import { AppDispatch } from "@/state/reduxStore";
+import { selectUid } from "@/state/auth/authSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 
 export type ConfirmRequest = {
   title: string;
@@ -11,41 +27,26 @@ export type ConfirmRequest = {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
+  onCancel: () => void;
 };
 
-type BoardModalsProps = {
-  paused: boolean;
-  onResume: () => void;
-
-  shouldShowWinModal: boolean;
-  onDismissWinModal: () => void;
-
-  moveCount: number;
-  timeElapsedMs: number;
-
-  confirmReq: ConfirmRequest | null;
-  dismissConfirm: () => void;
-  requestConfirm: (
-    req: Omit<ConfirmRequest, "onConfirm">,
-    onConfirm: () => void
-  ) => void;
-  onNewDealAction: () => void;
-};
-
-export default function BoardModals({
-  paused,
-  onResume,
-  shouldShowWinModal,
-  onDismissWinModal,
-  moveCount,
-  timeElapsedMs,
-  confirmReq,
-  dismissConfirm,
-  onNewDealAction
-}: BoardModalsProps) {
+export default function BoardModals() {
   const router = useRouter();
-  const game = useGame();
-  const { isUser } = useSession();
+
+  const dispatch = useDispatch<AppDispatch>();
+  // Auth state
+  const isUser = useSelector(selectUid) !== null;
+  // Session state
+  const sessionId = useSelector(selectSessionId);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const confirmReq = useSelector(selectConfirmModal);
+  // Game state
+  const moveCount = useSelector(selectMoveCount);
+  // Records state
+  const completedGames = useSelector(selectCompletedGames);
+  // ui state
+  const winModal = useSelector(selectWinModal);
+  const pauseModal = useSelector(selectPauseModal);
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -63,24 +64,24 @@ export default function BoardModals({
 
   const getWinBodyText = () => {
     // calculate if the current game is the best time / best moves based on completed history
-    const fastest = [...game.completedGames]
+    const fastest = completedGames
       .filter((g) => g.status === "won" && Number.isFinite(g.timeElapsedMs))
       .sort(
         (a, b) => (a.timeElapsedMs as number) - (b.timeElapsedMs as number)
       )[0];
 
-    const fewestMoves = [...game.completedGames]
+    const fewestMoves = completedGames
       .filter((g) => g.status === "won" && Number.isFinite(g.moveCount))
       .sort((a, b) => (a.moveCount as number) - (b.moveCount as number))[0];
 
-    const isNewBestTime = fastest?.gameId === game.gameId;
-    const isNewBestMoves = fewestMoves?.gameId === game.gameId;
+    const isNewBestTime = fastest?.sessionId === sessionId;
+    const isNewBestMoves = fewestMoves?.sessionId === sessionId;
 
     let bodyText = `Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`;
 
     if (!isUser) return bodyText; // only show win rate and records to signed-in users since it's based on persisted history
 
-    bodyText += `\nYou have won ${deriveWinRateLastN(game.completedGames).wins} out of your last ${deriveWinRateLastN(game.completedGames).count} games (${deriveWinRateLastN(game.completedGames).winRate}% win rate)`;
+    bodyText += `\nYou have won ${deriveWinRateLastN(completedGames).wins} out of your last ${deriveWinRateLastN(completedGames).count} games (${deriveWinRateLastN(completedGames).winRate}% win rate)`;
 
     if (isNewBestTime) {
       bodyText += "\n🎉 New record for fastest game!";
@@ -100,42 +101,44 @@ export default function BoardModals({
           overlayAriaLabel="Confirm action"
           title={confirmReq.title}
           buttonAriaLabel="Close confirmation dialog"
-          onClose={dismissConfirm}
+          onClose={confirmReq.onCancel}
           bodyText={confirmReq.bodyText}
           primaryButtonLabel={confirmReq.confirmLabel ?? "Confirm"}
-          primaryButtonAction={() => {
-            const fn = confirmReq.onConfirm;
-            dismissConfirm();
-            fn();
-          }}
+          primaryButtonAction={confirmReq.onConfirm}
           secondaryButtonLabel={confirmReq.cancelLabel ?? "Cancel"}
-          secondaryButtonAction={dismissConfirm}
+          secondaryButtonAction={confirmReq.onCancel}
         />
       )}
 
-      {paused && (
+      {pauseModal && (
         <ModalOverlay
           overlayAriaLabel="Game paused"
           title="Paused"
           buttonAriaLabel="Resume game"
-          onClose={onResume}
+          onClose={() => {
+            dispatch(closePauseModal());
+            dispatch(setPaused(false));
+          }}
           bodyText="Timer is paused. Gameplay is disabled until you resume."
           primaryButtonLabel="Resume"
         />
       )}
 
-      {shouldShowWinModal && (
+      {winModal && (
         <ModalOverlay
           overlayAriaLabel="Game won"
           title="You won!"
           buttonAriaLabel="Close win dialog"
-          onClose={onDismissWinModal}
+          onClose={() => dispatch(closeWinModal())}
           bodyText={getWinBodyText()}
           primaryButtonLabel="New Deal"
-          primaryButtonAction={onNewDealAction}
+          primaryButtonAction={() => {
+            dispatch(closeWinModal());
+            dispatch(transitionGameAndSession({}));
+          }}
           secondaryButtonLabel={isUser ? "View all stats" : "Close"}
           secondaryButtonAction={() => {
-            onDismissWinModal();
+            dispatch(closeWinModal());
             if (isUser) {
               router.push("/stats");
             }

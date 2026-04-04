@@ -33,6 +33,9 @@ function displayRank(rank: number) {
 
 type CardProps = {
   card?: Card | null;
+  region: "tableau" | "freecell" | "foundation" | "drag-layer";
+  regionIndex?: number; // which tableau col / freecell index / foundation index
+  positionInStack?: number; // -1 represents the empty slot / column container
   faceDown?: boolean;
   playable?: boolean;
   emptyLabel?: string;
@@ -49,6 +52,9 @@ type CardProps = {
 
 function Card({
   card,
+  region,
+  regionIndex,
+  positionInStack,
   faceDown = false,
   playable = false,
   emptyLabel = "",
@@ -57,7 +63,7 @@ function Card({
   onActivate,
   onPointerDownCard,
   onAutoFreeCell,
-  ...divProps
+  ...divProps // TODO: um, what?
 }: CardProps) {
   const isEmpty = !card;
 
@@ -68,6 +74,13 @@ function Card({
 
   const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     onPointerDownFromProps?.(e);
+
+    // Preserve native right-click/context-menu behavior for the card itself.
+    // Dragging should only begin from the primary mouse button (or touch/pen).
+    if (e.pointerType === "mouse" && e.button !== 0) {
+      return;
+    }
+
     // Card is a pure view: it never drags itself. Board-level drag (via onPointerDownCard)
     // is the only drag implementation.
     if (onPointerDownCard) {
@@ -81,6 +94,10 @@ function Card({
         {...restDivProps}
         className={`card-slot ${className}`.trim()}
         style={style}
+        data-region={region}
+        data-region-index={regionIndex}
+        data-position-in-stack={positionInStack}
+        tabIndex={restDivProps.tabIndex ?? -1}
       >
         {emptyLabel && <span className="empty-label">{emptyLabel}</span>}
       </div>
@@ -91,6 +108,9 @@ function Card({
     <div
       {...restDivProps}
       data-card-id={card.id}
+      data-region={region}
+      data-region-index={regionIndex}
+      data-position-in-stack={positionInStack}
       className={`card ${faceDown ? "face-down" : ""} ${
         playable ? "is-playable" : "is-locked"
       } ${className}`.trim()}
@@ -109,11 +129,12 @@ function Card({
         }
       }}
       onContextMenu={(e) => {
+        e.preventDefault();
+
         // Right-click: try foundation first (onActivate). If that fails, fall back to free cell.
         if (!card || faceDown) return;
-        if (!onActivate && !onAutoFreeCell) return;
 
-        e.preventDefault();
+        if (!onActivate && !onAutoFreeCell) return;
 
         const activated =
           canActivate && onActivate ? onActivate(e.currentTarget) : false;

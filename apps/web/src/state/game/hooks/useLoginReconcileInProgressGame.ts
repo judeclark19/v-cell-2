@@ -19,28 +19,33 @@ import {
   upsertInProgressGame
 } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/state/reduxStore";
+import {
+  selectSessionId,
+  selectSessionPhase
+} from "@/state/session/sessionSlice";
+import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { hydrateFromPersisted, selectSeed } from "../gameSlice";
+import { selectUid } from "@/state/auth/authSlice";
 
-type Params = {
-  uid: string | null;
-  seedReady: boolean;
-  startSession: (args: {
-    kind: "seed+id";
-    seed: string;
-    gameId: string;
-  }) => void;
-  setHydratedGameId: (next: string | null) => void;
-};
-
-export function useLoginReconcileInProgressGame({
-  uid,
-  seedReady,
-  startSession,
-  setHydratedGameId
-}: Params) {
+export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
+  const lastSwitchedSessionRef = useRef<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+
+  // auth state
+  const uid = useSelector(selectUid);
+
+  // session state
+  const sessionPhase = useSelector(selectSessionPhase);
+  const currentSessionId = useSelector(selectSessionId);
+
+  // game state
+  const currentSeed = useSelector(selectSeed);
 
   useEffect(() => {
-    if (!seedReady) return;
+    if (sessionPhase !== "ready") return;
     if (!uid) {
       didReconcileOnLoginRef.current = null;
       return;
@@ -77,6 +82,7 @@ export function useLoginReconcileInProgressGame({
         );
         snap = await getDocs(q);
       }
+
       if (cancelled) return;
 
       const cloudDocInProgressGame = snap.docs[0];
@@ -84,12 +90,12 @@ export function useLoginReconcileInProgressGame({
       if (cloudDocInProgressGame) {
         // Cloud wins: hydrate local, then switch the running session to it.
         const raw = cloudDocInProgressGame.data() as PersistedGame;
-        const cloudGameId =
-          (raw.gameId as string | undefined) ?? cloudDocInProgressGame.id;
+        const cloudSessionId =
+          (raw.sessionId as string | undefined) ?? cloudDocInProgressGame.id;
 
         const payload: PersistedGame = {
           ...(raw as PersistedGame),
-          gameId: cloudGameId,
+          sessionId: cloudSessionId,
           deviceId,
           userId: uid
         };
@@ -99,13 +105,44 @@ export function useLoginReconcileInProgressGame({
 
         if (cancelled) return;
 
-        // Force the active session to match the cloud record.
-        setHydratedGameId(null);
-        startSession({
-          kind: "seed+id",
-          seed: payload.seed,
-          gameId: payload.gameId
-        });
+        const sessionKey = `${payload.seed}:${payload.sessionId}`;
+
+        console.debug("current", currentSeed, currentSessionId);
+        console.debug("cloud", payload.seed, payload.sessionId);
+
+        if (
+          payload.seed === currentSeed &&
+          payload.sessionId === currentSessionId
+        ) {
+          // [login reconcile]noop; already on winning session
+
+          return;
+        }
+
+        //  [login reconcile] cloud wins; switching session
+        if (lastSwitchedSessionRef.current !== sessionKey) {
+          lastSwitchedSessionRef.current = sessionKey;
+          await dispatch(
+            transitionGameAndSession({
+              seed: payload.seed,
+              sessionId: payload.sessionId,
+              rules: payload.rules
+            })
+          ).unwrap();
+
+          dispatch(
+            hydrateFromPersisted({
+              seed: payload.seed,
+              rules: payload.rules,
+              moves: payload.moves,
+              undosUsed: payload.undosUsed,
+              cursor: payload.cursor,
+              fallbackRules: payload.rules,
+              undoLimit: payload.rules.undoLimit,
+              status: payload.status ?? null
+            })
+          );
+        }
 
         return;
       }
@@ -119,7 +156,7 @@ export function useLoginReconcileInProgressGame({
 
       // Only push if it’s actually an active in-progress game.
       if (local.status !== "in_progress") return;
-      if (!local.hasStarted) return;
+      if (!local.startedAtMs) return;
 
       const payload: PersistedGame = {
         ...local,
@@ -131,7 +168,7 @@ export function useLoginReconcileInProgressGame({
       if (cancelled) return;
 
       // Push ONCE on login (your per-second persistence does not write to Firestore).
-      await setDoc(doc(db, "users", uid, "games", payload.gameId), payload, {
+      await setDoc(doc(db, "users", uid, "games", payload.sessionId), payload, {
         merge: true
       });
     })().catch((err) => {
@@ -141,5 +178,5 @@ export function useLoginReconcileInProgressGame({
     return () => {
       cancelled = true;
     };
-  }, [uid, seedReady, startSession, setHydratedGameId]);
+  }, [uid, currentSeed, currentSessionId, dispatch, sessionPhase]);
 }

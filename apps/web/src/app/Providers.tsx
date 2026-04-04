@@ -1,19 +1,24 @@
 "use client";
 
 import React from "react";
-import { SessionProvider } from "@/state/session/SessionProvider";
-import { GameProvider } from "@/state/game/GameProvider"; // or wherever you put it
+import { Provider as ReduxProvider } from "react-redux";
+import { reduxStore } from "@/state/reduxStore";
+import { SessionProvider } from "@/state/auth/AuthProvider";
+import { GameLifecycle } from "@/state/game/GameLifecycle";
 import { ThemeProvider } from "@/state/theme/ThemeProvider";
-import { AuthGate } from "@/state/session/AuthGate";
+import { AuthGate } from "@/state/auth/AuthGate";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <SessionProvider>
-        <AuthGate>
-          <GameProvider>{children}</GameProvider>
-        </AuthGate>
-      </SessionProvider>
-    </ThemeProvider>
+    <ReduxProvider store={reduxStore}>
+      <ThemeProvider>
+        <SessionProvider>
+          <AuthGate>
+            <GameLifecycle />
+            {children}
+          </AuthGate>
+        </SessionProvider>
+      </ThemeProvider>
+    </ReduxProvider>
   );
 }

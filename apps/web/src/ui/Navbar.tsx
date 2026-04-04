@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import "./navbar.css";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import { selectUid } from "@/state/auth/authSlice";
 
 const NAV_LINKS = [
   { href: "/game", label: "Game" },
@@ -22,7 +24,7 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 ];
 
 export function NavBar() {
-  const { uid, logout, hydrated } = useSession();
+  const { logout, hydrated } = useSession();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
@@ -31,6 +33,8 @@ export function NavBar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+
+  const uid = useSelector(selectUid);
 
   const handleLogout = () => {
     logout();

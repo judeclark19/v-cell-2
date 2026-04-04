@@ -7,7 +7,6 @@ import type {
   TableauIndex
 } from "../types/piles";
 import { applyMove } from "./applyMove";
-import { areAllCardsUnlocked } from "./areAllCardsUnlocked";
 import { areAllCardsFaceUp } from "./areAllCardsFaceUp";
 
 function canPlaceOnFoundation(

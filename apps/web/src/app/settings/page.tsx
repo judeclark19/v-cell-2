@@ -1,15 +1,18 @@
 "use client";
 
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
-import { useGame } from "@/state/game/GameProvider";
-import { useSession } from "@/state/session/SessionProvider";
+import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
+import { useDispatch, useSelector } from "react-redux";
+import { selectShowTimer, setShowTimer } from "@/state/ui/uiSlice";
+import { AppDispatch } from "@/state/reduxStore";
 
 export default function SettingsPage() {
-  const { showTimer, setShowTimer } = useGame();
   const { theme, setTheme } = useTheme();
-
   const { isUser } = useSession();
+
+  const showTimer = useSelector(selectShowTimer);
+  const dispatch = useDispatch<AppDispatch>();
 
   return (
     <main>
@@ -52,7 +55,9 @@ export default function SettingsPage() {
               className="control"
               id="show-timer"
               value={showTimer ? "true" : "false"}
-              onChange={(e) => setShowTimer(e.target.value === "true")}
+              onChange={(e) =>
+                dispatch(setShowTimer(e.target.value === "true"))
+              }
             >
               <option value="true">Show</option>
               <option value="false">Hide</option>

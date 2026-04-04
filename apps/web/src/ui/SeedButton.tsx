@@ -10,25 +10,10 @@ const copySeed = async (seed: string): Promise<boolean> => {
       return true;
     }
   } catch {
-    // fall through
-  }
-
-  // Fallback for older browsers
-  try {
-    const el = document.createElement("textarea");
-    el.value = seed;
-    el.style.position = "fixed";
-    el.style.left = "-9999px";
-    el.style.top = "-9999px";
-    document.body.appendChild(el);
-    el.focus();
-    el.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(el);
-    return ok;
-  } catch {
     return false;
   }
+
+  return false;
 };
 
 function CopyIcon({ title }: { title?: string }) {
