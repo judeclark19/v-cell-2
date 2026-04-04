@@ -14,7 +14,7 @@ import {
   selectTimeElapsedMs
 } from "@/state/session/sessionSlice";
 import { openPauseModal, selectShowTimer } from "@/state/ui/uiSlice";
-import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { RootState } from "@/state/reduxStore";
 
 type FoundationProps = {

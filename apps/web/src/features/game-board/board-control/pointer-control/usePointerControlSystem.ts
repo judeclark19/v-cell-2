@@ -4,7 +4,7 @@ import { selectPlayableMask, selectRules } from "@/state/game/gameSlice";
 import type { RootState } from "@/state/reduxStore";
 import { useHandleCardDoubleTap } from "./handleCardDoubleTap";
 import { DragState, emptyDragState } from "./dragState";
-import { useGlobalPointerDrag } from "./useGlobalPointerDrag_new";
+import { useGlobalPointerDrag } from "./useGlobalPointerDrag";
 
 type UsePointerControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;

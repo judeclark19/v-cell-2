@@ -1,7 +1,7 @@
 import Card from "./Card";
 import { useSelector } from "react-redux";
 import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
-import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 
 function Tableau({
   boardController
@@ -140,7 +140,9 @@ function Tableau({
                       )
                     }
                     onPointerUp={
-                      isTopCard ? boardController.handleCardDoubleTap : undefined
+                      isTopCard
+                        ? boardController.handleCardDoubleTap
+                        : undefined
                     }
                     onAutoFreeCell={
                       isTopCard

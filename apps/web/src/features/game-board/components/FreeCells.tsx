@@ -1,5 +1,5 @@
 import Card from "./Card";
-import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import {
   selectFreeCellCards,
   selectIsAutoCompleting,

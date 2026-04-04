@@ -7,7 +7,7 @@ import { selectStartedAtMs } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { selectUid } from "@/state/auth/authSlice";
-import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 
 export default function BoardControls({
   boardController

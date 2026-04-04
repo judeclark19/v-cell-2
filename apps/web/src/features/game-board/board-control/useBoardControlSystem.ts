@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useKeyboardControlSystem } from "./keyboard-control/useKeyboardControlSystem";
-import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem_new";
+import { usePointerControlSystem } from "./pointer-control/usePointerControlSystem";
 import {
   selectFoundationCards,
   selectFreeCellCards,
@@ -10,7 +10,7 @@ import {
 import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { useCallback } from "react";
-import { useGameModel } from "@/state/game/hooks/useGameModel_new";
+import { useGameModel } from "@/state/game/hooks/useGameModel";
 import { useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
 import { Card, Move, PileRef } from "@vcell/engine";

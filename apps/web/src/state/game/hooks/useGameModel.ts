@@ -29,7 +29,7 @@ import { newDealThunk } from "@/state/session/thunks/newDeal";
 import {
   CardFlightState,
   StartCardFlightArgs
-} from "@/features/game-board/board-control_new/useCardFlight";
+} from "@/features/game-board/board-control/useCardFlight";
 import { openWinModal } from "@/state/ui/uiSlice";
 import { throwConfetti } from "../utils";
 import { start } from "repl";

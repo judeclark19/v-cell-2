@@ -1,8 +1,8 @@
 import { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
-import { useBoardControlSystem } from "../board-control_new/useBoardControlSystem";
-import { DragState } from "../board-control_new/pointer-control/dragState";
-import { CardFlightState } from "../board-control_new/useCardFlight";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
+import { DragState } from "../board-control/pointer-control/dragState";
+import { CardFlightState } from "../board-control/useCardFlight";
 
 type MovingStackVisual = {
   baseLeft: number;
