@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
@@ -20,6 +20,19 @@ export default function StatsPage() {
   const email = useSelector(selectEmail);
   // records slice
   const games = useSelector(selectCompletedGames);
+
+  useEffect(() => {
+    const statusCounts = games.reduce<Record<string, number>>((acc, game) => {
+      const status = String(game.status ?? "(missing)");
+      acc[status] = (acc[status] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    console.log("[stats] completed games snapshot", {
+      totalGames: games.length,
+      statusCounts
+    });
+  }, [games]);
 
   const derived = useMemo(() => {
     const ended = games
