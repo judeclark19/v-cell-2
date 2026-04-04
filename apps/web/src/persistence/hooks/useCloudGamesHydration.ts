@@ -18,17 +18,13 @@ import { upsertCompletedGame } from "@/persistence/completedGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 import { PersistedGame } from "../types";
 
-// Cloud model: users/{uid}/games/{gameId}
+// Cloud model: users/{uid}/games/{sessionId}
 // Local model: inProgressGames (single slot per device) + completedGames (history)
 
 type AnyRecord = Record<string, unknown>;
 
 function isRecord(v: unknown): v is AnyRecord {
   return typeof v === "object" && v !== null;
-}
-
-function isInProgress(status: unknown): boolean {
-  return status === "in_progress";
 }
 
 function getLastCloudSyncMs(uid: string, deviceId: string): number {
@@ -76,7 +72,6 @@ function hasInProgressFields(d: AnyRecord): boolean {
     typeof d.seed === "string" &&
     typeof d.cursor === "number" &&
     typeof d.timeElapsedMs === "number" &&
-    typeof d.hasStarted === "boolean" &&
     (typeof d.startedAtMs === "number" || d.startedAtMs === null) &&
     (typeof d.endedAtMs === "number" || d.endedAtMs === null) &&
     typeof d.paused === "boolean" &&
@@ -120,6 +115,7 @@ export function useCloudGamesHydration(uid: string | null) {
     const lastCloudSyncMs = getLastCloudSyncMs(uid, localDeviceId);
 
     const gamesCol = collection(db, "users", uid, "games");
+    const fullSyncQuery = query(gamesCol, orderBy("updatedAtMs", "desc"));
     // Incremental listener: after we have a watermark, only listen for docs newer than the last sync.
     // First run (no watermark) still listens to the full collection.
     const q =
@@ -133,19 +129,21 @@ export function useCloudGamesHydration(uid: string | null) {
 
     const upsertFromDocData = async (
       data: AnyRecord,
-      docId: string
+      docId: string,
+      respectWatermark = true
     ): Promise<boolean> => {
       if (
+        respectWatermark &&
         typeof data.updatedAtMs === "number" &&
         data.updatedAtMs <= lastCloudSyncMs
       ) {
         return false;
       }
 
-      const gameId = String((data.gameId as string | undefined) ?? docId);
+      const sessionId = String((data.sessionId as string | undefined) ?? docId);
       const status = data.status;
 
-      if (isInProgress(status)) {
+      if (status === "in_progress") {
         if (!hasInProgressFields(data)) return false;
 
         // In-progress is per-device. Only hydrate the in-progress game that
@@ -156,7 +154,7 @@ export function useCloudGamesHydration(uid: string | null) {
 
         const payload = {
           ...(data as unknown as PersistedGame),
-          gameId,
+          sessionId,
           deviceId: cloudDeviceId,
           userId: uid
         } satisfies PersistedGame;
@@ -170,11 +168,11 @@ export function useCloudGamesHydration(uid: string | null) {
 
       const payload = {
         ...(data as unknown as PersistedGame),
-        gameId,
+        sessionId,
         userId: uid
       } satisfies PersistedGame;
 
-      await upsertCompletedGame(payload, "upsertFromDocData");
+      await upsertCompletedGame(payload);
       return true;
     };
 
@@ -196,6 +194,8 @@ export function useCloudGamesHydration(uid: string | null) {
         ) {
           maxSeen = data.updatedAtMs;
         }
+
+        await upsertFromDocData(data, change.doc.id, false);
       }
 
       if (maxSeen > 0) {
@@ -208,12 +208,28 @@ export function useCloudGamesHydration(uid: string | null) {
     };
 
     const handleServerSync = async () => {
-      const snap = await getDocsFromServer(q);
+      const snap = await getDocsFromServer(fullSyncQuery);
+      let maxSeen = 0;
 
       for (const docSnap of snap.docs) {
         const raw = docSnap.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
-        await upsertFromDocData(data, docSnap.id);
+        await upsertFromDocData(data, docSnap.id, false);
+
+        if (
+          typeof data.updatedAtMs === "number" &&
+          data.updatedAtMs > maxSeen
+        ) {
+          maxSeen = data.updatedAtMs;
+        }
+      }
+
+      if (maxSeen > 0) {
+        setLastCloudSyncMs(
+          uid,
+          localDeviceId,
+          Math.max(lastCloudSyncMs, maxSeen)
+        );
       }
     };
 

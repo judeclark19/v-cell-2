@@ -18,16 +18,35 @@ import { getOrCreateDeviceId } from "../schema";
 import { db } from "@/lib/firebaseClient";
 import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/state/reduxStore";
+import {
+  GameStatus,
+  setStatus,
+  setUndosUsed,
+  selectStatus,
+  selectUndosUsed
+} from "@/state/game/gameSlice";
+import {
+  selectPaused,
+  setPaused,
+  setStartedAtMs,
+  selectStartedAtMs,
+  selectEndedAtMs,
+  setEndedAtMs,
+  selectSessionId,
+  selectTimeElapsedMs,
+  setTimeElapsedMs
+} from "@/state/session/sessionSlice";
+import { openPauseModal } from "@/state/ui/uiSlice";
 
 type InProgressSnapshot = {
   moves: Move[];
   cursor: number;
-  hasStarted: boolean;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
   paused: boolean;
   moveCount: number;
   undosUsed: number;
+  timeElapsedMs: number;
 };
 
 type PersistPhase = "DISARMED" | "ARMED";
@@ -37,83 +56,47 @@ type EndState = "none" | "won" | "abandoned";
 type Params = {
   // identity
   uid: string | null;
-  seedReady: boolean;
-  gameId: string;
   seed: string;
   rules: Rules;
 
   onHydrated?: (saved: PersistedGame | null) => void;
+  readyToHydrate: boolean;
 
   // snapshot + meta
   moves: Move[];
   cursor: number;
-  timeElapsedMsRef: React.RefObject<number>;
-  hasStarted: boolean;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
-  isAbandoned: boolean;
-  paused: boolean;
   moveCount: number;
-  undosUsed: number;
-  isWon: boolean;
-
-  // setters for hydration
-  setMoves: React.Dispatch<React.SetStateAction<Move[]>>;
-  setCursor: React.Dispatch<React.SetStateAction<number>>;
-  setTimeElapsedMs: React.Dispatch<React.SetStateAction<number>>;
-  setHasStarted: React.Dispatch<React.SetStateAction<boolean>>;
-  setStartedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
-  setEndedAtMs: React.Dispatch<React.SetStateAction<number | null>>;
-  setIsAbandoned: React.Dispatch<React.SetStateAction<boolean>>;
-  setPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  setMoveCount: React.Dispatch<React.SetStateAction<number>>;
-  setUndosUsed: React.Dispatch<React.SetStateAction<number>>;
 };
 
 export function useInProgressGamePersistence({
   uid,
-  seedReady,
-  gameId,
   seed,
   rules,
   onHydrated,
   moves,
   cursor,
-  timeElapsedMsRef,
-  hasStarted,
-  startedAtMs,
-  endedAtMs,
-  isAbandoned,
-  paused,
   moveCount,
-  undosUsed,
-  isWon,
-
-  setMoves,
-  setCursor,
-  setTimeElapsedMs,
-  setHasStarted,
-  setStartedAtMs,
-  setEndedAtMs,
-  setIsAbandoned,
-  setPaused,
-  setMoveCount,
-  setUndosUsed
+  readyToHydrate
 }: Params) {
   const inProgressHydratedRef = useRef<boolean>(false);
-  const hydratedGameIdRef = useRef<string | null>(null);
   const hydratedSessionKeyRef = useRef<string | null>(null);
   const pendingDeleteTimerRef = useRef<number | null>(null);
   const hasSavedRef = useRef<boolean>(false);
+  const startedAtMs = useSelector(selectStartedAtMs);
+  const endedAtMs = useSelector(selectEndedAtMs);
+  const undosUsed = useSelector(selectUndosUsed);
+  const status = useSelector(selectStatus);
+  const paused = useSelector(selectPaused);
+  const timeElapsedMs = useSelector(selectTimeElapsedMs);
+  const sessionId = useSelector(selectSessionId);
+
   const snapshotRef = useRef<InProgressSnapshot>({
     moves,
     cursor,
-    hasStarted,
-    startedAtMs,
-    endedAtMs,
     paused,
     moveCount,
-    undosUsed
+    undosUsed,
+    timeElapsedMs
   });
 
   const phaseRef = useRef<PersistPhase>("DISARMED");
@@ -121,7 +104,6 @@ export function useInProgressGamePersistence({
   const disarm = () => {
     phaseRef.current = "DISARMED";
     inProgressHydratedRef.current = false;
-    hydratedGameIdRef.current = null;
     hydratedSessionKeyRef.current = null;
     hasSavedRef.current = false;
 
@@ -137,7 +119,7 @@ export function useInProgressGamePersistence({
     hydratedSessionKeyRef.current = key;
   };
 
-  const sessionKey = `${uid ?? "anon"}::${gameId}::${seed}`;
+  const sessionKey = `${uid ?? "anon"}::${sessionId}::${seed}`;
 
   const isArmed = useCallback(() => {
     return (
@@ -150,29 +132,30 @@ export function useInProgressGamePersistence({
   // (Refs don't trigger rerenders.)
   const [hydrationVersion, setHydrationVersion] = useState(0);
 
-  const endState: EndState = isWon ? "won" : isAbandoned ? "abandoned" : "none";
+  const endState: EndState =
+    status === "won" ? "won" : status === "abandoned" ? "abandoned" : "none";
 
   useEffect(() => {
     snapshotRef.current = {
       moves,
       cursor,
-      hasStarted,
-      startedAtMs,
-      endedAtMs,
       paused,
       moveCount,
-      undosUsed
+      undosUsed,
+      timeElapsedMs
     };
   }, [
     moves,
     cursor,
-    hasStarted,
     startedAtMs,
     endedAtMs,
     paused,
     moveCount,
-    undosUsed
+    undosUsed,
+    timeElapsedMs
   ]);
+
+  const dispatch = useDispatch<AppDispatch>();
 
   const buildInProgressPayload = useCallback(
     (
@@ -180,41 +163,31 @@ export function useInProgressGamePersistence({
       updatedAtMs: number,
       snapshot: InProgressSnapshot = snapshotRef.current
     ) => {
-      const {
-        moves,
-        cursor,
-        hasStarted,
-        startedAtMs,
-        endedAtMs,
-        paused,
-        moveCount,
-        undosUsed
-      } = snapshot;
+      const { moves, cursor, paused, moveCount, undosUsed } = snapshot;
 
       return {
-        gameId,
+        sessionId,
         deviceId,
         seed,
         rules,
         kind: "freeplay" as const,
         moves,
         cursor,
-        status: "in_progress" as const,
-        timeElapsedMs: timeElapsedMsRef.current ?? 0,
-        hasStarted,
-        startedAtMs,
-        endedAtMs,
+        status: "in_progress" as GameStatus,
+        timeElapsedMs: snapshot.timeElapsedMs,
         paused,
         moveCount,
         undosUsed,
         updatedAtMs,
-        ...(uid ? { userId: uid } : {})
+        ...(uid ? { userId: uid } : {}),
+        startedAtMs: startedAtMs ?? null,
+        endedAtMs: endedAtMs ?? null
       };
     },
-    [gameId, seed, rules, timeElapsedMsRef, uid]
+    [sessionId, seed, rules, uid, startedAtMs, endedAtMs]
   );
 
-  // IMPORTANT: When the active session/gameId changes, React state in the game layer may
+  // IMPORTANT: When the active session/sessionId changes, React state in the game layer may
   // temporarily reset to initial values before IDXDB/cloud hydration re-applies moves.
   // During that brief window we must NOT run persistence/delete logic.
   //
@@ -234,7 +207,7 @@ export function useInProgressGamePersistence({
   useEffect(() => {
     let cancelled = false;
 
-    if (!seedReady) return;
+    if (!readyToHydrate) return;
 
     (async () => {
       try {
@@ -243,38 +216,30 @@ export function useInProgressGamePersistence({
         if (cancelled) return;
         hasSavedRef.current = !!saved;
 
-        hydratedGameIdRef.current = gameId;
-
         if (!saved) {
+          onHydrated?.(null);
           armForSession(sessionKey);
           setHydrationVersion((v) => v + 1);
-          onHydrated?.(null);
           return;
         }
 
         // Restore snapshot + meta (clamp cursor to move list length)
-        const restoredMoves = saved.moves ?? [];
-        const rawCursor = saved.cursor ?? 0;
-        const safeCursor = Math.min(rawCursor, restoredMoves.length);
-
-        setMoves(restoredMoves);
-        setCursor(safeCursor);
-        setTimeElapsedMs(saved.timeElapsedMs);
-        setHasStarted(saved.hasStarted);
-        setStartedAtMs(saved.startedAtMs);
-        setEndedAtMs(saved.endedAtMs);
-        setIsAbandoned(saved.status === "abandoned");
-        setPaused(saved.paused);
-        setMoveCount(saved.moveCount);
-        setUndosUsed(saved.undosUsed);
-        armForSession(sessionKey);
-        setHydrationVersion((v) => v + 1);
+        dispatch(setTimeElapsedMs(saved.timeElapsedMs ?? 0));
+        dispatch(setStartedAtMs(saved.startedAtMs ?? null));
+        dispatch(setEndedAtMs(saved.endedAtMs ?? null));
+        dispatch(setUndosUsed(saved.undosUsed ?? 0));
+        dispatch(setStatus(saved.status ?? "in_progress"));
+        dispatch(setPaused(saved.paused ?? false));
+        if (saved.paused) {
+          dispatch(openPauseModal());
+        }
         onHydrated?.(saved);
-      } catch (err) {
-        hydratedGameIdRef.current = gameId;
         armForSession(sessionKey);
         setHydrationVersion((v) => v + 1);
+      } catch (err) {
         onHydrated?.(null);
+        armForSession(sessionKey);
+        setHydrationVersion((v) => v + 1);
         console.error("Failed to hydrate in-progress game", err);
       }
     })();
@@ -283,74 +248,67 @@ export function useInProgressGamePersistence({
       cancelled = true;
     };
   }, [
-    seedReady,
-    gameId,
+    readyToHydrate,
+    sessionId,
     onHydrated,
-    setTimeElapsedMs,
-    setHasStarted,
-    setStartedAtMs,
-    setEndedAtMs,
-    setIsAbandoned,
-    setPaused,
-    setMoveCount,
-    setUndosUsed,
-    setMoves,
-    setCursor,
     sessionKey,
     rules,
     uid,
-    seed
+    seed,
+    dispatch
   ]);
 
   // ---------------------------------------------------------------------------
   // Persist per-move (IndexedDB)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!seedReady) return;
+    if (!readyToHydrate) return;
     if (!isArmed()) return;
 
     const deviceId = getOrCreateDeviceId();
 
     if (endState !== "none") {
-      deleteInProgressGameForDevice(
-        deviceId,
-        "useInProgressGamePersistence effect"
-      );
+      deleteInProgressGameForDevice(deviceId);
       if (uid) {
-        deleteDoc(doc(db, "users", uid, "games", gameId)).catch(() => {});
+        deleteDoc(doc(db, "users", uid, "games", sessionId)).catch(() => {});
       }
       return;
     }
 
-    if (!hasStarted) return;
+    // Persist once we've seen at least one move (even if the user undoes back to the start).
+    if (moves.length === 0) return;
 
     const payload = buildInProgressPayload(deviceId, Date.now());
 
-    upsertInProgressGame(payload).catch((err) => {
+    upsertInProgressGame({
+      ...payload,
+      startedAtMs: startedAtMs ?? null,
+      endedAtMs: endedAtMs ?? null
+    }).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
 
     if (uid) {
-      setDoc(doc(db, "users", uid, "games", gameId), payload, {
+      setDoc(doc(db, "users", uid, "games", sessionId), payload, {
         merge: true
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[in-progress persist] cloud write failed", err, payload);
+      });
     }
   }, [
     uid,
-    seedReady,
-    gameId,
+    readyToHydrate,
+    sessionId,
     seed,
     rules,
     moves,
     cursor,
-    hasStarted,
     startedAtMs,
     endedAtMs,
     endState,
     paused,
     moveCount,
     undosUsed,
-    timeElapsedMsRef,
     hydrationVersion,
     sessionKey,
     isArmed,
@@ -361,20 +319,25 @@ export function useInProgressGamePersistence({
   // Persist once per second between moves (IndexedDB)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!seedReady) return;
+    if (!readyToHydrate) return;
     if (!isArmed()) return;
 
     if (endState !== "none") return;
-    if (!hasStarted) return;
+    // Persist once we've seen at least one move (even if the user undoes back to the start).
+    if (moves.length === 0) return;
     if (paused) return;
 
     const deviceId = getOrCreateDeviceId();
 
     const id = window.setInterval(() => {
-      upsertInProgressGame(
-        buildInProgressPayload(deviceId, Date.now(), snapshotRef.current)
-      ).catch((err) => {
-        console.error("[in-progress persist] write failed (1s)", err);
+      const payload = buildInProgressPayload(
+        deviceId,
+        Date.now(),
+        snapshotRef.current
+      );
+
+      upsertInProgressGame(payload).catch((err) => {
+        console.error("[in-progress persist] write failed", err);
       });
     }, 1000);
 
@@ -387,13 +350,13 @@ export function useInProgressGamePersistence({
       window.clearInterval(id);
     };
   }, [
-    seedReady,
+    readyToHydrate,
     sessionKey,
     isArmed,
-    hasStarted,
     paused,
     endState,
     uid,
-    buildInProgressPayload
+    buildInProgressPayload,
+    moves.length
   ]);
 }

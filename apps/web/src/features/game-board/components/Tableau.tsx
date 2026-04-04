@@ -1,64 +1,43 @@
-import type { Card as EngineCard } from "@vcell/engine";
-import { useContext } from "react";
 import Card from "./Card";
-import type { useCardDrag } from "@/features/game-board/animations/useCardDrag";
-import { BoardKbAttrsContext } from "../keyboard/boardKbAttrs";
-
-type TableauProps = {
-  state: {
-    tableau: Array<Array<{ card: EngineCard; faceDown: boolean }>>;
-  };
-  playable: {
-    tableau: Array<Array<boolean>>;
-  };
-  drag: ReturnType<typeof useCardDrag>["drag"];
-  handleTableauPointerDown: ReturnType<
-    typeof useCardDrag
-  >["handleTableauPointerDown"];
-  /** Element-based auto-foundation (enables flight animation). Prefer this when provided. */
-  tryAutoFoundationFromEl: (el: HTMLElement) => boolean;
-  tryAutoFreeCellFromEl: (el: HTMLElement) => boolean;
-  setTableauColRef: (colIndex: number, el: HTMLDivElement | null) => void;
-  isWon: boolean;
-  onCardPointerUp: (e: React.PointerEvent<HTMLDivElement>) => void;
-};
+import { useSelector } from "react-redux";
+import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
+import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 
 function Tableau({
-  state,
-  playable,
-  drag,
-  handleTableauPointerDown,
-  tryAutoFoundationFromEl,
-  tryAutoFreeCellFromEl,
-  setTableauColRef,
-  onCardPointerUp
-}: TableauProps) {
-  const kbAttrsCtx = useContext(BoardKbAttrsContext);
-  const kbCarrying = kbAttrsCtx?.kbCarrying ?? false;
-  const kbFlight = drag.kbFlight;
+  boardController
+}: {
+  boardController: ReturnType<typeof useBoardControlSystem>;
+}) {
+  const { kbState, cardFlight } = boardController;
+
+  // game slice
+  const playable = useSelector(selectPlayableMask);
+  const history = useSelector(selectHistory);
 
   return (
     <div className="tableau-scroll" aria-label="Tableau">
       <div className="tableau" aria-label="Tableau grid">
-        {state.tableau.map((col, colIndex) => {
+        {history.present.tableau.map((col, colIndex) => {
           const tableauSource =
-            drag.source?.type === "tableau" ? drag.source : null;
+            boardController.drag.source?.type === "tableau"
+              ? boardController.drag.source
+              : null;
 
           const isDraggedFromThisCol =
-            drag.active &&
+            (boardController.drag.active || boardController.drag.isReturning) &&
             tableauSource != null &&
-            tableauSource.colIndex === colIndex;
+            tableauSource.index === colIndex;
 
           const isKbFlightDestCol =
-            kbFlight.active &&
-            kbFlight.dropTarget?.type === "tableau" &&
-            kbFlight.dropTarget.colIndex === colIndex;
+            cardFlight.active &&
+            cardFlight.dropTarget?.type === "tableau" &&
+            cardFlight.dropTarget.index === colIndex;
 
           const isDraggingEntireColumn =
             isDraggedFromThisCol &&
             tableauSource != null &&
             tableauSource.startIndex === 0 &&
-            drag.stack.length === col.length;
+            boardController.drag.stack.length === col.length;
 
           // Underlay slot is always rendered; label/focusability when the column is empty
           // OR when the entire stack is being dragged out (cards are visually absent).
@@ -69,32 +48,44 @@ function Tableau({
               key={colIndex}
               className="tableau-col"
               aria-label={`Tableau column ${colIndex + 1}`}
-              ref={(el) => setTableauColRef(colIndex, el)}
             >
               <div
                 className="tableau-empty-slot"
-                data-kb-focusable={
-                  kbCarrying && showEmptySlot ? "true" : "false"
-                }
                 role="button"
                 aria-hidden={!showEmptySlot}
                 aria-label={`Tableau column ${colIndex + 1} empty slot`}
               >
-                <Card card={null} emptyLabel="K" />
+                <Card
+                  card={null}
+                  emptyLabel="K"
+                  region="tableau"
+                  regionIndex={colIndex}
+                  positionInStack={-1}
+                  data-kb-focusable={
+                    kbState.carrying && showEmptySlot ? "true" : undefined
+                  }
+                  tabIndex={kbState.carrying && showEmptySlot ? -1 : undefined}
+                />
               </div>
 
               {col.map((tc, tcIndex) => {
+                const isTopCard = tcIndex === col.length - 1;
                 const inDraggedRange =
                   isDraggedFromThisCol &&
                   tableauSource != null &&
                   tcIndex >= tableauSource.startIndex &&
-                  tcIndex < tableauSource.startIndex + drag.stack.length;
+                  tcIndex <
+                    tableauSource.startIndex +
+                      boardController.drag.stack.length;
 
                 if (inDraggedRange) {
                   return (
                     <Card
                       key={tc.card.id}
                       card={tc.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={tcIndex}
                       faceDown={tc.faceDown}
                       playable={playable.tableau[colIndex][tcIndex]}
                       className="card--ghost"
@@ -103,14 +94,18 @@ function Tableau({
                   );
                 }
 
+                const flyingCardIds = cardFlight.stack.map((c) => c.id);
                 const isSuppressedByKbFlight =
-                  isKbFlightDestCol && kbFlight.cardIds.includes(tc.card.id);
+                  isKbFlightDestCol && flyingCardIds.includes(tc.card.id);
 
                 if (isSuppressedByKbFlight) {
                   return (
                     <Card
                       key={tc.card.id}
                       card={tc.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={tcIndex}
                       faceDown={tc.faceDown}
                       playable={playable.tableau[colIndex][tcIndex]}
                       className="card--ghost"
@@ -123,18 +118,37 @@ function Tableau({
                   <Card
                     key={tc.card.id}
                     card={tc.card}
+                    region="tableau"
+                    regionIndex={colIndex}
+                    positionInStack={tcIndex}
                     faceDown={tc.faceDown}
                     playable={playable.tableau[colIndex][tcIndex]}
                     data-kb-focusable={
                       playable.tableau[colIndex][tcIndex] ? "true" : "false"
                     }
                     style={{ zIndex: tcIndex + 1 }}
-                    onActivate={(el) => tryAutoFoundationFromEl(el)}
-                    onPointerDownCard={(e) =>
-                      handleTableauPointerDown(e, colIndex, tcIndex)
+                    onActivate={
+                      isTopCard
+                        ? (el) => boardController.tryAutoFoundation(el)
+                        : undefined
                     }
-                    onPointerUp={onCardPointerUp}
-                    onAutoFreeCell={(el) => tryAutoFreeCellFromEl(el)}
+                    onPointerDownCard={(e) =>
+                      boardController.handleTableauPointerDown(
+                        e,
+                        colIndex,
+                        tcIndex
+                      )
+                    }
+                    onPointerUp={
+                      isTopCard
+                        ? boardController.handleCardDoubleTap
+                        : undefined
+                    }
+                    onAutoFreeCell={
+                      isTopCard
+                        ? (el) => boardController.tryAutoFreeCell(el)
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -150,6 +164,9 @@ function Tableau({
                     <Card
                       key={`tail-anchor-${colIndex}-${tail.card.id}`}
                       card={tail.card}
+                      region="tableau"
+                      regionIndex={colIndex}
+                      positionInStack={col.length - 1}
                       faceDown={tail.faceDown}
                       playable={false}
                       className="card--ghost"

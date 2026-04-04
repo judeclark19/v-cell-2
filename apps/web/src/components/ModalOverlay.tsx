@@ -1,5 +1,7 @@
+import { useDispatch } from "react-redux";
 import "../styles/modal.css";
 import { useEffect, useRef } from "react";
+import { setIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 type ModalOverlayProps = {
   overlayAriaLabel: string;
@@ -11,6 +13,7 @@ type ModalOverlayProps = {
   primaryButtonAction?: () => void;
   secondaryButtonLabel?: string;
   secondaryButtonAction?: () => void;
+  onOverlayKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
 };
 
 export default function ModalOverlay({
@@ -22,11 +25,14 @@ export default function ModalOverlay({
   primaryButtonLabel,
   primaryButtonAction = onClose,
   secondaryButtonLabel,
-  secondaryButtonAction = onClose
+  secondaryButtonAction = onClose,
+  onOverlayKeyDown
 }: ModalOverlayProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const prevFocusedElRef = useRef<HTMLElement | null>(null);
+
+  const dispatch = useDispatch();
 
   useEffect(() => {
     prevFocusedElRef.current = document.activeElement as HTMLElement | null;
@@ -56,11 +62,19 @@ export default function ModalOverlay({
     };
   }, []);
 
+  const closeModal = () => {
+    dispatch(setIsAnyModalOpen(false));
+    onClose();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    onOverlayKeyDown?.(e);
+    if (e.defaultPrevented) return;
+
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
-      onClose();
+      closeModal();
       return;
     }
 
@@ -116,7 +130,7 @@ export default function ModalOverlay({
             type="button"
             className="modal-overlay__close"
             aria-label={buttonAriaLabel}
-            onClick={onClose}
+            onClick={closeModal}
           >
             ✕
           </button>

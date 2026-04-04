@@ -1,34 +1,39 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameState, Move } from "@vcell/engine";
+import { useSelector } from "react-redux";
+import {
+  selectCanUndo,
+  selectCursor,
+  selectMoveCount,
+  selectMoves,
+  selectRules,
+  selectSeed,
+  selectUndosUsed
+} from "../gameSlice";
+import {
+  selectPaused,
+  selectEndedAtMs,
+  selectCheckpoint,
+  selectSessionId
+} from "@/state/session/sessionSlice";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
-// Intentionally excludes `timeElapsedMs` from the LOG signature so timer ticks don't spam logs.
 export type GameSnapshot = {
-  gameId: string;
+  sessionId: string;
   seed: string;
   rules: GameState["rules"];
-  hasStarted: boolean;
-  isAbandoned: boolean;
   paused: boolean;
   canUndo: boolean;
   moveCount: number; // number of moves made in the current timeline (net of undos)
   undosUsed: number;
   moves: Move[];
   cursor: number;
-  checkpoint: { at: number; state: GameState } | null;
-  timeElapsedMs: number;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
-  // Keep the full engine state in the snapshot so we can inspect it when debugging.
-  state: GameState;
 };
 
-export type LogSnapshot = Omit<GameSnapshot, "timeElapsedMs">;
-
-function diffKeys(prev: LogSnapshot | null, next: LogSnapshot): string[] {
+function diffKeys(prev: GameSnapshot | null, next: GameSnapshot): string[] {
   if (!prev) return ["(initial)"];
   const changed: string[] = [];
-  (Object.keys(next) as (keyof LogSnapshot)[]).forEach((k) => {
+  (Object.keys(next) as (keyof GameSnapshot)[]).forEach((k) => {
     // Cheap comparison: primitives by value; objects by reference.
     // This is fine for console visibility; not meant for deep-equality.
     if (prev[k] !== next[k]) changed.push(String(k));
@@ -36,124 +41,83 @@ function diffKeys(prev: LogSnapshot | null, next: LogSnapshot): string[] {
   return changed;
 }
 
-export type UseGameSnapshotLoggerParams = {
-  gameId: string;
-  seed: string;
-  state: GameState;
-
-  hasStarted: boolean;
-  isAbandoned: boolean;
-  paused: boolean;
-  canUndo: boolean;
-
-  moveCount: number;
-  undosUsed: number;
-  timeElapsedMs: number;
-  startedAtMs: number | null;
-  endedAtMs: number | null;
-
-  moves: Move[];
-  cursor: number;
-  checkpoint: { at: number; state: GameState } | null;
-};
-
 /**
  * Dev-only snapshot logger.
  *
  * Keeps a full snapshot ref (including `timeElapsedMs`) but excludes `timeElapsedMs`
  * from the change signature so timer ticks don't flood the console.
  */
-export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
-  const {
-    gameId,
-    seed,
-    state,
-    hasStarted,
-    isAbandoned,
-    paused,
-    canUndo,
-    moveCount,
-    undosUsed,
-    timeElapsedMs,
-    startedAtMs,
-    endedAtMs,
-    moves,
-    cursor,
-    checkpoint
-  } = params;
+export function useGameSnapshotLogger() {
+  // session state
+  const endedAtMs = useSelector(selectEndedAtMs);
+  const paused = useSelector(selectPaused);
+  const checkpoint = useSelector(selectCheckpoint);
+  const sessionId = useSelector(selectSessionId);
+  // game state
+  const seed = useSelector(selectSeed);
+  const undosUsed = useSelector(selectUndosUsed);
+  const canUndo = useSelector(selectCanUndo);
+  const rules = useSelector(selectRules);
+  const moveCount = useSelector(selectMoveCount);
+  const moves = useSelector(selectMoves);
+  const cursor = useSelector(selectCursor);
 
   const gameSnapshot = useMemo<GameSnapshot>(
     () => ({
-      gameId,
+      sessionId,
       seed,
-      rules: state.rules,
-      hasStarted,
-      isAbandoned,
-      paused,
+      rules,
       canUndo,
       moveCount,
       undosUsed,
-      timeElapsedMs,
-      startedAtMs,
       endedAtMs,
-      state,
+      paused,
       moves,
       cursor,
       checkpoint
     }),
     [
-      gameId,
+      sessionId,
       seed,
-      state,
-      hasStarted,
-      isAbandoned,
-      paused,
+      rules,
       canUndo,
       moveCount,
       undosUsed,
-      timeElapsedMs,
-      startedAtMs,
       endedAtMs,
       moves,
       cursor,
-      checkpoint
+      checkpoint,
+      paused
     ]
   );
 
   // Keep `timeElapsedMs` inside the snapshot, but exclude it from the LOG signature.
-  const logSnapshot = useMemo<LogSnapshot>(
+  const logSnapshot = useMemo<GameSnapshot>(
     () => ({
-      gameId,
+      sessionId,
       seed,
-      rules: state.rules,
-      hasStarted,
-      isAbandoned,
+      rules,
       paused,
       canUndo,
       moveCount,
       undosUsed,
-      startedAtMs,
       endedAtMs,
-      state,
       moves,
       cursor,
       checkpoint
     }),
     [
-      gameId,
+      sessionId,
       seed,
-      state,
-      hasStarted,
-      isAbandoned,
-      paused,
+      rules,
+      endedAtMs,
       canUndo,
       moveCount,
       undosUsed,
-      startedAtMs,
-      endedAtMs,
       moves,
       cursor,
-      checkpoint
+      checkpoint,
+      paused
     ]
   );
 
@@ -162,7 +126,7 @@ export function useGameSnapshotLogger(params: UseGameSnapshotLoggerParams) {
     gameSnapshotRef.current = gameSnapshot;
   }, [gameSnapshot]);
 
-  const prevLogSnapshotRef = useRef<LogSnapshot | null>(null);
+  const prevLogSnapshotRef = useRef<GameSnapshot | null>(null);
 
   useEffect(() => {
     const prev = prevLogSnapshotRef.current;
