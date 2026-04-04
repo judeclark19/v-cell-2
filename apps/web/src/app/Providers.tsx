@@ -4,7 +4,7 @@ import React from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { reduxStore } from "@/state/reduxStore";
 import { SessionProvider } from "@/state/auth/AuthProvider";
-import { GameProvider } from "@/state/game/GameProvider"; // or wherever you put it
+import { GameLifecycle } from "@/state/game/GameLifecycle";
 import { ThemeProvider } from "@/state/theme/ThemeProvider";
 import { AuthGate } from "@/state/auth/AuthGate";
 
@@ -14,7 +14,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <SessionProvider>
           <AuthGate>
-            <GameProvider>{children}</GameProvider>
+            <GameLifecycle />
+            {children}
           </AuthGate>
         </SessionProvider>
       </ThemeProvider>
