@@ -107,47 +107,49 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const logout = async () => {
       const deviceId = getOrCreateDeviceId();
 
-      // If logged in, pause the cloud in-progress game for THIS device.
-      // Do this BEFORE signOut so Firestore rules still allow the write.
-      if (uid) {
-        try {
-          const gamesCol = collection(db, "users", uid, "games");
-          const q = query(
-            gamesCol,
-            where("status", "==", "in_progress"),
-            where("deviceId", "==", deviceId),
-            orderBy("updatedAtMs", "desc"),
-            limit(1)
-          );
-
-          let snap;
+      try {
+        // If logged in, pause the cloud in-progress game for THIS device.
+        // Do this BEFORE signOut so Firestore rules still allow the write.
+        if (uid) {
           try {
-            snap = await getDocsFromServer(q);
-          } catch {
-            snap = await getDocs(q);
-          }
+            const gamesCol = collection(db, "users", uid, "games");
+            const q = query(
+              gamesCol,
+              where("status", "==", "in_progress"),
+              where("deviceId", "==", deviceId),
+              orderBy("updatedAtMs", "desc"),
+              limit(1)
+            );
 
-          const cloudDoc = snap.docs[0];
-          if (cloudDoc) {
-            await updateDoc(cloudDoc.ref, {
-              paused: true,
-              updatedAtMs: Date.now()
-            });
+            let snap;
+            try {
+              snap = await getDocsFromServer(q);
+            } catch {
+              snap = await getDocs(q);
+            }
+
+            const cloudDoc = snap.docs[0];
+            if (cloudDoc) {
+              await updateDoc(cloudDoc.ref, {
+                paused: true,
+                updatedAtMs: Date.now()
+              });
+            }
+          } catch (err) {
+            console.warn(
+              "[session] failed to pause cloud in-progress on logout",
+              err
+            );
           }
-        } catch (err) {
-          console.warn(
-            "[session] failed to pause cloud in-progress on logout",
-            err
-          );
         }
+
+        // Clear local persistence so guest mode starts fresh.
+        await deleteInProgressGameForDevice(deviceId);
+        await clearCompletedGames();
+      } finally {
+        // Always attempt sign-out even if local cleanup fails.
+        await signOut(auth);
       }
-
-      // Clear local persistence so guest mode starts fresh.
-      await deleteInProgressGameForDevice(deviceId);
-      await clearCompletedGames();
-
-      // Finally, sign out (guests already have no auth session).
-      await signOut(auth);
     };
 
     const loginWithGoogle = async () => {

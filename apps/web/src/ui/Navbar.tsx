@@ -36,10 +36,10 @@ export function NavBar() {
 
   const uid = useSelector(selectUid);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     closeMenu();
-    router.push("/login");
+    router.replace("/login");
   };
 
   const AuthControl = !hydrated ? null : uid ? (
