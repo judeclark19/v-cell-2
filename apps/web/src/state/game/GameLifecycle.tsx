@@ -29,6 +29,7 @@ import {
 import { bootSession } from "../session/thunks/bootSession";
 import { transitionGameAndSession } from "../transitionGameAndSession";
 import { safeRandomId } from "../utils";
+import { setIsAnyModalOpen } from "../ui/uiSlice";
 
 export function GameLifecycle() {
   const dispatch = useDispatch<AppDispatch>();
@@ -91,6 +92,7 @@ export function GameLifecycle() {
     if (!startedAtMs) return;
 
     queueMicrotask(() => {
+      dispatch(setIsAnyModalOpen(false));
       startNewDealSession();
     });
   }, [uid, sessionPhase, startedAtMs, startNewDealSession]);

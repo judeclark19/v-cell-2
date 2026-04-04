@@ -90,6 +90,16 @@ export function applyMoveThunk({ move, uid }: Params): AppThunk {
     }
 
     if (didWin) {
+      console.log("[applyMove] didWin", {
+        sessionId,
+        seed,
+        nextCursor,
+        nextMovesLength: nextMoves.length,
+        startedAtMs,
+        endedAtMs,
+        uid
+      });
+
       if (endedAtMs != null) {
         dispatch(setEndedAtMs(endedAtMs));
       }
