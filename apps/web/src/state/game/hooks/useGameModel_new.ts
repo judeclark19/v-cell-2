@@ -32,6 +32,7 @@ import {
 } from "@/features/game-board/board-control_new/useCardFlight";
 import { openWinModal } from "@/state/ui/uiSlice";
 import { throwConfetti } from "../utils";
+import { start } from "repl";
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
   undo: () => void;
@@ -64,8 +65,7 @@ export function useGameModel(
   const isFullyCollected = useSelector(selectIsFullyCollected);
 
   // Autocomplete effect
-  useEffect(() => {
-    if (!isAutoCompleting) return;
+  const startAutoComplete = useCallback(() => {
     if (isAutoCompleting && isFullyCollected) {
       dispatch(setIsAutoCompleting(false));
       return;
@@ -98,15 +98,20 @@ export function useGameModel(
     }
   }, [
     isAutoCompleting,
+    isFullyCollected,
     cardFlight?.active,
     history.present,
-    isFullyCollected,
-    getCardForSingleMove,
     getElFromPileRef,
-    startCardFlight,
+    getCardForSingleMove,
     dispatch,
-    uid
+    uid,
+    startCardFlight
   ]);
+
+  useEffect(() => {
+    if (!isAutoCompleting) return;
+    startAutoComplete();
+  }, [isAutoCompleting, startAutoComplete]);
 
   // win celebration
   const confettiLoadedRef = useRef(false);

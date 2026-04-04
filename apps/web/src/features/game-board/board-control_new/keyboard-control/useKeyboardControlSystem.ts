@@ -1,7 +1,9 @@
 import {
   selectIsAutoCompleting,
+  selectIsFullyCollected,
   selectMoveCount,
-  selectStatus
+  selectStatus,
+  setIsAutoCompleting
 } from "@/state/game/gameSlice";
 import {
   closePauseModal,
@@ -81,6 +83,7 @@ export function useKeyboardControlSystem({
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const moveCount = useSelector(selectMoveCount);
   const status = useSelector(selectStatus);
+  const isFullyCollected = useSelector(selectIsFullyCollected);
 
   // ui slice
   const isAnyModalOpen = useSelector(selectIsAnyModalOpen);
@@ -136,6 +139,16 @@ export function useKeyboardControlSystem({
         } else if (!paused) {
           dispatch(openPauseModal());
           dispatch(setPaused(true));
+        }
+        return;
+      }
+
+      if (e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        if (isAutoCompleting) {
+          dispatch(setIsAutoCompleting(false));
+        } else if (status === "won" && !isFullyCollected) {
+          dispatch(setIsAutoCompleting(true));
         }
         return;
       }
@@ -253,7 +266,9 @@ export function useKeyboardControlSystem({
       tableauCards,
       tryAutoFoundation,
       tryAutoFreeCell,
-      uid
+      uid,
+      isAutoCompleting,
+      isFullyCollected
     ]
   );
 

@@ -35,9 +35,6 @@ export type RequireUserResult =
   | { ok: false; reason: "not_logged_in" | "auth_not_ready" };
 
 export type SessionContextValue = {
-  // Backwards-compatible API (guest is default, user requires real login)
-  setGuest: () => void;
-  setUser: () => void;
   logout: () => Promise<void>;
 
   // Convenience flags
@@ -47,7 +44,6 @@ export type SessionContextValue = {
 
   // Raw auth state (when not logged in, uid is null)
   authReady: boolean;
-  // uid: string | null;
 
   // Route guards
   requireUser: () => RequireUserResult;
@@ -100,30 +96,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<SessionContextValue>(() => {
     const hydrated = authReady;
-
     const isUser = Boolean(uid);
-    // const mode: SessionMode = isUser ? "user" : "guest";
-
-    // In guest mode, uid is intentionally null.
-    // const session: SessionState = { mode, uid: isUser ? uid : null };
-
     const isGuest = !isUser;
 
     const requireUser = (): RequireUserResult => {
       if (!authReady) return { ok: false, reason: "auth_not_ready" };
       return isUser ? { ok: true } : { ok: false, reason: "not_logged_in" };
-    };
-
-    const setGuest = () => {
-      // No-op by design. Guest is the default when not logged in.
-    };
-
-    const setUser = () => {
-      // Not implemented yet.
-      // Later: trigger Google/email login.
-      console.warn(
-        "setUser() not implemented. Add real provider login to switch from guest to user."
-      );
     };
 
     const logout = async () => {
@@ -196,15 +174,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       : authReady;
 
     return {
-      // session,
-      setGuest,
-      setUser,
       logout,
       isGuest,
       isUser,
       hydrated,
       authReady,
-      // uid: session.uid,
       requireUser,
       loginWithGoogle,
       profileReady: derivedProfileReady,

@@ -115,6 +115,7 @@ export function useCloudGamesHydration(uid: string | null) {
     const lastCloudSyncMs = getLastCloudSyncMs(uid, localDeviceId);
 
     const gamesCol = collection(db, "users", uid, "games");
+    const fullSyncQuery = query(gamesCol, orderBy("updatedAtMs", "desc"));
     // Incremental listener: after we have a watermark, only listen for docs newer than the last sync.
     // First run (no watermark) still listens to the full collection.
     const q =
@@ -128,9 +129,11 @@ export function useCloudGamesHydration(uid: string | null) {
 
     const upsertFromDocData = async (
       data: AnyRecord,
-      docId: string
+      docId: string,
+      respectWatermark = true
     ): Promise<boolean> => {
       if (
+        respectWatermark &&
         typeof data.updatedAtMs === "number" &&
         data.updatedAtMs <= lastCloudSyncMs
       ) {
@@ -191,6 +194,8 @@ export function useCloudGamesHydration(uid: string | null) {
         ) {
           maxSeen = data.updatedAtMs;
         }
+
+        await upsertFromDocData(data, change.doc.id, false);
       }
 
       if (maxSeen > 0) {
@@ -203,12 +208,28 @@ export function useCloudGamesHydration(uid: string | null) {
     };
 
     const handleServerSync = async () => {
-      const snap = await getDocsFromServer(q);
+      const snap = await getDocsFromServer(fullSyncQuery);
+      let maxSeen = 0;
 
       for (const docSnap of snap.docs) {
         const raw = docSnap.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
-        await upsertFromDocData(data, docSnap.id);
+        await upsertFromDocData(data, docSnap.id, false);
+
+        if (
+          typeof data.updatedAtMs === "number" &&
+          data.updatedAtMs > maxSeen
+        ) {
+          maxSeen = data.updatedAtMs;
+        }
+      }
+
+      if (maxSeen > 0) {
+        setLastCloudSyncMs(
+          uid,
+          localDeviceId,
+          Math.max(lastCloudSyncMs, maxSeen)
+        );
       }
     };
 

@@ -180,8 +180,8 @@ export function useInProgressGamePersistence({
         undosUsed,
         updatedAtMs,
         ...(uid ? { userId: uid } : {}),
-        startedAtMs,
-        endedAtMs
+        startedAtMs: startedAtMs ?? null,
+        endedAtMs: endedAtMs ?? null
       };
     },
     [sessionId, seed, rules, uid, startedAtMs, endedAtMs]
@@ -224,12 +224,12 @@ export function useInProgressGamePersistence({
         }
 
         // Restore snapshot + meta (clamp cursor to move list length)
-        dispatch(setTimeElapsedMs(saved.timeElapsedMs));
-        dispatch(setStartedAtMs(saved.startedAtMs));
-        dispatch(setEndedAtMs(saved.endedAtMs));
-        dispatch(setUndosUsed(saved.undosUsed));
-        dispatch(setStatus(saved.status));
-        dispatch(setPaused(saved.paused));
+        dispatch(setTimeElapsedMs(saved.timeElapsedMs ?? 0));
+        dispatch(setStartedAtMs(saved.startedAtMs ?? null));
+        dispatch(setEndedAtMs(saved.endedAtMs ?? null));
+        dispatch(setUndosUsed(saved.undosUsed ?? 0));
+        dispatch(setStatus(saved.status ?? "in_progress"));
+        dispatch(setPaused(saved.paused ?? false));
         if (saved.paused) {
           dispatch(openPauseModal());
         }
@@ -282,8 +282,8 @@ export function useInProgressGamePersistence({
 
     upsertInProgressGame({
       ...payload,
-      startedAtMs,
-      endedAtMs
+      startedAtMs: startedAtMs ?? null,
+      endedAtMs: endedAtMs ?? null
     }).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
@@ -291,7 +291,9 @@ export function useInProgressGamePersistence({
     if (uid) {
       setDoc(doc(db, "users", uid, "games", sessionId), payload, {
         merge: true
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[in-progress persist] cloud write failed", err, payload);
+      });
     }
   }, [
     uid,

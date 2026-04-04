@@ -1,5 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import type { Move, Rules } from "@vcell/engine";
+import {
+  upsertCompletedGame
+} from "@/persistence/completedGamesStore";
+import { deleteInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
 import type { AppDispatch, RootState } from "@/state/reduxStore";
 import { buildCompletedGameRecord } from "@/state/records/utils";
 import {
@@ -45,5 +49,9 @@ export const archiveCompletedGame = createAsyncThunk<
   if (completedGames.some((g) => g.sessionId === completed.sessionId)) return;
 
   thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
+
+  await upsertCompletedGame(completed);
+  await deleteInProgressGameForDevice(args.deviceId).catch(() => {});
+
   writeCompletedGameToCloud(args.uid, completed);
 });

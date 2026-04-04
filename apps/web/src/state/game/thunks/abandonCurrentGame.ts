@@ -10,12 +10,12 @@ import {
 import {
   selectCursor,
   selectMoves,
+  selectRules,
   selectUndosUsed,
   selectStatus,
   selectSeed,
   setStatus
 } from "@/state/game/gameSlice";
-import { selectRules } from "@/state/session/selectors_new";
 import { AppDispatch, RootState } from "@/state/reduxStore";
 import { ThunkAction, UnknownAction } from "@reduxjs/toolkit";
 

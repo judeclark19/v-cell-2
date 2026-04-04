@@ -6,6 +6,7 @@ import {
   selectCursor,
   selectMoveCount,
   selectMoves,
+  selectRules,
   selectSeed,
   selectUndosUsed
 } from "../gameSlice";
@@ -15,7 +16,6 @@ import {
   selectCheckpoint,
   selectSessionId
 } from "@/state/session/sessionSlice";
-import { selectRules } from "@/state/session/selectors_new";
 
 // A persistable-ish snapshot of the current game state for debugging / DB modeling.
 export type GameSnapshot = {

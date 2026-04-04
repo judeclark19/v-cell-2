@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "@/state/auth/AuthProvider";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -26,6 +26,11 @@ export default function LoginClient() {
   const nextPath = rawNext && rawNext.startsWith("/") ? rawNext : "/game";
 
   const { isUser, hydrated, loginWithGoogle } = useSession();
+
+  useEffect(() => {
+    if (!hydrated || !isUser) return;
+    router.replace(nextPath);
+  }, [hydrated, isUser, nextPath, router]);
 
   const [signupDisplayName, setSignupDisplayName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
