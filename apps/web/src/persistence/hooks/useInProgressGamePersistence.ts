@@ -16,7 +16,7 @@ import {
 import { getOrCreateDeviceId } from "../schema";
 
 import { db } from "@/lib/firebaseClient";
-import { doc, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
@@ -269,9 +269,6 @@ export function useInProgressGamePersistence({
 
     if (endState !== "none") {
       deleteInProgressGameForDevice(deviceId);
-      if (uid) {
-        deleteDoc(doc(db, "users", uid, "games", sessionId)).catch(() => {});
-      }
       return;
     }
 
