@@ -19,7 +19,12 @@ export const recordsSlice = createSlice({
     },
 
     addCompletedGame: (state, action: PayloadAction<PersistedGame>) => {
-      state.completedGames.unshift(action.payload);
+      state.completedGames = [
+        action.payload,
+        ...state.completedGames.filter(
+          (game) => game.sessionId !== action.payload.sessionId
+        )
+      ];
     },
 
     clearCompletedGames: (state) => {

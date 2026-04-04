@@ -15,6 +15,9 @@ import {
 import { db } from "@/lib/firebaseClient";
 import { upsertInProgressGame } from "@/persistence/inProgressGamesStore";
 import { upsertCompletedGame } from "@/persistence/completedGamesStore";
+import { addCompletedGame } from "@/state/records/recordsSlice";
+import { AppDispatch } from "@/state/reduxStore";
+import { useDispatch } from "react-redux";
 import { getOrCreateDeviceId } from "../schema";
 import { PersistedGame } from "../types";
 
@@ -96,6 +99,7 @@ function hasCompletedFields(d: AnyRecord): boolean {
  * - otherwise -> completedGames
  */
 export function useCloudGamesHydration(uid: string | null) {
+  const dispatch = useDispatch<AppDispatch>();
   const unsubRef = useRef<null | (() => void)>(null);
 
   useEffect(() => {
@@ -173,6 +177,7 @@ export function useCloudGamesHydration(uid: string | null) {
       } satisfies PersistedGame;
 
       await upsertCompletedGame(payload);
+      dispatch(addCompletedGame(payload));
       return true;
     };
 
@@ -258,5 +263,5 @@ export function useCloudGamesHydration(uid: string | null) {
         unsubRef.current = null;
       }
     };
-  }, [uid]);
+  }, [dispatch, uid]);
 }

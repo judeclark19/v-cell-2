@@ -32,7 +32,7 @@ import {
 } from "@/features/game-board/board-control/useCardFlight";
 import { openWinModal } from "@/state/ui/uiSlice";
 import { throwConfetti } from "../utils";
-import { start } from "repl";
+
 export type UseGameModelResult = {
   makeMove: (move: Move) => void;
   undo: () => void;
