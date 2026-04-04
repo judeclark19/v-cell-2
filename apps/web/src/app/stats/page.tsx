@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSession } from "@/state/auth/AuthProvider";
-import { getAllCompletedGames } from "@/persistence/completedGamesStore";
-import type { PersistedGame } from "@/persistence/types";
+import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
 import {
@@ -15,48 +14,12 @@ import {
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
-
-  const [games, setGames] = useState<PersistedGame[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   // auth slice
   const displayName = useSelector(selectDisplayName);
   const uid = useSelector(selectUid);
   const email = useSelector(selectEmail);
-
-  useEffect(() => {
-    // Stats are only for logged-in users.
-    if (!hydrated) return;
-    if (!isUser) {
-      setGames([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setLoading(true);
-        const all = await getAllCompletedGames();
-        if (cancelled) return;
-
-        // Defensive: ensure we have an array
-        setGames(Array.isArray(all) ? all : []);
-        setError(null);
-      } catch (e) {
-        if (cancelled) return;
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hydrated, isUser]);
+  // records slice
+  const games = useSelector(selectCompletedGames);
 
   const derived = useMemo(() => {
     const ended = games
@@ -131,11 +94,7 @@ export default function StatsPage() {
 
       <div style={{ margin: "12px 0 20px" }} />
 
-      {!hydrated || !isUser ? null : loading ? (
-        <p>Loading completed games…</p>
-      ) : error ? (
-        <p style={{ color: "tomato" }}>Error loading games: {error}</p>
-      ) : (
+      {!hydrated || !isUser ? null : (
         <UserStatsTables derived={derived} />
       )}
     </main>
