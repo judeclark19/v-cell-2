@@ -172,7 +172,8 @@ export default function LoginClient() {
       <div>
         <section
           style={{
-            display: "flex"
+            display: "flex",
+            gap: "12px"
           }}
         >
           <div style={{ flex: 1 }}>

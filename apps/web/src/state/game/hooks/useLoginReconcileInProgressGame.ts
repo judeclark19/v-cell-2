@@ -86,6 +86,16 @@ export function useLoginReconcileInProgressGame() {
       if (cancelled) return;
 
       const cloudDocInProgressGame = snap.docs[0];
+      console.log("[login reconcile] cloud query", {
+        uid,
+        deviceId,
+        docs: snap.docs.length,
+        currentSeed,
+        currentSessionId,
+        cloudStatus: cloudDocInProgressGame?.data()?.status ?? null,
+        cloudSeed: cloudDocInProgressGame?.data()?.seed ?? null,
+        cloudSessionId: cloudDocInProgressGame?.id ?? null
+      });
 
       if (cloudDocInProgressGame) {
         // Cloud wins: hydrate local, then switch the running session to it.
@@ -150,6 +160,14 @@ export function useLoginReconcileInProgressGame() {
       // 2) No cloud in-progress for this device:
       // Attribute the current local in-progress game to the user and push once.
       const local = await getInProgressGameForDevice(deviceId);
+      console.log("[login reconcile] local fallback", {
+        uid,
+        deviceId,
+        hasLocal: !!local,
+        localStatus: local?.status ?? null,
+        localSeed: local?.seed ?? null,
+        localSessionId: local?.sessionId ?? null
+      });
 
       if (cancelled) return;
       if (!local) return;
