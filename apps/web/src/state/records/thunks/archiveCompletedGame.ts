@@ -30,88 +30,30 @@ export const archiveCompletedGame = createAsyncThunk<
   },
   { state: RootState; dispatch: AppDispatch }
 >("records/archiveCompletedGame", async (args, thunkApi) => {
-  try {
-    console.log("[archiveCompletedGame] start", {
-      sessionId: args.sessionId,
-      finalStatus: args.finalStatus,
-      cursor: args.cursor,
-      movesLength: args.moves.length,
-      startedAtMs: args.startedAtMs,
-      endedAtMs: args.endedAtMs,
-      uid: args.uid
-    });
+  const completed = buildCompletedGameRecord({
+    sessionId: args.sessionId,
+    deviceId: args.deviceId,
+    seed: args.seed,
+    rules: args.rules,
+    finalStatus: args.finalStatus,
+    cursor: args.cursor,
+    moves: args.moves,
+    startedAtMs: args.startedAtMs,
+    endedAtMs: args.endedAtMs,
+    timeElapsedMs: args.timeElapsedMs,
+    undosUsed: args.undosUsed,
+    uid: args.uid
+  });
 
-    const completed = buildCompletedGameRecord({
-      sessionId: args.sessionId,
-      deviceId: args.deviceId,
-      seed: args.seed,
-      rules: args.rules,
-      finalStatus: args.finalStatus,
-      cursor: args.cursor,
-      moves: args.moves,
-      startedAtMs: args.startedAtMs,
-      endedAtMs: args.endedAtMs,
-      timeElapsedMs: args.timeElapsedMs,
-      undosUsed: args.undosUsed,
-      uid: args.uid
-    });
-    console.log("[archiveCompletedGame] built record", {
-      sessionId: completed.sessionId,
-      status: completed.status,
-      cursor: completed.cursor,
-      movesLength: completed.moves.length
-    });
-
-    const completedGames = selectCompletedGames(thunkApi.getState());
-    const duplicate = completedGames.some(
-      (g) => g.sessionId === completed.sessionId
-    );
-    console.log("[archiveCompletedGame] duplicate check", {
-      sessionId: completed.sessionId,
-      duplicate,
-      existingCount: completedGames.length
-    });
-
-    if (duplicate) {
-      console.warn("[archiveCompletedGame] duplicate sessionId; skipping write", {
-        sessionId: completed.sessionId,
-        finalStatus: completed.status,
-        existingCount: completedGames.length
-      });
-      return;
-    }
-
-    thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
-    console.log("[archiveCompletedGame] dispatched records update", {
-      sessionId: completed.sessionId
-    });
-
-    await upsertCompletedGame(completed);
-    console.log("[archiveCompletedGame] wrote IndexedDB", {
-      sessionId: completed.sessionId,
-      status: completed.status,
-      cursor: completed.cursor,
-      movesLength: completed.moves.length
-    });
-
-    await deleteInProgressGameForDevice(args.deviceId).catch(() => {});
-    console.log("[archiveCompletedGame] cleared local in-progress", {
-      deviceId: args.deviceId
-    });
-
-    writeCompletedGameToCloud(args.uid, completed);
-    console.log("[archiveCompletedGame] queued cloud write", {
-      sessionId: completed.sessionId,
-      status: completed.status
-    });
-  } catch (error) {
-    console.error("[archiveCompletedGame] failed", error, {
-      sessionId: args.sessionId,
-      finalStatus: args.finalStatus,
-      cursor: args.cursor,
-      movesLength: args.moves.length,
-      uid: args.uid
-    });
-    throw error;
+  const completedGames = selectCompletedGames(thunkApi.getState());
+  if (completedGames.some((g) => g.sessionId === completed.sessionId)) {
+    return;
   }
+
+  thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
+
+  await upsertCompletedGame(completed);
+  await deleteInProgressGameForDevice(args.deviceId).catch(() => {});
+
+  writeCompletedGameToCloud(args.uid, completed);
 });

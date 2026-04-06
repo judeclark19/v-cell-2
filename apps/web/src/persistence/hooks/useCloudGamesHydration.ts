@@ -183,9 +183,6 @@ export function useCloudGamesHydration(uid: string | null) {
 
     const handleSnapshot = async (snap: QuerySnapshot<DocumentData>) => {
       let maxSeen = 0;
-      let upsertedInProgress = 0;
-      let upsertedCompleted = 0;
-      let skipped = 0;
 
       for (const change of snap.docChanges()) {
         const raw = change.doc.data() ?? {};
@@ -198,25 +195,8 @@ export function useCloudGamesHydration(uid: string | null) {
           maxSeen = data.updatedAtMs;
         }
 
-        const didUpsert = await upsertFromDocData(data, change.doc.id, false);
-        if (!didUpsert) {
-          skipped += 1;
-        } else if (data.status === "in_progress") {
-          upsertedInProgress += 1;
-        } else {
-          upsertedCompleted += 1;
-        }
+        await upsertFromDocData(data, change.doc.id, false);
       }
-
-      console.log("[cloud hydration] snapshot", {
-        uid,
-        fromCache: snap.metadata.fromCache,
-        changes: snap.docChanges().length,
-        upsertedInProgress,
-        upsertedCompleted,
-        skipped,
-        maxSeen
-      });
 
       if (maxSeen > 0) {
         setLastCloudSyncMs(
@@ -230,31 +210,11 @@ export function useCloudGamesHydration(uid: string | null) {
     const handleServerSync = async () => {
       const snap = await getDocsFromServer(fullSyncQuery);
       let maxSeen = 0;
-      let docsWon = 0;
-      let docsAbandoned = 0;
-      let docsInProgress = 0;
-      let docsOtherStatus = 0;
-      let upsertedInProgress = 0;
-      let upsertedCompleted = 0;
-      let skipped = 0;
 
       for (const docSnap of snap.docs) {
         const raw = docSnap.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
-
-        if (data.status === "won") docsWon += 1;
-        else if (data.status === "abandoned") docsAbandoned += 1;
-        else if (data.status === "in_progress") docsInProgress += 1;
-        else docsOtherStatus += 1;
-
-        const didUpsert = await upsertFromDocData(data, docSnap.id, false);
-        if (!didUpsert) {
-          skipped += 1;
-        } else if (data.status === "in_progress") {
-          upsertedInProgress += 1;
-        } else {
-          upsertedCompleted += 1;
-        }
+        await upsertFromDocData(data, docSnap.id, false);
 
         if (
           typeof data.updatedAtMs === "number" &&
@@ -263,20 +223,6 @@ export function useCloudGamesHydration(uid: string | null) {
           maxSeen = data.updatedAtMs;
         }
       }
-
-      console.log("[cloud hydration] server sync", {
-        uid,
-        totalDocs: snap.docs.length,
-        docsWon,
-        docsAbandoned,
-        docsInProgress,
-        docsOtherStatus,
-        upsertedInProgress,
-        upsertedCompleted,
-        skipped,
-        maxSeen,
-        lastCloudSyncMs
-      });
 
       if (maxSeen > 0) {
         setLastCloudSyncMs(

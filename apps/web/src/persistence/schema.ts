@@ -7,7 +7,7 @@
 import { safeRandomId } from "@/state/utils";
 
 export const VCELL_DB_NAME = "vcell";
-export const VCELL_DB_VERSION = 65;
+export const VCELL_DB_VERSION = 66;
 
 export const STORES = {
   COMPLETED_GAMES: "completedGames",
