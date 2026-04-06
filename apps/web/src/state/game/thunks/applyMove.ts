@@ -81,6 +81,7 @@ export function applyMoveThunk({ move, uid }: Params): AppThunk {
     }
 
     const { next, nextMoves, nextCursor, didWin, shouldCheckpoint } = resolved;
+    const isCosmeticWinMove = status === "won" || didWin;
 
     const endedAtMs = didWin ? Date.now() : null;
 
@@ -122,7 +123,7 @@ export function applyMoveThunk({ move, uid }: Params): AppThunk {
       applyMoveToHistory({
         move,
         undoLimit,
-        isWon: didWin
+        isCosmeticWinMove
       })
     );
   };
