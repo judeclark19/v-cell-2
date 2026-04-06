@@ -48,6 +48,9 @@ export default function BoardModals() {
   const winModal = useSelector(selectWinModal);
   const pauseModal = useSelector(selectPauseModal);
 
+  const currentCompletedGame =
+    completedGames.find((g) => g.sessionId === sessionId) ?? null;
+
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
       .filter((g) => typeof g.endedAtMs === "number" && g.endedAtMs)
@@ -77,7 +80,11 @@ export default function BoardModals() {
     const isNewBestTime = fastest?.sessionId === sessionId;
     const isNewBestMoves = fewestMoves?.sessionId === sessionId;
 
-    let bodyText = `Moves: ${moveCount} • Time: ${formatElapsed(timeElapsedMs)}`;
+    const displayMoveCount = currentCompletedGame?.moveCount ?? moveCount;
+    const displayTimeElapsedMs =
+      currentCompletedGame?.timeElapsedMs ?? timeElapsedMs;
+
+    let bodyText = `Moves: ${displayMoveCount} • Time: ${formatElapsed(displayTimeElapsedMs)}`;
 
     if (!isUser) return bodyText; // only show win rate and records to signed-in users since it's based on persisted history
 

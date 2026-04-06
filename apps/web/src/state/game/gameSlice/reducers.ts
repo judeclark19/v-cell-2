@@ -107,10 +107,10 @@ export const gameSliceReducers = {
     action: PayloadAction<{
       move: Move;
       undoLimit: UndoLimit;
-      isWon: boolean;
+      isCosmeticWinMove: boolean;
     }>
   ) => {
-    const { move, undoLimit, isWon } = action.payload;
+    const { move, undoLimit, isCosmeticWinMove } = action.payload;
 
     let next: GameState;
     try {
@@ -121,7 +121,7 @@ export const gameSliceReducers = {
     }
 
     // After a win, allow cosmetic moves but do not mutate undo history.
-    if (isWon) {
+    if (isCosmeticWinMove) {
       state.history.present = next;
 
       return;
