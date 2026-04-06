@@ -1,24 +1,18 @@
 import { Move, Card } from "@vcell/engine";
 import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
-import { StartCardFlightArgs } from "./useCardFlight";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
-import { AppDispatch } from "@/state/reduxStore";
 import { useCallback } from "react";
+import type { PerformMoveArgs } from "./useBoardControlSystem";
 
 export function useTryAutoFreeCell({
   boardRef,
   legalMoves,
-  startCardFlight,
   getCardForSingleMove,
-  dispatch,
-  uid
+  performMove
 }: {
   boardRef: React.RefObject<HTMLDivElement | null>;
   legalMoves: Move[];
-  startCardFlight: (args: StartCardFlightArgs) => void;
   getCardForSingleMove: (move: Move) => Card | null;
-  dispatch: AppDispatch;
-  uid: string | null;
+  performMove: (args: PerformMoveArgs) => boolean;
 }) {
   const tryAutoFreeCell = useCallback(
     (el: HTMLElement): boolean => {
@@ -49,21 +43,19 @@ export function useTryAutoFreeCell({
 
       // 3. Commit the move.
       const cardToMove = getCardForSingleMove(move);
-      if (cardToMove && toEl) {
-        startCardFlight({
-          fromEl: el,
-          toEl: toEl!,
-          stack: [cardToMove],
-          dropTarget: { type: "freecell", index: move.to.index }
-        });
-      }
-
-      dispatch(applyMoveThunk({ move, uid }));
-
-      // 4. Return whether a move was made.
-      return true;
+      return performMove(
+        cardToMove && toEl
+          ? {
+              move,
+              fromEl: el,
+              toEl,
+              stack: [cardToMove],
+              dropTarget: { type: "freecell", index: move.to.index }
+            }
+          : { move }
+      );
     },
-    [dispatch, legalMoves, uid, getCardForSingleMove, startCardFlight, boardRef]
+    [boardRef, getCardForSingleMove, legalMoves, performMove]
   );
 
   return { tryAutoFreeCell };

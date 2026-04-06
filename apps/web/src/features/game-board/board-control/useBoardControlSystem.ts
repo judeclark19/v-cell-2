@@ -11,15 +11,25 @@ import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { useCallback } from "react";
 import { useGameModel } from "@/state/game/hooks/useGameModel";
-import { useCardFlight } from "./useCardFlight";
+import { DropTarget, useCardFlight } from "./useCardFlight";
 import { useTryAutoFoundation } from "./useTryAutoFoundation";
 import { Card, Move, PileRef } from "@vcell/engine";
 import { useTryAutoFreeCell } from "./useTryAutoFreeCell";
+import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
   | { type: "tableau"; index: number; startIndex: number }
   | { type: "freecell"; index: number };
+
+export type PerformMoveArgs = {
+  move: Move;
+  fromEl?: HTMLElement | null;
+  toEl?: HTMLElement | null;
+  stack?: Card[];
+  dropTarget?: DropTarget;
+  durationMs?: number;
+};
 
 export function useBoardControlSystem(
   boardRef: React.RefObject<HTMLDivElement | null>
@@ -75,23 +85,47 @@ export function useBoardControlSystem(
 
   // Hooks ============================================================
   const { cardFlight, startCardFlight, clearCardFlight } = useCardFlight();
+  const isCardFlightActive = cardFlight.active;
+
+  const performMove = useCallback(
+    ({
+      move,
+      fromEl,
+      toEl,
+      stack,
+      dropTarget,
+      durationMs
+    }: PerformMoveArgs): boolean => {
+      if (cardFlight.active) return false;
+
+      if (fromEl && toEl && stack && stack.length > 0 && dropTarget) {
+        startCardFlight({
+          fromEl,
+          toEl,
+          stack,
+          dropTarget,
+          durationMs
+        });
+      }
+
+      dispatch(applyMoveThunk({ move, uid }));
+      return true;
+    },
+    [cardFlight.active, dispatch, startCardFlight, uid]
+  );
 
   const { tryAutoFreeCell } = useTryAutoFreeCell({
     boardRef,
     legalMoves,
-    startCardFlight,
     getCardForSingleMove,
-    dispatch,
-    uid
+    performMove
   });
 
   const { tryAutoFoundation } = useTryAutoFoundation({
     boardRef,
     legalMoves,
-    uid,
-    dispatch,
-    startCardFlight,
-    getCardForSingleMove
+    getCardForSingleMove,
+    performMove
   });
 
   const gameModel = useGameModel(
@@ -110,7 +144,8 @@ export function useBoardControlSystem(
     legalMoves,
     tryAutoFreeCell,
     tryAutoFoundation,
-    startCardFlight,
+    performMove,
+    isCardFlightActive,
     newDeal: gameModel.newDeal,
     restart: gameModel.restart,
     undo: gameModel.undo
@@ -118,7 +153,9 @@ export function useBoardControlSystem(
 
   const pointer = usePointerControlSystem({
     boardRef,
-    onCardDoubleTap: tryAutoFoundation
+    onCardDoubleTap: tryAutoFoundation,
+    isCardFlightActive,
+    performMove
   });
 
   return {
@@ -128,6 +165,7 @@ export function useBoardControlSystem(
     cardFlight,
     startCardFlight,
     clearCardFlight,
+    performMove,
     tryAutoFoundation,
     tryAutoFreeCell
   };

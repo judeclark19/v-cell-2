@@ -5,15 +5,20 @@ import type { RootState } from "@/state/reduxStore";
 import { useHandleCardDoubleTap } from "./handleCardDoubleTap";
 import { DragState, emptyDragState } from "./dragState";
 import { useGlobalPointerDrag } from "./useGlobalPointerDrag";
+import type { PerformMoveArgs } from "../useBoardControlSystem";
 
 type UsePointerControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
   onCardDoubleTap: (el: HTMLElement) => void;
+  isCardFlightActive: boolean;
+  performMove: (args: PerformMoveArgs) => boolean;
 };
 
 export function usePointerControlSystem({
   boardRef,
-  onCardDoubleTap
+  onCardDoubleTap,
+  isCardFlightActive,
+  performMove
 }: UsePointerControlSystemArgs) {
   const playable = useSelector(selectPlayableMask);
   const rules = useSelector(selectRules);
@@ -32,7 +37,8 @@ export function usePointerControlSystem({
   const dragRef = useRef(drag);
   const { handleCardDoubleTap } = useHandleCardDoubleTap(
     onCardDoubleTap,
-    drag.pending
+    drag.pending,
+    isCardFlightActive
   );
 
   useEffect(() => {
@@ -43,6 +49,7 @@ export function usePointerControlSystem({
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => {
+    if (isCardFlightActive) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
 
     if (!rules.allowFoundationPullback) return;
@@ -73,6 +80,7 @@ export function usePointerControlSystem({
     index: number,
     tcIndex: number
   ) => {
+    if (isCardFlightActive) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
 
     // 1. If this card is not playable, return
@@ -132,13 +140,15 @@ export function usePointerControlSystem({
     drag,
     dragRef,
     setDrag,
-    resetDrag
+    resetDrag,
+    performMove
   });
 
   const handleFreeCellPointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
     index: number
   ) => {
+    if (isCardFlightActive) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
 
     const card = freeCells[index];
