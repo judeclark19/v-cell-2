@@ -1,24 +1,18 @@
-import { AppDispatch } from "@/state/reduxStore";
 import { Card, Move } from "@vcell/engine";
-import { StartCardFlightArgs } from "./useCardFlight";
 import { useCallback } from "react";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { resolveBoardSourceFromEl } from "./resolveMoveAttempt";
+import type { PerformMoveArgs } from "./useBoardControlSystem";
 
 export function useTryAutoFoundation({
   boardRef,
   legalMoves,
-  uid,
-  dispatch,
-  startCardFlight,
-  getCardForSingleMove
+  getCardForSingleMove,
+  performMove
 }: {
   boardRef: React.RefObject<HTMLDivElement | null>;
   legalMoves: Move[];
-  uid: string | null;
-  dispatch: AppDispatch;
-  startCardFlight: (args: StartCardFlightArgs) => void;
   getCardForSingleMove: (move: Move) => Card | null;
+  performMove: (args: PerformMoveArgs) => boolean;
 }) {
   const tryAutoFoundation = useCallback(
     (el: HTMLElement): boolean => {
@@ -45,21 +39,19 @@ export function useTryAutoFoundation({
       ) as HTMLDivElement | null;
 
       const card = getCardForSingleMove(match);
-      if (card && toEl) {
-        startCardFlight({
-          fromEl: el,
-          toEl,
-          stack: [card],
-          dropTarget: { type: "foundation", index: toIndex }
-        });
-      }
-      // 4. Commit the move.
-      dispatch(applyMoveThunk({ move: match, uid }));
-
-      // 5. Return whether a move was made.
-      return true;
+      return performMove(
+        card && toEl
+          ? {
+              move: match,
+              fromEl: el,
+              toEl,
+              stack: [card],
+              dropTarget: { type: "foundation", index: toIndex }
+            }
+          : { move: match }
+      );
     },
-    [dispatch, startCardFlight, legalMoves, uid, getCardForSingleMove, boardRef]
+    [boardRef, getCardForSingleMove, legalMoves, performMove]
   );
 
   return { tryAutoFoundation };

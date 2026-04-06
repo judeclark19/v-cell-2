@@ -2,7 +2,8 @@ import { useRef } from "react";
 
 export function useHandleCardDoubleTap(
   onCardDoubleTap: (el: HTMLElement) => void,
-  isDragPending: boolean
+  isDragPending: boolean,
+  isCardFlightActive: boolean
 ) {
   const lastTapRef = useRef<{
     t: number;
@@ -12,6 +13,8 @@ export function useHandleCardDoubleTap(
   } | null>(null);
 
   const handleCardDoubleTap = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isCardFlightActive) return;
+
     const el = e.currentTarget as HTMLElement;
     const cardId = el.dataset.cardId;
     if (!cardId) return;

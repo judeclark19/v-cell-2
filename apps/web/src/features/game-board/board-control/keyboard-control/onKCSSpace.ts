@@ -5,11 +5,9 @@ import {
   resolveMoveAttempt
 } from "../resolveMoveAttempt";
 import { startKbCarrying, stopKbCarrying } from "./keyboardCarrying";
-import { AppDispatch } from "@/state/reduxStore";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
 import { KBCarryRefs, KBCarryState } from "./useKeyboardControlSystem";
 import { RefObject } from "react";
-import { StartCardFlightArgs } from "../useCardFlight";
+import type { PerformMoveArgs } from "../useBoardControlSystem";
 
 function findTableauTailAnchorEl(
   root: HTMLElement | null,
@@ -30,13 +28,11 @@ export const onKCSSpace = (
   kbState: KBCarryState,
   setKbState: React.Dispatch<React.SetStateAction<KBCarryState>>,
   kbCarryRefs: RefObject<KBCarryRefs>,
-  startCardFlight: (args: StartCardFlightArgs) => void,
+  performMove: (args: PerformMoveArgs) => boolean,
   foundationCards: Array<Card | null>,
   tableauCards: Array<Array<{ card: Card; faceDown: boolean }>>,
   freeCellCards: Array<Card | null>,
-  legalMoves: Move[],
-  dispatch: AppDispatch,
-  uid: string | null
+  legalMoves: Move[]
 ) => {
   e.preventDefault();
 
@@ -91,11 +87,8 @@ export const onKCSSpace = (
             dropTargetEl!)
           : dropTargetEl!;
 
-      // apply the move
-      dispatch(applyMoveThunk({ move, uid }));
-
-      // cards fly
-      startCardFlight({
+      const didMove = performMove({
+        move,
         fromEl: carriedEl,
         toEl: flightToEl,
         stack: flightStack,
@@ -105,16 +98,18 @@ export const onKCSSpace = (
         }
       });
 
-      // focus the moved card in its new position after the board re-renders
-      requestAnimationFrame(() => {
-        if (!movedCardId || !boardRef.current) return;
+      if (didMove) {
+        // focus the moved card in its new position after the board re-renders
+        requestAnimationFrame(() => {
+          if (!movedCardId || !boardRef.current) return;
 
-        const movedCardEl = boardRef.current.querySelector<HTMLElement>(
-          `[data-card-id="${movedCardId}"]`
-        );
+          const movedCardEl = boardRef.current.querySelector<HTMLElement>(
+            `[data-card-id="${movedCardId}"]`
+          );
 
-        movedCardEl?.focus({ preventScroll: true });
-      });
+          movedCardEl?.focus({ preventScroll: true });
+        });
+      }
     } else {
       requestAnimationFrame(() => {
         // focus back on original card if move was not successful

@@ -18,17 +18,16 @@ import { focusFirstPlayable, focusElIfFocusable } from "./focusUtils";
 import { getKbFocusables } from "./getKbFocusables";
 import { stopKbCarrying, setKeyboardDropTarget } from "./keyboardCarrying";
 import { Card, Move, PileRef } from "@vcell/engine";
-import { selectUid } from "@/state/auth/authSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { onKCSSpace } from "./onKCSSpace";
 import { getPileRefFromElement } from "../resolveMoveAttempt";
-import { StartCardFlightArgs } from "../useCardFlight";
 import {
   selectPaused,
   selectStartedAtMs,
   setPaused
 } from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
+import type { PerformMoveArgs } from "../useBoardControlSystem";
 
 type UseKeyboardControlSystemArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
@@ -38,7 +37,8 @@ type UseKeyboardControlSystemArgs = {
   legalMoves: Move[];
   tryAutoFreeCell: (el: HTMLElement) => boolean;
   tryAutoFoundation: (el: HTMLElement) => boolean;
-  startCardFlight: (args: StartCardFlightArgs) => void;
+  performMove: (args: PerformMoveArgs) => boolean;
+  isCardFlightActive: boolean;
   newDeal: () => void;
   restart: () => void;
   undo: () => void;
@@ -65,15 +65,13 @@ export function useKeyboardControlSystem({
   legalMoves,
   tryAutoFreeCell,
   tryAutoFoundation,
-  startCardFlight,
+  performMove,
+  isCardFlightActive,
   newDeal,
   restart,
   undo
 }: UseKeyboardControlSystemArgs) {
   const dispatch = useDispatch<AppDispatch>();
-
-  // auth slice
-  const uid = useSelector(selectUid);
 
   // Session slice
   const startedAtMs = useSelector(selectStartedAtMs);
@@ -103,7 +101,8 @@ export function useKeyboardControlSystem({
   });
 
   // derived
-  const isInputSuppressed = isAnyModalOpen || isAutoCompleting;
+  const isInputSuppressed =
+    isAnyModalOpen || isAutoCompleting || isCardFlightActive;
 
   const isTypingTarget = (target: EventTarget | null) => {
     if (!(target instanceof HTMLElement)) return false;
@@ -171,13 +170,11 @@ export function useKeyboardControlSystem({
           kbState,
           setKbState,
           kbRefs,
-          startCardFlight,
+          performMove,
           foundationCards,
           tableauCards,
           freeCellCards,
-          legalMoves,
-          dispatch,
-          uid
+          legalMoves
         );
         return;
       }
@@ -261,12 +258,11 @@ export function useKeyboardControlSystem({
       undo,
       paused,
       startedAtMs,
-      startCardFlight,
+      performMove,
       status,
       tableauCards,
       tryAutoFoundation,
       tryAutoFreeCell,
-      uid,
       isAutoCompleting,
       isFullyCollected
     ]

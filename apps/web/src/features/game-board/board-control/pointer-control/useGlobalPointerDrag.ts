@@ -1,14 +1,12 @@
 import { useEffect } from "react";
 import type { DragState } from "./dragState";
-import { applyMoveThunk } from "@/state/game/thunks/applyMove";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/state/reduxStore";
+import { useSelector } from "react-redux";
 import {
   getPileRefFromElement,
   resolveMoveAttempt
 } from "../resolveMoveAttempt";
-import { selectUid } from "@/state/auth/authSlice";
 import { selectLegalMoves } from "@/state/game/gameSlice/selectors";
+import type { PerformMoveArgs } from "../useBoardControlSystem";
 
 type GlobalPointerDragArgs = {
   boardRef: React.RefObject<HTMLDivElement | null>;
@@ -16,6 +14,7 @@ type GlobalPointerDragArgs = {
   dragRef: React.RefObject<DragState>;
   setDrag: React.Dispatch<React.SetStateAction<DragState>>;
   resetDrag: () => void;
+  performMove: (args: PerformMoveArgs) => boolean;
 };
 
 export function useGlobalPointerDrag({
@@ -23,10 +22,9 @@ export function useGlobalPointerDrag({
   drag,
   dragRef,
   setDrag,
-  resetDrag
+  resetDrag,
+  performMove
 }: GlobalPointerDragArgs) {
-  const dispatch = useDispatch<AppDispatch>();
-  const uid = useSelector(selectUid);
   const legalMoves = useSelector(selectLegalMoves);
   useEffect(() => {
     if (!boardRef.current) return;
@@ -109,9 +107,10 @@ export function useGlobalPointerDrag({
 
       // if legal move, apply it
       if (move) {
-        dispatch(applyMoveThunk({ move, uid }));
-        resetDrag();
-        return;
+        if (performMove({ move })) {
+          resetDrag();
+          return;
+        }
       }
 
       // otherwise, let card fly back to origin
@@ -141,8 +140,7 @@ export function useGlobalPointerDrag({
     resetDrag,
     setDrag,
     dragRef,
-    dispatch,
-    uid,
-    legalMoves
+    legalMoves,
+    performMove
   ]);
 }
