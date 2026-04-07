@@ -3,6 +3,7 @@ import { Questrial, Poppins, Luckiest_Guy } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
+import { OfflineBanner } from "@/ui/OfflineBanner";
 
 const questrial = Questrial({
   variable: "--font-questrial",
@@ -69,6 +70,7 @@ export default function RootLayout({
       >
         <Providers>
           <NavBar />
+          <OfflineBanner />
           <div className="max-width-container">{children}</div>
         </Providers>
       </body>

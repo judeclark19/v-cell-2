@@ -13,9 +13,11 @@ import { auth, db } from "@/lib/firebaseClient";
 import Link from "next/link";
 import { selectUid } from "@/state/auth/authSlice";
 import { useSelector } from "react-redux";
+import { useIsOffline } from "@/state/network/useIsOffline";
 
 export default function LoginClient() {
   const uid = useSelector(selectUid);
+  const isOffline = useIsOffline();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +57,8 @@ export default function LoginClient() {
   }, [loginEmail, loginPassword]);
 
   const loginAndContinue = async () => {
+    if (isOffline) return;
+
     // AuthGate / session routing will decide whether to send the user to
     // finish-signup or into the app.
     await loginWithGoogle();
@@ -62,6 +66,7 @@ export default function LoginClient() {
 
   const loginWithEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isOffline) return;
     if (loginLoading) return;
 
     setLoginError(null);
@@ -91,6 +96,7 @@ export default function LoginClient() {
 
   const signupWithEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isOffline) return;
     if (signupLoading) return;
 
     setSignupError(null);
@@ -160,6 +166,21 @@ export default function LoginClient() {
           After you choose an option, we’ll send you back to{" "}
           <code>{nextPath}</code>.
         </p>
+        {isOffline && (
+          <p role="status" style={{ marginBottom: 16 }}>
+            You&apos;re offline. Login and signup are unavailable right now, but
+            you can still{" "}
+            <Link
+              style={{
+                textDecoration: "underline"
+              }}
+              href={nextPath}
+            >
+              continue as a guest
+            </Link>{" "}
+            and play locally on this device.
+          </p>
+        )}
       </header>
 
       {hydrated && uid && (
@@ -182,6 +203,7 @@ export default function LoginClient() {
               onClick={loginAndContinue}
               type="button"
               className="btn btn--primary"
+              disabled={isOffline}
             >
               Log in or sign up with Google
             </button>
@@ -233,6 +255,7 @@ export default function LoginClient() {
                   placeholder="you@example.com"
                   className="control"
                   type="email"
+                  disabled={isOffline}
                 />
               </label>
 
@@ -247,6 +270,7 @@ export default function LoginClient() {
                   placeholder="Your password"
                   className="control"
                   type="password"
+                  disabled={isOffline}
                 />
               </label>
 
@@ -259,7 +283,7 @@ export default function LoginClient() {
               <button
                 type="submit"
                 className="btn btn--primary"
-                disabled={!canSubmitLogin || loginLoading}
+                disabled={isOffline || !canSubmitLogin || loginLoading}
               >
                 {loginLoading ? "Logging in…" : "Log in"}
               </button>
@@ -292,6 +316,7 @@ export default function LoginClient() {
                 placeholder="e.g., Jude"
                 className="control"
                 type="text"
+                disabled={isOffline}
               />
             </label>
 
@@ -304,6 +329,7 @@ export default function LoginClient() {
                 placeholder="you@example.com"
                 className="control"
                 type="email"
+                disabled={isOffline}
               />
             </label>
 
@@ -318,6 +344,7 @@ export default function LoginClient() {
                 placeholder="6+ characters"
                 className="control"
                 type="password"
+                disabled={isOffline}
               />
             </label>
 
@@ -330,7 +357,7 @@ export default function LoginClient() {
             <button
               type="submit"
               className="btn btn--primary"
-              disabled={!canSubmitSignup || signupLoading}
+              disabled={isOffline || !canSubmitSignup || signupLoading}
             >
               {signupLoading ? "Creating account…" : "Create account"}
             </button>
