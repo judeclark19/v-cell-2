@@ -4,6 +4,7 @@ import "./globals.css";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
 import { OfflineBanner } from "@/ui/OfflineBanner";
+import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
 
 const questrial = Questrial({
   variable: "--font-questrial",
@@ -25,7 +26,15 @@ const luckiestGuy = Luckiest_Guy({
 
 export const metadata: Metadata = {
   title: "V-Cell (alpha)",
-  description: "A solitaire game with a twist on freecell"
+  description: "A solitaire game with a twist on freecell",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/images/V.png", type: "image/png" }
+    ],
+    apple: [{ url: "/images/V.png", type: "image/png" }]
+  }
 };
 
 export default function RootLayout({
@@ -69,6 +78,7 @@ export default function RootLayout({
         className={`${questrial.variable} ${poppins.variable} ${luckiestGuy.variable}`}
       >
         <Providers>
+          <ServiceWorkerRegistration />
           <NavBar />
           <OfflineBanner />
           <div className="max-width-container">{children}</div>

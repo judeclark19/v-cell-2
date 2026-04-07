@@ -30,6 +30,7 @@ import { bootSession } from "../session/thunks/bootSession";
 import { transitionGameAndSession } from "../transitionGameAndSession";
 import { safeRandomId } from "../utils";
 import { setIsAnyModalOpen } from "../ui/uiSlice";
+import { useCompletedGamesHydration } from "../records/utils";
 
 export function GameLifecycle() {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,6 +60,7 @@ export function GameLifecycle() {
   }, [dispatch, rules]);
 
   useLoginReconcileInProgressGame();
+  useCompletedGamesHydration();
 
   useEffect(() => {
     if (seed !== "seed-boot" && sessionId !== "session-boot") return;
