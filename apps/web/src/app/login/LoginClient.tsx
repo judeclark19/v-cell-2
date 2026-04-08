@@ -13,9 +13,11 @@ import { auth, db } from "@/lib/firebaseClient";
 import Link from "next/link";
 import { selectUid } from "@/state/auth/authSlice";
 import { useSelector } from "react-redux";
+import { useIsOffline } from "@/state/network/useIsOffline";
 
 export default function LoginClient() {
   const uid = useSelector(selectUid);
+  const isOffline = useIsOffline();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +57,8 @@ export default function LoginClient() {
   }, [loginEmail, loginPassword]);
 
   const loginAndContinue = async () => {
+    if (isOffline) return;
+
     // AuthGate / session routing will decide whether to send the user to
     // finish-signup or into the app.
     await loginWithGoogle();
@@ -62,6 +66,7 @@ export default function LoginClient() {
 
   const loginWithEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isOffline) return;
     if (loginLoading) return;
 
     setLoginError(null);
@@ -91,6 +96,7 @@ export default function LoginClient() {
 
   const signupWithEmail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isOffline) return;
     if (signupLoading) return;
 
     setSignupError(null);
@@ -144,22 +150,41 @@ export default function LoginClient() {
     <main>
       <header>
         <h1 style={{ marginBottom: 8 }}>Log in</h1>
-        <p style={{ marginBottom: 16 }}>
-          <Link
-            style={{
-              textDecoration: "underline"
-            }}
-            href={nextPath}
-          >
-            Continue as a guest
-          </Link>{" "}
-          to play locally on this device. Log in to unlock stats, leaderboard,
-          and sync across devices.
-        </p>
-        <p style={{ marginBottom: 16, opacity: 0.8 }}>
-          After you choose an option, we’ll send you back to{" "}
-          <code>{nextPath}</code>.
-        </p>
+
+        {isOffline ? (
+          <p role="status" style={{ marginBottom: 16 }}>
+            Cloud sync is unavailable right now. Login and signup are
+            temporarily unavailable, but you can still{" "}
+            <Link
+              style={{
+                textDecoration: "underline"
+              }}
+              href={nextPath}
+            >
+              continue as a guest
+            </Link>{" "}
+            and play locally on this device.
+          </p>
+        ) : (
+          <>
+            <p style={{ marginBottom: 16 }}>
+              <Link
+                style={{
+                  textDecoration: "underline"
+                }}
+                href={nextPath}
+              >
+                Continue as a guest
+              </Link>{" "}
+              to play locally on this device. Log in to unlock stats,
+              leaderboard, and sync across devices.
+            </p>
+            <p style={{ marginBottom: 16, opacity: 0.8 }}>
+              After you choose an option, we’ll send you back to{" "}
+              <code>{nextPath}</code>.
+            </p>
+          </>
+        )}
       </header>
 
       {hydrated && uid && (
@@ -169,70 +194,151 @@ export default function LoginClient() {
         </p>
       )}
 
-      <div>
-        <section
-          style={{
-            display: "flex",
-            gap: "12px"
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <button
-              title="Log in and continue"
-              onClick={loginAndContinue}
-              type="button"
-              className="btn btn--primary"
-            >
-              Log in or sign up with Google
-            </button>
-          </div>
-          <div
-            aria-hidden="true"
+      {!isOffline && (
+        <div>
+          <section
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: 8,
-              color: "var(--muted)",
-              fontSize: 14,
-              width: 70
+              gap: "12px"
             }}
           >
-            <span
+            <div style={{ flex: 1 }}>
+              <button
+                title="Log in and continue"
+                onClick={loginAndContinue}
+                type="button"
+                className="btn btn--primary"
+                disabled={isOffline}
+              >
+                Log in or sign up with Google
+              </button>
+            </div>
+            <div
+              aria-hidden="true"
               style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "var(--muted)",
+                fontSize: 14,
+                width: 70
               }}
-            />
-            <span>or</span>
-            <span
-              style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
-              }}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <form onSubmit={loginWithEmail} style={{ maxWidth: 520 }}>
-              <h2 style={{ marginBottom: 8, fontSize: 18 }}>
-                Log in with email
-              </h2>
-              <p style={{ marginBottom: 12, opacity: 0.8 }}>
-                Existing user? Log in with email + password.
-              </p>
+            >
+              <span
+                style={{
+                  flex: 1,
+                  height: 1,
+                  background: "currentColor",
+                  opacity: 0.3
+                }}
+              />
+              <span>or</span>
+              <span
+                style={{
+                  flex: 1,
+                  height: 1,
+                  background: "currentColor",
+                  opacity: 0.3
+                }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <form onSubmit={loginWithEmail} style={{ maxWidth: 520 }}>
+                <h2 style={{ marginBottom: 8, fontSize: 18 }}>
+                  Log in with email
+                </h2>
+                <p style={{ marginBottom: 12, opacity: 0.8 }}>
+                  Existing user? Log in with email + password.
+                </p>
+
+                <label style={{ display: "block", marginBottom: 10 }}>
+                  <span style={{ display: "block", marginBottom: 6 }}>
+                    Email
+                  </span>
+                  <input
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    className="control"
+                    type="email"
+                    disabled={isOffline}
+                  />
+                </label>
+
+                <label style={{ display: "block", marginBottom: 14 }}>
+                  <span style={{ display: "block", marginBottom: 6 }}>
+                    Password
+                  </span>
+                  <input
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    autoComplete="current-password"
+                    placeholder="Your password"
+                    className="control"
+                    type="password"
+                    disabled={isOffline}
+                  />
+                </label>
+
+                {loginError && (
+                  <p role="alert" style={{ marginBottom: 12 }}>
+                    {loginError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="btn btn--primary"
+                  disabled={isOffline || !canSubmitLogin || loginLoading}
+                >
+                  {loginLoading ? "Logging in…" : "Log in"}
+                </button>
+                <div style={{ marginTop: 10 }}>
+                  <Link
+                    href={`/forgot-password?next=${encodeURIComponent(nextPath)}`}
+                    style={{ textDecoration: "underline", fontSize: 14 }}
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              </form>
+            </div>
+          </section>
+          <section>
+            {" "}
+            <h2 style={{ marginBottom: 8, fontSize: 18 }}>
+              Sign up with email
+            </h2>
+            <p style={{ marginBottom: 12, opacity: 0.8 }}>
+              Create an account with email/password.
+            </p>
+            <form onSubmit={signupWithEmail} style={{ maxWidth: 520 }}>
+              <label style={{ display: "block", marginBottom: 10 }}>
+                <span style={{ display: "block", marginBottom: 6 }}>
+                  Display name
+                </span>
+                <input
+                  value={signupDisplayName}
+                  onChange={(e) => setSignupDisplayName(e.target.value)}
+                  autoComplete="nickname"
+                  placeholder="e.g., Jude"
+                  className="control"
+                  type="text"
+                  disabled={isOffline}
+                />
+              </label>
 
               <label style={{ display: "block", marginBottom: 10 }}>
                 <span style={{ display: "block", marginBottom: 6 }}>Email</span>
                 <input
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
                   autoComplete="email"
                   placeholder="you@example.com"
                   className="control"
                   type="email"
+                  disabled={isOffline}
                 />
               </label>
 
@@ -241,102 +347,33 @@ export default function LoginClient() {
                   Password
                 </span>
                 <input
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="Your password"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="6+ characters"
                   className="control"
                   type="password"
+                  disabled={isOffline}
                 />
               </label>
 
-              {loginError && (
+              {signupError && (
                 <p role="alert" style={{ marginBottom: 12 }}>
-                  {loginError}
+                  {signupError}
                 </p>
               )}
 
               <button
                 type="submit"
                 className="btn btn--primary"
-                disabled={!canSubmitLogin || loginLoading}
+                disabled={isOffline || !canSubmitSignup || signupLoading}
               >
-                {loginLoading ? "Logging in…" : "Log in"}
+                {signupLoading ? "Creating account…" : "Create account"}
               </button>
-              <div style={{ marginTop: 10 }}>
-                <Link
-                  href={`/forgot-password?next=${encodeURIComponent(nextPath)}`}
-                  style={{ textDecoration: "underline", fontSize: 14 }}
-                >
-                  Forgot password?
-                </Link>
-              </div>
             </form>
-          </div>
-        </section>
-        <section>
-          {" "}
-          <h2 style={{ marginBottom: 8, fontSize: 18 }}>Sign up with email</h2>
-          <p style={{ marginBottom: 12, opacity: 0.8 }}>
-            Create an account with email/password.
-          </p>
-          <form onSubmit={signupWithEmail} style={{ maxWidth: 520 }}>
-            <label style={{ display: "block", marginBottom: 10 }}>
-              <span style={{ display: "block", marginBottom: 6 }}>
-                Display name
-              </span>
-              <input
-                value={signupDisplayName}
-                onChange={(e) => setSignupDisplayName(e.target.value)}
-                autoComplete="nickname"
-                placeholder="e.g., Jude"
-                className="control"
-                type="text"
-              />
-            </label>
-
-            <label style={{ display: "block", marginBottom: 10 }}>
-              <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-              <input
-                value={signupEmail}
-                onChange={(e) => setSignupEmail(e.target.value)}
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="control"
-                type="email"
-              />
-            </label>
-
-            <label style={{ display: "block", marginBottom: 14 }}>
-              <span style={{ display: "block", marginBottom: 6 }}>
-                Password
-              </span>
-              <input
-                value={signupPassword}
-                onChange={(e) => setSignupPassword(e.target.value)}
-                autoComplete="new-password"
-                placeholder="6+ characters"
-                className="control"
-                type="password"
-              />
-            </label>
-
-            {signupError && (
-              <p role="alert" style={{ marginBottom: 12 }}>
-                {signupError}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={!canSubmitSignup || signupLoading}
-            >
-              {signupLoading ? "Creating account…" : "Create account"}
-            </button>
-          </form>
-        </section>
-      </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

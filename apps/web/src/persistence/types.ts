@@ -2,6 +2,13 @@
 import { GameStatus } from "@/state/game/gameSlice";
 import type { GameState, Move } from "@vcell/engine";
 
+// Local cloud-sync lifecycle:
+// - pending_upload: local changes still need upload/retry
+// - uploaded: remote acceptance is strongly evidenced (for example, successful write or matching live hydration),
+//   but we have not completed strict server confirmation yet
+// - synced: explicit server confirmation succeeded
+export type CloudSyncState = "pending_upload" | "uploaded" | "synced";
+
 export type PersistedGame = {
   // identity
   sessionId: string;
@@ -30,6 +37,10 @@ export type PersistedGame = {
 
   // bookkeeping
   updatedAtMs: number;
+  syncVersion?: number;
+  syncState?: CloudSyncState;
+  lastCloudAttemptAtMs?: number | null;
+  lastCloudError?: string | null;
 
   // optional pointer
   lastCompletedsessionId?: string;

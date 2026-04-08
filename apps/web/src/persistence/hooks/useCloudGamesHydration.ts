@@ -13,13 +13,31 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebaseClient";
-import { upsertInProgressGame } from "@/persistence/inProgressGamesStore";
-import { upsertCompletedGame } from "@/persistence/completedGamesStore";
+import {
+  deleteInProgressGameForDevice,
+  getInProgressGameForDevice,
+  upsertInProgressGame
+} from "@/persistence/inProgressGamesStore";
+import {
+  getCompletedGameBySessionId,
+  upsertCompletedGame
+} from "@/persistence/completedGamesStore";
 import { addCompletedGame } from "@/state/records/recordsSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { useDispatch } from "react-redux";
+import {
+  markCloudSyncAvailable,
+  markCloudSyncUnavailable
+} from "@/state/network/cloudSyncAvailability";
 import { getOrCreateDeviceId } from "../schema";
 import { PersistedGame } from "../types";
+import {
+  doesCloudGameMatchLocalVersion,
+  getPersistedGameSyncVersion,
+  markPersistedGameSynced,
+  withPersistedGameSyncVersion
+} from "../cloudSync";
+import { shouldIgnoreCloudInProgress } from "../reconciliation";
 
 // Cloud model: users/{uid}/games/{sessionId}
 // Local model: inProgressGames (single slot per device) + completedGames (history)
@@ -51,25 +69,6 @@ function setLastCloudSyncMs(uid: string, deviceId: string, ms: number): void {
   }
 }
 
-function shouldForceServerHydrationOnce(
-  uid: string,
-  deviceId: string
-): boolean {
-  const key = `vcell:forceServerHydrationOnce:${uid}:${deviceId}`;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return false;
-
-    // One-shot marker: remove it so the next login can hydrate normally.
-    localStorage.removeItem(key);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Narrowing helpers: we only upsert to IndexedDB when the doc has enough fields
-// to satisfy the local Persisted* types.
 function hasInProgressFields(d: AnyRecord): boolean {
   return (
     typeof d.seed === "string" &&
@@ -86,24 +85,53 @@ function hasInProgressFields(d: AnyRecord): boolean {
 }
 
 function hasCompletedFields(d: AnyRecord): boolean {
-  // Adjust if your completed schema is stricter. This is the minimum to avoid
-  // poisoning local state with half-baked docs.
   return typeof d.seed === "string" && isRecord(d.rules);
 }
 
-/**
- * Hydrate local IndexedDB stores from the signed-in user's Firestore `games` collection.
- *
- * Routes docs by `status`:
- * - status === "in_progress" -> inProgressGames
- * - otherwise -> completedGames
- */
+function mergeCloudGameIntoLocal(
+  existing: PersistedGame | null,
+  cloudGame: PersistedGame
+): PersistedGame {
+  const hydratedCloudGame = withPersistedGameSyncVersion(cloudGame);
+
+  if (!existing) {
+    return markPersistedGameSynced(hydratedCloudGame);
+  }
+
+  const cloudVersion = getPersistedGameSyncVersion(hydratedCloudGame);
+  const existingVersion = getPersistedGameSyncVersion(existing);
+
+  if (
+    doesCloudGameMatchLocalVersion(
+      withPersistedGameSyncVersion(existing),
+      hydratedCloudGame,
+      hydratedCloudGame.sessionId
+    ) ||
+    cloudVersion > existingVersion
+  ) {
+    return {
+      ...markPersistedGameSynced(hydratedCloudGame),
+      lastCloudAttemptAtMs: existing.lastCloudAttemptAtMs ?? null
+    };
+  }
+
+  if (existingVersion > cloudVersion) {
+    return existing;
+  }
+
+  return {
+    ...hydratedCloudGame,
+    syncState: existing.syncState,
+    lastCloudAttemptAtMs: existing.lastCloudAttemptAtMs ?? null,
+    lastCloudError: existing.lastCloudError ?? null
+  };
+}
+
 export function useCloudGamesHydration(uid: string | null) {
   const dispatch = useDispatch<AppDispatch>();
   const unsubRef = useRef<null | (() => void)>(null);
 
   useEffect(() => {
-    // Clean up any prior listener when uid changes.
     if (unsubRef.current) {
       unsubRef.current();
       unsubRef.current = null;
@@ -112,16 +140,10 @@ export function useCloudGamesHydration(uid: string | null) {
     if (!uid) return;
 
     const localDeviceId = getOrCreateDeviceId();
-    const forceServerHydration = shouldForceServerHydrationOnce(
-      uid,
-      localDeviceId
-    );
     const lastCloudSyncMs = getLastCloudSyncMs(uid, localDeviceId);
 
     const gamesCol = collection(db, "users", uid, "games");
     const fullSyncQuery = query(gamesCol, orderBy("updatedAtMs", "desc"));
-    // Incremental listener: after we have a watermark, only listen for docs newer than the last sync.
-    // First run (no watermark) still listens to the full collection.
     const q =
       lastCloudSyncMs > 0
         ? query(
@@ -150,39 +172,59 @@ export function useCloudGamesHydration(uid: string | null) {
       if (status === "in_progress") {
         if (!hasInProgressFields(data)) return false;
 
-        // In-progress is per-device. Only hydrate the in-progress game that
-        // belongs to THIS device; otherwise devices will overwrite each other.
         const cloudDeviceId = data.deviceId;
         if (typeof cloudDeviceId !== "string") return false;
         if (cloudDeviceId !== localDeviceId) return false;
 
-        const payload = {
+        const localCompleted = await getCompletedGameBySessionId(sessionId);
+        if (
+          shouldIgnoreCloudInProgress({
+            cloudSessionId: sessionId,
+            localCompleted
+          })
+        ) {
+          return false;
+        }
+
+        const existing = await getInProgressGameForDevice(localDeviceId);
+        const basePayload = withPersistedGameSyncVersion({
           ...(data as unknown as PersistedGame),
           sessionId,
           deviceId: cloudDeviceId,
           userId: uid
-        } satisfies PersistedGame;
+        } satisfies PersistedGame);
 
-        await upsertInProgressGame(payload);
+        await upsertInProgressGame(mergeCloudGameIntoLocal(existing, basePayload));
         return true;
       }
 
-      // Completed
       if (!hasCompletedFields(data)) return false;
 
-      const payload = {
+      const existingCompleted = await getCompletedGameBySessionId(sessionId);
+      const basePayload = withPersistedGameSyncVersion({
         ...(data as unknown as PersistedGame),
         sessionId,
         userId: uid
-      } satisfies PersistedGame;
+      } satisfies PersistedGame);
 
-      await upsertCompletedGame(payload);
-      dispatch(addCompletedGame(payload));
+      const merged = mergeCloudGameIntoLocal(existingCompleted, basePayload);
+      await upsertCompletedGame(merged);
+
+      const inProgress = await getInProgressGameForDevice(localDeviceId);
+      if (inProgress?.sessionId === sessionId) {
+        await deleteInProgressGameForDevice(localDeviceId);
+      }
+
+      dispatch(addCompletedGame(merged));
       return true;
     };
 
     const handleSnapshot = async (snap: QuerySnapshot<DocumentData>) => {
       let maxSeen = 0;
+
+      if (!snap.metadata.fromCache) {
+        markCloudSyncAvailable();
+      }
 
       for (const change of snap.docChanges()) {
         const raw = change.doc.data() ?? {};
@@ -224,6 +266,8 @@ export function useCloudGamesHydration(uid: string | null) {
         }
       }
 
+      markCloudSyncAvailable();
+
       if (maxSeen > 0) {
         setLastCloudSyncMs(
           uid,
@@ -236,19 +280,19 @@ export function useCloudGamesHydration(uid: string | null) {
     unsubRef.current = onSnapshot(
       q,
       (snap) => {
-        if (forceServerHydration && snap.metadata.fromCache) return;
-
         handleSnapshot(snap).catch((err) => {
+          markCloudSyncUnavailable(err);
           console.error("[cloud hydration] failed to apply snapshot", err);
         });
       },
       (err) => {
+        markCloudSyncUnavailable(err);
         console.error("[cloud hydration] listener error", err);
       }
     );
 
-    // Always do a one-time server sync on login to ensure correctness.
     handleServerSync().catch((err) => {
+      markCloudSyncUnavailable(err);
       console.error("[cloud hydration] server sync failed", err);
     });
 

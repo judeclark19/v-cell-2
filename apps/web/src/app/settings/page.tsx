@@ -6,6 +6,7 @@ import AccountSettings from "@/ui/AccountSettings";
 import { useDispatch, useSelector } from "react-redux";
 import { selectShowTimer, setShowTimer } from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
+import { useIsOffline } from "@/state/network/useIsOffline";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -13,6 +14,7 @@ export default function SettingsPage() {
 
   const showTimer = useSelector(selectShowTimer);
   const dispatch = useDispatch<AppDispatch>();
+  const isOffline = useIsOffline();
 
   return (
     <main>
@@ -22,7 +24,13 @@ export default function SettingsPage() {
 
       <section>
         <h2>Account</h2>
-        {isUser ? (
+
+        {isOffline ? (
+          <p className="hint">
+            Cloud sync is unavailable right now. Account settings are
+            unavailable until the connection recovers.
+          </p>
+        ) : isUser ? (
           <AccountSettings />
         ) : (
           <p className="hint">Log in to access account settings.</p>

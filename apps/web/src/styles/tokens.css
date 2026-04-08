@@ -7,7 +7,7 @@
   /* -------- Semantic tokens (used everywhere) -------- */
 
   /* Typography */
-  --font-ui: Questrial, Questrial Fallback, Arial, Helvetica, sans-serif;
+  --font-ui: "Avenir Next", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 
   /* Radii / spacing */
   --radius: 8px;
