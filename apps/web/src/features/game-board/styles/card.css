@@ -338,22 +338,18 @@
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
 
-/* TODO: some day make reduced motion a user preference w UI toggle, make sure flip and flight do not fire when it is enabled */
+:root[data-reduced-motion="true"] .card {
+  transition: none;
+}
 
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    transition: none;
-  }
+:root[data-reduced-motion="true"] .card-inner {
+  transition: none;
+}
 
-  .card-inner {
-    transition: none;
-  }
+:root[data-reduced-motion="true"] .card-face--front {
+  transition: none;
+}
 
-  .card-face--front {
-    transition: none;
-  }
-
-  .card.is-drop-target .card-face--front {
-    transition: none;
-  }
+:root[data-reduced-motion="true"] .card.is-drop-target .card-face--front {
+  transition: none;
 }

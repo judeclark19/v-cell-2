@@ -234,16 +234,14 @@
 /* Reduced motion                                                             */
 /* -------------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: reduce) {
-  .drag-layer.is-auto-moving {
-    transition: none;
-  }
+:root[data-reduced-motion="true"] .drag-layer.is-auto-moving {
+  transition: none;
+}
 
-  .pause-overlay {
-    backdrop-filter: none;
-  }
+:root[data-reduced-motion="true"] .pause-overlay {
+  backdrop-filter: none;
+}
 
-  .autocomplete-drawer {
-    transition: none;
-  }
+:root[data-reduced-motion="true"] .autocomplete-drawer {
+  transition: none;
 }

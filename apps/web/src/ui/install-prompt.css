@@ -31,6 +31,20 @@
   flex-shrink: 0;
 }
 
+.install-prompt__debug {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 90%, black 10%);
+  color: var(--foreground);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 700px) {
   .install-prompt__inner {
     flex-direction: column;

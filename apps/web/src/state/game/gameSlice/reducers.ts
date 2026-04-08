@@ -47,14 +47,6 @@ export const gameSliceReducers = {
     state.undosUsed = 0;
     state.status = "in_progress";
   },
-  hydrateHistory: (
-    // TODO: wtap these hydrate functions into transitionGameAndSession?
-    state,
-    action: PayloadAction<{ present: GameState; past: GameState[] }>
-  ) => {
-    state.history.present = action.payload.present;
-    state.history.past = action.payload.past;
-  },
   hydrateFromPersisted: (
     state,
     action: PayloadAction<{

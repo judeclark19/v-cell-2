@@ -117,6 +117,7 @@
   background-color: transparent;
   border: 1px solid var(--nav-button-border);
   transition: background-color 120ms ease;
+  height: 100%;
 }
 
 .navbar__select:hover {
@@ -240,9 +241,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .navbar__panel {
-    transition: none;
-    transform: none;
-  }
+:root[data-reduced-motion="true"] .navbar__panel {
+  transition: none;
+  transform: none;
 }

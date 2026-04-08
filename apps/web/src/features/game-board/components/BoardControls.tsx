@@ -201,7 +201,6 @@ export default function BoardControls({
 
           <label className="field">
             Foundation pullback
-            {/* TODO: when foundation pullback is turned off, the right click/context menu should NOT try auto foundation */}
             <select
               className="control"
               id="foundation-pullback"

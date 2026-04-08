@@ -63,14 +63,15 @@ function Card({
   onActivate,
   onPointerDownCard,
   onAutoFreeCell,
-  ...divProps // TODO: um, what?
+  ...forwardedDivProps
 }: CardProps) {
   const isEmpty = !card;
 
   const canActivate =
     Boolean(card) && playable && !faceDown && Boolean(onActivate);
 
-  const { onPointerDown: onPointerDownFromProps, ...restDivProps } = divProps;
+  const { onPointerDown: onPointerDownFromProps, ...restDivProps } =
+    forwardedDivProps;
 
   const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     onPointerDownFromProps?.(e);
