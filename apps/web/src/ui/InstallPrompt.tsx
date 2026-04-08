@@ -50,6 +50,26 @@ function readInstallDebugFlag(): boolean {
   }
 }
 
+function getInitialServiceWorkerDebug() {
+  if (typeof window === "undefined") {
+    return {
+      controller: false,
+      registrationScope: null,
+      registrationActive: false,
+      supported: false
+    };
+  }
+
+  const supported = "serviceWorker" in navigator;
+
+  return {
+    controller: supported ? navigator.serviceWorker.controller !== null : false,
+    registrationScope: null,
+    registrationActive: false,
+    supported
+  };
+}
+
 export function InstallPrompt() {
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(() => {
@@ -72,6 +92,12 @@ export function InstallPrompt() {
   const [beforeInstallPromptSeen, setBeforeInstallPromptSeen] = useState(false);
   const [appInstalledSeen, setAppInstalledSeen] = useState(false);
   const [installDebugEnabled] = useState(readInstallDebugFlag);
+  const [serviceWorkerDebug, setServiceWorkerDebug] = useState<{
+    controller: boolean;
+    registrationScope: string | null;
+    registrationActive: boolean;
+    supported: boolean;
+  }>(getInitialServiceWorkerDebug);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
@@ -108,6 +134,47 @@ export function InstallPrompt() {
     };
   }, []);
 
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
+    if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator)) return;
+
+    let cancelled = false;
+
+    const updateServiceWorkerDebug = async () => {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (cancelled) return;
+
+        setServiceWorkerDebug({
+          controller: navigator.serviceWorker.controller !== null,
+          registrationScope: registration?.scope ?? null,
+          registrationActive: registration?.active != null,
+          supported: true
+        });
+      } catch {
+        if (cancelled) return;
+
+        setServiceWorkerDebug({
+          controller: navigator.serviceWorker.controller !== null,
+          registrationScope: null,
+          registrationActive: false,
+          supported: true
+        });
+      }
+    };
+
+    updateServiceWorkerDebug().catch(() => undefined);
+
+    navigator.serviceWorker.ready
+      .then(() => updateServiceWorkerDebug())
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const shouldShow = useMemo(() => {
     if (typeof window === "undefined") return false;
     if (process.env.NODE_ENV !== "production") return false;
@@ -129,10 +196,19 @@ export function InstallPrompt() {
       deferredPromptCaptured: installEvent !== null,
       directPromptAvailable,
       dismissed,
+      hasManifestLink:
+        document.querySelector('link[rel="manifest"]')?.getAttribute("href") ??
+        null,
       isStandalone: isStandalone(),
+      locationHref: window.location.href,
+      locationOrigin: window.location.origin,
+      locationProtocol: window.location.protocol,
       mobileUserAgent: isMobileUserAgent(window.navigator.userAgent),
+      navigatorStandalone:
+        (window.navigator as NavigatorWithStandalone).standalone ?? null,
       pathname,
       promptMode,
+      serviceWorker: serviceWorkerDebug,
       userAgent: window.navigator.userAgent
     };
   }, [
@@ -142,7 +218,8 @@ export function InstallPrompt() {
     directPromptAvailable,
     installEvent,
     pathname,
-    promptMode
+    promptMode,
+    serviceWorkerDebug
   ]);
 
   const dismiss = () => {
