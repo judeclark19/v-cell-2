@@ -1,3 +1,4 @@
+import { STORES, VCELL_DB_NAME, VCELL_DB_VERSION } from "@/persistence/schema";
 import { expect, test } from "@playwright/test";
 
 async function waitForServiceWorker(page: import("@playwright/test").Page) {
@@ -14,7 +15,7 @@ async function readPersistedSeed(page: import("@playwright/test").Page) {
     const deviceId = window.localStorage.getItem("vcell.deviceId");
     if (!deviceId) return null;
 
-    const openRequest = window.indexedDB.open("vcell", 66);
+    const openRequest = window.indexedDB.open(VCELL_DB_NAME, VCELL_DB_VERSION);
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       openRequest.onsuccess = () => resolve(openRequest.result);
       openRequest.onerror = () =>
@@ -22,8 +23,8 @@ async function readPersistedSeed(page: import("@playwright/test").Page) {
     });
 
     return new Promise<string | null>((resolve, reject) => {
-      const tx = db.transaction("inProgressGames", "readonly");
-      const store = tx.objectStore("inProgressGames");
+      const tx = db.transaction(STORES.IN_PROGRESS_GAMES, "readonly");
+      const store = tx.objectStore(STORES.IN_PROGRESS_GAMES);
       const req = store.get(deviceId);
 
       req.onsuccess = () => {
@@ -64,8 +65,8 @@ test.describe("offline phone PWA", () => {
         });
 
         return new Promise<string | null>((resolve, reject) => {
-          const tx = db.transaction("inProgressGames", "readonly");
-          const store = tx.objectStore("inProgressGames");
+          const tx = db.transaction(STORES.IN_PROGRESS_GAMES, "readonly");
+          const store = tx.objectStore(STORES.IN_PROGRESS_GAMES);
           const req = store.get(deviceId);
 
           req.onsuccess = () => {
@@ -91,7 +92,9 @@ test.describe("offline phone PWA", () => {
 
     await expect(page.getByLabel("Game board")).toBeVisible();
     await expect(page.getByText("Current seed:")).toBeVisible();
-    await expect(page.getByText("Cloud sync is unavailable right now")).toBeVisible();
+    await expect(
+      page.getByText("Cloud sync is unavailable right now")
+    ).toBeVisible();
 
     const offlineSeed = await readPersistedSeed(page);
     expect(offlineSeed).toBe(onlineSeed);
@@ -128,7 +131,9 @@ test.describe("offline phone PWA", () => {
   }) => {
     await page.goto("/game");
 
-    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
+    const manifestHref = await page
+      .locator('link[rel="manifest"]')
+      .getAttribute("href");
     expect(manifestHref).toBe("/manifest.webmanifest");
 
     const manifest = await page.request.get("/manifest.webmanifest");
