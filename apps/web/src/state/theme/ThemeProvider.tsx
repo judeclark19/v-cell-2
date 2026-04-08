@@ -81,9 +81,6 @@ function subscribe(callback: () => void) {
     // Modern browsers
     if (typeof mql.addEventListener === "function") {
       mql.addEventListener("change", onMql);
-    } else if (hasLegacyMqlListeners(mql)) {
-      // Older Safari (deprecated API)
-      mql.addListener(onMql);
     }
   }
 
@@ -93,26 +90,9 @@ function subscribe(callback: () => void) {
     if (mql) {
       if (typeof mql.removeEventListener === "function") {
         mql.removeEventListener("change", onMql);
-      } else if (hasLegacyMqlListeners(mql)) {
-        mql.removeListener(onMql);
       }
     }
   };
-}
-
-type LegacyMediaQueryList = MediaQueryList & {
-  addListener: (listener: () => void) => void;
-  removeListener: (listener: () => void) => void;
-};
-
-function hasLegacyMqlListeners(
-  mql: MediaQueryList
-): mql is LegacyMediaQueryList {
-  const maybe = mql as Partial<LegacyMediaQueryList>;
-  return (
-    typeof maybe.addListener === "function" &&
-    typeof maybe.removeListener === "function"
-  );
 }
 
 function getServerSnapshot(): Theme {

@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ConfirmRequest } from "@/features/game-board/components/BoardModals";
+import type { MotionPreference } from "./motionPreference";
 
 export interface UiState {
   showTimer: boolean;
+  motionPreference: MotionPreference;
   settingsHydrated: boolean;
   confirmModal: ConfirmRequest | null;
   winModal: boolean;
@@ -12,6 +14,7 @@ export interface UiState {
 
 const initialState: UiState = {
   showTimer: true,
+  motionPreference: "system",
   settingsHydrated: false,
   confirmModal: null,
   winModal: false,
@@ -59,6 +62,9 @@ const uiSlice = createSlice({
     setShowTimer: (state, action: PayloadAction<boolean>) => {
       state.showTimer = action.payload;
     },
+    setMotionPreference: (state, action: PayloadAction<MotionPreference>) => {
+      state.motionPreference = action.payload;
+    },
     setSettingsHydrated: (state, action: PayloadAction<boolean>) => {
       state.settingsHydrated = action.payload;
     }
@@ -73,6 +79,7 @@ export const {
   openPauseModal,
   closePauseModal,
   setShowTimer,
+  setMotionPreference,
   setSettingsHydrated,
   setIsAnyModalOpen
 } = uiSlice.actions;
@@ -81,6 +88,8 @@ export const uiReducer = uiSlice.reducer;
 export const selectConfirmModal = (state: { ui: UiState }) =>
   state.ui.confirmModal;
 export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;
+export const selectMotionPreference = (state: { ui: UiState }) =>
+  state.ui.motionPreference;
 export const selectSettingsHydrated = (state: { ui: UiState }) =>
   state.ui.settingsHydrated;
 export const selectIsAnyModalOpen = (state: { ui: UiState }) =>

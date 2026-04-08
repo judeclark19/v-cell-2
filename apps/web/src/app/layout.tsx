@@ -31,10 +31,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme="poker">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      data-theme="poker"
+      data-reduced-motion="false"
+    >
       <head>
         <script
-          id="theme-init"
+          id="app-init"
           // Inline script runs as soon as the parser reaches it.
           dangerouslySetInnerHTML={{
             __html: `(function(){
@@ -55,6 +60,22 @@ export default function RootLayout({
     }
 
     document.documentElement.dataset.theme = theme;
+
+    var motionPreference = localStorage.getItem("vcell:motionPreference");
+    var shouldReduceMotion;
+
+    if (motionPreference === "reduce") {
+      shouldReduceMotion = true;
+    } else if (motionPreference === "full") {
+      shouldReduceMotion = false;
+    } else {
+      shouldReduceMotion = !!(
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      );
+    }
+
+    document.documentElement.dataset.reducedMotion = String(shouldReduceMotion);
   } catch (e) {
     // no-op
   }

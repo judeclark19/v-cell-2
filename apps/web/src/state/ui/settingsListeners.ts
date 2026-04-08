@@ -4,9 +4,11 @@ import {
   setFaceDownCountRule,
   setAllowFoundationPullbackRule
 } from "@/state/game/gameSlice";
-import { setShowTimer } from "@/state/ui/uiSlice";
+import { setMotionPreference, setShowTimer } from "@/state/ui/uiSlice";
+import type { MotionPreference } from "./motionPreference";
 
 export const SHOW_TIMER_KEY = "vcell:showTimer";
+export const MOTION_PREFERENCE_KEY = "vcell:motionPreference";
 export const UNDO_LIMIT_KEY = "vcell:undoLimit";
 export const FACE_DOWN_COUNT_KEY = "vcell:faceDownCount";
 export const ALLOW_FOUNDATION_PULLBACK_KEY = "vcell:allowFoundationPullback";
@@ -14,6 +16,7 @@ export const ALLOW_FOUNDATION_PULLBACK_KEY = "vcell:allowFoundationPullback";
 type SettingsListenerState = {
   ui: {
     showTimer: boolean;
+    motionPreference: MotionPreference;
     settingsHydrated: boolean;
   };
   game: {
@@ -34,6 +37,19 @@ settingsListenerMiddleware.startListening({
     if (!state.ui.settingsHydrated) return;
 
     window.localStorage.setItem(SHOW_TIMER_KEY, String(state.ui.showTimer));
+  }
+});
+
+settingsListenerMiddleware.startListening({
+  actionCreator: setMotionPreference,
+  effect: async (_action, listenerApi) => {
+    const state = listenerApi.getState();
+    if (!state.ui.settingsHydrated) return;
+
+    window.localStorage.setItem(
+      MOTION_PREFERENCE_KEY,
+      state.ui.motionPreference
+    );
   }
 });
 

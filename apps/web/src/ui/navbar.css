@@ -240,9 +240,7 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .navbar__panel {
-    transition: none;
-    transform: none;
-  }
+:root[data-reduced-motion="true"] .navbar__panel {
+  transition: none;
+  transform: none;
 }

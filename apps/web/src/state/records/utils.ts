@@ -2,7 +2,6 @@ import type { PersistedGame } from "@/persistence/types";
 import type { Move, Rules } from "@vcell/engine";
 
 export type BuildCompletedGameRecordArgs = {
-  // TODO: maybe merge w PersistedGame type
   sessionId: string;
   deviceId: string;
   seed: string;

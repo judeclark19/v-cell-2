@@ -16,6 +16,8 @@ import { useTryAutoFoundation } from "./useTryAutoFoundation";
 import { Card, Move, PileRef } from "@vcell/engine";
 import { useTryAutoFreeCell } from "./useTryAutoFreeCell";
 import { applyMoveThunk } from "@/state/game/thunks/applyMove";
+import { selectMotionPreference } from "@/state/ui/uiSlice";
+import { useReducedMotionEnabled } from "@/state/ui/motionPreference";
 
 export type BoardSource =
   | { type: "foundation"; index: number }
@@ -43,6 +45,8 @@ export function useBoardControlSystem(
   const foundationCards = useSelector(selectFoundationCards);
   const tableauCards = useSelector(selectTableauCards);
   const freeCellCards = useSelector(selectFreeCellCards);
+  const motionPreference = useSelector(selectMotionPreference);
+  const shouldReduceMotion = useReducedMotionEnabled(motionPreference);
 
   const getCardForSingleMove = useCallback(
     (move: Move): Card | null => {
@@ -98,7 +102,14 @@ export function useBoardControlSystem(
     }: PerformMoveArgs): boolean => {
       if (cardFlight.active) return false;
 
-      if (fromEl && toEl && stack && stack.length > 0 && dropTarget) {
+      if (
+        !shouldReduceMotion &&
+        fromEl &&
+        toEl &&
+        stack &&
+        stack.length > 0 &&
+        dropTarget
+      ) {
         startCardFlight({
           fromEl,
           toEl,
@@ -111,7 +122,7 @@ export function useBoardControlSystem(
       dispatch(applyMoveThunk({ move, uid }));
       return true;
     },
-    [cardFlight.active, dispatch, startCardFlight, uid]
+    [cardFlight.active, dispatch, shouldReduceMotion, startCardFlight, uid]
   );
 
   const { tryAutoFreeCell } = useTryAutoFreeCell({
