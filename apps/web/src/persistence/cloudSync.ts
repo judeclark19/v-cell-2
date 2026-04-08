@@ -45,7 +45,7 @@ export function withPersistedGameSyncVersion<T extends PersistedGame>(game: T): 
   };
 }
 
-export function toCloudPersistedGame(game: PersistedGame): PersistedGame {
+function toCloudPersistedGame(game: PersistedGame): PersistedGame {
   const entries = Object.entries(withPersistedGameSyncVersion(game)).filter(
     ([key]) => !LOCAL_ONLY_FIELDS.has(key)
   );
@@ -80,9 +80,7 @@ export function needsCloudSync(game: PersistedGame, uid: string): boolean {
   return game.syncState === "pending_upload";
 }
 
-export function markPersistedGameUploaded(
-  game: PersistedGame
-): PersistedGame {
+function markPersistedGameUploaded(game: PersistedGame): PersistedGame {
   return {
     ...withPersistedGameSyncVersion(game),
     syncState: "uploaded",
@@ -113,7 +111,7 @@ export function doesCloudGameMatchLocalVersion(
   return cloudGame.status === "in_progress";
 }
 
-export async function confirmGameSyncedFromServer(
+async function confirmGameSyncedFromServer(
   uid: string | null,
   game: PersistedGame
 ): Promise<boolean> {
@@ -129,7 +127,7 @@ export async function confirmGameSyncedFromServer(
   return doesCloudGameMatchLocalVersion(game, data, serverSessionId);
 }
 
-export async function writeGameToCloud(
+async function writeGameToCloud(
   uid: string | null,
   game: PersistedGame
 ): Promise<void> {
@@ -154,7 +152,6 @@ export async function syncGameToCloud({
   try {
     const syncReadyGame = withPersistedGameSyncVersion(game);
     await writeGameToCloud(uid, syncReadyGame);
-    markCloudSyncAvailable();
 
     const attempted = markPersistedGameUploaded(syncReadyGame);
     await upsertLocal(attempted);
