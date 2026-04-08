@@ -117,6 +117,7 @@
   background-color: transparent;
   border: 1px solid var(--nav-button-border);
   transition: background-color 120ms ease;
+  height: 100%;
 }
 
 .navbar__select:hover {

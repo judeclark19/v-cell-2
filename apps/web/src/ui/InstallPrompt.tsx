@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import "./install-prompt.css";
 
 const DISMISS_KEY = "vcell:installPrompt:dismissed";
@@ -42,6 +42,7 @@ function isAndroid(userAgent: string): boolean {
 
 export function InstallPrompt() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     if (process.env.NODE_ENV !== "production") return true;
@@ -59,17 +60,21 @@ export function InstallPrompt() {
     if (isAndroid(userAgent)) return "android";
     return null;
   });
+  const [beforeInstallPromptSeen, setBeforeInstallPromptSeen] = useState(false);
+  const [appInstalledSeen, setAppInstalledSeen] = useState(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
 
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
+      setBeforeInstallPromptSeen(true);
       setInstallEvent(event as DeferredPromptEvent);
       setPromptMode("android");
     };
 
     const onAppInstalled = () => {
+      setAppInstalledSeen(true);
       setInstallEvent(null);
       setDismissed(true);
       window.localStorage.setItem(DISMISS_KEY, "true");
@@ -80,7 +85,7 @@ export function InstallPrompt() {
       if (mediaQuery.matches) {
         setDismissed(true);
       }
-      };
+    };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
@@ -103,6 +108,34 @@ export function InstallPrompt() {
 
     return promptMode === "ios" || promptMode === "android";
   }, [dismissed, pathname, promptMode]);
+
+  const installDebugEnabled = searchParams.get("install-debug") === "1";
+  const directPromptAvailable =
+    promptMode === "android" && installEvent !== null;
+  const debugSnapshot = useMemo(() => {
+    if (typeof window === "undefined") return null;
+
+    return {
+      appInstalledSeen,
+      beforeInstallPromptSeen,
+      deferredPromptCaptured: installEvent !== null,
+      directPromptAvailable,
+      dismissed,
+      isStandalone: isStandalone(),
+      mobileUserAgent: isMobileUserAgent(window.navigator.userAgent),
+      pathname,
+      promptMode,
+      userAgent: window.navigator.userAgent
+    };
+  }, [
+    appInstalledSeen,
+    beforeInstallPromptSeen,
+    dismissed,
+    directPromptAvailable,
+    installEvent,
+    pathname,
+    promptMode
+  ]);
 
   const dismiss = () => {
     setDismissed(true);
@@ -151,14 +184,16 @@ export function InstallPrompt() {
             </button>
           ) : null}
 
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={dismiss}
-          >
-            Not now
+          <button type="button" className="btn btn--ghost" onClick={dismiss}>
+            Dismiss
           </button>
         </div>
+
+        {installDebugEnabled && debugSnapshot ? (
+          <pre className="install-prompt__debug">
+            {JSON.stringify(debugSnapshot, null, 2)}
+          </pre>
+        ) : null}
       </div>
     </div>
   );
