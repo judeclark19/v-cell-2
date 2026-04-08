@@ -2,13 +2,18 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/game",
     name: "V-Cell",
     short_name: "V-Cell",
     description: "A solitaire game with a twist on freecell",
     start_url: "/game",
+    scope: "/",
     display: "standalone",
+    orientation: "portrait",
     background_color: "#35654d",
     theme_color: "#35654d",
+    categories: ["games", "entertainment"],
+    prefer_related_applications: false,
     icons: [
       {
         src: "/images/V.png",

@@ -263,9 +263,6 @@ export function useInProgressGamePersistence({
       return;
     }
 
-    // Persist once we've seen at least one move (even if the user undoes back to the start).
-    if (moves.length === 0) return;
-
     const payload = buildInProgressPayload(deviceId, Date.now());
     const localPayload = uid
       ? markPersistedGamePendingSync({
@@ -283,7 +280,7 @@ export function useInProgressGamePersistence({
       console.error("[in-progress persist] write failed", err);
     });
 
-    if (uid) {
+    if (uid && moves.length > 0) {
       syncGameToCloud({
         uid,
         game: localPayload,

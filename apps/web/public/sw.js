@@ -1,9 +1,11 @@
-const CACHE_VERSION = "vcell-shell-v2";
+const CACHE_VERSION = "vcell-shell-v3";
 const DOCUMENT_CACHE = `${CACHE_VERSION}-documents`;
 const ASSET_CACHE = `${CACHE_VERSION}-assets`;
+const GAME_SHELL_PATH = "/game";
 
 const OFFLINE_DOCUMENTS = ["/", "/game", "/settings", "/how-to-play", "/stats"];
 const OFFLINE_ASSETS = [
+  "/manifest.webmanifest",
   "/favicon.ico",
   "/images/V.png",
   "/images/vcell-logo.webp",
@@ -18,10 +20,14 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const documentCache = await caches.open(DOCUMENT_CACHE);
-      await documentCache.addAll(OFFLINE_DOCUMENTS);
+      await documentCache.addAll(
+        OFFLINE_DOCUMENTS.map((path) => new Request(path, { cache: "reload" }))
+      );
 
       const assetCache = await caches.open(ASSET_CACHE);
-      await assetCache.addAll(OFFLINE_ASSETS);
+      await assetCache.addAll(
+        OFFLINE_ASSETS.map((path) => new Request(path, { cache: "reload" }))
+      );
 
       await self.skipWaiting();
     })()
@@ -56,12 +62,36 @@ function isStaticAssetRequest(request, url) {
   if (url.origin !== self.location.origin) return false;
 
   return (
+    url.pathname === "/manifest.webmanifest" ||
+    url.pathname === "/favicon.ico" ||
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/_next/image") ||
     request.destination === "script" ||
     request.destination === "style" ||
     request.destination === "font" ||
     request.destination === "image"
   );
 }
+
+async function cacheDocument(pathname, response) {
+  if (!response || !response.ok) return;
+
+  const cache = await caches.open(DOCUMENT_CACHE);
+  await cache.put(pathname, response.clone());
+}
+
+async function cacheAsset(request, response) {
+  if (!response || !response.ok) return;
+
+  const cache = await caches.open(ASSET_CACHE);
+  await cache.put(request, response.clone());
+}
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -78,17 +108,14 @@ self.addEventListener("fetch", (event) => {
 
         try {
           const response = await fetch(request);
-          if (response && response.ok && isOfflineDocument(pathname)) {
-            const cache = await caches.open(DOCUMENT_CACHE);
-            cache.put(request, response.clone());
-          }
+          event.waitUntil(cacheDocument(pathname, response.clone()));
           return response;
         } catch (error) {
           const cache = await caches.open(DOCUMENT_CACHE);
           const cachedResponse =
-            (await cache.match(request)) ||
-            (pathname !== "/" ? await cache.match(pathname) : null) ||
-            (await cache.match("/game"));
+            (await cache.match(pathname)) ||
+            (isOfflineDocument(pathname) ? await cache.match(request) : null) ||
+            (await cache.match(GAME_SHELL_PATH));
 
           if (cachedResponse) {
             return cachedResponse;
@@ -106,13 +133,18 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         const cache = await caches.open(ASSET_CACHE);
         const cached = await cache.match(request);
-        if (cached) return cached;
+        const fetchAndCache = async () => {
+          const response = await fetch(request);
+          event.waitUntil(cacheAsset(request, response.clone()));
+          return response;
+        };
 
-        const response = await fetch(request);
-        if (response && response.ok) {
-          cache.put(request, response.clone());
+        if (cached) {
+          event.waitUntil(fetchAndCache().catch(() => undefined));
+          return cached;
         }
-        return response;
+
+        return fetchAndCache();
       })()
     );
   }

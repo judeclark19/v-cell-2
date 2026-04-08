@@ -1,33 +1,21 @@
 import type { Metadata } from "next";
-import { Questrial, Poppins, Luckiest_Guy } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
 import { OfflineBanner } from "@/ui/OfflineBanner";
 import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
-
-const questrial = Questrial({
-  variable: "--font-questrial",
-  subsets: ["latin"],
-  weight: ["400"]
-});
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "600"]
-});
-
-const luckiestGuy = Luckiest_Guy({
-  variable: "--font-luckiest-guy",
-  subsets: ["latin"],
-  weight: ["400"]
-});
+import { InstallPrompt } from "@/ui/InstallPrompt";
 
 export const metadata: Metadata = {
   title: "V-Cell (alpha)",
+  applicationName: "V-Cell",
   description: "A solitaire game with a twist on freecell",
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "V-Cell"
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -75,12 +63,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${questrial.variable} ${poppins.variable} ${luckiestGuy.variable}`}
       >
         <Providers>
           <ServiceWorkerRegistration />
           <NavBar />
           <OfflineBanner />
+          <InstallPrompt />
           <div className="max-width-container">{children}</div>
         </Providers>
       </body>
