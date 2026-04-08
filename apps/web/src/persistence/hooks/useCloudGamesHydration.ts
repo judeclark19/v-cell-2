@@ -13,13 +13,22 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebaseClient";
-import { upsertInProgressGame } from "@/persistence/inProgressGamesStore";
-import { upsertCompletedGame } from "@/persistence/completedGamesStore";
+import {
+  deleteInProgressGameForDevice,
+  getInProgressGameForDevice,
+  upsertInProgressGame
+} from "@/persistence/inProgressGamesStore";
+import {
+  getCompletedGameBySessionId,
+  upsertCompletedGame
+} from "@/persistence/completedGamesStore";
 import { addCompletedGame } from "@/state/records/recordsSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { useDispatch } from "react-redux";
 import { getOrCreateDeviceId } from "../schema";
 import { PersistedGame } from "../types";
+import { needsCloudSync } from "../cloudSync";
+import { shouldIgnoreCloudInProgress } from "../reconciliation";
 
 // Cloud model: users/{uid}/games/{sessionId}
 // Local model: inProgressGames (single slot per device) + completedGames (history)
@@ -134,7 +143,8 @@ export function useCloudGamesHydration(uid: string | null) {
     const upsertFromDocData = async (
       data: AnyRecord,
       docId: string,
-      respectWatermark = true
+      respectWatermark = true,
+      markAsSynced = false
     ): Promise<boolean> => {
       if (
         respectWatermark &&
@@ -155,13 +165,32 @@ export function useCloudGamesHydration(uid: string | null) {
         const cloudDeviceId = data.deviceId;
         if (typeof cloudDeviceId !== "string") return false;
         if (cloudDeviceId !== localDeviceId) return false;
+        const localCompleted = await getCompletedGameBySessionId(sessionId);
+        if (
+          shouldIgnoreCloudInProgress({
+            cloudSessionId: sessionId,
+            localCompleted
+          })
+        ) {
+          return false;
+        }
 
-        const payload = {
+        const existing = await getInProgressGameForDevice(localDeviceId);
+        const basePayload = {
           ...(data as unknown as PersistedGame),
           sessionId,
           deviceId: cloudDeviceId,
           userId: uid
         } satisfies PersistedGame;
+        const payload =
+          markAsSynced || !existing || !needsCloudSync(existing, uid)
+            ? { ...basePayload, syncState: markAsSynced ? "synced" : existing?.syncState }
+            : {
+                ...basePayload,
+                syncState: existing.syncState,
+                lastCloudAttemptAtMs: existing.lastCloudAttemptAtMs ?? null,
+                lastCloudError: existing.lastCloudError ?? null
+              };
 
         await upsertInProgressGame(payload);
         return true;
@@ -170,13 +199,30 @@ export function useCloudGamesHydration(uid: string | null) {
       // Completed
       if (!hasCompletedFields(data)) return false;
 
-      const payload = {
+      const existingCompleted = await getCompletedGameBySessionId(sessionId);
+      const basePayload = {
         ...(data as unknown as PersistedGame),
         sessionId,
         userId: uid
       } satisfies PersistedGame;
+      const payload =
+        markAsSynced || !existingCompleted || !needsCloudSync(existingCompleted, uid)
+          ? {
+              ...basePayload,
+              syncState: markAsSynced ? "synced" : existingCompleted?.syncState
+            }
+          : {
+              ...basePayload,
+              syncState: existingCompleted.syncState,
+              lastCloudAttemptAtMs: existingCompleted.lastCloudAttemptAtMs ?? null,
+              lastCloudError: existingCompleted.lastCloudError ?? null
+            };
 
       await upsertCompletedGame(payload);
+      const inProgress = await getInProgressGameForDevice(localDeviceId);
+      if (inProgress?.sessionId === sessionId) {
+        await deleteInProgressGameForDevice(localDeviceId);
+      }
       dispatch(addCompletedGame(payload));
       return true;
     };
@@ -195,7 +241,7 @@ export function useCloudGamesHydration(uid: string | null) {
           maxSeen = data.updatedAtMs;
         }
 
-        await upsertFromDocData(data, change.doc.id, false);
+        await upsertFromDocData(data, change.doc.id, false, false);
       }
 
       if (maxSeen > 0) {
@@ -214,7 +260,7 @@ export function useCloudGamesHydration(uid: string | null) {
       for (const docSnap of snap.docs) {
         const raw = docSnap.data() ?? {};
         const data: AnyRecord = isRecord(raw) ? raw : {};
-        await upsertFromDocData(data, docSnap.id, false);
+        await upsertFromDocData(data, docSnap.id, false, true);
 
         if (
           typeof data.updatedAtMs === "number" &&

@@ -10,7 +10,10 @@ import {
   selectCompletedGames,
   setCompletedGames
 } from "@/state/records/recordsSlice";
-import { writeCompletedGameToCloud } from "@/persistence/utils";
+import {
+  markPersistedGamePendingSync,
+  syncGameToCloud
+} from "@/persistence/cloudSync";
 
 export const archiveCompletedGame = createAsyncThunk<
   void,
@@ -50,10 +53,20 @@ export const archiveCompletedGame = createAsyncThunk<
     return;
   }
 
-  thunkApi.dispatch(setCompletedGames([...completedGames, completed]));
+  const localCompleted = args.uid
+    ? markPersistedGamePendingSync(completed)
+    : completed;
 
-  await upsertCompletedGame(completed);
+  thunkApi.dispatch(setCompletedGames([...completedGames, localCompleted]));
+
+  await upsertCompletedGame(localCompleted);
   await deleteInProgressGameForDevice(args.deviceId).catch(() => {});
 
-  writeCompletedGameToCloud(args.uid, completed);
+  await syncGameToCloud({
+    uid: args.uid,
+    game: localCompleted,
+    upsertLocal: upsertCompletedGame
+  }).catch((err) => {
+    console.warn("[records] failed to sync completed game", err);
+  });
 });

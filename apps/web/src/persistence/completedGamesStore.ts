@@ -30,6 +30,27 @@ export async function getAllCompletedGames(): Promise<PersistedGame[]> {
   });
 }
 
+export async function getCompletedGameBySessionId(
+  sessionId: string
+): Promise<PersistedGame | null> {
+  if (typeof window === "undefined") return null;
+
+  const db = await openVCellDb();
+
+  return new Promise<PersistedGame | null>((resolve, reject) => {
+    const tx = db.transaction(STORES.COMPLETED_GAMES, "readonly");
+    const store = tx.objectStore(STORES.COMPLETED_GAMES);
+    const request = store.get(sessionId);
+
+    request.onsuccess = () => {
+      resolve((request.result as PersistedGame) ?? null);
+    };
+
+    request.onerror = () =>
+      reject(request.error ?? new Error("Failed to read completed game"));
+  });
+}
+
 /**
  * Append a completed game to IndexedDB.
  *

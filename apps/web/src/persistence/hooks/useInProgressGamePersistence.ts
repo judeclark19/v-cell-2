@@ -15,8 +15,6 @@ import {
 } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 
-import { db } from "@/lib/firebaseClient";
-import { doc, setDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
@@ -39,6 +37,10 @@ import {
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
 import { openPauseModal } from "@/state/ui/uiSlice";
+import {
+  markPersistedGamePendingSync,
+  syncGameToCloud
+} from "../cloudSync";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -276,21 +278,31 @@ export function useInProgressGamePersistence({
     if (moves.length === 0) return;
 
     const payload = buildInProgressPayload(deviceId, Date.now());
+    const localPayload = uid
+      ? markPersistedGamePendingSync({
+          ...payload,
+          startedAtMs: startedAtMs ?? null,
+          endedAtMs: endedAtMs ?? null
+        })
+      : {
+          ...payload,
+          startedAtMs: startedAtMs ?? null,
+          endedAtMs: endedAtMs ?? null
+        };
 
-    upsertInProgressGame({
-      ...payload,
-      startedAtMs: startedAtMs ?? null,
-      endedAtMs: endedAtMs ?? null
-    }).catch((err) => {
+    upsertInProgressGame(localPayload).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
 
     if (uid) {
-      setDoc(doc(db, "users", uid, "games", sessionId), payload, {
-        merge: true
-      }).catch((err) => {
-        console.error("[in-progress persist] cloud write failed", err, payload);
-      });
+      syncGameToCloud({
+        uid,
+        game: localPayload,
+        upsertLocal: upsertInProgressGame
+      })
+        .catch((err) => {
+          console.error("[in-progress persist] cloud write failed", err, payload);
+        });
     }
   }, [
     uid,
@@ -333,7 +345,9 @@ export function useInProgressGamePersistence({
         snapshotRef.current
       );
 
-      upsertInProgressGame(payload).catch((err) => {
+      const localPayload = uid ? markPersistedGamePendingSync(payload) : payload;
+
+      upsertInProgressGame(localPayload).catch((err) => {
         console.error("[in-progress persist] write failed", err);
       });
     }, 1000);

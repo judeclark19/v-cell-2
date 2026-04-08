@@ -2,6 +2,8 @@
 import { GameStatus } from "@/state/game/gameSlice";
 import type { GameState, Move } from "@vcell/engine";
 
+export type CloudSyncState = "pending" | "synced";
+
 export type PersistedGame = {
   // identity
   sessionId: string;
@@ -30,6 +32,9 @@ export type PersistedGame = {
 
   // bookkeeping
   updatedAtMs: number;
+  syncState?: CloudSyncState;
+  lastCloudAttemptAtMs?: number | null;
+  lastCloudError?: string | null;
 
   // optional pointer
   lastCompletedsessionId?: string;
