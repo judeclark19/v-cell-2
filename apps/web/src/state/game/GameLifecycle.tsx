@@ -30,11 +30,15 @@ import { bootSession } from "../session/thunks/bootSession";
 import { transitionGameAndSession } from "../transitionGameAndSession";
 import { safeRandomId } from "../utils";
 import { setIsAnyModalOpen } from "../ui/uiSlice";
+import { useCompletedGamesHydration } from "../records/useCompletedGamesHydration";
+import { selectAuthReady } from "../auth/authSlice";
+import { useReconnectCloudSync } from "@/persistence/hooks/useReconnectCloudSync";
 
 export function GameLifecycle() {
   const dispatch = useDispatch<AppDispatch>();
 
   const uid = useSelector(selectUid);
+  const authReady = useSelector(selectAuthReady);
 
   const sessionId = useSelector(selectSessionId);
   const sessionPhase = useSelector(selectSessionPhase);
@@ -59,6 +63,8 @@ export function GameLifecycle() {
   }, [dispatch, rules]);
 
   useLoginReconcileInProgressGame();
+  useCompletedGamesHydration();
+  useReconnectCloudSync(uid, authReady);
 
   useEffect(() => {
     if (seed !== "seed-boot" && sessionId !== "session-boot") return;
@@ -95,7 +101,7 @@ export function GameLifecycle() {
       dispatch(setIsAnyModalOpen(false));
       startNewDealSession();
     });
-  }, [uid, sessionPhase, startedAtMs, startNewDealSession]);
+  }, [dispatch, uid, sessionPhase, startedAtMs, startNewDealSession]);
 
   useGameSnapshotLogger();
 

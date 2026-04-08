@@ -15,8 +15,6 @@ import {
 } from "../inProgressGamesStore";
 import { getOrCreateDeviceId } from "../schema";
 
-import { db } from "@/lib/firebaseClient";
-import { doc, setDoc } from "firebase/firestore";
 import type { PersistedGame } from "../types";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/state/reduxStore";
@@ -39,6 +37,10 @@ import {
   setTimeElapsedMs
 } from "@/state/session/sessionSlice";
 import { openPauseModal } from "@/state/ui/uiSlice";
+import {
+  markPersistedGamePendingSync,
+  syncGameToCloud
+} from "../cloudSync";
 
 type InProgressSnapshot = {
   moves: Move[];
@@ -78,10 +80,7 @@ export function useInProgressGamePersistence({
   moveCount,
   readyToHydrate
 }: Params) {
-  const inProgressHydratedRef = useRef<boolean>(false);
   const hydratedSessionKeyRef = useRef<string | null>(null);
-  const pendingDeleteTimerRef = useRef<number | null>(null);
-  const hasSavedRef = useRef<boolean>(false);
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
@@ -103,19 +102,11 @@ export function useInProgressGamePersistence({
 
   const disarm = () => {
     phaseRef.current = "DISARMED";
-    inProgressHydratedRef.current = false;
     hydratedSessionKeyRef.current = null;
-    hasSavedRef.current = false;
-
-    if (pendingDeleteTimerRef.current != null) {
-      window.clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-    }
   };
 
   const armForSession = (key: string) => {
     phaseRef.current = "ARMED";
-    inProgressHydratedRef.current = true;
     hydratedSessionKeyRef.current = key;
   };
 
@@ -179,6 +170,7 @@ export function useInProgressGamePersistence({
         moveCount,
         undosUsed,
         updatedAtMs,
+        syncVersion: updatedAtMs,
         ...(uid ? { userId: uid } : {}),
         startedAtMs: startedAtMs ?? null,
         endedAtMs: endedAtMs ?? null
@@ -214,7 +206,6 @@ export function useInProgressGamePersistence({
         const deviceId = getOrCreateDeviceId();
         const saved = await getInProgressGameForDevice(deviceId);
         if (cancelled) return;
-        hasSavedRef.current = !!saved;
 
         if (!saved) {
           onHydrated?.(null);
@@ -272,25 +263,32 @@ export function useInProgressGamePersistence({
       return;
     }
 
-    // Persist once we've seen at least one move (even if the user undoes back to the start).
-    if (moves.length === 0) return;
-
     const payload = buildInProgressPayload(deviceId, Date.now());
+    const localPayload = uid
+      ? markPersistedGamePendingSync({
+          ...payload,
+          startedAtMs: startedAtMs ?? null,
+          endedAtMs: endedAtMs ?? null
+        })
+      : {
+          ...payload,
+          startedAtMs: startedAtMs ?? null,
+          endedAtMs: endedAtMs ?? null
+        };
 
-    upsertInProgressGame({
-      ...payload,
-      startedAtMs: startedAtMs ?? null,
-      endedAtMs: endedAtMs ?? null
-    }).catch((err) => {
+    upsertInProgressGame(localPayload).catch((err) => {
       console.error("[in-progress persist] write failed", err);
     });
 
-    if (uid) {
-      setDoc(doc(db, "users", uid, "games", sessionId), payload, {
-        merge: true
-      }).catch((err) => {
-        console.error("[in-progress persist] cloud write failed", err, payload);
-      });
+    if (uid && moves.length > 0) {
+      syncGameToCloud({
+        uid,
+        game: localPayload,
+        upsertLocal: upsertInProgressGame
+      })
+        .catch((err) => {
+          console.error("[in-progress persist] cloud write failed", err, payload);
+        });
     }
   }, [
     uid,
@@ -333,15 +331,12 @@ export function useInProgressGamePersistence({
         snapshotRef.current
       );
 
-      upsertInProgressGame(payload).catch((err) => {
+      const localPayload = uid ? markPersistedGamePendingSync(payload) : payload;
+
+      upsertInProgressGame(localPayload).catch((err) => {
         console.error("[in-progress persist] write failed", err);
       });
     }, 1000);
-
-    if (pendingDeleteTimerRef.current != null) {
-      window.clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-    }
 
     return () => {
       window.clearInterval(id);

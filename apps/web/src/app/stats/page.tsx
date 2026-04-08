@@ -73,28 +73,29 @@ export default function StatsPage() {
 
         {!hydrated ? (
           <p style={{ opacity: 0.75 }}>Loading session…</p>
-        ) : !isUser ? (
-          <>
-            <p style={{ opacity: 0.85, marginBottom: "16px" }}>
-              Stats are available for logged-in users only.
-            </p>
-            <Link href="/login?next=/stats" className="btn btn--primary">
-              Log in to view your stats
-            </Link>
-          </>
-        ) : (
+        ) : isUser ? (
           <>
             <p style={{ opacity: 0.85, marginTop: 0 }}>
               Signed in as <strong>{displayName ?? email ?? "User"}</strong>.
             </p>
             {uid && <p style={{ opacity: 0.65 }}>uid: {uid}</p>}
           </>
+        ) : (
+          <>
+            <p style={{ opacity: 0.85, marginBottom: "16px" }}>
+              Viewing local stats saved on this device. Log in if you want your
+              history to sync across devices.
+            </p>
+            <Link href="/login?next=/stats" className="btn btn--primary">
+              Log in for synced stats
+            </Link>
+          </>
         )}
       </header>
 
       <div style={{ margin: "12px 0 20px" }} />
 
-      {!hydrated || !isUser ? null : <UserStatsTables derived={derived} />}
+      {!hydrated ? null : <UserStatsTables derived={derived} />}
     </main>
   );
 }

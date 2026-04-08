@@ -1,0 +1,30 @@
+.offline-banner {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: calc(var(--z-navbar) - 1);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 16%, var(--surface)) 0%,
+      color-mix(in srgb, var(--surface-hover) 88%, var(--surface)) 100%
+    );
+  backdrop-filter: blur(8px);
+}
+
+.offline-banner__text {
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+@media (max-width: 640px) {
+  .offline-banner__text {
+    padding: 9px 0;
+    font-size: 0.9rem;
+  }
+}
