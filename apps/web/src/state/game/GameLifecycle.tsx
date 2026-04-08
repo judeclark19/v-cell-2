@@ -101,7 +101,7 @@ export function GameLifecycle() {
       dispatch(setIsAnyModalOpen(false));
       startNewDealSession();
     });
-  }, [uid, sessionPhase, startedAtMs, startNewDealSession]);
+  }, [dispatch, uid, sessionPhase, startedAtMs, startNewDealSession]);
 
   useGameSnapshotLogger();
 

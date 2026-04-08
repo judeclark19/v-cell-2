@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useIsOffline } from "@/state/network/useIsOffline";
+import { useEffect, useRef, useState } from "react";
+import {
+  useBrowserOffline,
+  useCloudSyncAvailability
+} from "@/state/network/useIsOffline";
 import { getOrCreateDeviceId } from "../schema";
 import {
   deleteInProgressGameForDevice,
@@ -22,11 +25,45 @@ export function useReconnectCloudSync(
   uid: string | null,
   authReady: boolean
 ) {
-  const isOffline = useIsOffline();
+  const browserOffline = useBrowserOffline();
+  const { cloudUnavailable } = useCloudSyncAvailability();
   const inFlightRef = useRef(false);
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
-    if (!authReady || !uid || isOffline) return;
+    if (!authReady || !uid) return;
+
+    const bumpRetryTick = () => {
+      setRetryTick((value) => value + 1);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        bumpRetryTick();
+      }
+    };
+
+    window.addEventListener("online", bumpRetryTick);
+    window.addEventListener("focus", bumpRetryTick);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    let retryTimer: number | null = null;
+    if (cloudUnavailable && !browserOffline) {
+      retryTimer = window.setTimeout(bumpRetryTick, 5000);
+    }
+
+    return () => {
+      window.removeEventListener("online", bumpRetryTick);
+      window.removeEventListener("focus", bumpRetryTick);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (retryTimer != null) {
+        window.clearTimeout(retryTimer);
+      }
+    };
+  }, [authReady, uid, cloudUnavailable, browserOffline]);
+
+  useEffect(() => {
+    if (!authReady || !uid || browserOffline) return;
     if (inFlightRef.current) return;
 
     let cancelled = false;
@@ -93,5 +130,5 @@ export function useReconnectCloudSync(
     return () => {
       cancelled = true;
     };
-  }, [authReady, uid, isOffline]);
+  }, [authReady, uid, browserOffline, retryTick]);
 }

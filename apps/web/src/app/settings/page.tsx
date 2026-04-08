@@ -27,7 +27,8 @@ export default function SettingsPage() {
 
         {isOffline ? (
           <p className="hint">
-            You&apos;re offline. Account settings are unavailable right now.
+            Cloud sync is unavailable right now. Account settings are
+            unavailable until the connection recovers.
           </p>
         ) : isUser ? (
           <AccountSettings />

@@ -10,10 +10,12 @@ import {
   limit,
   orderBy,
   query,
-  where,
-  doc,
-  setDoc
+  where
 } from "firebase/firestore";
+import {
+  markCloudSyncAvailable,
+  markCloudSyncUnavailable
+} from "@/state/network/cloudSyncAvailability";
 import {
   getCompletedGameBySessionId,
 } from "@/persistence/completedGamesStore";
@@ -32,7 +34,12 @@ import { transitionGameAndSession } from "@/state/transitionGameAndSession";
 import { hydrateFromPersisted, selectSeed } from "../gameSlice";
 import { selectUid } from "@/state/auth/authSlice";
 import { shouldIgnoreCloudInProgress } from "@/persistence/reconciliation";
-import { toCloudPersistedGame } from "@/persistence/cloudSync";
+import {
+  markPersistedGameSynced,
+  markPersistedGamePendingSync,
+  syncGameToCloud,
+  withPersistedGameSyncVersion
+} from "@/persistence/cloudSync";
 
 export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
@@ -79,8 +86,10 @@ export function useLoginReconcileInProgressGame() {
       try {
         // IMPORTANT: avoid Firestore's local cache here; we want server truth for login reconciliation.
         snap = await getDocsFromServer(q);
+        markCloudSyncAvailable();
       } catch (err) {
         // If offline / blocked, fall back to the default behavior.
+        markCloudSyncUnavailable(err);
         console.warn(
           "[login reconcile] getDocsFromServer failed; falling back to getDocs",
           err
@@ -109,14 +118,14 @@ export function useLoginReconcileInProgressGame() {
         }
 
         const payload: PersistedGame = {
-          ...(raw as PersistedGame),
+          ...withPersistedGameSyncVersion(raw as PersistedGame),
           sessionId: cloudSessionId,
           deviceId,
           userId: uid
         };
 
         // Put it in IndexedDB so the normal hydration path can rebuild history/moves.
-        await upsertInProgressGame(payload);
+        await upsertInProgressGame(markPersistedGameSynced(payload));
 
         if (cancelled) return;
 
@@ -174,22 +183,21 @@ export function useLoginReconcileInProgressGame() {
       if (!local.startedAtMs) return;
 
       const payload: PersistedGame = {
-        ...local,
+        ...withPersistedGameSyncVersion(local),
         deviceId,
         userId: uid
       };
 
-      await upsertInProgressGame(payload);
+      const localPending = markPersistedGamePendingSync(payload);
+
+      await upsertInProgressGame(localPending);
       if (cancelled) return;
 
-      // Push ONCE on login (your per-second persistence does not write to Firestore).
-      await setDoc(
-        doc(db, "users", uid, "games", payload.sessionId),
-        toCloudPersistedGame(payload),
-        {
-          merge: true
-        }
-      );
+      await syncGameToCloud({
+        uid,
+        game: localPending,
+        upsertLocal: upsertInProgressGame
+      });
     })().catch((err) => {
       console.error("[login reconcile] failed", err);
     });

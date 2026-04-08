@@ -80,10 +80,7 @@ export function useInProgressGamePersistence({
   moveCount,
   readyToHydrate
 }: Params) {
-  const inProgressHydratedRef = useRef<boolean>(false);
   const hydratedSessionKeyRef = useRef<string | null>(null);
-  const pendingDeleteTimerRef = useRef<number | null>(null);
-  const hasSavedRef = useRef<boolean>(false);
   const startedAtMs = useSelector(selectStartedAtMs);
   const endedAtMs = useSelector(selectEndedAtMs);
   const undosUsed = useSelector(selectUndosUsed);
@@ -105,19 +102,11 @@ export function useInProgressGamePersistence({
 
   const disarm = () => {
     phaseRef.current = "DISARMED";
-    inProgressHydratedRef.current = false;
     hydratedSessionKeyRef.current = null;
-    hasSavedRef.current = false;
-
-    if (pendingDeleteTimerRef.current != null) {
-      window.clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-    }
   };
 
   const armForSession = (key: string) => {
     phaseRef.current = "ARMED";
-    inProgressHydratedRef.current = true;
     hydratedSessionKeyRef.current = key;
   };
 
@@ -181,6 +170,7 @@ export function useInProgressGamePersistence({
         moveCount,
         undosUsed,
         updatedAtMs,
+        syncVersion: updatedAtMs,
         ...(uid ? { userId: uid } : {}),
         startedAtMs: startedAtMs ?? null,
         endedAtMs: endedAtMs ?? null
@@ -216,7 +206,6 @@ export function useInProgressGamePersistence({
         const deviceId = getOrCreateDeviceId();
         const saved = await getInProgressGameForDevice(deviceId);
         if (cancelled) return;
-        hasSavedRef.current = !!saved;
 
         if (!saved) {
           onHydrated?.(null);
@@ -351,11 +340,6 @@ export function useInProgressGamePersistence({
         console.error("[in-progress persist] write failed", err);
       });
     }, 1000);
-
-    if (pendingDeleteTimerRef.current != null) {
-      window.clearTimeout(pendingDeleteTimerRef.current);
-      pendingDeleteTimerRef.current = null;
-    }
 
     return () => {
       window.clearInterval(id);

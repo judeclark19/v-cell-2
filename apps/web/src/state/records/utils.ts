@@ -51,6 +51,7 @@ export function buildCompletedGameRecord({
     cursor,
 
     updatedAtMs: endedAtMs,
+    syncVersion: endedAtMs,
     ...(uid ? { userId: uid } : {})
   };
 }

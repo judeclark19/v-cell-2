@@ -153,8 +153,8 @@ export default function LoginClient() {
 
         {isOffline ? (
           <p role="status" style={{ marginBottom: 16 }}>
-            You&apos;re offline. Login and signup are unavailable right now, but
-            you can still{" "}
+            Cloud sync is unavailable right now. Login and signup are
+            temporarily unavailable, but you can still{" "}
             <Link
               style={{
                 textDecoration: "underline"

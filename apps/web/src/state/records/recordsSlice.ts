@@ -11,7 +11,8 @@ const initialState: RecordsState = {
 };
 
 function getRecordRank(game: PersistedGame): number {
-  const syncRank = game.syncState === "synced" ? 1 : 0;
+  const syncRank =
+    game.syncState === "synced" ? 2 : game.syncState === "uploaded" ? 1 : 0;
   const updatedAtMs = Number.isFinite(game.updatedAtMs) ? game.updatedAtMs : 0;
   const endedAtMs = Number.isFinite(game.endedAtMs) ? (game.endedAtMs ?? 0) : 0;
 
