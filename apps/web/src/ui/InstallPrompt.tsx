@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import "./install-prompt.css";
 
 const DISMISS_KEY = "vcell:installPrompt:dismissed";
@@ -40,9 +40,18 @@ function isAndroid(userAgent: string): boolean {
   return /android/i.test(userAgent);
 }
 
+function readInstallDebugFlag(): boolean {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return new URLSearchParams(window.location.search).get("install-debug") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function InstallPrompt() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     if (process.env.NODE_ENV !== "production") return true;
@@ -62,6 +71,7 @@ export function InstallPrompt() {
   });
   const [beforeInstallPromptSeen, setBeforeInstallPromptSeen] = useState(false);
   const [appInstalledSeen, setAppInstalledSeen] = useState(false);
+  const [installDebugEnabled] = useState(readInstallDebugFlag);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
@@ -108,8 +118,6 @@ export function InstallPrompt() {
 
     return promptMode === "ios" || promptMode === "android";
   }, [dismissed, pathname, promptMode]);
-
-  const installDebugEnabled = searchParams.get("install-debug") === "1";
   const directPromptAvailable =
     promptMode === "android" && installEvent !== null;
   const debugSnapshot = useMemo(() => {
