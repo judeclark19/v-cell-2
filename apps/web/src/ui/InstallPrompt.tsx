@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import "./install-prompt.css";
 
 const DISMISS_KEY = "vcell:installPrompt:dismissed";
+const DEBUG_SESSION_KEY = "vcell:installPrompt:debugSession";
 
 type DeferredPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -52,6 +53,36 @@ function readInstallDebugFlag(): boolean {
   }
 }
 
+function getDebugSessionInfo() {
+  if (typeof window === "undefined") {
+    return {
+      firstSeenAt: null as string | null,
+      reloadCount: 0
+    };
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(DEBUG_SESSION_KEY);
+    const parsed = raw ? (JSON.parse(raw) as {
+      firstSeenAt?: string | null;
+      reloadCount?: number;
+    }) : null;
+
+    const next = {
+      firstSeenAt: parsed?.firstSeenAt ?? new Date().toISOString(),
+      reloadCount: (parsed?.reloadCount ?? 0) + 1
+    };
+
+    window.sessionStorage.setItem(DEBUG_SESSION_KEY, JSON.stringify(next));
+    return next;
+  } catch {
+    return {
+      firstSeenAt: null as string | null,
+      reloadCount: 0
+    };
+  }
+}
+
 function getInitialServiceWorkerDebug() {
   if (typeof window === "undefined") {
     return {
@@ -94,9 +125,13 @@ export function InstallPrompt() {
   const [beforeInstallPromptSeen, setBeforeInstallPromptSeen] = useState(false);
   const [appInstalledSeen, setAppInstalledSeen] = useState(false);
   const [installDebugEnabled] = useState(readInstallDebugFlag);
+  const [debugSession] = useState(getDebugSessionInfo);
   const [beforeInstallPromptAt, setBeforeInstallPromptAt] = useState<
     string | null
   >(null);
+  const [controllerChangedAt, setControllerChangedAt] = useState<string | null>(
+    null
+  );
   const [serviceWorkerDebug, setServiceWorkerDebug] = useState<{
     controller: boolean;
     registrationScope: string | null;
@@ -172,12 +207,23 @@ export function InstallPrompt() {
 
     updateServiceWorkerDebug().catch(() => undefined);
 
+    const onControllerChange = () => {
+      setControllerChangedAt(new Date().toISOString());
+      updateServiceWorkerDebug().catch(() => undefined);
+    };
+
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
     navigator.serviceWorker.ready
       .then(() => updateServiceWorkerDebug())
       .catch(() => undefined);
 
     return () => {
       cancelled = true;
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        onControllerChange
+      );
     };
   }, []);
 
@@ -200,7 +246,9 @@ export function InstallPrompt() {
       appInstalledSeen,
       beforeInstallPromptAt,
       beforeInstallPromptSeen,
+      controllerChangedAt,
       deferredPromptCaptured: installEvent !== null,
+      debugSession,
       directPromptAvailable,
       dismissed,
       hasManifestLink:
@@ -222,6 +270,8 @@ export function InstallPrompt() {
     appInstalledSeen,
     beforeInstallPromptAt,
     beforeInstallPromptSeen,
+    controllerChangedAt,
+    debugSession,
     dismissed,
     directPromptAvailable,
     installEvent,
