@@ -44,7 +44,9 @@ function readInstallDebugFlag(): boolean {
   if (typeof window === "undefined") return false;
 
   try {
-    return new URLSearchParams(window.location.search).get("install-debug") === "1";
+    return (
+      new URLSearchParams(window.location.search).get("install-debug") === "1"
+    );
   } catch {
     return false;
   }
@@ -92,6 +94,9 @@ export function InstallPrompt() {
   const [beforeInstallPromptSeen, setBeforeInstallPromptSeen] = useState(false);
   const [appInstalledSeen, setAppInstalledSeen] = useState(false);
   const [installDebugEnabled] = useState(readInstallDebugFlag);
+  const [beforeInstallPromptAt, setBeforeInstallPromptAt] = useState<
+    string | null
+  >(null);
   const [serviceWorkerDebug, setServiceWorkerDebug] = useState<{
     controller: boolean;
     registrationScope: string | null;
@@ -105,6 +110,7 @@ export function InstallPrompt() {
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setBeforeInstallPromptSeen(true);
+      setBeforeInstallPromptAt(new Date().toISOString());
       setInstallEvent(event as DeferredPromptEvent);
       setPromptMode("android");
     };
@@ -192,6 +198,7 @@ export function InstallPrompt() {
 
     return {
       appInstalledSeen,
+      beforeInstallPromptAt,
       beforeInstallPromptSeen,
       deferredPromptCaptured: installEvent !== null,
       directPromptAvailable,
@@ -213,6 +220,7 @@ export function InstallPrompt() {
     };
   }, [
     appInstalledSeen,
+    beforeInstallPromptAt,
     beforeInstallPromptSeen,
     dismissed,
     directPromptAvailable,
@@ -240,6 +248,7 @@ export function InstallPrompt() {
     setInstallEvent(null);
   };
 
+  console.log("installEvent", installEvent);
   if (!shouldShow) return null;
 
   const canPromptDirectly = promptMode === "android" && installEvent;
@@ -251,7 +260,9 @@ export function InstallPrompt() {
           Install V-Cell for quicker launches and reliable airplane-mode play.
           {promptMode === "ios"
             ? " On iPhone, tap Share and choose Add to Home Screen."
-            : " On Android, use Install if prompted, or add it from the browser menu."}
+            : canPromptDirectly
+              ? " On Android, tap Install to open Chrome's install prompt."
+              : " On Android, Chrome has not offered an install prompt yet. Try the browser menu to install, or keep using the site and check again later."}
         </p>
 
         <div className="install-prompt__actions">
