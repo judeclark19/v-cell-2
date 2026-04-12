@@ -1,4 +1,4 @@
-const CACHE_VERSION = "vcell-shell-v3";
+const CACHE_VERSION = "vcell-shell-v4";
 const DOCUMENT_CACHE = `${CACHE_VERSION}-documents`;
 const ASSET_CACHE = `${CACHE_VERSION}-assets`;
 const GAME_SHELL_PATH = "/game";
@@ -7,7 +7,13 @@ const OFFLINE_DOCUMENTS = ["/", "/game", "/settings", "/how-to-play", "/stats"];
 const OFFLINE_ASSETS = [
   "/manifest.webmanifest",
   "/favicon.ico",
-  "/images/V.png",
+  "/images/favicon-16x16.png",
+  "/images/favicon-32x32.png",
+  "/images/apple-touch-icon.png",
+  "/images/icon-192.png",
+  "/images/icon-512.png",
+  "/images/icon-maskable-192.png",
+  "/images/icon-maskable-512.png",
   "/images/vcell-logo.webp",
   "/images/wood.webp",
   "/images/spades.svg",
