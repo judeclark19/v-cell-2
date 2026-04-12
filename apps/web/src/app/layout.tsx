@@ -28,6 +28,13 @@ export const metadata: Metadata = {
         sizes: "180x180",
         type: "image/png"
       }
+    ],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/images/icon-maskable-192.png"
+      }
     ]
   }
 };
