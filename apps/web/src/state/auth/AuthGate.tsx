@@ -12,11 +12,7 @@ type Props = {
   howToPlayPath?: string;
 };
 
-export function AuthGate({
-  children,
-  finishSignupPath = "/finish-signup",
-  howToPlayPath = "/how-to-play"
-}: Props) {
+export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { authReady, profileReady, profileComplete, needsHowToPlay } =
@@ -30,15 +26,9 @@ export function AuthGate({
     needsHowToPlay &&
     pathname !== howToPlayPath;
   const shouldRedirectToFinishSignup =
-    Boolean(uid) &&
-    profileReady &&
-    !profileComplete &&
-    pathname !== finishSignupPath;
+    Boolean(uid) && profileReady && !profileComplete;
   const shouldRedirectFromFinishSignup =
-    Boolean(uid) &&
-    profileReady &&
-    profileComplete &&
-    pathname === finishSignupPath;
+    Boolean(uid) && profileReady && profileComplete;
 
   useEffect(() => {
     // Wait until auth + profile are resolved before making routing decisions.
@@ -47,11 +37,6 @@ export function AuthGate({
 
     if (shouldRedirectToHowToPlay) {
       router.replace(howToPlayPath);
-      return;
-    }
-
-    if (shouldRedirectToFinishSignup) {
-      router.replace(finishSignupPath);
       return;
     }
 
@@ -64,7 +49,6 @@ export function AuthGate({
     shouldRedirectToHowToPlay,
     shouldRedirectToFinishSignup,
     shouldRedirectFromFinishSignup,
-    finishSignupPath,
     howToPlayPath,
     router
   ]);

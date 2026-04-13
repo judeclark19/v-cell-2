@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import "./install-prompt.css";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
+import { useIsOffline } from "@/state/network/useIsOffline";
 
 export const LOGIN_PROMPT_DISMISS_KEY = "vcell:loginPrompt:dismissed";
 
@@ -12,23 +13,21 @@ export function LoginPrompt() {
   const router = useRouter();
   const pathname = usePathname();
   const uid = useSelector(selectUid);
+  const isOffline = useIsOffline();
 
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.localStorage.getItem(LOGIN_PROMPT_DISMISS_KEY) === "true";
   });
 
-  console.log("dismissed", dismissed);
-
   const shouldShow = useMemo(() => {
     if (typeof window === "undefined") return false;
     if (dismissed) return false;
     if (uid) return false;
+    if (isOffline) return false;
     if (pathname !== "/game") return false;
     return true;
-  }, [dismissed, uid, pathname]);
-
-  console.log("shouldShow", shouldShow);
+  }, [dismissed, uid, isOffline, pathname]);
 
   const dismiss = () => {
     setDismissed(true);
@@ -53,7 +52,7 @@ export function LoginPrompt() {
               router.replace("/login");
             }}
           >
-            Go to login
+            Go to login page
           </button>
 
           <button type="button" className="btn btn--ghost" onClick={dismiss}>

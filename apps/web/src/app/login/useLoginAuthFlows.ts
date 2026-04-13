@@ -68,9 +68,6 @@ export function useLoginAuthFlows({
 
   const loginAndContinue = async () => {
     if (isOffline) return;
-
-    // AuthGate / session routing will decide whether to send the user to
-    // finish-signup or into the app.
     await loginWithGoogle();
   };
 
