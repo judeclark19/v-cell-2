@@ -29,6 +29,7 @@ import {
   selectUid,
   setAuthState
 } from "@/state/auth/authSlice";
+import { LOGIN_PROMPT_DISMISS_KEY } from "@/ui/LoginPrompt";
 
 export type RequireUserResult =
   | { ok: true }
@@ -150,6 +151,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       } finally {
         // Always attempt sign-out even if local cleanup fails.
         await signOut(auth);
+        window.localStorage.setItem(LOGIN_PROMPT_DISMISS_KEY, "false");
       }
     };
 
@@ -186,7 +188,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       profileReady: derivedProfileReady,
       profileComplete: derivedProfileComplete,
-      needsHowToPlay: profileState.uid === uid ? profileState.needsHowToPlay : false,
+      needsHowToPlay:
+        profileState.uid === uid ? profileState.needsHowToPlay : false,
       displayName: derivedDisplayName
     };
   }, [uid, authReady, profileState]);

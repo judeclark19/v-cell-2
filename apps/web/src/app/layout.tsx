@@ -5,6 +5,7 @@ import { Providers } from "./Providers";
 import { OfflineBanner } from "@/ui/OfflineBanner";
 import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/ui/InstallPrompt";
+import { LoginPrompt } from "@/ui/LoginPrompt";
 
 export const metadata: Metadata = {
   title: "V-Cell (alpha)",
@@ -97,13 +98,13 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-      >
+      <body>
         <Providers>
           <ServiceWorkerRegistration />
           <NavBar />
           <OfflineBanner />
           <InstallPrompt />
+          <LoginPrompt />
           <div className="max-width-container">{children}</div>
         </Providers>
       </body>
