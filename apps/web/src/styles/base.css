@@ -38,7 +38,7 @@ body {
 body {
   min-height: 100vh;
   color: var(--foreground);
-  background: var(--background);
+  background: var(--background-primary);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -76,13 +76,13 @@ header {
   margin-bottom: 16px;
 }
 
-section {
+/* section {
   margin-top: 16px;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface) 65%, transparent);
-}
+} */
 
 .grid {
   display: grid;

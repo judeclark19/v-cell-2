@@ -9,7 +9,6 @@ import { useLoginAuthFlows } from "./useLoginAuthFlows";
 import { LoginIntro } from "./LoginIntro";
 import { EmailLoginSection } from "./EmailLoginSection";
 import { EmailSignupSection } from "./EmailSignupSection";
-import { LoginTabs } from "./LoginTabs";
 
 export default function LoginClient() {
   const uid = useSelector(selectUid);
@@ -24,15 +23,15 @@ export default function LoginClient() {
 
   return (
     <main>
-      {/* <LoginIntro
+      <LoginIntro
         isOffline={isOffline}
         nextPath={nextPath}
         hydrated={hydrated}
         uid={uid}
         isUser={isUser}
-      /> */}
+      />
 
-      {/* {!isOffline && (
+      {!isOffline && (
         <div>
           <section
             style={{
@@ -107,9 +106,7 @@ export default function LoginClient() {
             onSubmit={authFlows.signupWithEmail}
           />
         </div>
-      )} */}
-
-      {!isOffline && <LoginTabs />}
+      )}
     </main>
   );
 }
