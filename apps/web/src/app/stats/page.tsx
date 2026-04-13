@@ -78,7 +78,6 @@ export default function StatsPage() {
             <p style={{ opacity: 0.85, marginTop: 0 }}>
               Signed in as <strong>{displayName ?? email ?? "User"}</strong>.
             </p>
-            {uid && <p style={{ opacity: 0.65 }}>uid: {uid}</p>}
           </>
         ) : (
           <>

@@ -1,0 +1,56 @@
+:root {
+  /* Red Color Palette */
+  --red-500: #ff194c;
+  --red-600: #d41d45;
+
+  /* Green Color Palette */
+  --green-100: #ebf8f5;
+  --green-200: #b8d1c7;
+  --green-300: #84ab99;
+  --green-400: #50856b;
+  --green-500: #1c5f3d;
+  --green-600: #174f34;
+  --green-700: #123f2b;
+  --green-800: #0d2f22;
+  --green-900: #061e18;
+
+  /* Blue Color Palette */
+  --blue-100: #cee5ff;
+  --blue-200: #a4cfff;
+  --blue-300: #79b8ff;
+  --blue-400: #4c94f5;
+  --blue-500: #1f6feb;
+  --blue-600: #1955bd;
+  --blue-700: #133b8f;
+  --blue-800: #0d2161;
+  --blue-900: #050832;
+
+  /* White Color Palette */
+  --white-000: #ffffff;
+  --white-100: #fffdfd;
+  --white-200: #f7f5f2;
+  --white-300: #f0eae4;
+
+  /* Black Color Palette */
+  --black-100: #dbdad9;
+  --black-200: #b5b4b4;
+  --black-300: #8f8e8f;
+  --black-400: #69686a;
+  --black-500: #434245;
+  --black-600: #1d1c20;
+  --black-700: #19181b;
+  --black-800: #141316;
+  --black-900: #000000;
+
+  /* Purple Color Palette */
+  --purple-800: #261722;
+
+  /* Status colors */
+  --error-100: #ff8585;
+
+  --focus-100: #9dffce;
+  --focus-200: #89e3da;
+  --focus-300: #75c7e6;
+  --focus-400: #61abf2;
+  --focus-500: #4d90fe;
+}

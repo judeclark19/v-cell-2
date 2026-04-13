@@ -1,4 +1,28 @@
+"use client";
+
+import { useEffect } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebaseClient";
+import { useSession } from "@/state/auth/AuthProvider";
+import { selectUid } from "@/state/auth/authSlice";
+import { useSelector } from "react-redux";
+
 export default function HowToPlayPage() {
+  const uid = useSelector(selectUid);
+  const { profileReady, needsHowToPlay } = useSession();
+
+  useEffect(() => {
+    if (!uid || !profileReady || !needsHowToPlay) return;
+
+    void setDoc(
+      doc(db, "users", uid),
+      {
+        needsHowToPlay: false
+      },
+      { merge: true }
+    );
+  }, [uid, profileReady, needsHowToPlay]);
+
   return (
     <main className="prose">
       <header>

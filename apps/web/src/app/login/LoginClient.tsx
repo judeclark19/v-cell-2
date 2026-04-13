@@ -128,6 +128,7 @@ export default function LoginClient() {
           lastLoginAtMs: now,
           displayName,
           profileComplete: true,
+          needsHowToPlay: true,
           email,
           providers: ["password"]
         },

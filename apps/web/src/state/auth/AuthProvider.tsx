@@ -52,6 +52,7 @@ export type SessionContextValue = {
 
   profileReady: boolean;
   profileComplete: boolean;
+  needsHowToPlay: boolean;
 
   displayName: string;
 };
@@ -185,6 +186,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle,
       profileReady: derivedProfileReady,
       profileComplete: derivedProfileComplete,
+      needsHowToPlay: profileState.uid === uid ? profileState.needsHowToPlay : false,
       displayName: derivedDisplayName
     };
   }, [uid, authReady, profileState]);

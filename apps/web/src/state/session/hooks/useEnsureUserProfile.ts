@@ -14,6 +14,7 @@ export type EnsureUserProfileState = {
   uid: string | null;
   ready: boolean;
   complete: boolean;
+  needsHowToPlay: boolean;
   displayName?: string | null;
   error?: string | null;
 };
@@ -27,6 +28,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
     uid: null,
     ready: false,
     complete: false,
+    needsHowToPlay: false,
     displayName: null,
     error: null
   });
@@ -38,6 +40,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
         uid: null,
         ready: false,
         complete: false,
+        needsHowToPlay: false,
         displayName: null,
         error: null
       }
@@ -46,11 +49,19 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
           uid: null,
           ready: true,
           complete: false,
+          needsHowToPlay: false,
           displayName: null,
           error: null
         }
       : profileState.uid !== uid
-        ? { uid, ready: false, complete: false, displayName: null, error: null }
+        ? {
+            uid,
+            ready: false,
+            complete: false,
+            needsHowToPlay: false,
+            displayName: null,
+            error: null
+          }
         : profileState;
 
   useEffect(() => {
@@ -84,6 +95,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               profileComplete: Boolean(
                 authDisplayName && authDisplayName.trim()
               ),
+              needsHowToPlay: true,
               email: authEmail,
               providers: authProviders
             },
@@ -200,6 +212,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
             const displayName = fsDisplayName ?? authFallback;
 
             let complete = Boolean(data?.profileComplete);
+            const needsHowToPlay = Boolean(data?.needsHowToPlay);
 
             // If we have a usable displayName but Firestore hasn't flipped profileComplete yet,
             // treat the profile as complete to avoid redirect loops.
@@ -215,6 +228,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               uid,
               ready: true,
               complete,
+              needsHowToPlay,
               displayName,
               error: null
             });
@@ -229,6 +243,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               uid,
               ready: true,
               complete,
+              needsHowToPlay: false,
               displayName,
               error: "Failed to read profile."
             });
@@ -241,6 +256,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
           uid,
           ready: true,
           complete: false,
+          needsHowToPlay: false,
           displayName: null,
           error: "Failed to load profile."
         });
