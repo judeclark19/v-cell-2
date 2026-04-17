@@ -8,6 +8,7 @@ import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { selectUid } from "@/state/auth/authSlice";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
+import Or from "@/ui/Or";
 
 export default function BoardControls({
   boardController
@@ -59,82 +60,61 @@ export default function BoardControls({
 
   return (
     <>
-      <section className="control" aria-label="Start a new game">
+      <section
+        className="paper paper-padding"
+        aria-label="Start a new game"
+        style={{ marginBottom: "2rem" }}
+      >
         <h2>Start a new game</h2>
         {/* <p className="hint" style={{ marginBottom: "1em" }}>
           Starting a new game abandons the current one.
         </p> */}
 
-        <div className="row">
-          <div>
-            <form
-              className="row"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!seedInput.trim()) return;
-                startBySeed(seedInput);
-                setSeedInput("");
-              }}
-            >
-              <input
-                className="control"
-                inputMode="text"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="Enter a specific seed…"
-                value={seedInput}
-                onChange={(e) => setSeedInput(e.target.value)}
-                aria-label="Seed"
-                name="seed-input"
-                id="seed-input"
-              />
-              <button
-                type="submit"
-                className="btn btn--secondary"
-                disabled={!seedInput.trim()}
-              >
-                Play seed
-              </button>
-            </form>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              color: "var(--muted)",
-              fontSize: 14,
-              width: 70
+        <button
+          type="button"
+          className="btn btn--primary
+        full-width"
+          onClick={onNewDeal}
+        >
+          New deal (random)
+        </button>
+
+        <Or />
+        <div>
+          <form
+            className="row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!seedInput.trim()) return;
+              startBySeed(seedInput);
+              setSeedInput("");
             }}
           >
-            <span
-              style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
-              }}
+            <input
+              className="control"
+              inputMode="text"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Enter a specific seed…"
+              value={seedInput}
+              onChange={(e) => setSeedInput(e.target.value)}
+              aria-label="Seed"
+              name="seed-input"
+              id="seed-input"
+              style={{ flex: "1 1 auto" }}
             />
-            <span>or</span>
-            <span
-              style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
-              }}
-            />
-          </div>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={onNewDeal}
-          >
-            New deal (random)
-          </button>
+            <button
+              type="submit"
+              className="btn btn--secondary"
+              disabled={!seedInput.trim()}
+            >
+              Play seed
+            </button>
+          </form>
         </div>
       </section>
-      <section className="control">
+
+      <section className="paper paper-padding" aria-label="Gameplay settings">
         <h2>Gameplay</h2>
         <p className="hint" style={{ marginBottom: "1em" }}>
           Changing any gameplay setting starts a new game and abandons the
