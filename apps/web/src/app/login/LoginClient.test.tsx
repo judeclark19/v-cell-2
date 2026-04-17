@@ -1,11 +1,18 @@
 "use client";
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { configureStore } from "@reduxjs/toolkit";
 import { Provider } from "react-redux";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import LoginClient from "./LoginClient";
-import { authReducer, type AuthStoreState } from "@/state/auth/authSlice";
+import { authReducer } from "@/state/auth/authSlice";
+import { uiReducer } from "@/state/ui/uiSlice";
 
 const replaceMock = vi.fn();
 const searchParamsState = new URLSearchParams();
@@ -57,14 +64,38 @@ vi.mock("firebase/firestore", () => ({
   setDoc: (...args: unknown[]) => setDocMock(...args)
 }));
 
+vi.mock("./GSIMaterialButton", () => ({
+  default: ({
+    inOrUp,
+    onClick
+  }: {
+    inOrUp?: "in" | "up";
+    onClick?: () => void | Promise<void>;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {inOrUp === "up" ? "Sign up with Google" : "Log in with Google"}
+    </button>
+  )
+}));
+
+vi.mock("@/ui/Or", () => ({
+  default: () => <div aria-hidden="true">or</div>
+}));
+
 function renderLoginClient({
   auth
 }: {
-  auth?: Partial<AuthStoreState>;
+  auth?: {
+    uid?: string | null;
+    authReady?: boolean;
+    displayName?: string | null;
+    email?: string | null;
+  };
 } = {}) {
   const store = configureStore({
     reducer: {
-      auth: authReducer
+      auth: authReducer,
+      ui: uiReducer
     },
     preloadedState: {
       auth: {
@@ -108,7 +139,6 @@ describe("LoginClient", () => {
     expect(
       screen.getByRole("link", { name: /Forgot password/i })
     ).toHaveAttribute("href", "/forgot-password?next=%2Fgame");
-    expect(screen.getByText("/game")).toBeInTheDocument();
   });
 
   it("sanitizes non-internal next params back to /game", () => {
@@ -116,9 +146,6 @@ describe("LoginClient", () => {
 
     renderLoginClient();
 
-    expect(
-      screen.getByRole("link", { name: /Continue as a guest/i })
-    ).toHaveAttribute("href", "/game");
     expect(
       screen.getByRole("link", { name: /Forgot password/i })
     ).toHaveAttribute("href", "/forgot-password?next=%2Fgame");
@@ -144,10 +171,10 @@ describe("LoginClient", () => {
     renderLoginClient();
 
     expect(
-      screen.getByText(/Cloud sync is unavailable right now/i)
+      screen.getByText(/You are currently offline/i)
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Log in or sign up with Google/i })
+      screen.queryByRole("tablist", { name: /Authentication options/i })
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /continue as a guest/i })
@@ -185,6 +212,7 @@ describe("LoginClient", () => {
   it("validates email signup fields before calling Firebase", async () => {
     renderLoginClient();
 
+    fireEvent.click(screen.getByRole("tab", { name: /Sign up/i }));
     fireEvent.submit(
       screen.getByRole("button", { name: /Create account/i }).closest("form")!
     );
@@ -206,18 +234,24 @@ describe("LoginClient", () => {
 
     renderLoginClient();
 
-    fireEvent.change(screen.getByLabelText(/Display name/i), {
+    fireEvent.click(screen.getByRole("tab", { name: /Sign up/i }));
+    const signupPanel = screen.getByRole("tabpanel", { name: /Sign up/i });
+    const signupQueries = within(signupPanel);
+
+    fireEvent.change(signupQueries.getByLabelText(/Display name/i), {
       target: { value: "Jude" }
     });
-    fireEvent.change(screen.getAllByLabelText(/^Email$/i)[1], {
+    fireEvent.change(signupQueries.getByLabelText(/^Email$/i), {
       target: { value: "jude@example.com" }
     });
-    fireEvent.change(screen.getAllByLabelText(/^Password$/i)[1], {
+    fireEvent.change(signupQueries.getByLabelText(/^Password$/i), {
       target: { value: "secret123" }
     });
 
     fireEvent.submit(
-      screen.getByRole("button", { name: /Create account/i }).closest("form")!
+      signupQueries
+        .getByRole("button", { name: /Create account/i })
+        .closest("form")!
     );
 
     await waitFor(() => {
