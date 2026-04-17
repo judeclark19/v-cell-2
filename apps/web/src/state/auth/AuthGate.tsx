@@ -8,11 +8,15 @@ import { selectUid } from "@/state/auth/authSlice";
 
 type Props = {
   children: React.ReactNode;
-  finishSignupPath?: string; // default "/finish-setup"
+  finishSignupPath?: string;
   howToPlayPath?: string;
 };
 
-export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
+export function AuthGate({
+  children,
+  finishSignupPath = "/finish-signup",
+  howToPlayPath = "/how-to-play"
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { authReady, profileReady, profileComplete, needsHowToPlay } =
@@ -26,9 +30,15 @@ export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
     needsHowToPlay &&
     pathname !== howToPlayPath;
   const shouldRedirectToFinishSignup =
-    Boolean(uid) && profileReady && !profileComplete;
+    Boolean(uid) &&
+    profileReady &&
+    !profileComplete &&
+    pathname !== finishSignupPath;
   const shouldRedirectFromFinishSignup =
-    Boolean(uid) && profileReady && profileComplete;
+    Boolean(uid) &&
+    profileReady &&
+    profileComplete &&
+    pathname === finishSignupPath;
 
   useEffect(() => {
     // Wait until auth + profile are resolved before making routing decisions.
@@ -37,6 +47,11 @@ export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
 
     if (shouldRedirectToHowToPlay) {
       router.replace(howToPlayPath);
+      return;
+    }
+
+    if (shouldRedirectToFinishSignup) {
+      router.replace(finishSignupPath);
       return;
     }
 
@@ -49,6 +64,7 @@ export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
     shouldRedirectToHowToPlay,
     shouldRedirectToFinishSignup,
     shouldRedirectFromFinishSignup,
+    finishSignupPath,
     howToPlayPath,
     router
   ]);

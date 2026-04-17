@@ -7,8 +7,8 @@ import { useIsOffline } from "@/state/network/useIsOffline";
 import { useLoginNavigation } from "./useLoginNavigation";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
 import { LoginIntro } from "./LoginIntro";
-import { EmailLoginSection } from "./EmailLoginSection";
-import { EmailSignupSection } from "./EmailSignupSection";
+import { LoginTabContent } from "./LoginTabContent";
+import { SignupTabContent } from "./SignupTabContent";
 
 export default function LoginClient() {
   const uid = useSelector(selectUid);
@@ -79,7 +79,7 @@ export default function LoginClient() {
                 }}
               />
             </div>
-            <EmailLoginSection
+            <LoginTabContent
               nextPath={nextPath}
               isOffline={isOffline}
               loginEmail={authFlows.loginEmail}
@@ -92,7 +92,7 @@ export default function LoginClient() {
               onSubmit={authFlows.loginWithEmail}
             />
           </section>
-          <EmailSignupSection
+          <SignupTabContent
             isOffline={isOffline}
             signupDisplayName={authFlows.signupDisplayName}
             signupEmail={authFlows.signupEmail}

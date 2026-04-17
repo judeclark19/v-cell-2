@@ -98,7 +98,6 @@ export default function BoardControls({
             </form>
           </div>
           <div
-            aria-hidden="true"
             style={{
               display: "flex",
               alignItems: "center",

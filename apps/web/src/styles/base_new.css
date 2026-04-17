@@ -1,3 +1,7 @@
+.full-width {
+  width: 100%;
+}
+
 .paper {
   border-radius: 16px;
   background: var(--background-secondary);
