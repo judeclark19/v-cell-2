@@ -271,7 +271,6 @@ describe("LoginClient", () => {
       expect.objectContaining({
         displayName: "Jude",
         email: "jude@example.com",
-        profileComplete: true,
         needsHowToPlay: true,
         providers: ["password"]
       }),

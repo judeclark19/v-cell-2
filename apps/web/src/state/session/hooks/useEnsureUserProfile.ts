@@ -13,7 +13,6 @@ import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 export type EnsureUserProfileState = {
   uid: string | null;
   ready: boolean;
-  complete: boolean;
   needsHowToPlay: boolean;
   displayName?: string | null;
   error?: string | null;
@@ -27,7 +26,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
   const [profileState, setProfileState] = useState<EnsureUserProfileState>({
     uid: null,
     ready: false,
-    complete: false,
     needsHowToPlay: false,
     displayName: null,
     error: null
@@ -39,7 +37,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
     ? {
         uid: null,
         ready: false,
-        complete: false,
         needsHowToPlay: false,
         displayName: null,
         error: null
@@ -48,7 +45,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
       ? {
           uid: null,
           ready: true,
-          complete: false,
           needsHowToPlay: false,
           displayName: null,
           error: null
@@ -57,7 +53,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
         ? {
             uid,
             ready: false,
-            complete: false,
             needsHowToPlay: false,
             displayName: null,
             error: null
@@ -92,9 +87,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               createdAtMs: now,
               lastLoginAtMs: now,
               displayName: authDisplayName,
-              profileComplete: Boolean(
-                authDisplayName && authDisplayName.trim()
-              ),
               needsHowToPlay: true,
               email: authEmail,
               providers: authProviders
@@ -109,25 +101,13 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
             lastLoginAtMs: now
           };
 
-          // Only backfill displayName/email if missing in Firestore.
+          // Firebase Auth is the canonical display-name source.
           if (
-            (data?.displayName == null || data?.displayName === "") &&
-            authDisplayName
+            authDisplayName &&
+            authDisplayName !==
+              (typeof data?.displayName === "string" ? data.displayName : null)
           ) {
             updates.displayName = authDisplayName;
-          }
-
-          // Promote profileComplete once we have a usable display name.
-          const finalDisplayName =
-            (updates.displayName as string | undefined) ??
-            (data?.displayName as string | undefined) ??
-            null;
-          if (
-            typeof finalDisplayName === "string" &&
-            finalDisplayName.trim().length > 0 &&
-            data?.profileComplete !== true
-          ) {
-            updates.profileComplete = true;
           }
 
           if ((data?.email == null || data?.email === "") && authEmail) {
@@ -196,8 +176,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
           }
         }
 
-        // Subscribe so profile changes (like setting displayName on finish-signup)
-        // immediately update state and avoid redirect loops.
+        // Subscribe so routing state like needsHowToPlay updates immediately.
         if (cancelled) return;
 
         unsub = onSnapshot(
@@ -206,28 +185,13 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
             if (cancelled) return;
             const data = snap.data();
 
-            const fsDisplayName =
+            const displayName =
               typeof data?.displayName === "string" ? data.displayName : null;
-            const authFallback = auth.currentUser?.displayName ?? null;
-            const displayName = fsDisplayName ?? authFallback;
-
-            let complete = Boolean(data?.profileComplete);
             const needsHowToPlay = Boolean(data?.needsHowToPlay);
-
-            // If we have a usable displayName but Firestore hasn't flipped profileComplete yet,
-            // treat the profile as complete to avoid redirect loops.
-            if (
-              !complete &&
-              typeof displayName === "string" &&
-              displayName.trim().length > 0
-            ) {
-              complete = true;
-            }
 
             setProfileState({
               uid,
               ready: true,
-              complete,
               needsHowToPlay,
               displayName,
               error: null
@@ -238,11 +202,9 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
             if (cancelled) return;
             // Fallback to Auth-only info if snapshot fails.
             const displayName = auth.currentUser?.displayName ?? null;
-            const complete = Boolean(displayName && displayName.trim());
             setProfileState({
               uid,
               ready: true,
-              complete,
               needsHowToPlay: false,
               displayName,
               error: "Failed to read profile."
@@ -255,7 +217,6 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
         setProfileState({
           uid,
           ready: true,
-          complete: false,
           needsHowToPlay: false,
           displayName: null,
           error: "Failed to load profile."

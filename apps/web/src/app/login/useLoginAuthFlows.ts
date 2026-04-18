@@ -129,7 +129,6 @@ export function useLoginAuthFlows({
           createdAtMs: now,
           lastLoginAtMs: now,
           displayName,
-          profileComplete: true,
           needsHowToPlay: true,
           email,
           providers: ["password"]

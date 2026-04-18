@@ -8,37 +8,20 @@ import { selectUid } from "@/state/auth/authSlice";
 
 type Props = {
   children: React.ReactNode;
-  finishSignupPath?: string;
   howToPlayPath?: string;
 };
 
-export function AuthGate({
-  children,
-  finishSignupPath = "/finish-signup",
-  howToPlayPath = "/how-to-play"
-}: Props) {
+export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authReady, profileReady, profileComplete, needsHowToPlay } =
-    useSession();
+  const { authReady, profileReady, needsHowToPlay } = useSession();
   const uid = useSelector(selectUid);
   const shouldWaitForProfile = uid && !profileReady;
   const shouldRedirectToHowToPlay =
     Boolean(uid) &&
     profileReady &&
-    profileComplete &&
     needsHowToPlay &&
     pathname !== howToPlayPath;
-  const shouldRedirectToFinishSignup =
-    Boolean(uid) &&
-    profileReady &&
-    !profileComplete &&
-    pathname !== finishSignupPath;
-  const shouldRedirectFromFinishSignup =
-    Boolean(uid) &&
-    profileReady &&
-    profileComplete &&
-    pathname === finishSignupPath;
 
   useEffect(() => {
     // Wait until auth + profile are resolved before making routing decisions.
@@ -47,24 +30,11 @@ export function AuthGate({
 
     if (shouldRedirectToHowToPlay) {
       router.replace(howToPlayPath);
-      return;
-    }
-
-    if (shouldRedirectToFinishSignup) {
-      router.replace(finishSignupPath);
-      return;
-    }
-
-    if (shouldRedirectFromFinishSignup) {
-      router.replace("/");
     }
   }, [
     authReady,
     shouldWaitForProfile,
     shouldRedirectToHowToPlay,
-    shouldRedirectToFinishSignup,
-    shouldRedirectFromFinishSignup,
-    finishSignupPath,
     howToPlayPath,
     router
   ]);
@@ -73,11 +43,7 @@ export function AuthGate({
     return null;
   }
 
-  if (
-    shouldRedirectToHowToPlay ||
-    shouldRedirectToFinishSignup ||
-    shouldRedirectFromFinishSignup
-  ) {
+  if (shouldRedirectToHowToPlay) {
     return null;
   }
 

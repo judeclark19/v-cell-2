@@ -52,7 +52,6 @@ export type SessionContextValue = {
   loginWithGoogle: () => Promise<void>;
 
   profileReady: boolean;
-  profileComplete: boolean;
   needsHowToPlay: boolean;
 
   displayName: string;
@@ -163,16 +162,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const authDisplayName = auth.currentUser?.displayName ?? "";
 
     const derivedDisplayName = uid
-      ? profileState.uid === uid
-        ? (profileState.displayName ?? authDisplayName ?? "")
-        : (authDisplayName ?? "")
+      ? authDisplayName ||
+        (profileState.uid === uid ? profileState.displayName ?? "" : "")
       : "";
-
-    const derivedProfileComplete = uid
-      ? profileState.uid === uid
-        ? profileState.complete || derivedDisplayName.trim().length > 0
-        : authDisplayName.trim().length > 0
-      : false;
 
     const derivedProfileReady = uid
       ? profileState.uid === uid && profileState.ready
@@ -187,7 +179,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       requireUser,
       loginWithGoogle,
       profileReady: derivedProfileReady,
-      profileComplete: derivedProfileComplete,
       needsHowToPlay:
         profileState.uid === uid ? profileState.needsHowToPlay : false,
       displayName: derivedDisplayName

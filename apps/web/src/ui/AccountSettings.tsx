@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, updateProfile, User } from "firebase/auth";
-import { auth } from "@/lib/firebaseClient";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebaseClient";
 
 function AccountSettings() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,6 +47,11 @@ function AccountSettings() {
     try {
       setIsSaving(true);
       await updateProfile(user, { displayName: next });
+      await setDoc(
+        doc(db, "users", user.uid),
+        { displayName: next },
+        { merge: true }
+      );
       setUser({ ...user, displayName: next });
       setMessage("Display name updated.");
     } catch (err) {
