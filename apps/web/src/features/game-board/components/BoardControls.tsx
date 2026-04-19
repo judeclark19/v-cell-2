@@ -59,7 +59,7 @@ export default function BoardControls({
   };
 
   return (
-    <>
+    <div>
       <section
         className="paper paper-padding"
         aria-label="Start a new game"
@@ -204,6 +204,6 @@ export default function BoardControls({
           </label>
         </div>
       </section>
-    </>
+    </div>
   );
 }

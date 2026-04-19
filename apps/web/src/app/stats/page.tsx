@@ -7,6 +7,7 @@ import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
 import { selectDisplayName, selectEmail } from "@/state/auth/authSlice";
+import { formatDate } from "@/ui/utils";
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
@@ -62,16 +63,43 @@ export default function StatsPage() {
   }, [games]);
 
   return (
-    <main>
-      <header>
-        <h1>Stats</h1>
+    <main className="stats-page-main">
+      {/* left sidebar  */}
+      <section
+        className="paper paper-padding"
+        style={{
+          flex: "1 1 320px",
+          height: "fit-content"
+        }}
+      >
+        <h1>{displayName}</h1>
+        <hr />
+        <br />
+        <br />
 
         {!hydrated ? (
           <p style={{ opacity: 0.75 }}>Loading session…</p>
         ) : isUser ? (
           <>
-            <p style={{ opacity: 0.85, marginTop: 0 }}>
-              Signed in as <strong>{displayName ?? email ?? "User"}</strong>.
+            <h2 style={{ marginBottom: 8 }}>Completed Games</h2>
+            <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+              {derived.ended.length === 0 ? (
+                <strong>No games finished yet.</strong>
+              ) : (
+                <>
+                  <strong>{derived.ended.length}</strong> completed game
+                  {derived.ended.length > 1 ? "s" : ""} since{" "}
+                  {formatDate(
+                    derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
+                  )}
+                </>
+              )}
+            </p>
+
+            <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
+            <p style={{ marginTop: 0 }}>
+              <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
+              out of {derived.last100Count} games)
             </p>
           </>
         ) : (
@@ -85,9 +113,7 @@ export default function StatsPage() {
             </Link>
           </>
         )}
-      </header>
-
-      <div style={{ margin: "12px 0 20px" }} />
+      </section>
 
       {!hydrated ? null : <UserStatsTables derived={derived} />}
     </main>

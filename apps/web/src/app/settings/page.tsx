@@ -26,10 +26,14 @@ export default function SettingsPage() {
   return (
     <main>
       <header>
-        <h1>Settings</h1>
+        <h1 style={{ textAlign: "center" }}>Settings</h1>
       </header>
 
-      <section>
+      <section
+        className="paper paper-padding margin-auto"
+        aria-label="Account settings"
+        style={{ marginBottom: "2rem" }}
+      >
         <h2>Account</h2>
 
         {isOffline ? (
@@ -44,7 +48,10 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section>
+      <section
+        className="paper paper-padding margin-auto"
+        aria-label="Appearance settings"
+      >
         <h2>Appearance</h2>
         <div className="grid">
           <label className="field">

@@ -1,3 +1,20 @@
+.board-layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2em;
+}
+
+.board-layout__board-pane {
+  flex: 0 1 520px;
+  min-width: 0;
+}
+
+/* .board-layout__controls-pane {
+  flex: 0 1 320px;
+} */
+
 .board-border {
   /* keep your existing --board-h + width rules */
   position: relative;

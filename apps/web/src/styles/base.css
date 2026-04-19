@@ -62,12 +62,12 @@ a {
 }
 
 .max-width-container {
-  max-width: 900px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 16px;
   box-sizing: content-box;
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) { /* sm */
     padding: 8px;
   }
 }
