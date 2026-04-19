@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { Button } from "@vcell/ui";
+import { Button, Input } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 
 function ForgotPasswordInner() {
@@ -68,12 +68,11 @@ function ForgotPasswordInner() {
         <form onSubmit={onSubmit} style={{ maxWidth: 520 }}>
           <label style={{ display: "block", marginBottom: 14 }}>
             <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-            <input
+            <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               placeholder="you@example.com"
-              className="control"
               type="email"
             />
           </label>

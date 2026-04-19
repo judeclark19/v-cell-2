@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Select } from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import "./navbar.css";
@@ -61,7 +62,7 @@ export function NavBar() {
       {/* <label className="navbar__themeLabel" htmlFor="navbar-theme">
         Theme
       </label> */}
-      <select
+      <Select
         id="navbar-theme"
         className="navbar__select"
         value={theme}
@@ -72,7 +73,7 @@ export function NavBar() {
             {opt.label}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 

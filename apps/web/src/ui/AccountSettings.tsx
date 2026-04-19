@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, updateProfile, User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { Button } from "@vcell/ui";
+import { Button, Input } from "@vcell/ui";
 import { auth, db } from "@/lib/firebaseClient";
 
 function AccountSettings() {
@@ -77,13 +77,12 @@ function AccountSettings() {
       </p>
 
       <form onSubmit={handleSave}>
-        <input
+        <Input
           type="text"
           value={draftName}
           onChange={(e) => setDraftName(e.target.value)}
           disabled={isSaving}
           placeholder="Enter new display name"
-          className="control"
           style={{ marginRight: 8 }}
         />
         <Button type="submit" disabled={isSaving}>

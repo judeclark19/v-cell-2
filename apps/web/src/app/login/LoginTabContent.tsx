@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@vcell/ui";
+import { Button, Input } from "@vcell/ui";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
 import Or from "@/ui/Or";
@@ -40,28 +40,28 @@ export function LoginTabContent({
       <form onSubmit={onSubmit}>
         <label style={{ display: "block", marginBottom: 10 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-          <input
+          <Input
             value={loginEmail}
             onChange={(e) => onLoginEmailChange(e.target.value)}
             autoComplete="email"
             placeholder="you@example.com"
-            className="control full-width"
             type="email"
             disabled={isOffline}
             name="email"
+            fullWidth
           />
         </label>
         <label style={{ display: "block", marginBottom: 14 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <input
+          <Input
             value={loginPassword}
             onChange={(e) => onLoginPasswordChange(e.target.value)}
             autoComplete="current-password"
             placeholder="Your password"
-            className="control full-width"
             type="password"
             disabled={isOffline}
             name="password"
+            fullWidth
           />
         </label>
         {loginError && (

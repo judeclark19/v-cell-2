@@ -1,6 +1,6 @@
 "use client";
 
-import { Panel } from "@vcell/ui";
+import { Field, Panel, Select } from "@vcell/ui";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
@@ -58,27 +58,22 @@ export default function SettingsPage() {
       >
         <h2>Appearance</h2>
         <div className="grid">
-          <label className="field">
-            Theme
-            <select
-              className="control"
+          <Field
+            label="Theme"
+            hint="Saved locally. If you haven’t chosen a theme yet, OS dark mode defaults to Times Dark."
+          >
+            <Select
               value={theme}
               onChange={(e) => setTheme(e.target.value as Theme)}
             >
               <option value="poker">Poker</option>
               <option value="times-light">Times Light</option>
               <option value="times-dark">Times Dark</option>
-            </select>
-            <small className="hint">
-              Saved locally. If you haven’t chosen a theme yet, OS dark mode
-              defaults to Times Dark.
-            </small>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Show timer
-            <select
-              className="control"
+          <Field label="Show timer">
+            <Select
               id="show-timer"
               value={showTimer ? "true" : "false"}
               onChange={(e) =>
@@ -87,13 +82,14 @@ export default function SettingsPage() {
             >
               <option value="true">Show</option>
               <option value="false">Hide</option>
-            </select>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Reduce motion
-            <select
-              className="control"
+          <Field
+            label="Reduce motion"
+            hint="System default follows your OS reduced-motion setting."
+          >
+            <Select
               id="reduce-motion"
               value={motionPreference}
               onChange={(e) =>
@@ -105,11 +101,8 @@ export default function SettingsPage() {
               <option value="system">System default</option>
               <option value="reduce">Reduce motion</option>
               <option value="full">Full motion</option>
-            </select>
-            <small className="hint">
-              System default follows your OS reduced-motion setting.
-            </small>
-          </label>
+            </Select>
+          </Field>
         </div>
       </Panel>
     </main>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Panel } from "@vcell/ui";
+import { Button, Field, Input, Panel, Select } from "@vcell/ui";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
@@ -87,8 +87,7 @@ export default function BoardControls({
               setSeedInput("");
             }}
           >
-            <input
-              className="control"
+            <Input
               inputMode="text"
               autoComplete="off"
               spellCheck={false}
@@ -98,6 +97,7 @@ export default function BoardControls({
               aria-label="Seed"
               name="seed-input"
               id="seed-input"
+              // fullWidth
               style={{ flex: "1 1 auto" }}
             />
             <Button
@@ -118,10 +118,11 @@ export default function BoardControls({
           current one.
         </p>
         <div className="grid">
-          <label className="field">
-            Face-down cards at deal
-            <select
-              className="control"
+          <Field
+            label="Face-down cards at deal"
+            hint="Engine rule: V-shape layering. Auto-flip when a face-down card becomes exposed."
+          >
+            <Select
               id="face-down-cards"
               value={String(rules.faceDownCount)}
               onChange={async (e) => {
@@ -139,17 +140,14 @@ export default function BoardControls({
               <option value="7">7 (classic)</option>
               <option value="14">14 (2 rows)</option>
               <option value="21">21 (3 rows)</option>
-            </select>
-            <small className="hint">
-              Engine rule: V-shape layering. Auto-flip when a face-down card
-              becomes exposed.
-            </small>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Undo limit
-            <select
-              className="control"
+          <Field
+            label="Undo limit"
+            hint="For MVP we can enforce in UI; later we can also record undos used for stats."
+          >
+            <Select
               id="undo-limit"
               value={String(rules.undoLimit)}
               onChange={async (e) => {
@@ -168,17 +166,14 @@ export default function BoardControls({
               <option value="3">3</option>
               <option value="5">5</option>
               <option value="unlimited">Unlimited</option>
-            </select>
-            <small className="hint">
-              For MVP we can enforce in UI; later we can also record undos used
-              for stats.
-            </small>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Foundation pullback
-            <select
-              className="control"
+          <Field
+            label="Foundation pullback"
+            hint="When enabled, top foundation card can move to tableau/freecell."
+          >
+            <Select
               id="foundation-pullback"
               value={rules.allowFoundationPullback ? "on" : "off"}
               onChange={async (e) => {
@@ -194,11 +189,8 @@ export default function BoardControls({
             >
               <option value="on">On (easier)</option>
               <option value="off">Off (harder)</option>
-            </select>
-            <small className="hint">
-              When enabled, top foundation card can move to tableau/freecell.
-            </small>
-          </label>
+            </Select>
+          </Field>
         </div>
       </Panel>
     </div>

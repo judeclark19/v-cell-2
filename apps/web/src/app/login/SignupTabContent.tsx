@@ -1,4 +1,4 @@
-import { Button } from "@vcell/ui";
+import { Button, Input } from "@vcell/ui";
 import Or from "@/ui/Or";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
@@ -45,43 +45,43 @@ export function SignupTabContent({
           <span style={{ display: "block", marginBottom: 6 }}>
             Display name
           </span>
-          <input
+          <Input
             value={signupDisplayName}
             onChange={(e) => onSignupDisplayNameChange(e.target.value)}
             autoComplete="nickname"
             placeholder="e.g., Jude"
-            className="control full-width"
             type="text"
             disabled={isOffline}
             name="displayName"
+            fullWidth
           />
         </label>
 
         <label style={{ display: "block", marginBottom: 10 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-          <input
+          <Input
             value={signupEmail}
             onChange={(e) => onSignupEmailChange(e.target.value)}
             autoComplete="email"
             placeholder="you@example.com"
-            className="control full-width"
             type="email"
             disabled={isOffline}
             name="email"
+            fullWidth
           />
         </label>
 
         <label style={{ display: "block", marginBottom: 14 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <input
+          <Input
             value={signupPassword}
             onChange={(e) => onSignupPasswordChange(e.target.value)}
             autoComplete="new-password"
             placeholder="6+ characters"
-            className="control full-width"
             type="password"
             disabled={isOffline}
             name="password"
+            fullWidth
           />
         </label>
 

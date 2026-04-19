@@ -96,52 +96,6 @@ header {
   gap: 12px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.control {
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: color-mix(in srgb, var(--surface) 80%, transparent);
-}
-
-select,
-input,
-textarea {
-  font: inherit;
-  color: var(--foreground);
-  padding: 8px 10px;
-  height: 34px;;;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--muted);
-
-}
-
-select {
-  color: var(--foreground);
-  cursor: pointer;
-  font: inherit;
-  border-radius: var(--radius);
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  padding: 8px 2.25rem 8px 10px;
-
-  background-image: var(--select-chevron);
-  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='currentColor' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E"); */
-  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='white' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E"); */
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center; /* <— this respects your “padding” idea */
-  background-size: 0.9rem;
-}
-
 .row {
   display: flex;
   flex-wrap: wrap;
