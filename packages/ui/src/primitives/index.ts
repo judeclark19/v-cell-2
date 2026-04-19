@@ -1,4 +1,5 @@
 export * from "./Button";
+export * from "./Banner";
 export * from "./Field";
 export * from "./Input";
 export * from "./Modal";

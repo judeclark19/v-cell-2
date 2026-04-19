@@ -30,6 +30,20 @@ const GlobalStyleSheet = createGlobalStyle`
     --btn-ghost-bg: transparent;
     --btn-ghost-fg: var(--foreground);
 
+    --banner-prompt-border: color-mix(in srgb, var(--accent) 18%, var(--border));
+    --banner-prompt-bg: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--surface-hover) 82%, var(--surface)) 0%,
+      color-mix(in srgb, var(--surface) 88%, white 12%) 100%
+    );
+    --banner-status-border: color-mix(in srgb, var(--accent) 22%, var(--border));
+    --banner-status-bg: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 16%, var(--surface)) 0%,
+      color-mix(in srgb, var(--surface-hover) 88%, var(--surface)) 100%
+    );
+    --banner-debug-bg: color-mix(in srgb, var(--surface) 90%, black 10%);
+
     --control-radius: 8px;
     --control-border: var(--border);
     --control-bg: color-mix(in srgb, #0f2216 80%, transparent);

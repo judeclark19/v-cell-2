@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@vcell/ui";
-import "./install-prompt.css";
+import { Banner, BannerActions, BannerInner, BannerText, Button } from "@vcell/ui";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
 import { useIsOffline } from "@/state/network/useIsOffline";
@@ -38,14 +37,15 @@ export function LoginPrompt() {
   if (!shouldShow) return null;
 
   return (
-    <div className="install-prompt" role="status" aria-live="polite">
-      <div className="max-width-container install-prompt__inner">
-        <p className="install-prompt__text">
+    <Banner role="status" aria-live="polite">
+      <div className="max-width-container">
+        <BannerInner>
+        <BannerText>
           You are currently playing in guest mode. Log in to enable game history
           and stats.
-        </p>
+        </BannerText>
 
-        <div className="install-prompt__actions">
+        <BannerActions>
           <Button
             onClick={() => {
               router.replace("/login");
@@ -57,8 +57,9 @@ export function LoginPrompt() {
           <Button variant="ghost" onClick={dismiss}>
             Dismiss
           </Button>
-        </div>
+        </BannerActions>
+        </BannerInner>
       </div>
-    </div>
+    </Banner>
   );
 }

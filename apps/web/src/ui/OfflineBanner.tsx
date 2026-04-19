@@ -1,7 +1,7 @@
 "use client";
 
+import { Banner, BannerText } from "@vcell/ui";
 import { useIsOffline } from "@/state/network/useIsOffline";
-import "./offline-banner.css";
 
 export function OfflineBanner() {
   const isOffline = useIsOffline();
@@ -9,13 +9,13 @@ export function OfflineBanner() {
   if (!isOffline) return null;
 
   return (
-    <div className="offline-banner" role="status" aria-live="polite">
+    <Banner sticky tone="status" role="status" aria-live="polite">
       <div className="max-width-container">
-        <p className="offline-banner__text">
+        <BannerText>
           Cloud sync is unavailable right now. Gameplay stays local on this
           device and sync will resume when the connection recovers.
-        </p>
+        </BannerText>
       </div>
-    </div>
+    </Banner>
   );
 }

@@ -2,8 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@vcell/ui";
-import "./install-prompt.css";
+import {
+  Banner,
+  BannerActions,
+  BannerInner,
+  BannerText,
+  Button
+} from "@vcell/ui";
 
 const DISMISS_KEY = "vcell:installPrompt:dismissed";
 
@@ -125,39 +130,40 @@ export function InstallPrompt() {
 
   if (!shouldShow) return null;
 
-  const canPromptDirectly =
-    promptMode === "android" && installEvent !== null;
+  const canPromptDirectly = promptMode === "android" && installEvent !== null;
 
   return (
-    <div className="install-prompt" role="status" aria-live="polite">
-      <div className="max-width-container install-prompt__inner">
-        <p className="install-prompt__text">
-          Install V-Cell for quicker launches and reliable airplane-mode play.
-          {promptMode === "ios"
-            ? " On iPhone, tap Share and choose Add to Home Screen."
-            : canPromptDirectly
-              ? " On Android, tap Install to open Chrome's install prompt."
-              : " On Android, open the browser menu and choose Install app or Add to Home screen."}
-        </p>
+    <Banner role="status" aria-live="polite">
+      <div className="max-width-container">
+        <BannerInner>
+          <BannerText>
+            Install V-Cell for quicker launches and reliable airplane-mode play.
+            {promptMode === "ios"
+              ? " On iPhone, tap Share and choose Add to Home Screen."
+              : canPromptDirectly
+                ? " On Android, tap Install to open Chrome's install prompt."
+                : " On Android, open the browser menu and choose Install app or Add to Home screen."}
+          </BannerText>
 
-        <div className="install-prompt__actions">
-          {canPromptDirectly ? (
-            <Button
-              onClick={() => {
-                handleInstall().catch((error) => {
-                  console.error("[install prompt] failed", error);
-                });
-              }}
-            >
-              Install
+          <BannerActions>
+            {canPromptDirectly ? (
+              <Button
+                onClick={() => {
+                  handleInstall().catch((error) => {
+                    console.error("[install prompt] failed", error);
+                  });
+                }}
+              >
+                Install
+              </Button>
+            ) : null}
+
+            <Button variant="ghost" onClick={dismiss}>
+              Dismiss
             </Button>
-          ) : null}
-
-          <Button variant="ghost" onClick={dismiss}>
-            Dismiss
-          </Button>
-        </div>
+          </BannerActions>
+        </BannerInner>
       </div>
-    </div>
+    </Banner>
   );
 }
