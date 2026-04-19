@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "./globals.css";
 import { GlobalStyles, StyledComponentsRegistry } from "@vcell/ui";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
