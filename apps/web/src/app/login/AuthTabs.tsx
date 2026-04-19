@@ -1,5 +1,6 @@
 "use client";
 
+import { Panel } from "@vcell/ui";
 import { useLayoutEffect, useId, useRef, useState } from "react";
 import "./auth-tabs.css";
 import { useSelector } from "react-redux";
@@ -86,7 +87,7 @@ export function AuthTabs({
   }
 
   return (
-    <div className="paper auth-card">
+    <Panel className="auth-card">
       <div
         role="tablist"
         aria-label="Authentication options"
@@ -164,6 +165,6 @@ export function AuthTabs({
           <SignupTabContent isOffline={isOffline} authFlows={authFlows} />
         </section>
       </div>
-    </div>
+    </Panel>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { Button } from "@vcell/ui";
+import { Button, Panel } from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
@@ -65,8 +65,9 @@ export default function StatsPage() {
   return (
     <main className="stats-page-main">
       {/* left sidebar  */}
-      <section
-        className="paper paper-padding"
+      <Panel
+        as="section"
+        padding="lg"
         style={{
           flex: "1 1 320px",
           height: "fit-content"
@@ -113,7 +114,7 @@ export default function StatsPage() {
             </Button>
           </>
         )}
-      </section>
+      </Panel>
 
       {!hydrated ? null : <UserStatsTables derived={derived} />}
     </main>

@@ -1,4 +1,5 @@
 import { PersistedGame } from "@/persistence/types";
+import { Panel } from "@vcell/ui";
 import SeedButton from "./SeedButton";
 import { formatDate, formatDateAndTime, formatElapsed } from "./utils";
 
@@ -130,25 +131,25 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
         </p>
       </section> */}
 
-      <section className="paper paper-padding">
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Fastest wins</h2>
         {derived.fastest.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
           renderGamesTable(derived.fastest, "fastest")
         )}
-      </section>
+      </Panel>
 
-      <section className="paper paper-padding">
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Fewest moves (wins)</h2>
         {derived.fewestMoves.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
           renderGamesTable(derived.fewestMoves, "fewestMoves")
         )}
-      </section>
+      </Panel>
 
-      <section className="paper paper-padding">
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Most recent completed games</h2>
         {derived.ended.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No completed games yet.</p>
@@ -186,7 +187,7 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
             </table>
           </div>
         )}
-      </section>
+      </Panel>
     </div>
   );
 }

@@ -29,6 +29,10 @@ const GlobalStyleSheet = createGlobalStyle`
     --btn-secondary-fg: var(--foreground);
     --btn-ghost-bg: transparent;
     --btn-ghost-fg: var(--foreground);
+
+    --panel-radius: 16px;
+    --panel-bg: #123f2b;
+    --panel-shadow: 0 6px 24px 0 #141316;
   }
 
   :root[data-theme="times-light"] {
@@ -38,6 +42,8 @@ const GlobalStyleSheet = createGlobalStyle`
     --accent: #1f6feb;
     --accent-contrast: #ffffff;
     --focus-alpha: 25%;
+    --panel-bg: #fffdfd;
+    --panel-shadow: 0 6px 24px 0 rgba(20, 19, 22, 0.16);
   }
 
   :root[data-theme="times-dark"] {
@@ -47,6 +53,8 @@ const GlobalStyleSheet = createGlobalStyle`
     --accent: #79b8ff;
     --accent-contrast: #0b0b0d;
     --focus-alpha: 35%;
+    --panel-bg: #19181b;
+    --panel-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.45);
   }
 `;
 

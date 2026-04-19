@@ -2,31 +2,6 @@
   width: 100%;
 }
 
-.margin-auto {
-  margin: auto;
-}
-
-.paper {
-  border-radius: 16px;
-  background: var(--background-secondary);
-  box-shadow: 0 6px 24px 0 var(--black-800);
-}
-
-.paper-w-500 {
-  max-width: 500px;
-}
-
-.paper-padding {
-  padding: 40px;
-}
-
-@media (max-width: 640px) {
-  /* sm */
-  .paper-padding {
-    padding: 16px;
-  }
-}
-
 .stats-page-main {
   display: grid;
   grid-template-columns: 320px 1fr;

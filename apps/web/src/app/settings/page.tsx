@@ -1,5 +1,6 @@
 "use client";
 
+import { Panel } from "@vcell/ui";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
@@ -29,10 +30,11 @@ export default function SettingsPage() {
         <h1 style={{ textAlign: "center" }}>Settings</h1>
       </header>
 
-      <section
-        className="paper paper-padding margin-auto"
+      <Panel
+        as="section"
+        padding="lg"
         aria-label="Account settings"
-        style={{ marginBottom: "2rem" }}
+        style={{ margin: "0 auto 2rem" }}
       >
         <h2>Account</h2>
 
@@ -46,11 +48,13 @@ export default function SettingsPage() {
         ) : (
           <p className="hint">Log in to access account settings.</p>
         )}
-      </section>
+      </Panel>
 
-      <section
-        className="paper paper-padding margin-auto"
+      <Panel
+        as="section"
+        padding="lg"
         aria-label="Appearance settings"
+        style={{ margin: "0 auto" }}
       >
         <h2>Appearance</h2>
         <div className="grid">
@@ -107,7 +111,7 @@ export default function SettingsPage() {
             </small>
           </label>
         </div>
-      </section>
+      </Panel>
     </main>
   );
 }

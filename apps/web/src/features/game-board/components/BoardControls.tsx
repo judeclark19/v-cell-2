@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "@vcell/ui";
+import { Button, Panel } from "@vcell/ui";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
@@ -61,8 +61,9 @@ export default function BoardControls({
 
   return (
     <div>
-      <section
-        className="paper paper-padding"
+      <Panel
+        as="section"
+        padding="lg"
         aria-label="Start a new game"
         style={{ marginBottom: "2rem" }}
       >
@@ -108,9 +109,9 @@ export default function BoardControls({
             </Button>
           </form>
         </div>
-      </section>
+      </Panel>
 
-      <section className="paper paper-padding" aria-label="Gameplay settings">
+      <Panel as="section" padding="lg" aria-label="Gameplay settings">
         <h2>Gameplay</h2>
         <p className="hint" style={{ marginBottom: "1em" }}>
           Changing any gameplay setting starts a new game and abandons the
@@ -199,7 +200,7 @@ export default function BoardControls({
             </small>
           </label>
         </div>
-      </section>
+      </Panel>
     </div>
   );
 }
