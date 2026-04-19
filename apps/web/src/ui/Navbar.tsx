@@ -3,10 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Select } from "@vcell/ui";
+import {
+  NavBar as NavBarRow,
+  NavBrand,
+  NavBurger,
+  NavBurgerLine,
+  NavButton,
+  NavLink,
+  NavLinks,
+  NavPanel,
+  NavRight,
+  NavRoot,
+  NavTheme,
+  Select
+} from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
-import "./navbar.css";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
@@ -44,29 +56,27 @@ export function NavBar() {
   };
 
   const AuthControl = !hydrated ? null : uid ? (
-    <button className="navbar__button" onClick={handleLogout} type="button">
+    <NavButton onClick={handleLogout} type="button">
       Log out
-    </button>
+    </NavButton>
   ) : (
-    <Link
-      className={`navbar__link ${isActive("/login") ? "navbar__link--active" : ""}`}
+    <NavLink
+      as={Link}
+      $active={isActive("/login")}
       href="/login"
       onClick={closeMenu}
     >
       Log in
-    </Link>
+    </NavLink>
   );
 
   const ThemeControl = (
-    <div className="navbar__theme">
-      {/* <label className="navbar__themeLabel" htmlFor="navbar-theme">
-        Theme
-      </label> */}
+    <NavTheme>
       <Select
         id="navbar-theme"
-        className="navbar__select"
         value={theme}
         onChange={(e) => setTheme(e.target.value as Theme)}
+        style={{ backgroundColor: "transparent", borderColor: "var(--nav-button-border)" }}
       >
         {THEME_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -74,15 +84,14 @@ export function NavBar() {
           </option>
         ))}
       </Select>
-    </div>
+    </NavTheme>
   );
 
   return (
-    <nav className="navbar" aria-label="Primary">
+    <NavRoot aria-label="Primary">
       <div className="max-width-container">
-        <div className="navbar__bar">
-          <Link className="navbar__brand" href="/game" onClick={closeMenu}>
-            {/* V-Cell */}
+        <NavBarRow>
+          <NavBrand as={Link} href="/game" onClick={closeMenu}>
             <Image
               src="/images/vcell-logo.webp"
               alt="V-Cell"
@@ -91,47 +100,43 @@ export function NavBar() {
               loading="eager"
               unoptimized
             />
-          </Link>
+          </NavBrand>
 
-          <button
-            className={`navbar__burger ${menuOpen ? "is-open" : ""}`}
+          <NavBurger
+            $open={menuOpen}
             type="button"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="navbar-panel"
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <span className="navbar__burgerLine" />
-            <span className="navbar__burgerLine" />
-            <span className="navbar__burgerLine" />
-          </button>
+            <NavBurgerLine $open={menuOpen} />
+            <NavBurgerLine $open={menuOpen} />
+            <NavBurgerLine $open={menuOpen} />
+          </NavBurger>
 
-          <div
-            id="navbar-panel"
-            className={`navbar__panel ${menuOpen ? "is-open" : ""}`}
-          >
-            <div className="navbar__links">
+          <NavPanel id="navbar-panel" $open={menuOpen}>
+            <NavLinks>
               {NAV_LINKS.map(({ href, label }) => (
-                <Link
+                <NavLink
                   key={href}
-                  className={`navbar__link ${
-                    isActive(href) ? "navbar__link--active" : ""
-                  }`}
+                  as={Link}
+                  $active={isActive(href)}
                   href={href}
                   onClick={closeMenu}
                 >
                   {label}
-                </Link>
+                </NavLink>
               ))}
-            </div>
+            </NavLinks>
 
-            <div className="navbar__right">
+            <NavRight>
               {ThemeControl}
               {AuthControl}
-            </div>
-          </div>
-        </div>
+            </NavRight>
+          </NavPanel>
+        </NavBarRow>
       </div>
-    </nav>
+    </NavRoot>
   );
 }

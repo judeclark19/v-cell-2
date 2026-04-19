@@ -44,6 +44,12 @@ const GlobalStyleSheet = createGlobalStyle`
     );
     --banner-debug-bg: color-mix(in srgb, var(--surface) 90%, black 10%);
 
+    --nav-height: 56px;
+    --nav-bg: var(--surface);
+    --nav-hover-bg: var(--surface-hover);
+    --nav-border: var(--border);
+    --nav-button-border: var(--border);
+
     --control-radius: 8px;
     --control-border: var(--border);
     --control-bg: color-mix(in srgb, #0f2216 80%, transparent);

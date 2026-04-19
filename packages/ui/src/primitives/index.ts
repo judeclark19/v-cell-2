@@ -3,6 +3,7 @@ export * from "./Banner";
 export * from "./Field";
 export * from "./Input";
 export * from "./Modal";
+export * from "./Nav";
 export * from "./Panel";
 export * from "./Select";
 export * from "./Tabs";
