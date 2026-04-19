@@ -40,6 +40,11 @@ const GlobalStyleSheet = createGlobalStyle`
     --panel-shadow: 0 6px 24px 0 #141316;
 
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23e9f6ee' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
+
+    --tabs-fg: #87a095;
+    --tabs-border: #87a095;
+    --tabs-active-fg: #ffffff;
+    --tabs-active-border: #ffffff;
   }
 
   :root[data-theme="times-light"] {
@@ -54,6 +59,10 @@ const GlobalStyleSheet = createGlobalStyle`
     --panel-bg: #fffdfd;
     --panel-shadow: 0 6px 24px 0 rgba(20, 19, 22, 0.16);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23171717' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
+    --tabs-fg: #5f6b65;
+    --tabs-border: #5f6b65;
+    --tabs-active-fg: #171717;
+    --tabs-active-border: #171717;
   }
 
   :root[data-theme="times-dark"] {
@@ -68,6 +77,10 @@ const GlobalStyleSheet = createGlobalStyle`
     --panel-bg: #19181b;
     --panel-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.45);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f1f1f1' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
+    --tabs-fg: #8f8e8f;
+    --tabs-border: #8f8e8f;
+    --tabs-active-fg: #f1f1f1;
+    --tabs-active-border: #f1f1f1;
   }
 `;
 
