@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { GlobalStyles, StyledComponentsRegistry } from "@vcell/ui";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
 import { OfflineBanner } from "@/ui/OfflineBanner";
@@ -99,14 +100,17 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>
-          <ServiceWorkerRegistration />
-          <NavBar />
-          <OfflineBanner />
-          <InstallPrompt />
-          <LoginPrompt />
-          <div className="max-width-container">{children}</div>
-        </Providers>
+        <StyledComponentsRegistry>
+          <Providers>
+            <GlobalStyles />
+            <ServiceWorkerRegistration />
+            <NavBar />
+            <OfflineBanner />
+            <InstallPrompt />
+            <LoginPrompt />
+            <div className="max-width-container">{children}</div>
+          </Providers>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );
