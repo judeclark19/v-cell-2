@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, updateProfile, User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import { Button } from "@vcell/ui";
 import { auth, db } from "@/lib/firebaseClient";
 
 function AccountSettings() {
@@ -85,9 +86,9 @@ function AccountSettings() {
           className="control"
           style={{ marginRight: 8 }}
         />
-        <button className="btn btn--primary" type="submit" disabled={isSaving}>
+        <Button type="submit" disabled={isSaving}>
           {isSaving ? "Saving..." : "Save"}
-        </button>
+        </Button>
       </form>
 
       {message && <p style={{ marginTop: 8 }}>{message}</p>}

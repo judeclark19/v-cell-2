@@ -8,7 +8,9 @@ import {
 } from "./Button.styles";
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  as?: React.ElementType;
   fullWidth?: boolean;
+  href?: string;
   size?: ButtonSize;
   variant?: ButtonVariant;
 };

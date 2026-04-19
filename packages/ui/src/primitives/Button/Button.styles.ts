@@ -72,6 +72,7 @@ export const ButtonRoot = styled.button<StyledButtonProps>`
   font: inherit;
   line-height: 1;
   text-align: center;
+  text-decoration: none;
   transition:
     transform 120ms ease,
     background 120ms ease,

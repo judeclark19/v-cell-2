@@ -1,4 +1,5 @@
 import type { Card as EngineCard } from "@vcell/engine";
+import { Button } from "@vcell/ui";
 import Card from "./Card";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
@@ -155,10 +156,8 @@ function Foundations({
           <div className={`timer${!startedAtMs ? " muted" : ""}`}>
             {showTimer ? formatElapsed(timeElapsedMs) : ""}
           </div>
-          <button
-            className="btn btn--primary"
+          <Button
             aria-label="Pause timer"
-            type="button"
             onClick={() => {
               dispatch(openPauseModal());
               dispatch(setPaused(true));
@@ -177,7 +176,7 @@ function Foundations({
               <rect x="6" y="5" width="4" height="14" rx="1" />
               <rect x="14" y="5" width="4" height="14" rx="1" />
             </svg>
-          </button>
+          </Button>
         </div>
         {foundationCards.map((card, foundationIndex) => (
           <Foundation

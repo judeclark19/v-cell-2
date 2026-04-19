@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@vcell/ui";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
@@ -70,14 +71,9 @@ export default function BoardControls({
           Starting a new game abandons the current one.
         </p> */}
 
-        <button
-          type="button"
-          className="btn btn--primary
-        full-width"
-          onClick={onNewDeal}
-        >
+        <Button type="button" fullWidth onClick={onNewDeal}>
           New deal (random)
-        </button>
+        </Button>
 
         <Or />
         <div>
@@ -103,13 +99,13 @@ export default function BoardControls({
               id="seed-input"
               style={{ flex: "1 1 auto" }}
             />
-            <button
+            <Button
               type="submit"
-              className="btn btn--secondary"
+              variant="secondary"
               disabled={!seedInput.trim()}
             >
               Play seed
-            </button>
+            </Button>
           </form>
         </div>
       </section>

@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { Button } from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
-import { selectDisplayName, selectEmail } from "@/state/auth/authSlice";
+import { selectDisplayName } from "@/state/auth/authSlice";
 import { formatDate } from "@/ui/utils";
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
   // auth slice
   const displayName = useSelector(selectDisplayName);
-  const email = useSelector(selectEmail);
   // records slice
   const games = useSelector(selectCompletedGames);
 
@@ -72,7 +72,7 @@ export default function StatsPage() {
           height: "fit-content"
         }}
       >
-        <h1>{displayName}</h1>
+        <h1>{displayName ? `${displayName}` : "Playing as Guest"}</h1>
         <hr />
         <br />
         <br />
@@ -108,9 +108,9 @@ export default function StatsPage() {
               Viewing local stats saved on this device. Log in if you want your
               history to sync across devices.
             </p>
-            <Link href="/login?next=/stats" className="btn btn--primary">
+            <Button as={Link} href="/login?next=/stats">
               Log in for synced stats
-            </Link>
+            </Button>
           </>
         )}
       </section>

@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { Button } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 
 function ResetPasswordInner() {
@@ -181,13 +182,9 @@ function ResetPasswordInner() {
             </p>
           )}
 
-          <button
-            type="submit"
-            className="btn btn--primary"
-            disabled={!canSubmit || loading}
-          >
+          <Button type="submit" disabled={!canSubmit || loading}>
             {loading ? "Saving…" : "Update password"}
-          </button>
+          </Button>
 
           <div style={{ marginTop: 12, fontSize: 14, opacity: 0.85 }}>
             {done ? (

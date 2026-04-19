@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@vcell/ui";
 import "./install-prompt.css";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
@@ -45,19 +46,17 @@ export function LoginPrompt() {
         </p>
 
         <div className="install-prompt__actions">
-          <button
-            type="button"
-            className="btn btn--primary"
+          <Button
             onClick={() => {
               router.replace("/login");
             }}
           >
             Go to login page
-          </button>
+          </Button>
 
-          <button type="button" className="btn btn--ghost" onClick={dismiss}>
+          <Button variant="ghost" onClick={dismiss}>
             Dismiss
-          </button>
+          </Button>
         </div>
       </div>
     </div>

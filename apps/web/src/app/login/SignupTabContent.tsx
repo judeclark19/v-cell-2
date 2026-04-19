@@ -1,3 +1,4 @@
+import { Button } from "@vcell/ui";
 import Or from "@/ui/Or";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
@@ -90,13 +91,13 @@ export function SignupTabContent({
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
-          className="btn btn--primary full-width"
+          fullWidth
           disabled={isOffline || !canSubmitSignup || signupLoading}
         >
           {signupLoading ? "Creating account…" : "Create account"}
-        </button>
+        </Button>
       </form>
     </section>
   );

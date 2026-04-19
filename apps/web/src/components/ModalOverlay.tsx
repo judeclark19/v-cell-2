@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 import "../styles/modal.css";
 import { useEffect, useRef } from "react";
+import { Button } from "@vcell/ui";
 import { setIsAnyModalOpen } from "@/state/ui/uiSlice";
 
 type ModalOverlayProps = {
@@ -143,23 +144,17 @@ export default function ModalOverlay({
 
           <div className="modal-overlay__buttons">
             {secondaryButtonLabel && (
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={secondaryButtonAction}
-              >
+              <Button variant="secondary" onClick={secondaryButtonAction}>
                 {secondaryButtonLabel}
-              </button>
+              </Button>
             )}
 
-            <button
+            <Button
               ref={primaryButtonRef}
-              type="button"
-              className="btn btn--primary"
               onClick={primaryButtonAction}
             >
               {primaryButtonLabel}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

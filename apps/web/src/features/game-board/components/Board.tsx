@@ -8,6 +8,7 @@ import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
+import { Button } from "@vcell/ui";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 import {
@@ -67,24 +68,24 @@ function Board() {
                   className="row"
                   style={{ marginTop: "1em", marginBottom: "0.5em" }}
                 >
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn--secondary"
+                    variant="secondary"
                     onClick={boardController.restartDeal}
                   >
                     Restart deal
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn--secondary"
+                    variant="secondary"
                     onClick={boardController.undo}
                     disabled={!canUndo}
                   >
                     {rules.undoLimit === "unlimited" || rules.undoLimit === 0
                       ? "Undo"
                       : `Undo (${undosRemaining})`}
-                  </button>
+                  </Button>
                 </div>
               </>
             ) : (

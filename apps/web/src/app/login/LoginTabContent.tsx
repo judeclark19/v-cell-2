@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@vcell/ui";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
 import Or from "@/ui/Or";
@@ -68,13 +69,13 @@ export function LoginTabContent({
             {loginError}
           </p>
         )}
-        <button
+        <Button
           type="submit"
-          className="btn btn--primary full-width"
+          fullWidth
           disabled={isOffline || !canSubmitLogin || loginLoading}
         >
           {loginLoading ? "Logging in…" : "Log in"}
-        </button>{" "}
+        </Button>
       </form>
       <div
         style={{

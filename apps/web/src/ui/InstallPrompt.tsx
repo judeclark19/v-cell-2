@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { Button } from "@vcell/ui";
 import "./install-prompt.css";
 
 const DISMISS_KEY = "vcell:installPrompt:dismissed";
@@ -141,9 +142,7 @@ export function InstallPrompt() {
 
         <div className="install-prompt__actions">
           {canPromptDirectly ? (
-            <button
-              type="button"
-              className="btn btn--primary"
+            <Button
               onClick={() => {
                 handleInstall().catch((error) => {
                   console.error("[install prompt] failed", error);
@@ -151,12 +150,12 @@ export function InstallPrompt() {
               }}
             >
               Install
-            </button>
+            </Button>
           ) : null}
 
-          <button type="button" className="btn btn--ghost" onClick={dismiss}>
+          <Button variant="ghost" onClick={dismiss}>
             Dismiss
-          </button>
+          </Button>
         </div>
       </div>
     </div>
