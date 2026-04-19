@@ -39,6 +39,12 @@ const GlobalStyleSheet = createGlobalStyle`
     --panel-bg: #123f2b;
     --panel-shadow: 0 6px 24px 0 #141316;
 
+    --modal-radius: 8px;
+    --modal-overlay-bg: color-mix(in srgb, #1c5f3d 35%, transparent);
+    --modal-bg: color-mix(in srgb, #0f2216 85%, transparent);
+    --modal-border: color-mix(in srgb, rgba(0, 0, 0, 0.35) 35%, transparent);
+    --modal-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23e9f6ee' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
 
     --tabs-fg: #87a095;
@@ -58,6 +64,10 @@ const GlobalStyleSheet = createGlobalStyle`
     --control-fg: var(--foreground);
     --panel-bg: #fffdfd;
     --panel-shadow: 0 6px 24px 0 rgba(20, 19, 22, 0.16);
+    --modal-overlay-bg: color-mix(in srgb, #fffdfd 45%, transparent);
+    --modal-bg: color-mix(in srgb, #f6f6f6 92%, transparent);
+    --modal-border: color-mix(in srgb, rgba(0, 0, 0, 0.22) 35%, transparent);
+    --modal-shadow: 0 18px 50px rgba(20, 19, 22, 0.18);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23171717' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
     --tabs-fg: #5f6b65;
     --tabs-border: #5f6b65;
@@ -76,6 +86,10 @@ const GlobalStyleSheet = createGlobalStyle`
     --control-fg: var(--foreground);
     --panel-bg: #19181b;
     --panel-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.45);
+    --modal-overlay-bg: color-mix(in srgb, #141316 42%, transparent);
+    --modal-bg: color-mix(in srgb, #16161a 92%, transparent);
+    --modal-border: color-mix(in srgb, rgba(255, 255, 255, 0.22) 35%, transparent);
+    --modal-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 20 20'%3E%3Cpath fill='%23f1f1f1' d='M5.5 7.5 10 12l4.5-4.5 1.5 1.5L10 15 4 9z'/%3E%3C/svg%3E");
     --tabs-fg: #8f8e8f;
     --tabs-border: #8f8e8f;
