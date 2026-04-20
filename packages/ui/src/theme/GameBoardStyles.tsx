@@ -12,8 +12,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .tableau-col > .card.is-locked { pointer-events: none; }
   .tableau-col > :is(.card, .card-slot) + :is(.card, .card-slot) { margin-top: -107%; }
   .tableau-col > :is(.card.is-dragging, .card.is-auto-moving) { margin-top: 0; }
-  .autocomplete-drawer { position: absolute; top: 0; transform: translateY(0); transition: transform 180ms ease; will-change: transform; width: 100%; background-color: var(--board-bg); padding: 8px; display: flex; justify-content: center; }
-  .autocomplete-drawer--visible { z-index: var(--z-drag); transform: translateY(-100%); }
   .drag-layer { position: fixed; z-index: var(--z-drag); pointer-events: none; will-change: transform; width: var(--card-w); height: auto; transition: none; }
   .drag-layer.is-auto-moving { transition: transform 180ms ease; }
   .drag-layer__stack { display: flex; flex-direction: column; width: 100%; }
@@ -23,7 +21,7 @@ const GameBoardStyleSheet = createGlobalStyle`
   .timer-cell button { width: 50%; }
   .timer-cell .timer.muted { color: var(--muted); }
   .timer-cell[aria-hidden="true"] { visibility: hidden; }
-  :root[data-reduced-motion="true"] .drag-layer.is-auto-moving, :root[data-reduced-motion="true"] .autocomplete-drawer { transition: none; }
+  :root[data-reduced-motion="true"] .drag-layer.is-auto-moving { transition: none; }
   :root[data-reduced-motion="true"] .pause-overlay { backdrop-filter: none; }
   .card { border-radius: var(--card-radius); width: 100%; aspect-ratio: 2 / 3; perspective: 900px; display: block; user-select: none; container-type: inline-size; touch-action: none; transition: box-shadow 120ms ease, background-color 120ms ease; }
   .card-inner { pointer-events: none; width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 220ms ease; will-change: transform; }

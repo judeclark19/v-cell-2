@@ -7,7 +7,14 @@ import {
   selectShowAcp
 } from "@/state/game/gameSlice/selectors";
 import { useDispatch, useSelector } from "react-redux";
-import { BoardBottom, Button, PileCell, PileRow, PileSpacer } from "@vcell/ui";
+import {
+  AutocompleteDrawer,
+  BoardBottom,
+  Button,
+  PileCell,
+  PileRow,
+  PileSpacer
+} from "@vcell/ui";
 import { setIsAutoCompleting } from "@/state/game/gameSlice";
 
 function FreeCells({
@@ -27,12 +34,7 @@ function FreeCells({
 
   return (
     <BoardBottom aria-label="Free cells">
-      <div
-        className={`autocomplete-drawer${
-          showAcp ? " autocomplete-drawer--visible" : ""
-        }`}
-        aria-hidden={showAcp ? "false" : "true"}
-      >
+      <AutocompleteDrawer visible={showAcp} aria-hidden={!showAcp}>
         <Button
           onClick={() => {
             if (isAutoCompleting) dispatch(setIsAutoCompleting(false));
@@ -42,7 +44,7 @@ function FreeCells({
         >
           {isAutoCompleting ? "Stop" : "Autocomplete"}
         </Button>
-      </div>
+      </AutocompleteDrawer>
       <PileRow aria-label="Free cells">
         <PileSpacer aria-hidden="true" />
         {freeCellCards.map((card, i) => (
