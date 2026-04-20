@@ -3,10 +3,6 @@
 import { createGlobalStyle } from "styled-components";
 
 const GameBoardStyleSheet = createGlobalStyle`
-  .board-layout { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 2em; }
-  .board-layout__board-pane { flex: 0 1 520px; min-width: 0; }
-  .board-border { position: relative; --board-h: min(max(450px, calc(100vh - 200px)), 1440px); width: min(100%, 900px, calc(var(--board-h) * 3 / 4)); background-image: var(--board-border-image); background-size: cover; box-sizing: border-box; padding: 4px; margin: 0 auto; border-radius: var(--radius); background-color: var(--board-border-color); }
-  @media (max-width: 450px) { .board-border { --board-h: min(550px, 70vh); } }
   .board { container-type: inline-size; --card-w: calc((100cqw - 8px - (6 * var(--card-gap, 10px))) / 7); height: var(--board-h); width: 100%; aspect-ratio: 3 / 4; background-color: var(--board-bg); padding: 4px; border-radius: var(--radius); display: flex; flex-direction: column; }
   .board-top { margin-bottom: var(--card-gap, 10px); }
   .board-bottom { margin-top: var(--card-gap, 10px); position: relative; }
@@ -32,8 +28,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .timer-cell button { width: 50%; }
   .timer-cell .timer.muted { color: var(--muted); }
   .timer-cell[aria-hidden="true"] { visibility: hidden; }
-  .board-border.is-kb-carrying { outline: 3px dashed var(--kb-highlight); outline-offset: 6px; }
-  .board-border.is-kb-carrying::after { content: attr(data-carrying-label); text-align: center; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); white-space: nowrap; width: max-content; max-width: calc(100% - 12px); font-size: 12px; padding: 4px 8px; border-radius: 999px; background: color-mix(in srgb, var(--kb-highlight) 85%, transparent); color: var(--kb-highlight-contrast, #000); pointer-events: none; }
   :root[data-reduced-motion="true"] .drag-layer.is-auto-moving, :root[data-reduced-motion="true"] .autocomplete-drawer { transition: none; }
   :root[data-reduced-motion="true"] .pause-overlay { backdrop-filter: none; }
   .card { border-radius: var(--card-radius); width: 100%; aspect-ratio: 2 / 3; perspective: 900px; display: block; user-select: none; container-type: inline-size; touch-action: none; transition: box-shadow 120ms ease, background-color 120ms ease; }
@@ -73,9 +67,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .card.is-kb-carried .card-face--front, .card.is-kb-carried-stack .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 86%, var(--accent) 14%); box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .card.is-kb-carried { opacity: 0.9; }
   .card.is-kb-carried-stack { opacity: 0.75; }
-  .board-border.is-kb-carrying .card-face--front { transition: none; }
-  .board-border.is-kb-carrying .card:not(.is-drop-target):not(.is-kb-carried):not(.is-kb-carried-stack):hover .card-face--front, .board-border.is-kb-carrying .card.is-playable:not(.is-drop-target):not(.is-kb-carried):not(.is-kb-carried-stack):hover .card-face--front { box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow); }
-  .board-border.is-kb-carrying .card:not(.is-drop-target):not(.is-kb-carried):not(.is-kb-carried-stack):focus .card-face--front { background-color: var(--card-front-bg); box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow); }
   :root[data-reduced-motion="true"] .card, :root[data-reduced-motion="true"] .card-inner, :root[data-reduced-motion="true"] .card-face--front, :root[data-reduced-motion="true"] .card.is-drop-target .card-face--front { transition: none; }
 `;
 

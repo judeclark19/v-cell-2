@@ -122,7 +122,7 @@ const GlobalStyleSheet = createGlobalStyle`
     );
     --banner-debug-bg: color-mix(in srgb, var(--surface) 90%, black 10%);
 
-    --nav-height: 56px;
+    --nav-height: 80px;
     --nav-bg: var(--surface);
     --nav-hover-bg: var(--surface-hover);
     --nav-border: var(--border);

@@ -6,7 +6,7 @@ import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
-import { Button } from "@vcell/ui";
+import { BoardBorder, BoardLayout, Button } from "@vcell/ui";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 import {
@@ -32,77 +32,72 @@ function Board() {
   const sessionPhase = useSelector(selectSessionPhase);
 
   return (
-    <div className="board-layout">
-      <div className="board-layout__board-pane">
+    <BoardLayout>
+      <BoardBorder
+        keyboardCarrying={boardController.kbState.carrying}
+        key={sessionPhase === "ready" ? seed : "loading"}
+        data-carrying-label={`Carrying the ${boardController.kbState.carryingLabel} — choose a target:`}
+      >
         <div
-          className={`board-border ${boardController.kbState.carrying ? "is-kb-carrying" : ""}`}
-          key={sessionPhase === "ready" ? seed : "loading"}
-          data-carrying-label={`Carrying the ${boardController.kbState.carryingLabel} — choose a target:`}
+          className="board"
+          aria-label="Game board"
+          ref={boardRef}
+          tabIndex={boardController.isInputSuppressed ? -1 : 0}
+          onPointerDownCapture={boardController.onKCSPointerDown}
+          onFocusCapture={boardController.onKCSFocusCapture}
+          onBlurCapture={boardController.onKCSBlurCapture}
+          onFocus={boardController.onKCSFocus}
         >
-          <div
-            className="board"
-            aria-label="Game board"
-            ref={boardRef}
-            tabIndex={boardController.isInputSuppressed ? -1 : 0}
-            onPointerDownCapture={boardController.onKCSPointerDown}
-            onFocusCapture={boardController.onKCSFocusCapture}
-            onBlurCapture={boardController.onKCSBlurCapture}
-            onFocus={boardController.onKCSFocus}
-          >
-            {sessionPhase === "ready" ? (
-              <>
-                {/* Foundations on top */}
-                <Foundations boardController={boardController} />
+          {sessionPhase === "ready" ? (
+            <>
+              {/* Foundations on top */}
+              <Foundations boardController={boardController} />
 
-                {/* Tableau in the middle */}
-                <Tableau boardController={boardController} />
+              {/* Tableau in the middle */}
+              <Tableau boardController={boardController} />
 
-                {/* Drag overlay layer */}
-                <DragLayer boardController={boardController} />
+              {/* Drag overlay layer */}
+              <DragLayer boardController={boardController} />
 
-                {/* Free cells on bottom */}
-                <FreeCells boardController={boardController} />
-                <div
-                  className="row"
-                  style={{ marginTop: "1em", marginBottom: "0.5em" }}
+              {/* Free cells on bottom */}
+              <FreeCells boardController={boardController} />
+              <div
+                className="row"
+                style={{ marginTop: "1em", marginBottom: "0.5em" }}
+              >
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={boardController.restartDeal}
                 >
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={boardController.restartDeal}
-                  >
-                    Restart deal
-                  </Button>
+                  Restart deal
+                </Button>
 
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={boardController.undo}
-                    disabled={!canUndo}
-                  >
-                    {rules.undoLimit === "unlimited" || rules.undoLimit === 0
-                      ? "Undo"
-                      : `Undo (${undosRemaining})`}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="board-loading" aria-label="Loading deal" />
-            )}
-          </div>
-
-          <BoardModals />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={boardController.undo}
+                  disabled={!canUndo}
+                >
+                  {rules.undoLimit === "unlimited" || rules.undoLimit === 0
+                    ? "Undo"
+                    : `Undo (${undosRemaining})`}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="board-loading" aria-label="Loading deal" />
+          )}
         </div>
-        <p className="hint" style={{ marginTop: "1rem", textAlign: "center" }}>
-          Current seed:{" "}
-          {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
-        </p>
-      </div>
 
-      <div className="board-layout__controls-pane">
-        <BoardControls boardController={boardController} />
-      </div>
-    </div>
+        <BoardModals />
+      </BoardBorder>
+      <p className="hint" style={{ marginTop: "1rem", textAlign: "center" }}>
+        Current seed:{" "}
+        {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
+      </p>
+      <BoardControls boardController={boardController} />
+    </BoardLayout>
   );
 }
 
