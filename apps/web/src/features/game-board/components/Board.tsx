@@ -6,7 +6,7 @@ import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
-import { BoardBorder, BoardLayout, Button } from "@vcell/ui";
+import { BoardBorder, BoardSurface, Button } from "@vcell/ui";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
 
 import {
@@ -32,14 +32,13 @@ function Board() {
   const sessionPhase = useSelector(selectSessionPhase);
 
   return (
-    <BoardLayout>
+    <>
       <BoardBorder
         keyboardCarrying={boardController.kbState.carrying}
         key={sessionPhase === "ready" ? seed : "loading"}
         data-carrying-label={`Carrying the ${boardController.kbState.carryingLabel} — choose a target:`}
       >
-        <div
-          className="board"
+        <BoardSurface
           aria-label="Game board"
           ref={boardRef}
           tabIndex={boardController.isInputSuppressed ? -1 : 0}
@@ -88,7 +87,7 @@ function Board() {
           ) : (
             <div className="board-loading" aria-label="Loading deal" />
           )}
-        </div>
+        </BoardSurface>
 
         <BoardModals />
       </BoardBorder>
@@ -97,7 +96,7 @@ function Board() {
         {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
       </p>
       <BoardControls boardController={boardController} />
-    </BoardLayout>
+    </>
   );
 }
 

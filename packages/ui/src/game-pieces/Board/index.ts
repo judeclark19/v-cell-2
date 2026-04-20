@@ -1,2 +1,4 @@
 export * from "./BoardBorder";
-export * from "./BoardLayout";
+export * from "./BoardSection";
+export * from "./BoardSurface";
+export * from "../Pile";

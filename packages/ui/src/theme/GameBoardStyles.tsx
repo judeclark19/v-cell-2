@@ -3,10 +3,6 @@
 import { createGlobalStyle } from "styled-components";
 
 const GameBoardStyleSheet = createGlobalStyle`
-  .board { container-type: inline-size; --card-w: calc((100cqw - 8px - (6 * var(--card-gap, 10px))) / 7); height: var(--board-h); width: 100%; aspect-ratio: 3 / 4; background-color: var(--board-bg); padding: 4px; border-radius: var(--radius); display: flex; flex-direction: column; }
-  .board-top { margin-bottom: var(--card-gap, 10px); }
-  .board-bottom { margin-top: var(--card-gap, 10px); position: relative; }
-  .pile-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--card-gap, 10px); box-sizing: border-box; padding: 4px; background-color: var(--board-bg); position: relative; }
   .tableau-scroll { overflow: auto; flex-grow: 1; }
   .tableau { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--card-gap, 10px); padding: 4px; background-color: var(--tableau-bg); border-radius: var(--radius); overflow: visible; min-height: 100%; position: relative; }
   .tableau-col { display: flex; flex-direction: column; position: relative; min-height: calc(var(--card-w) * 1.5); }
@@ -22,7 +18,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .drag-layer.is-auto-moving { transition: transform 180ms ease; }
   .drag-layer__stack { display: flex; flex-direction: column; width: 100%; }
   .drag-layer__stack > .card:not(:first-child) { margin-top: calc(var(--card-w) * -1.07); }
-  .pile-spacer { width: 100%; aspect-ratio: 2 / 3; }
   .timer-cell { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; grid-column: span 3; }
   .timer-cell .timer { text-align: center; font-size: 24px; }
   .timer-cell button { width: 50%; }
@@ -60,7 +55,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .card.is-playable .card-face--front { box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow); }
   .card.is-playable:hover .card-face--front { box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .card.is-playable:not(.is-drop-target):focus .card-face--front, .card.is-playable:not(.is-drop-target):focus-visible .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 86%, var(--accent) 14%); box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
-  .pile-cell { position: relative; }
   .pile-card { position: absolute; inset: 0; }
   .tableau-col > .card { position: relative; }
   .card.is-drop-target .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 84%, var(--kb-highlight) 16%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--kb-highlight) 55%, transparent), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }

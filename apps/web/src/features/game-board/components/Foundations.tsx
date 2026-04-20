@@ -1,5 +1,5 @@
 import type { Card as EngineCard } from "@vcell/engine";
-import { Button } from "@vcell/ui";
+import { BoardTop, Button, PileCell, PileRow } from "@vcell/ui";
 import Card from "./Card";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
@@ -79,9 +79,8 @@ function Foundation({
     : undefined;
 
   return (
-    <div
+    <PileCell
       key={i}
-      className="pile-cell"
       data-kb-focusable={kbState.carrying && isEmptySlot ? "true" : undefined}
       role={kbState.carrying && isEmptySlot ? "button" : undefined}
       aria-label={
@@ -130,7 +129,7 @@ function Foundation({
           />
         </>
       )}
-    </div>
+    </PileCell>
   );
 }
 
@@ -150,8 +149,8 @@ function Foundations({
   const showTimer = useSelector(selectShowTimer);
 
   return (
-    <div className="board-top" aria-label="Foundations">
-      <div className="pile-row" aria-label="Foundations">
+    <BoardTop aria-label="Foundations">
+      <PileRow aria-label="Foundations">
         <div className="timer-cell" aria-hidden={showTimer ? "false" : "true"}>
           <div className={`timer${!startedAtMs ? " muted" : ""}`}>
             {showTimer ? formatElapsed(timeElapsedMs) : ""}
@@ -187,8 +186,8 @@ function Foundations({
             boardController={boardController}
           />
         ))}
-      </div>
-    </div>
+      </PileRow>
+    </BoardTop>
   );
 }
 

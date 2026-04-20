@@ -7,7 +7,7 @@ import {
   selectShowAcp
 } from "@/state/game/gameSlice/selectors";
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "@vcell/ui";
+import { BoardBottom, Button, PileCell, PileRow, PileSpacer } from "@vcell/ui";
 import { setIsAutoCompleting } from "@/state/game/gameSlice";
 
 function FreeCells({
@@ -26,7 +26,7 @@ function FreeCells({
   const { kbState, cardFlight } = boardController;
 
   return (
-    <div className="board-bottom" aria-label="Free cells">
+    <BoardBottom aria-label="Free cells">
       <div
         className={`autocomplete-drawer${
           showAcp ? " autocomplete-drawer--visible" : ""
@@ -43,12 +43,11 @@ function FreeCells({
           {isAutoCompleting ? "Stop" : "Autocomplete"}
         </Button>
       </div>
-      <div className="pile-row" aria-label="Free cells">
-        <div className="pile-spacer" aria-hidden="true" />
+      <PileRow aria-label="Free cells">
+        <PileSpacer aria-hidden="true" />
         {freeCellCards.map((card, i) => (
-          <div
+          <PileCell
             key={i}
-            className="pile-cell"
             role={kbState.carrying && !card ? "button" : undefined}
             aria-label={!card ? `Free cell ${i} empty slot` : `Free cell ${i}`}
           >
@@ -102,11 +101,11 @@ function FreeCells({
                   />
                 );
               })()}
-          </div>
+          </PileCell>
         ))}
-        <div className="pile-spacer" aria-hidden="true" />
-      </div>
-    </div>
+        <PileSpacer aria-hidden="true" />
+      </PileRow>
+    </BoardBottom>
   );
 }
 
