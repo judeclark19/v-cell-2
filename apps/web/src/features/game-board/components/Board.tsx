@@ -1,5 +1,3 @@
-import "../styles/board.css";
-
 import Tableau from "../components/Tableau";
 import Foundations from "../components/Foundations";
 import FreeCells from "../components/FreeCells";

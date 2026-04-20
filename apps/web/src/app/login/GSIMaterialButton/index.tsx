@@ -1,5 +1,3 @@
-import "./styles.css";
-
 function GSIMaterialButton({
   inOrUp,
   onClick
