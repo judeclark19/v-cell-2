@@ -1,7 +1,7 @@
 "use client";
 
 import { Panel, Tabs } from "@vcell/ui";
-import { useLayoutEffect, useId, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useReducedMotionEnabled } from "@/state/ui/motionPreference";
 import { selectMotionPreference } from "@/state/ui/uiSlice";
@@ -16,6 +16,17 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+function isTabId(value: string): value is TabId {
+  return value === "login" || value === "signup";
+}
+
+function readHashTab(): TabId | null {
+  if (typeof window === "undefined") return null;
+
+  const hash = window.location.hash.replace(/^#/, "");
+  return isTabId(hash) ? hash : null;
+}
+
 export function AuthTabs({
   nextPath,
   isOffline,
@@ -26,7 +37,7 @@ export function AuthTabs({
   authFlows: ReturnType<typeof useLoginAuthFlows>;
 }) {
   const baseId = useId();
-  const [activeTab, setActiveTab] = useState<TabId>("login");
+  const [activeTab, setActiveTab] = useState<TabId>(() => readHashTab() ?? "login");
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const panelRefs = useRef<Record<TabId, HTMLElement | null>>({
     login: null,
@@ -36,6 +47,32 @@ export function AuthTabs({
   const shouldReduceMotion = useReducedMotionEnabled(motionPreference);
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const [isHeightReady, setIsHeightReady] = useState(false);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hashTab = readHashTab();
+      if (hashTab) {
+        setActiveTab(hashTab);
+      }
+    };
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const nextHash = `#${activeTab}`;
+    if (window.location.hash === nextHash) return;
+
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}${nextHash}`
+    );
+  }, [activeTab]);
 
   useLayoutEffect(() => {
     const activePanel = panelRefs.current[activeTab];
