@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@vcell/ui";
 
 const formatSeed = (seed: string) =>
   seed.length > 7 ? `${seed.slice(0, 7)}…` : seed;
@@ -95,9 +96,8 @@ function SeedButton({ seed }: { seed: string }) {
     : `Seed ${seed}. Press Enter to copy.`;
 
   return (
-    <button
-      type="button"
-      className="btn btn--ghost"
+    <Button
+      variant="ghost"
       title={"Copy seed to clipboard"}
       aria-label={label}
       onClick={handleCopy}
@@ -125,7 +125,7 @@ function SeedButton({ seed }: { seed: string }) {
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </span>
-    </button>
+    </Button>
   );
 }
 

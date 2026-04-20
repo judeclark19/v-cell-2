@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Button, Field, Input, Panel, Select } from "@vcell/ui";
 import { selectRules, selectStatus } from "@/state/game/gameSlice";
 import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 import { AppDispatch } from "@/state/reduxStore";
@@ -8,6 +9,7 @@ import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { selectUid } from "@/state/auth/authSlice";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
+import Or from "@/ui/Or";
 
 export default function BoardControls({
   boardController
@@ -58,94 +60,69 @@ export default function BoardControls({
   };
 
   return (
-    <>
-      <section className="control" aria-label="Start a new game">
+    <div>
+      <Panel
+        as="section"
+        padding="lg"
+        aria-label="Start a new game"
+        style={{ marginBottom: "2rem" }}
+      >
         <h2>Start a new game</h2>
         {/* <p className="hint" style={{ marginBottom: "1em" }}>
           Starting a new game abandons the current one.
         </p> */}
 
-        <div className="row">
-          <div>
-            <form
-              className="row"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!seedInput.trim()) return;
-                startBySeed(seedInput);
-                setSeedInput("");
-              }}
-            >
-              <input
-                className="control"
-                inputMode="text"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="Enter a specific seed…"
-                value={seedInput}
-                onChange={(e) => setSeedInput(e.target.value)}
-                aria-label="Seed"
-                name="seed-input"
-                id="seed-input"
-              />
-              <button
-                type="submit"
-                className="btn btn--secondary"
-                disabled={!seedInput.trim()}
-              >
-                Play seed
-              </button>
-            </form>
-          </div>
-          <div
-            aria-hidden="true"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              color: "var(--muted)",
-              fontSize: 14,
-              width: 70
+        <Button type="button" fullWidth onClick={onNewDeal}>
+          New deal (random)
+        </Button>
+
+        <Or />
+        <div>
+          <form
+            className="row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!seedInput.trim()) return;
+              startBySeed(seedInput);
+              setSeedInput("");
             }}
           >
-            <span
-              style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
-              }}
+            <Input
+              inputMode="text"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Enter a specific seed…"
+              value={seedInput}
+              onChange={(e) => setSeedInput(e.target.value)}
+              aria-label="Seed"
+              name="seed-input"
+              id="seed-input"
+              // fullWidth
+              style={{ flex: "1 1 auto" }}
             />
-            <span>or</span>
-            <span
-              style={{
-                flex: 1,
-                height: 1,
-                background: "currentColor",
-                opacity: 0.3
-              }}
-            />
-          </div>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={onNewDeal}
-          >
-            New deal (random)
-          </button>
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={!seedInput.trim()}
+            >
+              Play seed
+            </Button>
+          </form>
         </div>
-      </section>
-      <section className="control">
+      </Panel>
+
+      <Panel as="section" padding="lg" aria-label="Gameplay settings">
         <h2>Gameplay</h2>
         <p className="hint" style={{ marginBottom: "1em" }}>
           Changing any gameplay setting starts a new game and abandons the
           current one.
         </p>
         <div className="grid">
-          <label className="field">
-            Face-down cards at deal
-            <select
-              className="control"
+          <Field
+            label="Face-down cards at deal"
+            hint="Engine rule: V-shape layering. Auto-flip when a face-down card becomes exposed."
+          >
+            <Select
               id="face-down-cards"
               value={String(rules.faceDownCount)}
               onChange={async (e) => {
@@ -163,17 +140,14 @@ export default function BoardControls({
               <option value="7">7 (classic)</option>
               <option value="14">14 (2 rows)</option>
               <option value="21">21 (3 rows)</option>
-            </select>
-            <small className="hint">
-              Engine rule: V-shape layering. Auto-flip when a face-down card
-              becomes exposed.
-            </small>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Undo limit
-            <select
-              className="control"
+          <Field
+            label="Undo limit"
+            hint="For MVP we can enforce in UI; later we can also record undos used for stats."
+          >
+            <Select
               id="undo-limit"
               value={String(rules.undoLimit)}
               onChange={async (e) => {
@@ -192,17 +166,14 @@ export default function BoardControls({
               <option value="3">3</option>
               <option value="5">5</option>
               <option value="unlimited">Unlimited</option>
-            </select>
-            <small className="hint">
-              For MVP we can enforce in UI; later we can also record undos used
-              for stats.
-            </small>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="field">
-            Foundation pullback
-            <select
-              className="control"
+          <Field
+            label="Foundation pullback"
+            hint="When enabled, top foundation card can move to tableau/freecell."
+          >
+            <Select
               id="foundation-pullback"
               value={rules.allowFoundationPullback ? "on" : "off"}
               onChange={async (e) => {
@@ -218,13 +189,10 @@ export default function BoardControls({
             >
               <option value="on">On (easier)</option>
               <option value="off">Off (harder)</option>
-            </select>
-            <small className="hint">
-              When enabled, top foundation card can move to tableau/freecell.
-            </small>
-          </label>
+            </Select>
+          </Field>
         </div>
-      </section>
-    </>
+      </Panel>
+    </div>
   );
 }

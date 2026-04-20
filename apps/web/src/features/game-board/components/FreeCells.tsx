@@ -7,6 +7,7 @@ import {
   selectShowAcp
 } from "@/state/game/gameSlice/selectors";
 import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@vcell/ui";
 import { setIsAutoCompleting } from "@/state/game/gameSlice";
 
 function FreeCells({
@@ -32,9 +33,7 @@ function FreeCells({
         }`}
         aria-hidden={showAcp ? "false" : "true"}
       >
-        <button
-          type="button"
-          className="btn btn--primary"
+        <Button
           onClick={() => {
             if (isAutoCompleting) dispatch(setIsAutoCompleting(false));
             else dispatch(setIsAutoCompleting(true));
@@ -42,7 +41,7 @@ function FreeCells({
           disabled={!showAcp}
         >
           {isAutoCompleting ? "Stop" : "Autocomplete"}
-        </button>
+        </Button>
       </div>
       <div className="pile-row" aria-label="Free cells">
         <div className="pile-spacer" aria-hidden="true" />

@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  transpilePackages: ["@vcell/engine"]
+  compiler: {
+    styledComponents: true
+  },
+  transpilePackages: ["@vcell/engine", "@vcell/ui"]
 };
 
 export default nextConfig;

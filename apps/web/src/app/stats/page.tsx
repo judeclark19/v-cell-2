@@ -2,22 +2,18 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { Button, Panel } from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
-import {
-  selectDisplayName,
-  selectEmail,
-  selectUid
-} from "@/state/auth/authSlice";
+import { selectDisplayName } from "@/state/auth/authSlice";
+import { formatDate } from "@/ui/utils";
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
   // auth slice
   const displayName = useSelector(selectDisplayName);
-  const uid = useSelector(selectUid);
-  const email = useSelector(selectEmail);
   // records slice
   const games = useSelector(selectCompletedGames);
 
@@ -67,18 +63,45 @@ export default function StatsPage() {
   }, [games]);
 
   return (
-    <main>
-      <header>
-        <h1>Stats</h1>
+    <main className="stats-page-main">
+      {/* left sidebar  */}
+      <Panel
+        as="section"
+        padding="lg"
+        style={{
+          flex: "1 1 320px",
+          height: "fit-content"
+        }}
+      >
+        <h1>{displayName ? `${displayName}` : "Playing as Guest"}</h1>
+        <hr />
+        <br />
+        <br />
 
         {!hydrated ? (
           <p style={{ opacity: 0.75 }}>Loading session…</p>
         ) : isUser ? (
           <>
-            <p style={{ opacity: 0.85, marginTop: 0 }}>
-              Signed in as <strong>{displayName ?? email ?? "User"}</strong>.
+            <h2 style={{ marginBottom: 8 }}>Completed Games</h2>
+            <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+              {derived.ended.length === 0 ? (
+                <strong>No games finished yet.</strong>
+              ) : (
+                <>
+                  <strong>{derived.ended.length}</strong> completed game
+                  {derived.ended.length > 1 ? "s" : ""} since{" "}
+                  {formatDate(
+                    derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
+                  )}
+                </>
+              )}
             </p>
-            {uid && <p style={{ opacity: 0.65 }}>uid: {uid}</p>}
+
+            <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
+            <p style={{ marginTop: 0 }}>
+              <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
+              out of {derived.last100Count} games)
+            </p>
           </>
         ) : (
           <>
@@ -86,14 +109,12 @@ export default function StatsPage() {
               Viewing local stats saved on this device. Log in if you want your
               history to sync across devices.
             </p>
-            <Link href="/login?next=/stats" className="btn btn--primary">
+            <Button as={Link} href="/login?next=/stats">
               Log in for synced stats
-            </Link>
+            </Button>
           </>
         )}
-      </header>
-
-      <div style={{ margin: "12px 0 20px" }} />
+      </Panel>
 
       {!hydrated ? null : <UserStatsTables derived={derived} />}
     </main>

@@ -8,52 +8,44 @@ import { selectUid } from "@/state/auth/authSlice";
 
 type Props = {
   children: React.ReactNode;
-  finishSignupPath?: string; // default "/finish-setup"
+  howToPlayPath?: string;
 };
 
-export function AuthGate({
-  children,
-  finishSignupPath = "/finish-signup"
-}: Props) {
+export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { authReady, profileReady, profileComplete } = useSession();
+  const { authReady, profileReady, needsHowToPlay } = useSession();
   const uid = useSelector(selectUid);
+  const shouldWaitForProfile = uid && !profileReady;
+  const shouldRedirectToHowToPlay =
+    Boolean(uid) &&
+    profileReady &&
+    needsHowToPlay &&
+    pathname !== howToPlayPath;
 
   useEffect(() => {
     // Wait until auth + profile are resolved before making routing decisions.
     if (!authReady) return;
-    if (uid && !profileReady) return;
+    if (shouldWaitForProfile) return;
 
-    // Logged-in but incomplete profile -> force Finish Setup (unless already there).
-    if (
-      uid &&
-      profileReady &&
-      !profileComplete &&
-      pathname !== finishSignupPath
-    ) {
-      router.replace(finishSignupPath);
-      return;
-    }
-
-    // Logged-in and complete, but currently on finish setup -> bounce home.
-    if (
-      uid &&
-      profileReady &&
-      profileComplete &&
-      pathname === finishSignupPath
-    ) {
-      router.replace("/");
+    if (shouldRedirectToHowToPlay) {
+      router.replace(howToPlayPath);
     }
   }, [
     authReady,
-    uid,
-    profileReady,
-    profileComplete,
-    pathname,
-    finishSignupPath,
+    shouldWaitForProfile,
+    shouldRedirectToHowToPlay,
+    howToPlayPath,
     router
   ]);
+
+  if (!authReady || shouldWaitForProfile) {
+    return null;
+  }
+
+  if (shouldRedirectToHowToPlay) {
+    return null;
+  }
 
   return <>{children}</>;
 }

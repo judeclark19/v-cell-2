@@ -3,7 +3,6 @@
 
 import React from "react";
 import type { Card, Suit } from "@vcell/engine";
-import "../styles/card.css";
 
 function suitSymbol(suit: Suit, size: "small" | "large" = "large") {
   return (

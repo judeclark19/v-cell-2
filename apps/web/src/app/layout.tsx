@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import { GlobalStyles, StyledComponentsRegistry } from "@vcell/ui";
 import { NavBar } from "@/ui/Navbar";
 import { Providers } from "./Providers";
 import { OfflineBanner } from "@/ui/OfflineBanner";
 import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/ui/InstallPrompt";
+import { LoginPrompt } from "@/ui/LoginPrompt";
 
 export const metadata: Metadata = {
   title: "V-Cell (alpha)",
@@ -97,15 +98,18 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-      >
-        <Providers>
-          <ServiceWorkerRegistration />
-          <NavBar />
-          <OfflineBanner />
-          <InstallPrompt />
-          <div className="max-width-container">{children}</div>
-        </Providers>
+      <body>
+        <StyledComponentsRegistry>
+          <Providers>
+            <GlobalStyles />
+            <ServiceWorkerRegistration />
+            <NavBar />
+            <OfflineBanner />
+            <InstallPrompt />
+            <LoginPrompt />
+            <div className="max-width-container">{children}</div>
+          </Providers>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

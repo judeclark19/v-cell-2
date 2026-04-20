@@ -21,7 +21,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@vcell/engine": ["../../packages/engine/src/index.ts"],
-      "@vcell/engine/*": ["../../packages/engine/src/*"]
+      "@vcell/engine/*": ["../../packages/engine/src/*"],
+      "@vcell/ui": ["../../packages/ui/src/index.ts"],
+      "@vcell/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [

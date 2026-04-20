@@ -1,4 +1,5 @@
 import { PersistedGame } from "@/persistence/types";
+import { Panel } from "@vcell/ui";
 import SeedButton from "./SeedButton";
 import { formatDate, formatDateAndTime, formatElapsed } from "./utils";
 
@@ -97,8 +98,15 @@ const renderGamesTable = (
 
 function UserStatsTables({ derived }: { derived: GameStats }) {
   return (
-    <>
-      <section>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        minWidth: 0
+      }}
+    >
+      {/* <section className="paper paper-padding">
         <h2 style={{ marginBottom: 8 }}>Number of games played</h2>
         <p style={{ marginTop: 0 }}>
           {derived.ended.length === 0 ? (
@@ -115,33 +123,33 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
         </p>
       </section>
 
-      <section>
+      <section className="paper paper-padding">
         <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
         <p style={{ marginTop: 0 }}>
           <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins out of{" "}
           {derived.last100Count} games)
         </p>
-      </section>
+      </section> */}
 
-      <section>
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Fastest wins</h2>
         {derived.fastest.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
           renderGamesTable(derived.fastest, "fastest")
         )}
-      </section>
+      </Panel>
 
-      <section>
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Fewest moves (wins)</h2>
         {derived.fewestMoves.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
         ) : (
           renderGamesTable(derived.fewestMoves, "fewestMoves")
         )}
-      </section>
+      </Panel>
 
-      <section>
+      <Panel as="section" padding="lg">
         <h2 style={{ marginBottom: 8 }}>Most recent completed games</h2>
         {derived.ended.length === 0 ? (
           <p style={{ marginTop: 0, opacity: 0.8 }}>No completed games yet.</p>
@@ -179,8 +187,8 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
             </table>
           </div>
         )}
-      </section>
-    </>
+      </Panel>
+    </div>
   );
 }
 
