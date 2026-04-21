@@ -6,6 +6,7 @@ import {
 } from "@/state/game/gameSlice";
 import { setMotionPreference, setShowTimer } from "@/state/ui/uiSlice";
 import type { MotionPreference } from "./motionPreference";
+import { setPaused } from "@/state/session/sessionSlice";
 
 export const SHOW_TIMER_KEY = "vcell:showTimer";
 export const MOTION_PREFERENCE_KEY = "vcell:motionPreference";
@@ -18,6 +19,7 @@ type SettingsListenerState = {
     showTimer: boolean;
     motionPreference: MotionPreference;
     settingsHydrated: boolean;
+    isAnyModalOpen: boolean;
   };
   game: {
     rules: {
@@ -29,6 +31,14 @@ type SettingsListenerState = {
 };
 export const settingsListenerMiddleware =
   createListenerMiddleware<SettingsListenerState>();
+
+settingsListenerMiddleware.startListening({
+  predicate: (_action, currentState, previousState) =>
+    currentState.ui.isAnyModalOpen !== previousState.ui.isAnyModalOpen,
+  effect: async (_action, listenerApi) => {
+    listenerApi.dispatch(setPaused(listenerApi.getState().ui.isAnyModalOpen));
+  }
+});
 
 settingsListenerMiddleware.startListening({
   actionCreator: setShowTimer,

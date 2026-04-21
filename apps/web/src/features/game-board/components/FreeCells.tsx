@@ -128,7 +128,13 @@ function FreeCells({
           >
             <Undo2 aria-hidden="true" size={20} />
             {showUndoCount ? (
-              <span aria-hidden="true" style={{ marginTop: "3px" }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  marginTop: "3px",
+                  fontWeight: "500"
+                }}
+              >
                 {undosRemaining}
               </span>
             ) : null}
@@ -138,7 +144,7 @@ function FreeCells({
             onClick={boardController.restartDeal}
             title="Restart deal"
           >
-            <RotateCcw aria-hidden="true" size={18} />
+            <RotateCcw aria-hidden="true" size={19} />
           </Button>
         </PileSpacer>
       </PileRow>

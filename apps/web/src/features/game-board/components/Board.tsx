@@ -61,10 +61,10 @@ function Board() {
 
         <BoardModals />
       </BoardBorder>
-      <p className="hint" style={{ marginTop: "1rem", textAlign: "center" }}>
+      {/* <p className="hint" style={{ marginTop: "1rem", textAlign: "center" }}>
         Current seed:{" "}
         {seed ? <SeedButton seed={seed ?? "(unknown)"} /> : "(unknown)"}
-      </p>
+      </p> */}
       <BoardControls boardController={boardController} />
     </>
   );

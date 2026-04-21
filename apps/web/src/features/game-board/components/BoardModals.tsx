@@ -9,17 +9,22 @@ import {
 import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { selectMoveCount } from "@/state/game/gameSlice";
+import { selectMoveCount, selectRules } from "@/state/game/gameSlice";
 import {
   closePauseModal,
+  closeSettingsModal,
   closeWinModal,
   selectConfirmModal,
   selectPauseModal,
+  selectSettingsModal,
   selectWinModal
 } from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { selectUid } from "@/state/auth/authSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { Field, Panel, Select } from "@vcell/ui";
+import { parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
+import { requestRulesChange } from "@/state/session/thunks/requestRulesChange";
 
 export type ConfirmRequest = {
   title: string;
@@ -35,18 +40,21 @@ export default function BoardModals() {
 
   const dispatch = useDispatch<AppDispatch>();
   // Auth state
-  const isUser = useSelector(selectUid) !== null;
+  const uid = useSelector(selectUid);
+  const isUser = uid !== null;
   // Session state
   const sessionId = useSelector(selectSessionId);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const confirmReq = useSelector(selectConfirmModal);
   // Game state
   const moveCount = useSelector(selectMoveCount);
+  const rules = useSelector(selectRules);
   // Records state
   const completedGames = useSelector(selectCompletedGames);
   // ui state
   const winModal = useSelector(selectWinModal);
   const pauseModal = useSelector(selectPauseModal);
+  const settingsModal = useSelector(selectSettingsModal);
 
   const currentCompletedGame =
     completedGames.find((g) => g.sessionId === sessionId) ?? null;
@@ -128,6 +136,99 @@ export default function BoardModals() {
           }}
           bodyText="Timer is paused. Gameplay is disabled until you resume."
           primaryButtonLabel="Resume"
+        />
+      )}
+
+      {settingsModal && (
+        <ModalOverlay
+          overlayAriaLabel="Game settings"
+          title="Settings"
+          buttonAriaLabel="Close settings"
+          onClose={() => dispatch(closeSettingsModal())}
+          body={
+            <>
+              <p className="hint" style={{ marginBottom: "1em" }}>
+                Changing any gameplay setting starts a new game and abandons the
+                current one.
+              </p>
+              <div className="grid">
+                <Field
+                  label="Face-down cards at deal"
+                  hint="Engine rule: V-shape layering. Auto-flip when a face-down card becomes exposed."
+                >
+                  <Select
+                    id="face-down-cards"
+                    value={String(rules.faceDownCount)}
+                    onChange={async (e) => {
+                      const next = parseFaceDownCount(e.target.value);
+                      if (next === rules.faceDownCount) return;
+                      await dispatch(
+                        requestRulesChange({
+                          patch: { ...rules, faceDownCount: next },
+                          uid
+                        })
+                      ).unwrap();
+                    }}
+                  >
+                    <option value="0">0 (all face-up)</option>
+                    <option value="7">7 (classic)</option>
+                    <option value="14">14 (2 rows)</option>
+                    <option value="21">21 (3 rows)</option>
+                  </Select>
+                </Field>
+
+                <Field
+                  label="Undo limit"
+                  hint="For MVP we can enforce in UI; later we can also record undos used for stats."
+                >
+                  <Select
+                    id="undo-limit"
+                    value={String(rules.undoLimit)}
+                    onChange={async (e) => {
+                      const next = parseUndoLimit(e.target.value);
+                      if (next === rules.undoLimit) return;
+                      await dispatch(
+                        requestRulesChange({
+                          patch: { ...rules, undoLimit: next },
+                          uid
+                        })
+                      ).unwrap();
+                    }}
+                  >
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                    <option value="unlimited">Unlimited</option>
+                  </Select>
+                </Field>
+
+                <Field
+                  label="Foundation pullback"
+                  hint="When enabled, top foundation card can move to tableau/freecell."
+                >
+                  <Select
+                    id="foundation-pullback"
+                    value={rules.allowFoundationPullback ? "on" : "off"}
+                    onChange={async (e) => {
+                      const next = e.target.value === "on";
+                      if (next === rules.allowFoundationPullback) return;
+                      await dispatch(
+                        requestRulesChange({
+                          patch: { ...rules, allowFoundationPullback: next },
+                          uid
+                        })
+                      ).unwrap();
+                    }}
+                  >
+                    <option value="on">On (easier)</option>
+                    <option value="off">Off (harder)</option>
+                  </Select>
+                </Field>
+              </div>
+            </>
+          }
+          primaryButtonLabel="Close"
         />
       )}
 

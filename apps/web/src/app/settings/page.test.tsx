@@ -39,6 +39,7 @@ describe("SettingsPage", () => {
       confirmModal: null,
       winModal: false,
       pauseModal: false,
+      settingsModal: false,
       isAnyModalOpen: false
     };
 

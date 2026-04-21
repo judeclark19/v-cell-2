@@ -1,4 +1,5 @@
 export * from "./AutocompleteDrawer";
+export * from "./BoardControls";
 export * from "./BoardBorder";
 export * from "./BoardSection";
 export * from "./BoardSurface";
