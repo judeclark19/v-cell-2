@@ -1,6 +1,6 @@
 import { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
-import { TableauColumn } from "@vcell/ui";
+import { BoardDragLayer, BoardDragLayerStack } from "@vcell/ui";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { DragState } from "../board-control/pointer-control/dragState";
 import { CardFlightState } from "../board-control/useCardFlight";
@@ -58,10 +58,8 @@ export default function DragLayer({
   if (!visual) return null;
 
   return (
-    <div
-      className={`drag-layer ${
-        drag.isReturning || visual.mode === "flight" ? "is-auto-moving" : ""
-      } `}
+    <BoardDragLayer
+      autoMoving={drag.isReturning || visual.mode === "flight"}
       onTransitionEnd={() => {
         if (visual.mode === "drag" && drag.isReturning) {
           resetDrag();
@@ -84,7 +82,7 @@ export default function DragLayer({
       }}
       aria-hidden="true"
     >
-      <TableauColumn className="drag-layer__stack">
+      <BoardDragLayerStack>
         {visual.stack.map((card, i) => (
           <Card
             key={card.id}
@@ -94,7 +92,7 @@ export default function DragLayer({
             style={{ zIndex: i + 1 }}
           />
         ))}
-      </TableauColumn>
-    </div>
+      </BoardDragLayerStack>
+    </BoardDragLayer>
   );
 }
