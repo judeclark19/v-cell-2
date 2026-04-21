@@ -6,15 +6,10 @@ import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
 import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
-import { BoardBorder, BoardSurface, Button } from "@vcell/ui";
+import { BoardBorder, BoardSurface } from "@vcell/ui";
 import { selectSessionPhase } from "@/state/session/sessionSlice";
 
-import {
-  selectCanUndo,
-  selectRules,
-  selectSeed,
-  selectUndosRemaining
-} from "@/state/game/gameSlice";
+import { selectSeed } from "@/state/game/gameSlice";
 import { useRef } from "react";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 
@@ -25,9 +20,7 @@ function Board() {
 
   // Game state
   const seed = useSelector(selectSeed);
-  const rules = useSelector(selectRules);
-  const undosRemaining = useSelector(selectUndosRemaining);
-  const canUndo = useSelector(selectCanUndo);
+
   // Session state
   const sessionPhase = useSelector(selectSessionPhase);
 
@@ -60,29 +53,6 @@ function Board() {
 
               {/* Free cells on bottom */}
               <FreeCells boardController={boardController} />
-              <div
-                className="row"
-                style={{ marginTop: "1em", marginBottom: "0.5em" }}
-              >
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={boardController.restartDeal}
-                >
-                  Restart deal
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={boardController.undo}
-                  disabled={!canUndo}
-                >
-                  {rules.undoLimit === "unlimited" || rules.undoLimit === 0
-                    ? "Undo"
-                    : `Undo (${undosRemaining})`}
-                </Button>
-              </div>
             </>
           ) : (
             <div className="board-loading" aria-label="Loading deal" />

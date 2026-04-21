@@ -1,11 +1,15 @@
 import Card from "./Card";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import {
+  selectCanUndo,
   selectFreeCellCards,
   selectIsAutoCompleting,
   selectPlayableMask,
-  selectShowAcp
-} from "@/state/game/gameSlice/selectors";
+  selectRules,
+  selectShowAcp,
+  selectUndosRemaining,
+  setIsAutoCompleting
+} from "@/state/game/gameSlice";
 import { useDispatch, useSelector } from "react-redux";
 import {
   AutocompleteDrawer,
@@ -16,7 +20,7 @@ import {
   PileRow,
   PileSpacer
 } from "@vcell/ui";
-import { setIsAutoCompleting } from "@/state/game/gameSlice";
+import { RotateCcw, Undo2 } from "lucide-react";
 
 function FreeCells({
   boardController
@@ -30,6 +34,11 @@ function FreeCells({
   const showAcp = useSelector(selectShowAcp);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const playable = useSelector(selectPlayableMask);
+  const rules = useSelector(selectRules);
+  const undosRemaining = useSelector(selectUndosRemaining);
+  const canUndo = useSelector(selectCanUndo);
+  const showUndoCount =
+    rules.undoLimit !== "unlimited" && rules.undoLimit !== 0;
 
   const { kbState, cardFlight } = boardController;
 
@@ -107,7 +116,31 @@ function FreeCells({
               })()}
           </PileCell>
         ))}
-        <PileSpacer aria-hidden="true" />
+        <PileSpacer aria-hidden="true">
+          <Button
+            type="button"
+            onClick={boardController.undo}
+            disabled={!canUndo}
+            aria-label={
+              showUndoCount ? `Undo, ${undosRemaining} remaining` : "Undo"
+            }
+            title={showUndoCount ? `${undosRemaining} undos remaining` : "Undo"}
+          >
+            <Undo2 aria-hidden="true" size={20} />
+            {showUndoCount ? (
+              <span aria-hidden="true" style={{ marginTop: "3px" }}>
+                {undosRemaining}
+              </span>
+            ) : null}
+          </Button>
+          <Button
+            type="button"
+            onClick={boardController.restartDeal}
+            title="Restart deal"
+          >
+            <RotateCcw aria-hidden="true" size={18} />
+          </Button>
+        </PileSpacer>
       </PileRow>
     </BoardBottom>
   );
