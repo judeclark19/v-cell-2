@@ -3,11 +3,6 @@
 import { createGlobalStyle } from "styled-components";
 
 const GameBoardStyleSheet = createGlobalStyle`
-  .timer-cell { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; grid-column: span 3; }
-  .timer-cell .timer { text-align: center; font-size: 24px; }
-  .timer-cell button { width: 50%; }
-  .timer-cell .timer.muted { color: var(--muted); }
-  .timer-cell[aria-hidden="true"] { visibility: hidden; }
   :root[data-reduced-motion="true"] .pause-overlay { backdrop-filter: none; }
   .card { border-radius: var(--card-radius); width: 100%; aspect-ratio: 2 / 3; perspective: 900px; display: block; user-select: none; container-type: inline-size; touch-action: none; transition: box-shadow 120ms ease, background-color 120ms ease; }
   .card-inner { pointer-events: none; width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 220ms ease; will-change: transform; }

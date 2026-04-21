@@ -1,5 +1,12 @@
 import type { Card as EngineCard } from "@vcell/engine";
-import { BoardTop, Button, PileCell, PileRow } from "@vcell/ui";
+import {
+  BoardTimerCell,
+  BoardTimerText,
+  BoardTop,
+  Button,
+  PileCell,
+  PileRow
+} from "@vcell/ui";
 import Card from "./Card";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
@@ -151,10 +158,10 @@ function Foundations({
   return (
     <BoardTop aria-label="Foundations">
       <PileRow aria-label="Foundations">
-        <div className="timer-cell" aria-hidden={showTimer ? "false" : "true"}>
-          <div className={`timer${!startedAtMs ? " muted" : ""}`}>
+        <BoardTimerCell aria-hidden={!showTimer}>
+          <BoardTimerText muted={!startedAtMs}>
             {showTimer ? formatElapsed(timeElapsedMs) : ""}
-          </div>
+          </BoardTimerText>
           <Button
             aria-label="Pause timer"
             onClick={() => {
@@ -176,7 +183,7 @@ function Foundations({
               <rect x="14" y="5" width="4" height="14" rx="1" />
             </svg>
           </Button>
-        </div>
+        </BoardTimerCell>
         {foundationCards.map((card, foundationIndex) => (
           <Foundation
             key={`foundation-${foundationIndex}`}
