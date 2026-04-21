@@ -3,15 +3,6 @@
 import { createGlobalStyle } from "styled-components";
 
 const GameBoardStyleSheet = createGlobalStyle`
-  .tableau-scroll { overflow: auto; flex-grow: 1; }
-  .tableau { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--card-gap, 10px); padding: 4px; background-color: var(--tableau-bg); border-radius: var(--radius); overflow: visible; min-height: 100%; position: relative; }
-  .tableau-col { display: flex; flex-direction: column; position: relative; min-height: calc(var(--card-w) * 1.5); }
-  .tableau-empty-slot { position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 2 / 3; z-index: var(--z-base, 0); }
-  .tableau-empty-slot > .card, .tableau-empty-slot > .card-slot { width: 100%; height: 100%; }
-  .tableau-col > .card, .tableau-col > .card-slot { position: relative; z-index: 1; }
-  .tableau-col > .card.is-locked { pointer-events: none; }
-  .tableau-col > :is(.card, .card-slot) + :is(.card, .card-slot) { margin-top: -107%; }
-  .tableau-col > :is(.card.is-dragging, .card.is-auto-moving) { margin-top: 0; }
   .drag-layer { position: fixed; z-index: var(--z-drag); pointer-events: none; will-change: transform; width: var(--card-w); height: auto; transition: none; }
   .drag-layer.is-auto-moving { transition: transform 180ms ease; }
   .drag-layer__stack { display: flex; flex-direction: column; width: 100%; }
@@ -54,7 +45,6 @@ const GameBoardStyleSheet = createGlobalStyle`
   .card.is-playable:hover .card-face--front { box-shadow: inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .card.is-playable:not(.is-drop-target):focus .card-face--front, .card.is-playable:not(.is-drop-target):focus-visible .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 86%, var(--accent) 14%); box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .pile-card { position: absolute; inset: 0; }
-  .tableau-col > .card { position: relative; }
   .card.is-drop-target .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 84%, var(--kb-highlight) 16%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--kb-highlight) 55%, transparent), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .card.is-kb-carried .card-face--front, .card.is-kb-carried-stack .card-face--front { background-color: color-mix(in srgb, var(--card-front-bg) 86%, var(--accent) 14%); box-shadow: var(--focus-ring-strong), inset 0 1px 0 var(--card-front-inset), var(--card-shadow-hover); }
   .card.is-kb-carried { opacity: 0.9; }

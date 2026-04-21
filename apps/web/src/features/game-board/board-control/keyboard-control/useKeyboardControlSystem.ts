@@ -293,7 +293,7 @@ export function useKeyboardControlSystem({
 
     const candidate =
       (target.closest(
-        "[tabindex], .card, .freecell, .foundation, .tableau-col, .tableau-empty"
+        "[tabindex], .card, .freecell, .foundation, [data-tableau-column], [data-tableau-empty-slot]"
       ) as HTMLElement | null) || target;
 
     const focused = focusElIfFocusable(

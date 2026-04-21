@@ -1,5 +1,6 @@
 import { Card as EngineCard } from "@vcell/engine";
 import Card from "./Card";
+import { TableauColumn } from "@vcell/ui";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { DragState } from "../board-control/pointer-control/dragState";
 import { CardFlightState } from "../board-control/useCardFlight";
@@ -83,7 +84,7 @@ export default function DragLayer({
       }}
       aria-hidden="true"
     >
-      <div className="drag-layer__stack tableau-col">
+      <TableauColumn className="drag-layer__stack">
         {visual.stack.map((card, i) => (
           <Card
             key={card.id}
@@ -93,7 +94,7 @@ export default function DragLayer({
             style={{ zIndex: i + 1 }}
           />
         ))}
-      </div>
+      </TableauColumn>
     </div>
   );
 }
