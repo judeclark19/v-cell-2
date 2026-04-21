@@ -4,6 +4,7 @@ import {
   BoardTimerText,
   BoardTop,
   Button,
+  PileCardLayer,
   PileCell,
   PileRow
 } from "@vcell/ui";
@@ -109,31 +110,34 @@ function Foundation({
       {effectiveCard && (
         <>
           {underlayCard && (
-            <Card
-              card={underlayCard}
-              className="pile-card pile-card--underlay"
-              playable={false}
-              region="foundation"
-              regionIndex={i}
-            />
+            <PileCardLayer>
+              <Card
+                card={underlayCard}
+                playable={false}
+                region="foundation"
+                regionIndex={i}
+              />
+            </PileCardLayer>
           )}
 
-          <Card
-            card={effectiveCard}
-            region="foundation"
-            regionIndex={i}
-            className={`pile-card${pullbackDisabled ? " is-pullback-disabled" : ""}`}
-            playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
-            data-kb-focusable={
-              playable.foundations[foundationIndex] ? "true" : "false"
-            }
-            onPointerDownCard={
-              pullbackDisabled
-                ? undefined
-                : (e) => handleFoundationPointerDown?.(e, foundationIndex)
-            }
-            style={cardStyle}
-          />
+          <PileCardLayer>
+            <Card
+              card={effectiveCard}
+              region="foundation"
+              regionIndex={i}
+              className={pullbackDisabled ? "is-pullback-disabled" : ""}
+              playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
+              data-kb-focusable={
+                playable.foundations[foundationIndex] ? "true" : "false"
+              }
+              onPointerDownCard={
+                pullbackDisabled
+                  ? undefined
+                  : (e) => handleFoundationPointerDown?.(e, foundationIndex)
+              }
+              style={cardStyle}
+            />
+          </PileCardLayer>
         </>
       )}
     </PileCell>

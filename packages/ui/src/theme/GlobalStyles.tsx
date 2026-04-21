@@ -1,7 +1,6 @@
 "use client";
 
 import { createGlobalStyle } from "styled-components";
-import { GameBoardStyles } from "./GameBoardStyles";
 import { GoogleSignInStyles } from "./GoogleSignInStyles";
 
 const GlobalStyleSheet = createGlobalStyle`
@@ -466,7 +465,6 @@ export function GlobalStyles() {
   return (
     <>
       <GlobalStyleSheet />
-      <GameBoardStyles />
       <GoogleSignInStyles />
     </>
   );

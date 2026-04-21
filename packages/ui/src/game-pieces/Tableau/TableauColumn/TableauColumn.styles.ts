@@ -8,21 +8,22 @@ export const TableauColumnRoot = styled.div`
   position: relative;
   min-height: calc(var(--card-w) * 1.5);
 
-  > .card,
-  > .card-slot {
+  > [data-card-root],
+  > [data-card-slot] {
     position: relative;
     z-index: 1;
   }
 
-  > .card.is-locked {
+  > [data-card-locked="true"] {
     pointer-events: none;
   }
 
-  > :is(.card, .card-slot) + :is(.card, .card-slot) {
+  > :is([data-card-root], [data-card-slot])
+    + :is([data-card-root], [data-card-slot]) {
     margin-top: -107%;
   }
 
-  > :is(.card.is-dragging, .card.is-auto-moving) {
+  > :is([data-card-dragging="true"], [data-card-auto-moving="true"]) {
     margin-top: 0;
   }
 `;
@@ -35,8 +36,8 @@ export const TableauEmptySlotRoot = styled.div`
   aspect-ratio: 2 / 3;
   z-index: var(--z-base, 0);
 
-  > .card,
-  > .card-slot {
+  > [data-card-root],
+  > [data-card-slot] {
     width: 100%;
     height: 100%;
   }

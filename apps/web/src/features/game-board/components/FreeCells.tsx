@@ -11,6 +11,7 @@ import {
   AutocompleteDrawer,
   BoardBottom,
   Button,
+  PileCardLayer,
   PileCell,
   PileRow,
   PileSpacer
@@ -88,19 +89,20 @@ function FreeCells({
                     : undefined;
 
                 return (
-                  <Card
-                    card={card}
-                    region="freecell"
-                    regionIndex={i}
-                    playable={playable.freeCells[i]}
-                    data-kb-focusable={true}
-                    className="pile-card"
-                    onPointerDownCard={(e) =>
-                      boardController.handleFreeCellPointerDown(e, i)
-                    }
-                    onPointerUp={boardController.handleCardDoubleTap}
-                    style={style}
-                  />
+                  <PileCardLayer>
+                    <Card
+                      card={card}
+                      region="freecell"
+                      regionIndex={i}
+                      playable={playable.freeCells[i]}
+                      data-kb-focusable={true}
+                      onPointerDownCard={(e) =>
+                        boardController.handleFreeCellPointerDown(e, i)
+                      }
+                      onPointerUp={boardController.handleCardDoubleTap}
+                      style={style}
+                    />
+                  </PileCardLayer>
                 );
               })()}
           </PileCell>

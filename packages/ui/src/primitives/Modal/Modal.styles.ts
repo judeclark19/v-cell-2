@@ -12,6 +12,10 @@ export const ModalOverlayRoot = styled.div`
 
   background: var(--modal-overlay-bg);
   backdrop-filter: blur(2px);
+
+  :root[data-reduced-motion="true"] & {
+    backdrop-filter: none;
+  }
 `;
 
 export const ModalPanel = styled.div`

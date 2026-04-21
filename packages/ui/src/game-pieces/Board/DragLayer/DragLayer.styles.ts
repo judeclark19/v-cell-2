@@ -32,7 +32,7 @@ export const DragLayerStackRoot = styled.div`
   flex-direction: column;
   width: 100%;
 
-  > .card:not(:first-child) {
+  > [data-card-root]:not(:first-child) {
     margin-top: calc(var(--card-w) * -1.07);
   }
 `;
