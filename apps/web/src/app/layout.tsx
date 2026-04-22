@@ -109,14 +109,9 @@ export default function RootLayout({
             <OfflineBanner />
             <InstallPrompt />
             <LoginPrompt />
-            <div
-              className="max-width-container"
-              style={{
-                flex: 1
-              }}
-            >
-              {children}
-            </div>
+            <main className="app-main">
+              <div className="max-width-container">{children}</div>
+            </main>
             <AuthStatusModal />
             <footer>
               <p
