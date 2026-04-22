@@ -1,6 +1,7 @@
 "use client";
 
 import { Field, Select } from "@vcell/ui";
+import Link from "next/link";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
@@ -48,7 +49,17 @@ export default function SettingsPage() {
           ) : isUser ? (
             <AccountSettings />
           ) : (
-            <SettingsHint>Log in to access account settings.</SettingsHint>
+            <SettingsHint>
+              <Link
+                href="/login"
+                style={{
+                  textDecoration: "underline"
+                }}
+              >
+                Log in
+              </Link>{" "}
+              to access account settings.
+            </SettingsHint>
           )}
         </SettingsPanel>
 

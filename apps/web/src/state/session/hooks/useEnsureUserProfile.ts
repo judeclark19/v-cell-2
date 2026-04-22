@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebaseClient";
+import { updateProfile } from "firebase/auth";
 import { clearCompletedGames } from "@/persistence/completedGamesStore";
 import {
   getInProgressGameForDevice,
@@ -9,6 +10,9 @@ import {
 } from "@/persistence/inProgressGamesStore";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/state/reduxStore";
+import { setAuthDisplayName } from "@/state/auth/authSlice";
 
 export type EnsureUserProfileState = {
   uid: string | null;
@@ -23,6 +27,7 @@ export type EnsureUserProfileState = {
  * Also runs the local first-login migration exactly when we first see this uid.
  */
 export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
+  const dispatch = useDispatch<AppDispatch>();
   const [profileState, setProfileState] = useState<EnsureUserProfileState>({
     uid: null,
     ready: false,
@@ -101,13 +106,19 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
             lastLoginAtMs: now
           };
 
-          // Firebase Auth is the canonical display-name source.
+          const storedDisplayName =
+            typeof data?.displayName === "string" ? data.displayName : null;
+
           if (
-            authDisplayName &&
-            authDisplayName !==
-              (typeof data?.displayName === "string" ? data.displayName : null)
+            storedDisplayName &&
+            authUser &&
+            authDisplayName !== storedDisplayName
           ) {
-            updates.displayName = authDisplayName;
+            try {
+              await updateProfile(authUser, { displayName: storedDisplayName });
+            } catch (err) {
+              console.warn("[session] failed to sync Auth displayName", err);
+            }
           }
 
           if ((data?.email == null || data?.email === "") && authEmail) {
@@ -196,6 +207,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               displayName,
               error: null
             });
+            dispatch(setAuthDisplayName(displayName));
           },
           (err) => {
             console.error("[session] user doc snapshot error", err);
@@ -209,6 +221,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
               displayName,
               error: "Failed to read profile."
             });
+            dispatch(setAuthDisplayName(displayName));
           }
         );
       } catch (err) {
@@ -228,7 +241,7 @@ export function useEnsureUserProfile(uid: string | null, authReady: boolean) {
       cancelled = true;
       if (unsub) unsub();
     };
-  }, [uid, authReady]);
+  }, [uid, authReady, dispatch]);
 
   return derivedState;
 }

@@ -6,6 +6,10 @@ export interface UiState {
   showTimer: boolean;
   motionPreference: MotionPreference;
   settingsHydrated: boolean;
+  authStatusModal: {
+    title: string;
+    bodyText: string;
+  } | null;
   confirmModal: ConfirmRequest | null;
   winModal: boolean;
   pauseModal: boolean;
@@ -17,6 +21,7 @@ const initialState: UiState = {
   showTimer: true,
   motionPreference: "system",
   settingsHydrated: false,
+  authStatusModal: null,
   confirmModal: null,
   winModal: false,
   pauseModal: false,
@@ -28,6 +33,17 @@ const uiSlice = createSlice({
   name: "ui",
   initialState,
   reducers: {
+    openAuthStatusModal: (
+      state,
+      action: PayloadAction<{ title: string; bodyText: string }>
+    ) => {
+      state.authStatusModal = action.payload;
+      state.isAnyModalOpen = true;
+    },
+    closeAuthStatusModal: (state) => {
+      state.authStatusModal = null;
+      state.isAnyModalOpen = false;
+    },
     openConfirmModal: (state, action: PayloadAction<ConfirmRequest>) => {
       state.confirmModal = action.payload;
       state.isAnyModalOpen = true;
@@ -68,6 +84,7 @@ const uiSlice = createSlice({
       state.isAnyModalOpen = action.payload;
 
       if (!action.payload) {
+        state.authStatusModal = null;
         state.confirmModal = null;
         state.winModal = false;
         state.pauseModal = false;
@@ -87,6 +104,8 @@ const uiSlice = createSlice({
 });
 
 export const {
+  openAuthStatusModal,
+  closeAuthStatusModal,
   openConfirmModal,
   closeConfirmModal,
   openWinModal,
@@ -103,6 +122,8 @@ export const {
 } = uiSlice.actions;
 export const uiReducer = uiSlice.reducer;
 
+export const selectAuthStatusModal = (state: { ui: UiState }) =>
+  state.ui.authStatusModal;
 export const selectConfirmModal = (state: { ui: UiState }) =>
   state.ui.confirmModal;
 export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;

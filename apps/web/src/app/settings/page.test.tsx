@@ -36,6 +36,7 @@ describe("SettingsPage", () => {
       showTimer: true,
       motionPreference: "reduce",
       settingsHydrated: true,
+      authStatusModal: null,
       confirmModal: null,
       winModal: false,
       pauseModal: false,

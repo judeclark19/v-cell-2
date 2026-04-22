@@ -23,11 +23,11 @@ const panelPaddingStyles = {
   `,
   lg: css`
     padding: 40px;
-    padding-top: 58px;
+    /* padding-top: 58px; */
 
     @media (max-width: 640px) {
       padding: 16px;
-      padding-top: 24px;
+      /* padding-top: 24px; */
     }
   `
 } satisfies Record<TabPanelProps["$padding"], ReturnType<typeof css>>;
@@ -55,7 +55,9 @@ export const TabButton = styled.button<TabButtonProps>`
 
   &:focus-visible {
     outline: none;
-    box-shadow: inset 0 -2px 0 var(--tabs-active-border), var(--focus-ring);
+    box-shadow:
+      inset 0 -2px 0 var(--tabs-active-border),
+      var(--focus-ring);
   }
 `;
 

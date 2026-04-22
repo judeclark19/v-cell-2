@@ -9,6 +9,9 @@ import {
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseClient";
 import { useSession } from "@/state/auth/AuthProvider";
+import { useDispatch } from "react-redux";
+import { openAuthStatusModal } from "@/state/ui/uiSlice";
+import type { AppDispatch } from "@/state/reduxStore";
 
 type UseLoginAuthFlowsArgs = {
   isOffline: boolean;
@@ -43,6 +46,7 @@ export function useLoginAuthFlows({
   replaceToNextPath
 }: UseLoginAuthFlowsArgs): LoginAuthFlowsState {
   const { loginWithGoogle } = useSession();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [signupDisplayName, setSignupDisplayName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -69,6 +73,15 @@ export function useLoginAuthFlows({
   const loginAndContinue = async () => {
     if (isOffline) return;
     await loginWithGoogle();
+    const user = auth.currentUser;
+    const name = user?.displayName || user?.email || "your account";
+    dispatch(
+      openAuthStatusModal({
+        title: "Logged in",
+        bodyText: `You have logged in as ${name}.`
+      })
+    );
+    replaceToNextPath();
   };
 
   const loginWithEmail = async (e: FormEvent<HTMLFormElement>) => {
@@ -87,8 +100,20 @@ export function useLoginAuthFlows({
 
     setLoginLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const name =
+        credential.user.displayName || credential.user.email || "your account";
       setLoginPassword("");
+      dispatch(
+        openAuthStatusModal({
+          title: "Logged in",
+          bodyText: `You have logged in as ${name}.`
+        })
+      );
       replaceToNextPath();
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "Login failed.");
@@ -139,6 +164,12 @@ export function useLoginAuthFlows({
       setSignupDisplayName("");
       setSignupEmail("");
       setSignupPassword("");
+      dispatch(
+        openAuthStatusModal({
+          title: "Logged in",
+          bodyText: `You have logged in as ${displayName}.`
+        })
+      );
       replaceToNextPath();
     } catch (err) {
       setSignupError(err instanceof Error ? err.message : "Sign up failed.");

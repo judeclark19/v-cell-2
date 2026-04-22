@@ -3,8 +3,12 @@ import { onAuthStateChanged, updateProfile, User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { Button, Input } from "@vcell/ui";
 import { auth, db } from "@/lib/firebaseClient";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/state/reduxStore";
+import { setAuthDisplayName } from "@/state/auth/authSlice";
 
 function AccountSettings() {
+  const dispatch = useDispatch<AppDispatch>();
   const [user, setUser] = useState<User | null>(null);
   const [draftName, setDraftName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +57,9 @@ function AccountSettings() {
         { displayName: next },
         { merge: true }
       );
+      await user.reload();
       setUser({ ...user, displayName: next });
+      dispatch(setAuthDisplayName(next));
       setMessage("Display name updated.");
     } catch (err) {
       console.error("Failed to update display name", err);

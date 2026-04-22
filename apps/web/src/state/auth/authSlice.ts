@@ -38,13 +38,17 @@ export const authSlice = createSlice({
       state.authReady = true;
       state.displayName = null;
       state.email = null;
+    },
+    setAuthDisplayName: (state, action: PayloadAction<string | null>) => {
+      state.displayName = action.payload;
     }
   }
 });
 
 export const authReducer = authSlice.reducer;
 
-export const { setAuthState, clearAuthState } = authSlice.actions;
+export const { setAuthState, clearAuthState, setAuthDisplayName } =
+  authSlice.actions;
 
 // Selectors
 export const selectUid = (state: RootState) => state.auth.uid;
