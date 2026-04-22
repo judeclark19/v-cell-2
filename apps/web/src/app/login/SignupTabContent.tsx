@@ -1,4 +1,4 @@
-import { Button, Input } from "@vcell/ui";
+import { Button, Input, PasswordInput } from "@vcell/ui";
 import Or from "@/ui/Or";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
@@ -73,12 +73,11 @@ export function SignupTabContent({
 
         <label style={{ display: "block", marginBottom: 14 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <Input
+          <PasswordInput
             value={signupPassword}
             onChange={(e) => onSignupPasswordChange(e.target.value)}
             autoComplete="new-password"
             placeholder="6+ characters"
-            type="password"
             disabled={isOffline}
             name="password"
             fullWidth

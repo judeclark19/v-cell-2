@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
-import { Button, Input } from "@vcell/ui";
+import { Button, PasswordInput } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 
 function ResetPasswordInner() {
@@ -152,12 +152,11 @@ function ResetPasswordInner() {
             <span style={{ display: "block", marginBottom: 6 }}>
               New password
             </span>
-            <Input
+            <PasswordInput
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               placeholder="6+ characters"
-              type="password"
             />
           </label>
 
@@ -165,12 +164,11 @@ function ResetPasswordInner() {
             <span style={{ display: "block", marginBottom: 6 }}>
               Confirm new password
             </span>
-            <Input
+            <PasswordInput
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
               placeholder="Repeat password"
-              type="password"
             />
           </label>
 
