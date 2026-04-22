@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Input } from "@vcell/ui";
+import { Button, Input, PasswordInput } from "@vcell/ui";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
 import Or from "@/ui/Or";
@@ -53,12 +53,11 @@ export function LoginTabContent({
         </label>
         <label style={{ display: "block", marginBottom: 14 }}>
           <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <Input
+          <PasswordInput
             value={loginPassword}
             onChange={(e) => onLoginPasswordChange(e.target.value)}
             autoComplete="current-password"
             placeholder="Your password"
-            type="password"
             disabled={isOffline}
             name="password"
             fullWidth

@@ -34,3 +34,45 @@ export const InputRoot = styled.input<InputRootProps>`
     cursor: not-allowed;
   }
 `;
+
+export const PasswordInputRoot = styled.div<InputRootProps>`
+  position: relative;
+  width: ${({ $fullWidth }) => ($fullWidth ? "100%" : "auto")};
+`;
+
+export const PasswordInputField = styled(InputRoot)`
+  padding-right: 44px;
+  width: 100%;
+`;
+
+export const PasswordVisibilityButton = styled.button`
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--control-radius) - 2px);
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+
+  &:hover {
+    color: var(--control-fg);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
