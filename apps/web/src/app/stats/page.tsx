@@ -76,11 +76,17 @@ export default function StatsPage() {
         as="section"
         padding="lg"
         style={{
-          flex: "1 1 320px",
           height: "fit-content"
         }}
       >
-        <h1>{displayName ? `${displayName}` : "Playing as Guest"}</h1>
+        <h1
+        // style={{
+        //   // no wrap
+        //   whiteSpace: "nowrap"
+        // }}
+        >
+          {displayName ? `${displayName}` : "Playing as Guest"}
+        </h1>
         <hr />
         <br />
         <br />

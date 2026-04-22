@@ -79,11 +79,9 @@ export const CardFaceBack = styled(CardFace)`
     var(--card-back-pattern-b) 16px
   );
   box-shadow:
-    inset 0 0 0 2px
-      color-mix(in srgb, var(--card-back-border) 55%, transparent),
+    inset 0 0 0 2px color-mix(in srgb, var(--card-back-border) 55%, transparent),
     var(--card-shadow);
-  border: 1px solid
-    color-mix(in srgb, var(--card-back-border) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-back-border) 55%, transparent);
 `;
 
 export const CardSuit = styled.img`
@@ -143,8 +141,7 @@ export const PlayingCardRoot = styled.div<PlayingCardRootProps>`
     outline: none;
   }
 
-  &:focus ${CardFaceFront},
-  &:focus-visible ${CardFaceFront} {
+  &:focus ${CardFaceFront}, &:focus-visible ${CardFaceFront} {
     background-color: color-mix(
       in srgb,
       var(--card-front-bg) 86%,
@@ -215,8 +212,10 @@ export const PlayingCardRoot = styled.div<PlayingCardRootProps>`
               var(--card-shadow-hover);
           }
 
-          &:not(.is-drop-target):focus ${CardFaceFront},
-          &:not(.is-drop-target):focus-visible ${CardFaceFront} {
+          &:not(.is-drop-target):focus
+            ${CardFaceFront},
+            &:not(.is-drop-target):focus-visible
+            ${CardFaceFront} {
             background-color: color-mix(
               in srgb,
               var(--card-front-bg) 86%,
@@ -256,44 +255,33 @@ export const PlayingCardRoot = styled.div<PlayingCardRootProps>`
               var(--kb-highlight) 16%
             );
             box-shadow:
-              0 0 0 3px
-                color-mix(in srgb, var(--kb-highlight) 55%, transparent),
+              0 0 0 3px color-mix(in srgb, var(--kb-highlight) 55%, transparent),
               inset 0 1px 0 var(--card-front-inset),
               var(--card-shadow-hover);
           }
         `
       : ""}
 
-  ${({ $keyboardCarried, $keyboardCarriedStack }) =>
-    $keyboardCarried || $keyboardCarriedStack
-      ? css`
-          ${CardFaceFront} {
-            background-color: color-mix(
-              in srgb,
-              var(--card-front-bg) 86%,
-              var(--accent) 14%
-            );
-            box-shadow:
-              var(--focus-ring-strong),
-              inset 0 1px 0 var(--card-front-inset),
-              var(--card-shadow-hover);
-          }
-        `
-      : ""}
+  &.is-kb-carried ${CardFaceFront},
+  &.is-kb-carried-stack ${CardFaceFront},
+  &.is-kb-carried:focus ${CardFaceFront},
+  &.is-kb-carried:focus-visible ${CardFaceFront},
+  &.is-kb-carried-stack:focus ${CardFaceFront},
+  &.is-kb-carried-stack:focus-visible ${CardFaceFront} {
+    background-color: color-mix(
+      in srgb,
+      var(--card-front-bg) 50%,
+      var(--kb-highlight) 50%
+    );
+  }
 
-  ${({ $keyboardCarried }) =>
-    $keyboardCarried
-      ? css`
-          opacity: 0.9;
-        `
-      : ""}
+  &.is-kb-carried {
+    opacity: 0.75;
+  }
 
-  ${({ $keyboardCarriedStack }) =>
-    $keyboardCarriedStack
-      ? css`
-          opacity: 0.75;
-        `
-      : ""}
+  &.is-kb-carried-stack {
+    opacity: 0.75;
+  }
 
   :root[data-reduced-motion="true"] & {
     transition: none;

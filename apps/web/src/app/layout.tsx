@@ -6,6 +6,8 @@ import { OfflineBanner } from "@/ui/OfflineBanner";
 import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/ui/InstallPrompt";
 import { LoginPrompt } from "@/ui/LoginPrompt";
+import { AuthStatusModal } from "@/state/ui/AuthStatusModal";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "V-Cell (alpha)",
@@ -107,7 +109,35 @@ export default function RootLayout({
             <OfflineBanner />
             <InstallPrompt />
             <LoginPrompt />
-            <div className="max-width-container">{children}</div>
+            <div
+              className="max-width-container"
+              style={{
+                flex: 1
+              }}
+            >
+              {children}
+            </div>
+            <AuthStatusModal />
+            <footer>
+              <p
+                style={{
+                  textAlign: "center",
+                  padding: "1rem",
+                  color: "var(--muted)"
+                }}
+              >
+                A 2026{" "}
+                <Link
+                  href="https://github.com/judeclark19"
+                  style={{
+                    textDecoration: "underline"
+                  }}
+                >
+                  Code Couture
+                </Link>{" "}
+                creation
+              </p>
+            </footer>
           </Providers>
         </StyledComponentsRegistry>
       </body>

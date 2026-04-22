@@ -1,7 +1,7 @@
 import { PersistedGame } from "@/persistence/types";
 import { Panel } from "@vcell/ui";
 import SeedButton from "./SeedButton";
-import { formatDate, formatDateAndTime, formatElapsed } from "./utils";
+import { formatDateAndTime, formatElapsed } from "./utils";
 
 export type GameStats = {
   winRate: number;
