@@ -1,6 +1,7 @@
 import { KBCarryRefs, KBCarryState } from "./useKeyboardControlSystem";
 
 const CARRYING_CLASS = "is-kb-carried";
+const CARRYING_STACK_CLASS = "is-kb-carried-stack";
 const DROP_TARGET_CLASS = "is-drop-target";
 
 const cardIdToAlias = (cardId: string | undefined): string => {
@@ -36,9 +37,12 @@ export const stopKbCarrying = (
   if (!root) return;
 
   root
-    .querySelectorAll<HTMLElement>(`.${CARRYING_CLASS}, .${DROP_TARGET_CLASS}`)
+    .querySelectorAll<HTMLElement>(
+      `.${CARRYING_CLASS}, .${CARRYING_STACK_CLASS}, .${DROP_TARGET_CLASS}`
+    )
     .forEach((el) => {
       el.classList.remove(CARRYING_CLASS);
+      el.classList.remove(CARRYING_STACK_CLASS);
       el.classList.remove(DROP_TARGET_CLASS);
     });
 
@@ -55,14 +59,17 @@ export const startKbCarrying = (
 ) => {
   if (!root) return;
 
-  // Clear old carried element
-  if (kbCarryRefs.current.carriedEl && kbCarryRefs.current.carriedEl !== el) {
-    kbCarryRefs.current.carriedEl.classList.remove(CARRYING_CLASS);
-  }
+  root
+    .querySelectorAll<HTMLElement>(`.${CARRYING_CLASS}, .${CARRYING_STACK_CLASS}`)
+    .forEach((carriedEl) => {
+      carriedEl.classList.remove(CARRYING_CLASS);
+      carriedEl.classList.remove(CARRYING_STACK_CLASS);
+    });
 
   kbCarryRefs.current.carriedEl = el;
   if (kbCarryRefs.current.carriedEl) {
     kbCarryRefs.current.carriedEl.classList.add(CARRYING_CLASS);
+    markCarriedTableauStack(root, kbCarryRefs.current.carriedEl);
   }
 
   setKbState((prev) => ({
@@ -71,6 +78,29 @@ export const startKbCarrying = (
     carryingLabel: cardIdToAlias(el?.dataset.cardId)
   }));
 };
+
+function markCarriedTableauStack(root: HTMLElement, carriedEl: HTMLElement) {
+  if (carriedEl.dataset.region !== "tableau") return;
+
+  const regionIndex = carriedEl.dataset.regionIndex;
+  const positionInStack = Number(carriedEl.dataset.positionInStack);
+
+  if (regionIndex == null || Number.isNaN(positionInStack)) return;
+
+  root
+    .querySelectorAll<HTMLElement>(
+      `[data-card-root="true"][data-region="tableau"][data-region-index="${regionIndex}"]`
+    )
+    .forEach((cardEl) => {
+      if (cardEl === carriedEl) return;
+      if (cardEl.dataset.tableauTailAnchor === "true") return;
+
+      const cardPosition = Number(cardEl.dataset.positionInStack);
+      if (Number.isNaN(cardPosition) || cardPosition <= positionInStack) return;
+
+      cardEl.classList.add(CARRYING_STACK_CLASS);
+    });
+}
 
 export const setKeyboardDropTarget = (
   el: HTMLElement | null,

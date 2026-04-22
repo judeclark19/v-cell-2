@@ -4,7 +4,6 @@ import FreeCells from "../components/FreeCells";
 import BoardModals from "../components/BoardModals";
 import DragLayer from "../components/DragLayer";
 import BoardControls from "../components/BoardControls";
-import SeedButton from "@/ui/SeedButton";
 import { useSelector } from "react-redux";
 import { BoardBorder, BoardSurface } from "@vcell/ui";
 import { selectSessionPhase } from "@/state/session/sessionSlice";

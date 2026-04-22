@@ -7,13 +7,14 @@ import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
 import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
-import { selectDisplayName } from "@/state/auth/authSlice";
+import { selectDisplayName, selectEmail } from "@/state/auth/authSlice";
 import { formatDate } from "@/ui/utils";
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
   // auth slice
   const displayName = useSelector(selectDisplayName);
+  const email = useSelector(selectEmail);
   // records slice
   const games = useSelector(selectCompletedGames);
 
@@ -76,11 +77,18 @@ export default function StatsPage() {
         as="section"
         padding="lg"
         style={{
-          flex: "1 1 320px",
           height: "fit-content"
         }}
       >
-        <h1>{displayName ? `${displayName}` : "Playing as Guest"}</h1>
+        <h1
+          style={{
+            marginBottom: "0.5rem"
+          }}
+        >
+          {displayName ? `${displayName}` : "Playing as Guest"}
+        </h1>
+        {email && <p>{email}</p>}
+        <br />
         <hr />
         <br />
         <br />

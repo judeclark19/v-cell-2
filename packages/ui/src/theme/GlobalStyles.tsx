@@ -329,6 +329,9 @@ const GlobalStyleSheet = createGlobalStyle`
     font-family: var(--font-ui);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    display: flex;
+    flex-direction: column;
   }
 
   * {
@@ -449,7 +452,7 @@ const GlobalStyleSheet = createGlobalStyle`
 
   .stats-page-main {
     display: grid;
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: 1fr 1.5fr;
     gap: 2rem;
   }
 

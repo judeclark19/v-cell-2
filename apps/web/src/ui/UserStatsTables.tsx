@@ -1,7 +1,17 @@
 import { PersistedGame } from "@/persistence/types";
-import { Panel } from "@vcell/ui";
+import {
+  Panel,
+  UserStatsTable,
+  UserStatsTableCell,
+  UserStatsTableEmpty,
+  UserStatsTableHeaderCell,
+  UserStatsTableHeading,
+  UserStatsTableRow,
+  UserStatsTableScroller,
+  UserStatsTablesRoot
+} from "@vcell/ui";
 import SeedButton from "./SeedButton";
-import { formatDate, formatDateAndTime, formatElapsed } from "./utils";
+import { formatDateAndTime, formatElapsed } from "./utils";
 
 export type GameStats = {
   winRate: number;
@@ -12,24 +22,6 @@ export type GameStats = {
   ended: PersistedGame[];
 };
 
-const tableStyle: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  minWidth: 560
-};
-
-const tableWrapperStyle: React.CSSProperties = {
-  width: "100%",
-  overflowX: "auto",
-  WebkitOverflowScrolling: "touch"
-};
-
-const thTdStyle: React.CSSProperties = {
-  borderBottom: "1px solid rgba(255,255,255,0.12)",
-  padding: "8px 6px",
-  textAlign: "left"
-};
-
 const renderGamesTable = (
   rows: PersistedGame[],
   kind: "fastest" | "fewestMoves"
@@ -37,75 +29,74 @@ const renderGamesTable = (
   const isFastest = kind === "fastest";
 
   return (
-    <div style={tableWrapperStyle}>
-      <table style={tableStyle}>
+    <UserStatsTableScroller>
+      <UserStatsTable>
         <thead>
-          <tr>
-            <th style={thTdStyle}>Rank</th>
+          <UserStatsTableRow>
+            <UserStatsTableHeaderCell>Rank</UserStatsTableHeaderCell>
             {isFastest ? (
-              <th style={thTdStyle}>Elapsed</th>
+              <UserStatsTableHeaderCell>Elapsed</UserStatsTableHeaderCell>
             ) : (
-              <th style={thTdStyle}>Moves</th>
+              <UserStatsTableHeaderCell>Moves</UserStatsTableHeaderCell>
             )}
-            <th style={thTdStyle}>Date completed</th>
+            <UserStatsTableHeaderCell>Date completed</UserStatsTableHeaderCell>
             {isFastest ? (
-              <th style={thTdStyle}>Moves</th>
+              <UserStatsTableHeaderCell>Moves</UserStatsTableHeaderCell>
             ) : (
-              <th style={thTdStyle}>Elapsed</th>
+              <UserStatsTableHeaderCell>Elapsed</UserStatsTableHeaderCell>
             )}
-            <th style={thTdStyle}>Seed</th>
-          </tr>
+            <UserStatsTableHeaderCell>Seed</UserStatsTableHeaderCell>
+          </UserStatsTableRow>
         </thead>
         <tbody>
           {rows.slice(0, 10).map((g, index) => (
-            <tr key={g.sessionId}>
-              <td style={thTdStyle}>
+            <UserStatsTableRow key={g.sessionId}>
+              <UserStatsTableCell>
                 <strong>{index + 1}</strong>
-              </td>
+              </UserStatsTableCell>
 
               {isFastest ? (
-                <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+                <UserStatsTableCell>
+                  {formatElapsed(g.timeElapsedMs)}
+                </UserStatsTableCell>
               ) : (
-                <td style={thTdStyle}>
+                <UserStatsTableCell>
                   {typeof g.moveCount === "number" ? g.moveCount : "—"}
-                </td>
+                </UserStatsTableCell>
               )}
 
-              <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
+              <UserStatsTableCell>
+                {formatDateAndTime(g.endedAtMs)}
+              </UserStatsTableCell>
 
               {isFastest ? (
-                <td style={thTdStyle}>
+                <UserStatsTableCell>
                   {typeof g.moveCount === "number" ? g.moveCount : "—"}
-                </td>
+                </UserStatsTableCell>
               ) : (
-                <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
+                <UserStatsTableCell>
+                  {formatElapsed(g.timeElapsedMs)}
+                </UserStatsTableCell>
               )}
 
-              <td style={thTdStyle}>
+              <UserStatsTableCell>
                 {typeof g.seed === "string" ? (
                   <SeedButton seed={g.seed} />
                 ) : (
                   "—"
                 )}
-              </td>
-            </tr>
+              </UserStatsTableCell>
+            </UserStatsTableRow>
           ))}
         </tbody>
-      </table>
-    </div>
+      </UserStatsTable>
+    </UserStatsTableScroller>
   );
 };
 
 function UserStatsTables({ derived }: { derived: GameStats }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        minWidth: 0
-      }}
-    >
+    <UserStatsTablesRoot>
       {/* <section className="paper paper-padding">
         <h2 style={{ marginBottom: 8 }}>Number of games played</h2>
         <p style={{ marginTop: 0 }}>
@@ -132,63 +123,71 @@ function UserStatsTables({ derived }: { derived: GameStats }) {
       </section> */}
 
       <Panel as="section" padding="lg">
-        <h2 style={{ marginBottom: 8 }}>Fastest wins</h2>
+        <UserStatsTableHeading>Fastest wins</UserStatsTableHeading>
         {derived.fastest.length === 0 ? (
-          <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
+          <UserStatsTableEmpty>No wins yet.</UserStatsTableEmpty>
         ) : (
           renderGamesTable(derived.fastest, "fastest")
         )}
       </Panel>
 
       <Panel as="section" padding="lg">
-        <h2 style={{ marginBottom: 8 }}>Fewest moves (wins)</h2>
+        <UserStatsTableHeading>Fewest moves (wins)</UserStatsTableHeading>
         {derived.fewestMoves.length === 0 ? (
-          <p style={{ marginTop: 0, opacity: 0.8 }}>No wins yet.</p>
+          <UserStatsTableEmpty>No wins yet.</UserStatsTableEmpty>
         ) : (
           renderGamesTable(derived.fewestMoves, "fewestMoves")
         )}
       </Panel>
 
       <Panel as="section" padding="lg">
-        <h2 style={{ marginBottom: 8 }}>Most recent completed games</h2>
+        <UserStatsTableHeading>
+          Most recent completed games
+        </UserStatsTableHeading>
         {derived.ended.length === 0 ? (
-          <p style={{ marginTop: 0, opacity: 0.8 }}>No completed games yet.</p>
+          <UserStatsTableEmpty>No completed games yet.</UserStatsTableEmpty>
         ) : (
-          <div style={tableWrapperStyle}>
-            <table style={tableStyle}>
+          <UserStatsTableScroller>
+            <UserStatsTable>
               <thead>
-                <tr>
-                  <th style={thTdStyle}>Date completed</th>
-                  <th style={thTdStyle}>Status</th>
-                  <th style={thTdStyle}>Elapsed</th>
-                  <th style={thTdStyle}>Moves</th>
-                  <th style={thTdStyle}>Seed</th>
-                </tr>
+                <UserStatsTableRow>
+                  <UserStatsTableHeaderCell>
+                    Date completed
+                  </UserStatsTableHeaderCell>
+                  <UserStatsTableHeaderCell>Status</UserStatsTableHeaderCell>
+                  <UserStatsTableHeaderCell>Elapsed</UserStatsTableHeaderCell>
+                  <UserStatsTableHeaderCell>Moves</UserStatsTableHeaderCell>
+                  <UserStatsTableHeaderCell>Seed</UserStatsTableHeaderCell>
+                </UserStatsTableRow>
               </thead>
               <tbody>
                 {derived.ended.slice(0, 10).map((g) => (
-                  <tr key={g.sessionId}>
-                    <td style={thTdStyle}>{formatDateAndTime(g.endedAtMs)}</td>
-                    <td style={thTdStyle}>{g.status}</td>
-                    <td style={thTdStyle}>{formatElapsed(g.timeElapsedMs)}</td>
-                    <td style={thTdStyle}>
+                  <UserStatsTableRow key={g.sessionId}>
+                    <UserStatsTableCell>
+                      {formatDateAndTime(g.endedAtMs)}
+                    </UserStatsTableCell>
+                    <UserStatsTableCell>{g.status}</UserStatsTableCell>
+                    <UserStatsTableCell>
+                      {formatElapsed(g.timeElapsedMs)}
+                    </UserStatsTableCell>
+                    <UserStatsTableCell>
                       {typeof g.moveCount === "number" ? g.moveCount : "—"}
-                    </td>
-                    <td style={thTdStyle}>
+                    </UserStatsTableCell>
+                    <UserStatsTableCell>
                       {typeof g.seed === "string" ? (
                         <SeedButton seed={g.seed} />
                       ) : (
                         "—"
                       )}
-                    </td>
-                  </tr>
+                    </UserStatsTableCell>
+                  </UserStatsTableRow>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </UserStatsTable>
+          </UserStatsTableScroller>
         )}
       </Panel>
-    </div>
+    </UserStatsTablesRoot>
   );
 }
 
