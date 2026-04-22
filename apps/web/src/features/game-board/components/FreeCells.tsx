@@ -56,7 +56,6 @@ function FreeCells({
         </Button>
       </AutocompleteDrawer>
       <PileRow aria-label="Free cells">
-        <PileSpacer aria-hidden="true" />
         {freeCellCards.map((card, i) => (
           <PileCell
             key={i}
@@ -116,6 +115,7 @@ function FreeCells({
               })()}
           </PileCell>
         ))}
+        <PileSpacer aria-hidden="true" />
         <PileSpacer aria-hidden="true">
           <Button
             type="button"
