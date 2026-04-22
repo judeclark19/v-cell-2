@@ -71,73 +71,78 @@ export default function StatsPage() {
   }, [games]);
 
   return (
-    <main className="stats-page-main">
-      {/* left sidebar  */}
-      <Panel
-        as="section"
-        padding="lg"
-        style={{
-          height: "fit-content"
-        }}
-      >
-        <h1
+    <>
+      <header>
+        <h1 style={{ textAlign: "center" }}>Stats</h1>
+      </header>
+      <main className="stats-page-main">
+        {/* left sidebar  */}
+        <Panel
+          as="section"
+          padding="lg"
           style={{
-            marginBottom: "0.5rem"
+            height: "fit-content"
           }}
         >
-          {displayName ? `${displayName}` : "Playing as Guest"}
-        </h1>
-        {email && <p>{email}</p>}
-        <br />
-        <hr />
-        <br />
-        <br />
+          <h2
+            style={{
+              marginBottom: "0.5rem"
+            }}
+          >
+            {displayName ? `${displayName}` : "Playing as Guest"}
+          </h2>
+          {email && <p>{email}</p>}
+          <br />
+          <hr />
+          <br />
+          <br />
 
-        {!hydrated ? (
-          <p style={{ opacity: 0.75 }}>Loading session…</p>
-        ) : isUser ? (
-          <>
-            <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
-            <p style={{ marginTop: 0, marginBottom: "2rem" }}>
-              <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
-              out of {derived.last100Count} games)
-            </p>
+          {!hydrated ? (
+            <p style={{ opacity: 0.75 }}>Loading session…</p>
+          ) : isUser ? (
+            <>
+              <h3 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h3>
+              <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+                <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
+                out of {derived.last100Count} games)
+              </p>
 
-            <h2 style={{ marginBottom: 8 }}>Win rate (all time)</h2>
-            <p style={{ marginTop: 0, marginBottom: "2rem" }}>
-              <strong>{derived.winRateAllTime}%</strong> ({derived.allTimeWins}{" "}
-              wins out of {derived.allTimeCount} games)
-            </p>
+              <h3 style={{ marginBottom: 8 }}>Win rate (all time)</h3>
+              <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+                <strong>{derived.winRateAllTime}%</strong> (
+                {derived.allTimeWins} wins out of {derived.allTimeCount} games)
+              </p>
 
-            <h2 style={{ marginBottom: 8 }}>Total Completed Games</h2>
-            <p style={{ marginTop: 0 }}>
-              {derived.ended.length === 0 ? (
-                <strong>No games finished yet.</strong>
-              ) : (
-                <>
-                  <strong>{derived.ended.length}</strong> completed game
-                  {derived.ended.length > 1 ? "s" : ""} since{" "}
-                  {formatDate(
-                    derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
-                  )}
-                </>
-              )}
-            </p>
-          </>
-        ) : (
-          <>
-            <p style={{ opacity: 0.85, marginBottom: "16px" }}>
-              Viewing local stats saved on this device. Log in if you want your
-              history to sync across devices.
-            </p>
-            <Button as={Link} href="/login?next=/stats">
-              Log in for synced stats
-            </Button>
-          </>
-        )}
-      </Panel>
+              <h3 style={{ marginBottom: 8 }}>Total Completed Games</h3>
+              <p style={{ marginTop: 0 }}>
+                {derived.ended.length === 0 ? (
+                  <strong>No games finished yet.</strong>
+                ) : (
+                  <>
+                    <strong>{derived.ended.length}</strong> completed game
+                    {derived.ended.length > 1 ? "s" : ""} since{" "}
+                    {formatDate(
+                      derived.ended[derived.ended.length - 1]?.endedAtMs ?? 0
+                    )}
+                  </>
+                )}
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ opacity: 0.85, marginBottom: "16px" }}>
+                Viewing local stats saved on this device. Log in if you want
+                your history to sync across devices.
+              </p>
+              <Button as={Link} href="/login?next=/stats">
+                Log in for synced stats
+              </Button>
+            </>
+          )}
+        </Panel>
 
-      {!hydrated ? null : <UserStatsTables derived={derived} />}
-    </main>
+        {!hydrated ? null : <UserStatsTables derived={derived} />}
+      </main>
+    </>
   );
 }

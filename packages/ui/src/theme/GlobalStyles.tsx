@@ -323,7 +323,7 @@ const GlobalStyleSheet = createGlobalStyle`
   }
 
   body {
-    min-height: 100vh;
+    min-height: 100dvh;
     color: var(--foreground);
     background: var(--background-primary);
     font-family: var(--font-ui);
@@ -332,6 +332,15 @@ const GlobalStyleSheet = createGlobalStyle`
 
     display: flex;
     flex-direction: column;
+  }
+
+  .app-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .app-main > .max-width-container {
+    min-height: 0;
   }
 
   * {
