@@ -20,8 +20,10 @@ import {
 import { useSession } from "@/state/auth/AuthProvider";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import Image from "next/image";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
+import { openAuthStatusModal } from "@/state/ui/uiSlice";
+import type { AppDispatch } from "@/state/reduxStore";
 
 const NAV_LINKS = [
   { href: "/game", label: "Game" },
@@ -39,6 +41,7 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 export function NavBar() {
   const { logout, hydrated } = useSession();
   const { theme, setTheme } = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -52,6 +55,12 @@ export function NavBar() {
   const handleLogout = async () => {
     await logout();
     closeMenu();
+    dispatch(
+      openAuthStatusModal({
+        title: "Logged out",
+        bodyText: "You have successfully logged out."
+      })
+    );
     router.replace("/login");
   };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { createGlobalStyle } from "styled-components";
-import { GameBoardStyles } from "./GameBoardStyles";
 import { GoogleSignInStyles } from "./GoogleSignInStyles";
 
 const GlobalStyleSheet = createGlobalStyle`
@@ -65,9 +64,9 @@ const GlobalStyleSheet = createGlobalStyle`
     --z-card: 1;
     --z-drag: 100;
     --z-overlay: 200;
-    --z-modal: 300;
     --z-navbar: 400;
     --z-popover: 500;
+    --z-modal: 600;
 
     --font-ui: "Avenir Next", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
     --radius: 8px;
@@ -122,7 +121,7 @@ const GlobalStyleSheet = createGlobalStyle`
     );
     --banner-debug-bg: color-mix(in srgb, var(--surface) 90%, black 10%);
 
-    --nav-height: 56px;
+    --nav-height: 80px;
     --nav-bg: var(--surface);
     --nav-hover-bg: var(--surface-hover);
     --nav-border: var(--border);
@@ -353,6 +352,9 @@ const GlobalStyleSheet = createGlobalStyle`
   h2 {
     margin-bottom: 1rem;
   }
+  h3 {
+    margin-bottom: 0.5rem;
+  }
 
   header {
     margin-bottom: 16px;
@@ -466,7 +468,6 @@ export function GlobalStyles() {
   return (
     <>
       <GlobalStyleSheet />
-      <GameBoardStyles />
       <GoogleSignInStyles />
     </>
   );

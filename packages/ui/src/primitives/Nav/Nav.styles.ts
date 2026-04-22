@@ -18,6 +18,7 @@ export const NavRoot = styled.nav`
   position: sticky;
   top: 0;
   z-index: var(--z-navbar, 400);
+  height: var(--nav-height, 80px);
 
   background: var(--nav-bg);
   border-bottom: 1px solid var(--nav-border);
@@ -82,7 +83,9 @@ export const NavBurgerLine = styled.span<NavBurgerProps>`
   height: 2px;
   background: var(--foreground);
   border-radius: 999px;
-  transition: transform 250ms ease, opacity 200ms ease;
+  transition:
+    transform 250ms ease,
+    opacity 200ms ease;
   transform-origin: center;
 
   &:nth-child(1) {

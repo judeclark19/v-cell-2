@@ -42,13 +42,21 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
-      onPointerDown={(event) => event.stopPropagation()}
-      onClick={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
       tabIndex={-1}
       onKeyDown={onKeyDown}
       {...overlayProps}
     >
-      <ModalPanel ref={panelRef} tabIndex={-1}>
+      <ModalPanel
+        ref={panelRef}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+      >
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
           <ModalCloseButton
@@ -61,8 +69,10 @@ export function Modal({
         </ModalHeader>
 
         <ModalBody>
-          {body == null ? null : (
+          {body == null ? null : typeof body === "string" ? (
             <ModalHint style={{ whiteSpace: "pre-line" }}>{body}</ModalHint>
+          ) : (
+            body
           )}
           {children}
           {actions == null ? null : <ModalActions>{actions}</ModalActions>}

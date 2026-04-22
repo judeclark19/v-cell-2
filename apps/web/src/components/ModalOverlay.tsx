@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { Button, Modal } from "@vcell/ui";
 import { setIsAnyModalOpen } from "@/state/ui/uiSlice";
 
@@ -8,7 +8,9 @@ type ModalOverlayProps = {
   title: string;
   buttonAriaLabel: string;
   onClose: () => void;
-  bodyText: string;
+  body?: ReactNode;
+  bodyText?: string;
+  primaryButtonDisabled?: boolean;
   primaryButtonLabel: string;
   primaryButtonAction?: () => void;
   secondaryButtonLabel?: string;
@@ -21,7 +23,9 @@ export default function ModalOverlay({
   title,
   buttonAriaLabel,
   onClose,
+  body,
   bodyText,
+  primaryButtonDisabled = false,
   primaryButtonLabel,
   primaryButtonAction = onClose,
   secondaryButtonLabel,
@@ -122,13 +126,17 @@ export default function ModalOverlay({
             </Button>
           )}
 
-          <Button ref={primaryButtonRef} onClick={primaryButtonAction}>
+          <Button
+            ref={primaryButtonRef}
+            disabled={primaryButtonDisabled}
+            onClick={primaryButtonAction}
+          >
             {primaryButtonLabel}
           </Button>
         </>
       }
       ariaLabel={overlayAriaLabel}
-      body={bodyText}
+      body={body ?? bodyText}
       closeLabel={buttonAriaLabel}
       onClose={closeModal}
       onKeyDown={handleKeyDown}

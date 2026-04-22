@@ -2,6 +2,12 @@ import Card from "./Card";
 import { useSelector } from "react-redux";
 import { selectHistory, selectPlayableMask } from "@/state/game/gameSlice";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
+import {
+  TableauColumn,
+  TableauEmptySlot,
+  TableauGrid,
+  TableauScroll
+} from "@vcell/ui";
 
 function Tableau({
   boardController
@@ -15,8 +21,8 @@ function Tableau({
   const history = useSelector(selectHistory);
 
   return (
-    <div className="tableau-scroll" aria-label="Tableau">
-      <div className="tableau" aria-label="Tableau grid">
+    <TableauScroll aria-label="Tableau">
+      <TableauGrid aria-label="Tableau grid">
         {history.present.tableau.map((col, colIndex) => {
           const tableauSource =
             boardController.drag.source?.type === "tableau"
@@ -44,13 +50,13 @@ function Tableau({
           const showEmptySlot = col.length === 0 || isDraggingEntireColumn;
 
           return (
-            <div
+            <TableauColumn
               key={colIndex}
-              className="tableau-col"
+              data-tableau-column="true"
               aria-label={`Tableau column ${colIndex + 1}`}
             >
-              <div
-                className="tableau-empty-slot"
+              <TableauEmptySlot
+                data-tableau-empty-slot="true"
                 role="button"
                 aria-hidden={!showEmptySlot}
                 aria-label={`Tableau column ${colIndex + 1} empty slot`}
@@ -66,7 +72,7 @@ function Tableau({
                   }
                   tabIndex={kbState.carrying && showEmptySlot ? -1 : undefined}
                 />
-              </div>
+              </TableauEmptySlot>
 
               {col.map((tc, tcIndex) => {
                 const isTopCard = tcIndex === col.length - 1;
@@ -176,11 +182,11 @@ function Tableau({
                     />
                   );
                 })()}
-            </div>
+            </TableauColumn>
           );
         })}
-      </div>
-    </div>
+      </TableauGrid>
+    </TableauScroll>
   );
 }
 

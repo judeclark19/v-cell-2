@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Banner, BannerActions, BannerInner, BannerText, Button } from "@vcell/ui";
+import {
+  Banner,
+  BannerActions,
+  BannerInner,
+  BannerText,
+  Button
+} from "@vcell/ui";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
 import { useIsOffline } from "@/state/network/useIsOffline";
@@ -37,27 +43,27 @@ export function LoginPrompt() {
   if (!shouldShow) return null;
 
   return (
-    <Banner role="status" aria-live="polite">
+    <Banner role="status" aria-live="polite" sticky>
       <div className="max-width-container">
         <BannerInner>
-        <BannerText>
-          You are currently playing in guest mode. Log in to enable game history
-          and stats.
-        </BannerText>
+          <BannerText>
+            You are currently playing in guest mode. Log in to enable game
+            history and stats.
+          </BannerText>
 
-        <BannerActions>
-          <Button
-            onClick={() => {
-              router.replace("/login");
-            }}
-          >
-            Go to login page
-          </Button>
+          <BannerActions>
+            <Button
+              onClick={() => {
+                router.replace("/login");
+              }}
+            >
+              Go to login page
+            </Button>
 
-          <Button variant="ghost" onClick={dismiss}>
-            Dismiss
-          </Button>
-        </BannerActions>
+            <Button variant="ghost" onClick={dismiss}>
+              Dismiss
+            </Button>
+          </BannerActions>
         </BannerInner>
       </div>
     </Banner>

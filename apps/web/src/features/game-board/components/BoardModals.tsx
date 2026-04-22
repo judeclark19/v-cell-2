@@ -1,25 +1,32 @@
 import ModalOverlay from "@/components/ModalOverlay";
 import { PersistedGame } from "@/persistence/types";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
+import { useMemo, useState } from "react";
 import {
   selectSessionId,
   selectTimeElapsedMs,
   setPaused
 } from "@/state/session/sessionSlice";
-import { formatElapsed } from "@/ui/utils";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { selectMoveCount } from "@/state/game/gameSlice";
+import { selectMoveCount, selectRules } from "@/state/game/gameSlice";
 import {
   closePauseModal,
+  closeSettingsModal,
   closeWinModal,
   selectConfirmModal,
   selectPauseModal,
+  selectSettingsModal,
   selectWinModal
 } from "@/state/ui/uiSlice";
 import { AppDispatch } from "@/state/reduxStore";
 import { selectUid } from "@/state/auth/authSlice";
 import { transitionGameAndSession } from "@/state/transitionGameAndSession";
+import { Field, Select } from "@vcell/ui";
+import { formatElapsed, parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
+import { newDealThunk } from "@/state/session/thunks/newDeal";
+import { areRulesEqual } from "@/state/game/utils";
+import type { Rules } from "@vcell/engine";
 
 export type ConfirmRequest = {
   title: string;
@@ -30,26 +37,153 @@ export type ConfirmRequest = {
   onCancel: () => void;
 };
 
+function GameSettingsModal({
+  onClose,
+  rules,
+  uid
+}: {
+  onClose: () => void;
+  rules: Rules;
+  uid: string | null;
+}) {
+  const dispatch = useDispatch<AppDispatch>();
+  const [draftRules, setDraftRules] = useState<Rules>(() => rules);
+  const settingsChanged = useMemo(
+    () => !areRulesEqual(rules, draftRules),
+    [draftRules, rules]
+  );
+
+  const applySettings = async () => {
+    if (!settingsChanged) return;
+
+    await dispatch(newDealThunk({ rules: draftRules, uid })).unwrap();
+    onClose();
+  };
+
+  return (
+    <ModalOverlay
+      overlayAriaLabel="Game settings"
+      title="Settings"
+      buttonAriaLabel="Close settings"
+      onClose={onClose}
+      body={
+        <>
+          <p className="hint" style={{ marginBottom: "1em" }}>
+            Adjust gameplay rules, then apply them when you are ready.
+          </p>
+          <div className="grid">
+            <Field
+              label="Face-down cards at deal"
+              hint="Engine rule: V-shape layering. Auto-flip when a face-down card becomes exposed."
+            >
+              <Select
+                id="face-down-cards"
+                value={String(draftRules.faceDownCount)}
+                onChange={(e) => {
+                  const next = parseFaceDownCount(e.target.value);
+                  setDraftRules((current) => ({
+                    ...current,
+                    faceDownCount: next
+                  }));
+                }}
+              >
+                <option value="0">0 (all face-up)</option>
+                <option value="7">7 (classic)</option>
+                <option value="14">14 (2 rows)</option>
+                <option value="21">21 (3 rows)</option>
+              </Select>
+            </Field>
+
+            <Field
+              label="Undo limit"
+              hint="For MVP we can enforce in UI; later we can also record undos used for stats."
+            >
+              <Select
+                id="undo-limit"
+                value={String(draftRules.undoLimit)}
+                onChange={(e) => {
+                  const next = parseUndoLimit(e.target.value);
+                  setDraftRules((current) => ({
+                    ...current,
+                    undoLimit: next
+                  }));
+                }}
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="unlimited">Unlimited</option>
+              </Select>
+            </Field>
+
+            <Field
+              label="Foundation pullback"
+              hint="When enabled, top foundation card can move to tableau/freecell."
+            >
+              <Select
+                id="foundation-pullback"
+                value={draftRules.allowFoundationPullback ? "on" : "off"}
+                onChange={(e) => {
+                  const next = e.target.value === "on";
+                  setDraftRules((current) => ({
+                    ...current,
+                    allowFoundationPullback: next
+                  }));
+                }}
+              >
+                <option value="on">On (easier)</option>
+                <option value="off">Off (harder)</option>
+              </Select>
+            </Field>
+          </div>
+          <p
+            className="hint"
+            style={{
+              marginTop: "1em",
+              textAlign: "center"
+            }}
+          >
+            Applying changes starts a new game and abandons the current one.
+          </p>
+        </>
+      }
+      primaryButtonLabel="Apply changes"
+      primaryButtonAction={applySettings}
+      primaryButtonDisabled={!settingsChanged}
+      secondaryButtonLabel="Close"
+      secondaryButtonAction={onClose}
+    />
+  );
+}
+
 export default function BoardModals() {
   const router = useRouter();
 
   const dispatch = useDispatch<AppDispatch>();
   // Auth state
-  const isUser = useSelector(selectUid) !== null;
+  const uid = useSelector(selectUid);
+  const isUser = uid !== null;
   // Session state
   const sessionId = useSelector(selectSessionId);
   const timeElapsedMs = useSelector(selectTimeElapsedMs);
   const confirmReq = useSelector(selectConfirmModal);
   // Game state
   const moveCount = useSelector(selectMoveCount);
+  const rules = useSelector(selectRules);
   // Records state
   const completedGames = useSelector(selectCompletedGames);
   // ui state
   const winModal = useSelector(selectWinModal);
   const pauseModal = useSelector(selectPauseModal);
+  const settingsModal = useSelector(selectSettingsModal);
 
   const currentCompletedGame =
     completedGames.find((g) => g.sessionId === sessionId) ?? null;
+
+  const closeSettings = () => {
+    dispatch(closeSettingsModal());
+  };
 
   function deriveWinRateLastN(games: PersistedGame[], n = 100) {
     const ended = games
@@ -129,6 +263,10 @@ export default function BoardModals() {
           bodyText="Timer is paused. Gameplay is disabled until you resume."
           primaryButtonLabel="Resume"
         />
+      )}
+
+      {settingsModal && (
+        <GameSettingsModal rules={rules} uid={uid} onClose={closeSettings} />
       )}
 
       {winModal && (

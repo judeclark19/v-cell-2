@@ -3,13 +3,25 @@
 
 import React from "react";
 import type { Card, Suit } from "@vcell/engine";
+import {
+  CardFaceBack,
+  CardFaceFront,
+  CardFrontMain,
+  CardFrontTop,
+  CardInner,
+  CardSlotRoot,
+  CardSuit,
+  EmptyCardLabel,
+  PlayingCardRoot
+} from "@vcell/ui";
 
 function suitSymbol(suit: Suit, size: "small" | "large" = "large") {
   return (
-    <img
+    <CardSuit
       src={`/images/${suit}.svg`}
       alt=""
       className={`card-suit card-suit--${size}`}
+      data-size={size}
       aria-hidden
     />
   );
@@ -65,6 +77,8 @@ function Card({
   ...forwardedDivProps
 }: CardProps) {
   const isEmpty = !card;
+  const classNames = className.split(/\s+/).filter(Boolean);
+  const hasClassName = (name: string) => classNames.includes(name);
 
   const canActivate =
     Boolean(card) && playable && !faceDown && Boolean(onActivate);
@@ -90,30 +104,57 @@ function Card({
 
   if (isEmpty) {
     return (
-      <div
+      <CardSlotRoot
         {...restDivProps}
         className={`card-slot ${className}`.trim()}
+        $dropTarget={hasClassName("is-drop-target")}
         style={style}
+        data-card-slot="true"
+        data-card-drop-target={hasClassName("is-drop-target") || undefined}
         data-region={region}
         data-region-index={regionIndex}
         data-position-in-stack={positionInStack}
         tabIndex={restDivProps.tabIndex ?? -1}
       >
-        {emptyLabel && <span className="empty-label">{emptyLabel}</span>}
-      </div>
+        {emptyLabel && <EmptyCardLabel>{emptyLabel}</EmptyCardLabel>}
+      </CardSlotRoot>
     );
   }
 
   return (
-    <div
+    <PlayingCardRoot
       {...restDivProps}
       data-card-id={card.id}
+      data-card-root="true"
+      data-card-auto-moving={hasClassName("is-auto-moving") || undefined}
+      data-card-dragging={hasClassName("is-dragging") || undefined}
+      data-card-drop-target={hasClassName("is-drop-target") || undefined}
+      data-card-keyboard-carried={
+        hasClassName("is-kb-carried") || undefined
+      }
+      data-card-keyboard-carried-stack={
+        hasClassName("is-kb-carried-stack") || undefined
+      }
+      data-card-locked={!playable || undefined}
+      data-card-playable={playable || undefined}
+      data-card-pullback-disabled={
+        hasClassName("is-pullback-disabled") || undefined
+      }
       data-region={region}
       data-region-index={regionIndex}
       data-position-in-stack={positionInStack}
       className={`card ${faceDown ? "face-down" : ""} ${
         playable ? "is-playable" : "is-locked"
       } ${className}`.trim()}
+      $autoMoving={hasClassName("is-auto-moving")}
+      $dragging={hasClassName("is-dragging")}
+      $dropTarget={hasClassName("is-drop-target")}
+      $faceDown={faceDown}
+      $keyboardCarried={hasClassName("is-kb-carried")}
+      $keyboardCarriedStack={hasClassName("is-kb-carried-stack")}
+      $locked={!playable}
+      $playable={playable}
+      $pullbackDisabled={hasClassName("is-pullback-disabled")}
       style={style}
       aria-label={`Card ${card.id}${faceDown ? ", face down" : ""}`}
       tabIndex={-1}
@@ -144,23 +185,23 @@ function Card({
       }}
       onPointerDown={onPointerDown}
     >
-      <div className="card-inner">
-        <div className="card-face card-face--front">
-          <div className="card-front__top">
+      <CardInner className="card-inner">
+        <CardFaceFront className="card-face card-face--front">
+          <CardFrontTop className="card-front__top">
             {displayRank(card.rank)}
             {suitSymbol(card.suit, "small")}
-          </div>
+          </CardFrontTop>
 
-          <div className="card-front__main">
+          <CardFrontMain className="card-front__main">
             {suitSymbol(card.suit, "large")}
-          </div>
-        </div>
+          </CardFrontMain>
+        </CardFaceFront>
 
-        <div className="card-face card-face--back" aria-hidden>
+        <CardFaceBack className="card-face card-face--back" aria-hidden>
           <img src="/images/V.png" alt="" className="card-back-image" />
-        </div>
-      </div>
-    </div>
+        </CardFaceBack>
+      </CardInner>
+    </PlayingCardRoot>
   );
 }
 

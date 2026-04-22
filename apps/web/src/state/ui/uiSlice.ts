@@ -6,9 +6,14 @@ export interface UiState {
   showTimer: boolean;
   motionPreference: MotionPreference;
   settingsHydrated: boolean;
+  authStatusModal: {
+    title: string;
+    bodyText: string;
+  } | null;
   confirmModal: ConfirmRequest | null;
   winModal: boolean;
   pauseModal: boolean;
+  settingsModal: boolean;
   isAnyModalOpen: boolean;
 }
 
@@ -16,9 +21,11 @@ const initialState: UiState = {
   showTimer: true,
   motionPreference: "system",
   settingsHydrated: false,
+  authStatusModal: null,
   confirmModal: null,
   winModal: false,
   pauseModal: false,
+  settingsModal: false,
   isAnyModalOpen: false
 };
 
@@ -26,6 +33,17 @@ const uiSlice = createSlice({
   name: "ui",
   initialState,
   reducers: {
+    openAuthStatusModal: (
+      state,
+      action: PayloadAction<{ title: string; bodyText: string }>
+    ) => {
+      state.authStatusModal = action.payload;
+      state.isAnyModalOpen = true;
+    },
+    closeAuthStatusModal: (state) => {
+      state.authStatusModal = null;
+      state.isAnyModalOpen = false;
+    },
     openConfirmModal: (state, action: PayloadAction<ConfirmRequest>) => {
       state.confirmModal = action.payload;
       state.isAnyModalOpen = true;
@@ -50,13 +68,27 @@ const uiSlice = createSlice({
       state.pauseModal = false;
       state.isAnyModalOpen = false;
     },
+    openSettingsModal: (state) => {
+      state.settingsModal = true;
+      state.isAnyModalOpen = true;
+    },
+    closeSettingsModal: (state) => {
+      state.settingsModal = false;
+      state.isAnyModalOpen = false;
+    },
+    toggleSettingsModal: (state) => {
+      state.settingsModal = !state.settingsModal;
+      state.isAnyModalOpen = state.settingsModal;
+    },
     setIsAnyModalOpen: (state, action: PayloadAction<boolean>) => {
       state.isAnyModalOpen = action.payload;
 
       if (!action.payload) {
+        state.authStatusModal = null;
         state.confirmModal = null;
         state.winModal = false;
         state.pauseModal = false;
+        state.settingsModal = false;
       }
     },
     setShowTimer: (state, action: PayloadAction<boolean>) => {
@@ -72,12 +104,17 @@ const uiSlice = createSlice({
 });
 
 export const {
+  openAuthStatusModal,
+  closeAuthStatusModal,
   openConfirmModal,
   closeConfirmModal,
   openWinModal,
   closeWinModal,
   openPauseModal,
   closePauseModal,
+  openSettingsModal,
+  closeSettingsModal,
+  toggleSettingsModal,
   setShowTimer,
   setMotionPreference,
   setSettingsHydrated,
@@ -85,6 +122,8 @@ export const {
 } = uiSlice.actions;
 export const uiReducer = uiSlice.reducer;
 
+export const selectAuthStatusModal = (state: { ui: UiState }) =>
+  state.ui.authStatusModal;
 export const selectConfirmModal = (state: { ui: UiState }) =>
   state.ui.confirmModal;
 export const selectShowTimer = (state: { ui: UiState }) => state.ui.showTimer;
@@ -96,3 +135,5 @@ export const selectIsAnyModalOpen = (state: { ui: UiState }) =>
   state.ui.isAnyModalOpen;
 export const selectWinModal = (state: { ui: UiState }) => state.ui.winModal;
 export const selectPauseModal = (state: { ui: UiState }) => state.ui.pauseModal;
+export const selectSettingsModal = (state: { ui: UiState }) =>
+  state.ui.settingsModal;

@@ -100,6 +100,7 @@ function SeedButton({ seed }: { seed: string }) {
       variant="ghost"
       title={"Copy seed to clipboard"}
       aria-label={label}
+      fullWidth
       onClick={handleCopy}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {

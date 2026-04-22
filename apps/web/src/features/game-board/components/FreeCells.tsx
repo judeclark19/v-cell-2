@@ -1,14 +1,26 @@
 import Card from "./Card";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import {
+  selectCanUndo,
   selectFreeCellCards,
   selectIsAutoCompleting,
   selectPlayableMask,
-  selectShowAcp
-} from "@/state/game/gameSlice/selectors";
+  selectRules,
+  selectShowAcp,
+  selectUndosRemaining,
+  setIsAutoCompleting
+} from "@/state/game/gameSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "@vcell/ui";
-import { setIsAutoCompleting } from "@/state/game/gameSlice";
+import {
+  AutocompleteDrawer,
+  BoardBottom,
+  Button,
+  PileCardLayer,
+  PileCell,
+  PileRow,
+  PileSpacer
+} from "@vcell/ui";
+import { RotateCcw, Undo2 } from "lucide-react";
 
 function FreeCells({
   boardController
@@ -22,17 +34,17 @@ function FreeCells({
   const showAcp = useSelector(selectShowAcp);
   const isAutoCompleting = useSelector(selectIsAutoCompleting);
   const playable = useSelector(selectPlayableMask);
+  const rules = useSelector(selectRules);
+  const undosRemaining = useSelector(selectUndosRemaining);
+  const canUndo = useSelector(selectCanUndo);
+  const showUndoCount =
+    rules.undoLimit !== "unlimited" && rules.undoLimit !== 0;
 
   const { kbState, cardFlight } = boardController;
 
   return (
-    <div className="board-bottom" aria-label="Free cells">
-      <div
-        className={`autocomplete-drawer${
-          showAcp ? " autocomplete-drawer--visible" : ""
-        }`}
-        aria-hidden={showAcp ? "false" : "true"}
-      >
+    <BoardBottom aria-label="Free cells">
+      <AutocompleteDrawer visible={showAcp} aria-hidden={!showAcp}>
         <Button
           onClick={() => {
             if (isAutoCompleting) dispatch(setIsAutoCompleting(false));
@@ -42,13 +54,12 @@ function FreeCells({
         >
           {isAutoCompleting ? "Stop" : "Autocomplete"}
         </Button>
-      </div>
-      <div className="pile-row" aria-label="Free cells">
-        <div className="pile-spacer" aria-hidden="true" />
+      </AutocompleteDrawer>
+      <PileRow aria-label="Free cells">
+        <PileSpacer aria-hidden="true" />
         {freeCellCards.map((card, i) => (
-          <div
+          <PileCell
             key={i}
-            className="pile-cell"
             role={kbState.carrying && !card ? "button" : undefined}
             aria-label={!card ? `Free cell ${i} empty slot` : `Free cell ${i}`}
           >
@@ -87,26 +98,57 @@ function FreeCells({
                     : undefined;
 
                 return (
-                  <Card
-                    card={card}
-                    region="freecell"
-                    regionIndex={i}
-                    playable={playable.freeCells[i]}
-                    data-kb-focusable={true}
-                    className="pile-card"
-                    onPointerDownCard={(e) =>
-                      boardController.handleFreeCellPointerDown(e, i)
-                    }
-                    onPointerUp={boardController.handleCardDoubleTap}
-                    style={style}
-                  />
+                  <PileCardLayer>
+                    <Card
+                      card={card}
+                      region="freecell"
+                      regionIndex={i}
+                      playable={playable.freeCells[i]}
+                      data-kb-focusable={true}
+                      onPointerDownCard={(e) =>
+                        boardController.handleFreeCellPointerDown(e, i)
+                      }
+                      onPointerUp={boardController.handleCardDoubleTap}
+                      style={style}
+                    />
+                  </PileCardLayer>
                 );
               })()}
-          </div>
+          </PileCell>
         ))}
-        <div className="pile-spacer" aria-hidden="true" />
-      </div>
-    </div>
+        <PileSpacer aria-hidden="true">
+          <Button
+            type="button"
+            onClick={boardController.undo}
+            disabled={!canUndo}
+            aria-label={
+              showUndoCount ? `Undo, ${undosRemaining} remaining` : "Undo"
+            }
+            title={showUndoCount ? `${undosRemaining} undos remaining` : "Undo"}
+          >
+            <Undo2 aria-hidden="true" size={20} />
+            {showUndoCount ? (
+              <span
+                aria-hidden="true"
+                style={{
+                  marginTop: "3px",
+                  fontWeight: "500"
+                }}
+              >
+                {undosRemaining}
+              </span>
+            ) : null}
+          </Button>
+          <Button
+            type="button"
+            onClick={boardController.restartDeal}
+            title="Restart deal"
+          >
+            <RotateCcw aria-hidden="true" size={19} />
+          </Button>
+        </PileSpacer>
+      </PileRow>
+    </BoardBottom>
   );
 }
 

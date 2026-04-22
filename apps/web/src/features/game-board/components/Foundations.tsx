@@ -1,5 +1,13 @@
 import type { Card as EngineCard } from "@vcell/engine";
-import { Button } from "@vcell/ui";
+import {
+  BoardTimerCell,
+  BoardTimerText,
+  BoardTop,
+  Button,
+  PileCardLayer,
+  PileCell,
+  PileRow
+} from "@vcell/ui";
 import Card from "./Card";
 import { formatElapsed } from "../../../ui/utils";
 import { useDispatch, useSelector } from "react-redux";
@@ -79,9 +87,8 @@ function Foundation({
     : undefined;
 
   return (
-    <div
+    <PileCell
       key={i}
-      className="pile-cell"
       data-kb-focusable={kbState.carrying && isEmptySlot ? "true" : undefined}
       role={kbState.carrying && isEmptySlot ? "button" : undefined}
       aria-label={
@@ -103,34 +110,37 @@ function Foundation({
       {effectiveCard && (
         <>
           {underlayCard && (
-            <Card
-              card={underlayCard}
-              className="pile-card pile-card--underlay"
-              playable={false}
-              region="foundation"
-              regionIndex={i}
-            />
+            <PileCardLayer>
+              <Card
+                card={underlayCard}
+                playable={false}
+                region="foundation"
+                regionIndex={i}
+              />
+            </PileCardLayer>
           )}
 
-          <Card
-            card={effectiveCard}
-            region="foundation"
-            regionIndex={i}
-            className={`pile-card${pullbackDisabled ? " is-pullback-disabled" : ""}`}
-            playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
-            data-kb-focusable={
-              playable.foundations[foundationIndex] ? "true" : "false"
-            }
-            onPointerDownCard={
-              pullbackDisabled
-                ? undefined
-                : (e) => handleFoundationPointerDown?.(e, foundationIndex)
-            }
-            style={cardStyle}
-          />
+          <PileCardLayer>
+            <Card
+              card={effectiveCard}
+              region="foundation"
+              regionIndex={i}
+              className={pullbackDisabled ? "is-pullback-disabled" : ""}
+              playable={playable.foundations[foundationIndex]} // -3 accounts for spacers
+              data-kb-focusable={
+                playable.foundations[foundationIndex] ? "true" : "false"
+              }
+              onPointerDownCard={
+                pullbackDisabled
+                  ? undefined
+                  : (e) => handleFoundationPointerDown?.(e, foundationIndex)
+              }
+              style={cardStyle}
+            />
+          </PileCardLayer>
         </>
       )}
-    </div>
+    </PileCell>
   );
 }
 
@@ -150,12 +160,12 @@ function Foundations({
   const showTimer = useSelector(selectShowTimer);
 
   return (
-    <div className="board-top" aria-label="Foundations">
-      <div className="pile-row" aria-label="Foundations">
-        <div className="timer-cell" aria-hidden={showTimer ? "false" : "true"}>
-          <div className={`timer${!startedAtMs ? " muted" : ""}`}>
+    <BoardTop aria-label="Foundations">
+      <PileRow aria-label="Foundations">
+        <BoardTimerCell aria-hidden={!showTimer}>
+          <BoardTimerText muted={!startedAtMs}>
             {showTimer ? formatElapsed(timeElapsedMs) : ""}
-          </div>
+          </BoardTimerText>
           <Button
             aria-label="Pause timer"
             onClick={() => {
@@ -177,7 +187,7 @@ function Foundations({
               <rect x="14" y="5" width="4" height="14" rx="1" />
             </svg>
           </Button>
-        </div>
+        </BoardTimerCell>
         {foundationCards.map((card, foundationIndex) => (
           <Foundation
             key={`foundation-${foundationIndex}`}
@@ -187,8 +197,8 @@ function Foundations({
             boardController={boardController}
           />
         ))}
-      </div>
-    </div>
+      </PileRow>
+    </BoardTop>
   );
 }
 

@@ -23,7 +23,7 @@ export const BannerRoot = styled.div<BannerRootProps>`
     $sticky
       ? css`
           position: sticky;
-          top: var(--nav-height, 56px);
+          top: var(--nav-height, 80px);
           z-index: calc(var(--z-navbar, 400) - 1);
         `
       : ""}
@@ -37,7 +37,6 @@ export const BannerInner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px;
 
   @media (max-width: 700px) {
     flex-direction: column;
