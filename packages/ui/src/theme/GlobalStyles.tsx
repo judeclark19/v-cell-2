@@ -64,9 +64,9 @@ const GlobalStyleSheet = createGlobalStyle`
     --z-card: 1;
     --z-drag: 100;
     --z-overlay: 200;
-    --z-modal: 300;
     --z-navbar: 400;
     --z-popover: 500;
+    --z-modal: 600;
 
     --font-ui: "Avenir Next", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
     --radius: 8px;
@@ -351,6 +351,9 @@ const GlobalStyleSheet = createGlobalStyle`
   h1,
   h2 {
     margin-bottom: 1rem;
+  }
+  h3 {
+    margin-bottom: 0.5rem;
   }
 
   header {

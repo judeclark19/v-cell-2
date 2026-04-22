@@ -37,7 +37,9 @@ export function AuthTabs({
   authFlows: ReturnType<typeof useLoginAuthFlows>;
 }) {
   const baseId = useId();
-  const [activeTab, setActiveTab] = useState<TabId>(() => readHashTab() ?? "login");
+  const [activeTab, setActiveTab] = useState<TabId>(
+    () => readHashTab() ?? "login"
+  );
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const panelRefs = useRef<Record<TabId, HTMLElement | null>>({
     login: null,
@@ -160,7 +162,11 @@ export function AuthTabs({
   ];
 
   return (
-    <Panel className="auth-card" maxWidth={500} style={{ margin: "0 auto" }}>
+    <Panel
+      className="auth-card"
+      maxWidth={500}
+      style={{ marginLeft: "auto", marginRight: "auto" }}
+    >
       <Tabs
         activeId={activeTab}
         animated={isHeightReady && !shouldReduceMotion}

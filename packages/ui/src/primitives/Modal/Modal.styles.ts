@@ -9,6 +9,8 @@ export const ModalOverlayRoot = styled.div`
 
   display: grid;
   place-items: center;
+  overflow: auto;
+  padding: var(--modal-viewport-padding, 24px);
 
   background: var(--modal-overlay-bg);
   backdrop-filter: blur(2px);
@@ -19,8 +21,11 @@ export const ModalOverlayRoot = styled.div`
 `;
 
 export const ModalPanel = styled.div`
-  width: min(420px, 92%);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: calc(100dvh - (var(--modal-viewport-padding, 24px) * 2));
   padding: 16px;
+  width: min(420px, 92vw);
 
   border-radius: var(--modal-radius);
   background: var(--modal-bg);
@@ -65,6 +70,8 @@ export const ModalCloseButton = styled.button`
 export const ModalBody = styled.div`
   display: grid;
   gap: 12px;
+  min-height: 0;
+  overflow: auto;
 `;
 
 export const ModalHint = styled.p`
@@ -73,8 +80,14 @@ export const ModalHint = styled.p`
 `;
 
 export const ModalActions = styled.div`
+  position: sticky;
+  bottom: 0;
+
   display: flex;
   gap: 8px;
+  padding-top: 12px;
+
+  background: var(--modal-bg);
 
   & > * {
     flex: 1;

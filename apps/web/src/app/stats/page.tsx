@@ -27,10 +27,14 @@ export default function StatsPage() {
     const last100 = ended.slice(0, 100);
     const last100Count = last100.length;
     const last100Wins = last100.filter((g) => g.status === "won").length;
-    const winRate =
+    const winRate100 =
       last100Count === 0 ? 0 : Math.round((last100Wins / last100Count) * 100);
 
     const wins = ended.filter((g) => g.status === "won");
+    const allTimeCount = ended.length;
+    const allTimeWins = wins.length;
+    const winRateAllTime =
+      allTimeCount === 0 ? 0 : Math.round((allTimeWins / allTimeCount) * 100);
 
     const fastest = wins
       .filter((g) => typeof g.timeElapsedMs === "number")
@@ -56,7 +60,10 @@ export default function StatsPage() {
       ended,
       last100Count,
       last100Wins,
-      winRate,
+      winRate: winRate100,
+      allTimeCount,
+      allTimeWins,
+      winRateAllTime,
       fastest,
       fewestMoves
     };
@@ -82,8 +89,20 @@ export default function StatsPage() {
           <p style={{ opacity: 0.75 }}>Loading session…</p>
         ) : isUser ? (
           <>
-            <h2 style={{ marginBottom: 8 }}>Completed Games</h2>
+            <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
             <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+              <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
+              out of {derived.last100Count} games)
+            </p>
+
+            <h2 style={{ marginBottom: 8 }}>Win rate (all time)</h2>
+            <p style={{ marginTop: 0, marginBottom: "2rem" }}>
+              <strong>{derived.winRateAllTime}%</strong> ({derived.allTimeWins}{" "}
+              wins out of {derived.allTimeCount} games)
+            </p>
+
+            <h2 style={{ marginBottom: 8 }}>Total Completed Games</h2>
+            <p style={{ marginTop: 0 }}>
               {derived.ended.length === 0 ? (
                 <strong>No games finished yet.</strong>
               ) : (
@@ -95,12 +114,6 @@ export default function StatsPage() {
                   )}
                 </>
               )}
-            </p>
-
-            <h2 style={{ marginBottom: 8 }}>Win rate (last 100 games)</h2>
-            <p style={{ marginTop: 0 }}>
-              <strong>{derived.winRate}%</strong> ({derived.last100Wins} wins
-              out of {derived.last100Count} games)
             </p>
           </>
         ) : (

@@ -10,6 +10,7 @@ type ModalOverlayProps = {
   onClose: () => void;
   body?: ReactNode;
   bodyText?: string;
+  primaryButtonDisabled?: boolean;
   primaryButtonLabel: string;
   primaryButtonAction?: () => void;
   secondaryButtonLabel?: string;
@@ -24,6 +25,7 @@ export default function ModalOverlay({
   onClose,
   body,
   bodyText,
+  primaryButtonDisabled = false,
   primaryButtonLabel,
   primaryButtonAction = onClose,
   secondaryButtonLabel,
@@ -124,7 +126,11 @@ export default function ModalOverlay({
             </Button>
           )}
 
-          <Button ref={primaryButtonRef} onClick={primaryButtonAction}>
+          <Button
+            ref={primaryButtonRef}
+            disabled={primaryButtonDisabled}
+            onClick={primaryButtonAction}
+          >
             {primaryButtonLabel}
           </Button>
         </>

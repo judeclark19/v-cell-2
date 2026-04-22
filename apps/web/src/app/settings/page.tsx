@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, Panel, Select } from "@vcell/ui";
+import { Field, Select } from "@vcell/ui";
 import { useTheme, type Theme } from "@/state/theme/ThemeProvider";
 import { useSession } from "@/state/auth/AuthProvider";
 import AccountSettings from "@/ui/AccountSettings";
@@ -14,6 +14,13 @@ import {
 import { AppDispatch } from "@/state/reduxStore";
 import { useIsOffline } from "@/state/network/useIsOffline";
 import type { MotionPreference } from "@/state/ui/motionPreference";
+import {
+  SettingsFields,
+  SettingsHeader,
+  SettingsHint,
+  SettingsPanel,
+  SettingsPanels
+} from "./page.styles";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -26,85 +33,80 @@ export default function SettingsPage() {
 
   return (
     <main>
-      <header>
-        <h1 style={{ textAlign: "center" }}>Settings</h1>
-      </header>
+      <SettingsHeader>
+        <h1>Settings</h1>
+      </SettingsHeader>
+      <SettingsPanels>
+        <SettingsPanel as="section" padding="lg" aria-label="Account settings">
+          <h2>Account</h2>
 
-      <Panel
-        as="section"
-        padding="lg"
-        aria-label="Account settings"
-        style={{ margin: "0 auto 2rem" }}
-      >
-        <h2>Account</h2>
+          {isOffline ? (
+            <SettingsHint>
+              Cloud sync is unavailable right now. Account settings are
+              unavailable until the connection recovers.
+            </SettingsHint>
+          ) : isUser ? (
+            <AccountSettings />
+          ) : (
+            <SettingsHint>Log in to access account settings.</SettingsHint>
+          )}
+        </SettingsPanel>
 
-        {isOffline ? (
-          <p className="hint">
-            Cloud sync is unavailable right now. Account settings are
-            unavailable until the connection recovers.
-          </p>
-        ) : isUser ? (
-          <AccountSettings />
-        ) : (
-          <p className="hint">Log in to access account settings.</p>
-        )}
-      </Panel>
-
-      <Panel
-        as="section"
-        padding="lg"
-        aria-label="Appearance settings"
-        style={{ margin: "0 auto" }}
-      >
-        <h2>Appearance</h2>
-        <div className="grid">
-          <Field
-            label="Theme"
-            hint="Saved locally. If you haven’t chosen a theme yet, OS dark mode defaults to Times Dark."
-          >
-            <Select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as Theme)}
+        <SettingsPanel
+          as="section"
+          padding="lg"
+          aria-label="Appearance settings"
+        >
+          <h2>Appearance</h2>
+          <SettingsFields>
+            <Field
+              label="Theme"
+              hint="Saved locally. If you haven’t chosen a theme yet, OS dark mode defaults to Times Dark."
             >
-              <option value="poker">Poker</option>
-              <option value="times-light">Times Light</option>
-              <option value="times-dark">Times Dark</option>
-            </Select>
-          </Field>
+              <Select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as Theme)}
+              >
+                <option value="poker">Poker</option>
+                <option value="times-light">Times Light</option>
+                <option value="times-dark">Times Dark</option>
+              </Select>
+            </Field>
 
-          <Field label="Show timer">
-            <Select
-              id="show-timer"
-              value={showTimer ? "true" : "false"}
-              onChange={(e) =>
-                dispatch(setShowTimer(e.target.value === "true"))
-              }
-            >
-              <option value="true">Show</option>
-              <option value="false">Hide</option>
-            </Select>
-          </Field>
+            <Field label="Show timer">
+              <Select
+                id="show-timer"
+                value={showTimer ? "true" : "false"}
+                onChange={(e) =>
+                  dispatch(setShowTimer(e.target.value === "true"))
+                }
+              >
+                <option value="true">Show</option>
+                <option value="false">Hide</option>
+              </Select>
+            </Field>
 
-          <Field
-            label="Reduce motion"
-            hint="System default follows your OS reduced-motion setting."
-          >
-            <Select
-              id="reduce-motion"
-              value={motionPreference}
-              onChange={(e) =>
-                dispatch(
-                  setMotionPreference(e.target.value as MotionPreference)
-                )
-              }
+            <Field
+              label="Reduce motion"
+              hint="System default follows your OS reduced-motion setting."
             >
-              <option value="system">System default</option>
-              <option value="reduce">Reduce motion</option>
-              <option value="full">Full motion</option>
-            </Select>
-          </Field>
-        </div>
-      </Panel>
+              <Select
+                id="reduce-motion"
+                value={motionPreference}
+                onChange={(e) =>
+                  dispatch(
+                    setMotionPreference(e.target.value as MotionPreference)
+                  )
+                }
+              >
+                <option value="system">System default</option>
+                <option value="reduce">Reduce motion</option>
+                <option value="full">Full motion</option>
+              </Select>
+            </Field>
+          </SettingsFields>
+        </SettingsPanel>
+      </SettingsPanels>
     </main>
   );
 }

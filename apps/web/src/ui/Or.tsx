@@ -7,7 +7,8 @@ function Or() {
           alignItems: "center",
           gap: 8,
           fontSize: 14,
-          margin: "24px 0"
+          marginBottom: 24,
+          marginTop: 24
         }}
       >
         <span

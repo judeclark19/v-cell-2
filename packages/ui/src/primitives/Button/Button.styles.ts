@@ -4,11 +4,9 @@ import styled, { css } from "styled-components";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 
-export type ButtonSize = "md" | "lg";
-
 type StyledButtonProps = {
+  $active: boolean;
   $fullWidth: boolean;
-  $size: ButtonSize;
   $variant: ButtonVariant;
 };
 
@@ -50,20 +48,14 @@ const variantStyles = {
   `
 } satisfies Record<ButtonVariant, ReturnType<typeof css>>;
 
-const sizeStyles = {
-  md: css`
-    padding: 8px 12px;
-  `,
-  lg: css`
-    padding: 10px 14px;
-  `
-} satisfies Record<ButtonSize, ReturnType<typeof css>>;
-
 export const ButtonRoot = styled.button<StyledButtonProps>`
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-height: 40px;
+  padding: 0 12px;
   width: ${({ $fullWidth }) => ($fullWidth ? "100%" : "auto")};
 
   border-radius: var(--btn-radius);
@@ -79,8 +71,15 @@ export const ButtonRoot = styled.button<StyledButtonProps>`
     border-color 120ms ease,
     opacity 120ms ease;
 
-  ${({ $size }) => sizeStyles[$size]}
   ${({ $variant }) => variantStyles[$variant]}
+  ${({ $active }) =>
+    $active
+      ? css`
+          border-color: var(--accent);
+          box-shadow: inset 0 0 0 1px
+            color-mix(in srgb, var(--accent) 55%, transparent);
+        `
+      : null}
 
   &:active {
     transform: translateY(1px);
