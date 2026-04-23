@@ -50,6 +50,7 @@ export const archiveCompletedGame = createAsyncThunk<
 
   const completedGames = selectCompletedGames(thunkApi.getState());
   if (completedGames.some((g) => g.sessionId === completed.sessionId)) {
+    await deleteInProgressGameForDevice(args.deviceId).catch(() => {});
     return;
   }
 

@@ -40,7 +40,11 @@ export const sessionSlice = createSlice({
     setSessionId: (state, action: PayloadAction<string | undefined>) => {
       let newId;
 
-      if (!action.payload || action.payload === "game-boot") {
+      if (
+        !action.payload ||
+        action.payload === "game-boot" ||
+        action.payload === "session-boot"
+      ) {
         newId = safeRandomId();
       } else {
         newId = action.payload;
