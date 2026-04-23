@@ -31,6 +31,10 @@ export const ModalPanel = styled.div`
   background: var(--modal-bg);
   border: 1px solid var(--modal-border);
   box-shadow: var(--modal-shadow);
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 export const ModalHeader = styled.div`
