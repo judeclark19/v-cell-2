@@ -87,8 +87,6 @@ export const ModalActions = styled.div`
   gap: 8px;
   padding-top: 12px;
 
-  background: var(--modal-bg);
-
   & > * {
     flex: 1;
   }
