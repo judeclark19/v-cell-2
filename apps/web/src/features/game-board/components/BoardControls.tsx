@@ -9,7 +9,10 @@ import {
 } from "@vcell/ui";
 import { selectSeed, selectStatus } from "@/state/game/gameSlice";
 import { AppDispatch } from "@/state/reduxStore";
-import { selectStartedAtMs } from "@/state/session/sessionSlice";
+import {
+  selectSessionPhase,
+  selectStartedAtMs
+} from "@/state/session/sessionSlice";
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { toggleSettingsModal } from "@/state/ui/uiSlice";
@@ -30,12 +33,16 @@ export default function BoardControls({
 
   // Session state
   const startedAtMs = useSelector(selectStartedAtMs);
+  const sessionPhase = useSelector(selectSessionPhase);
 
   // Game state
   const status = useSelector(selectStatus);
   const seed = useSelector(selectSeed);
+  const isSessionReady = sessionPhase === "ready";
 
   const onNewDeal = async () => {
+    if (!isSessionReady) return;
+
     const ok =
       !(startedAtMs && status === "in_progress") ||
       (await requestConfirmation({
@@ -50,6 +57,8 @@ export default function BoardControls({
   };
 
   const startBySeed = async (seed: string) => {
+    if (!isSessionReady) return;
+
     boardController.startBySeed(seed);
     setSeedInput("");
     setSeedMenuOpen(false);
@@ -89,7 +98,12 @@ export default function BoardControls({
     <BoardControlsStyle>
       {/* <Button onClick={onNewDeal}>New deal</Button> */}
 
-      <Button type="button" onClick={onNewDeal} title="New deal">
+      <Button
+        type="button"
+        onClick={onNewDeal}
+        title="New deal"
+        disabled={!isSessionReady}
+      >
         <Shuffle aria-hidden="true" size={28} />
       </Button>
 
@@ -119,6 +133,7 @@ export default function BoardControls({
               id="seed-menu-input"
               inputMode="text"
               autoComplete="off"
+              disabled={!isSessionReady}
               spellCheck={false}
               placeholder="Enter seed..."
               value={seedInput}
@@ -130,7 +145,7 @@ export default function BoardControls({
             <Button
               type="submit"
               variant="secondary"
-              disabled={!seedInput.trim()}
+              disabled={!isSessionReady || !seedInput.trim()}
             >
               Play
             </Button>
@@ -153,7 +168,11 @@ export default function BoardControls({
           aria-expanded={seedMenuOpen}
           aria-haspopup="dialog"
           aria-label={seedMenuOpen ? "Close seed menu" : "Open seed menu"}
-          onClick={() => setSeedMenuOpen((open) => !open)}
+          disabled={!isSessionReady}
+          onClick={() => {
+            if (!isSessionReady) return;
+            setSeedMenuOpen((open) => !open);
+          }}
           title="Seed"
         >
           <Sprout aria-hidden="true" size={28} />
@@ -162,6 +181,7 @@ export default function BoardControls({
 
       <Button
         type="button"
+        disabled={!isSessionReady}
         onClick={() => dispatch(toggleSettingsModal())}
         title="Settings"
       >

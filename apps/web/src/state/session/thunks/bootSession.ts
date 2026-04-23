@@ -1,7 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { Rules } from "@vcell/engine";
 
-import { getInProgressGameForDevice } from "@/persistence/inProgressGamesStore";
+import { getCompletedGameBySessionId } from "@/persistence/completedGamesStore";
+import {
+  deleteInProgressGameForDevice,
+  getInProgressGameForDevice
+} from "@/persistence/inProgressGamesStore";
+import { isCompletedStatus } from "@/persistence/reconciliation";
 import { getOrCreateDeviceId } from "@/persistence/schema";
 
 import { transitionGameAndSession } from "../../transitionGameAndSession";
@@ -33,27 +38,40 @@ export const bootSession = createAsyncThunk<
   const deviceId = getOrCreateDeviceId();
   const saved = await getInProgressGameForDevice(deviceId);
 
-  // If we have a saved in-progress game, hydrate it directly into READY.
-  if (saved && saved.seed && saved.sessionId) {
-    thunkApi.dispatch(
-      hydrateFromPersisted({
-        seed: saved.seed,
-        rules: saved.rules,
-        moves: saved.moves,
-        cursor: saved.cursor,
-        fallbackRules: rules,
-        // Prefer the saved rules' undoLimit if present, otherwise use current rules.
-        undoLimit: saved.rules.undoLimit
-      })
-    );
-    thunkApi.dispatch(setSessionPhase("ready"));
-    thunkApi.dispatch(setPaused(saved.paused ?? false));
-    thunkApi.dispatch(setStartedAtMs(saved.startedAtMs ?? null));
-    thunkApi.dispatch(setEndedAtMs(saved.endedAtMs ?? null));
-    thunkApi.dispatch(setSessionId(saved.sessionId));
-    thunkApi.dispatch(setTimeElapsedMs(saved.timeElapsedMs ?? 0));
+  if (saved?.sessionId) {
+    const isBootPlaceholder =
+      saved.seed === "seed-boot" ||
+      saved.sessionId === "game-boot" ||
+      saved.sessionId === "session-boot";
+    const completed = await getCompletedGameBySessionId(saved.sessionId);
+    if (
+      isBootPlaceholder ||
+      isCompletedStatus(saved.status) ||
+      (completed && isCompletedStatus(completed.status))
+    ) {
+      await deleteInProgressGameForDevice(deviceId).catch(() => {});
+    } else if (saved.seed) {
+      // If we have a saved in-progress game, hydrate it directly into READY.
+      thunkApi.dispatch(
+        hydrateFromPersisted({
+          seed: saved.seed,
+          rules: saved.rules,
+          moves: saved.moves,
+          cursor: saved.cursor,
+          fallbackRules: rules,
+          // Prefer the saved rules' undoLimit if present, otherwise use current rules.
+          undoLimit: saved.rules.undoLimit
+        })
+      );
+      thunkApi.dispatch(setSessionPhase("ready"));
+      thunkApi.dispatch(setPaused(saved.paused ?? false));
+      thunkApi.dispatch(setStartedAtMs(saved.startedAtMs ?? null));
+      thunkApi.dispatch(setEndedAtMs(saved.endedAtMs ?? null));
+      thunkApi.dispatch(setSessionId(saved.sessionId));
+      thunkApi.dispatch(setTimeElapsedMs(saved.timeElapsedMs ?? 0));
 
-    return { kind: "hydrated" as const };
+      return { kind: "hydrated" as const };
+    }
   }
 
   // Otherwise start a fresh session and immediately mark READY.

@@ -13,6 +13,8 @@ import {
   upsertInProgressGame,
   deleteInProgressGameForDevice
 } from "../inProgressGamesStore";
+import { getCompletedGameBySessionId } from "../completedGamesStore";
+import { isCompletedStatus } from "../reconciliation";
 import { getOrCreateDeviceId } from "../schema";
 
 import type { PersistedGame } from "../types";
@@ -208,6 +210,28 @@ export function useInProgressGamePersistence({
         if (cancelled) return;
 
         if (!saved) {
+          onHydrated?.(null);
+          armForSession(sessionKey);
+          setHydrationVersion((v) => v + 1);
+          return;
+        }
+
+        const completed = await getCompletedGameBySessionId(saved.sessionId);
+        if (cancelled) return;
+
+        const isBootPlaceholder =
+          saved.seed === "seed-boot" ||
+          saved.sessionId === "game-boot" ||
+          saved.sessionId === "session-boot";
+
+        if (
+          isBootPlaceholder ||
+          isCompletedStatus(saved.status) ||
+          (completed && isCompletedStatus(completed.status))
+        ) {
+          await deleteInProgressGameForDevice(deviceId).catch(() => {});
+          if (cancelled) return;
+
           onHydrated?.(null);
           armForSession(sessionKey);
           setHydrationVersion((v) => v + 1);

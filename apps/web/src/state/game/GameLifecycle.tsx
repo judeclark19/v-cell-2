@@ -52,6 +52,9 @@ export function GameLifecycle() {
 
   const didBootstrapRef = useRef(false);
   const prevUidRef = useRef<string | null>(uid);
+  const isBootSeed = seed === "seed-boot";
+  const isBootSessionId =
+    sessionId === "game-boot" || sessionId === "session-boot";
 
   const startNewDealSession = useCallback(() => {
     dispatch(
@@ -67,7 +70,7 @@ export function GameLifecycle() {
   useReconnectCloudSync(uid, authReady);
 
   useEffect(() => {
-    if (seed !== "seed-boot" && sessionId !== "session-boot") return;
+    if (!isBootSeed && !isBootSessionId) return;
     if (didBootstrapRef.current) return;
     didBootstrapRef.current = true;
 
@@ -84,7 +87,7 @@ export function GameLifecycle() {
     return () => {
       didBootstrapRef.current = false;
     };
-  }, [dispatch, rules, seed, sessionId]);
+  }, [dispatch, isBootSeed, isBootSessionId, rules]);
 
   useEffect(() => {
     if (sessionPhase !== "ready") return;
@@ -109,7 +112,9 @@ export function GameLifecycle() {
     <>
       <SessionTimerDriver />
       <InProgressPersistenceDriver
-        readyToHydrate={!!sessionId && !!seed}
+        readyToHydrate={
+          sessionPhase === "ready" && !isBootSeed && !isBootSessionId
+        }
         rules={rules}
         moves={moves}
         cursor={cursor}
