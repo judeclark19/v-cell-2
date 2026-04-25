@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { Button, Input } from "@vcell/ui";
+import { Button, Input, Panel } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 
 function ForgotPasswordInner() {
@@ -56,7 +56,14 @@ function ForgotPasswordInner() {
   };
 
   return (
-    <main>
+    <Panel
+      padding="lg"
+      aria-label="Forgot password form"
+      style={{
+        maxWidth: 480,
+        margin: "2rem auto"
+      }}
+    >
       <header style={{ marginBottom: 16 }}>
         <h1 style={{ marginBottom: 8 }}>Reset your password</h1>
         <p style={{ opacity: 0.85, marginBottom: 0 }}>
@@ -106,12 +113,15 @@ function ForgotPasswordInner() {
             Check your email, especially the spam folder! After you reset your
             password, come back and log in.
           </p>
-          <Button as={Link} href={`/login?next=${encodeURIComponent(nextPath)}`}>
+          <Button
+            as={Link}
+            href={`/login?next=${encodeURIComponent(nextPath)}`}
+          >
             Return to login
           </Button>
         </section>
       )}
-    </main>
+    </Panel>
   );
 }
 
