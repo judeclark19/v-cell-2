@@ -17,7 +17,7 @@ import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { toggleSettingsModal } from "@/state/ui/uiSlice";
 
-import { Shuffle, Settings, Sprout } from "lucide-react";
+import { Shuffle, Settings, Sprout, CircleQuestionMark } from "lucide-react";
 import SeedButton from "@/ui/SeedButton";
 
 export default function BoardControls({
@@ -186,6 +186,19 @@ export default function BoardControls({
         title="Settings"
       >
         <Settings aria-hidden="true" size={28} />
+      </Button>
+
+      {/* question mark button goes to /how-to-play */}
+      <Button
+        type="button"
+        disabled={!isSessionReady}
+        onClick={() => {
+          if (!isSessionReady) return;
+          window.location.href = "/how-to-play";
+        }}
+        title="How to play"
+      >
+        <CircleQuestionMark aria-hidden="true" size={28} />
       </Button>
     </BoardControlsStyle>
   );
