@@ -14,7 +14,7 @@ import SeedButton from "./SeedButton";
 import { formatDateAndTime, formatElapsed } from "./utils";
 
 export type GameStats = {
-  winRate: number;
+  winRate: string;
   last100Wins: number;
   last100Count: number;
   fastest: PersistedGame[];

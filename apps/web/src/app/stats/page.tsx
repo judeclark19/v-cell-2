@@ -29,13 +29,17 @@ export default function StatsPage() {
     const last100Count = last100.length;
     const last100Wins = last100.filter((g) => g.status === "won").length;
     const winRate100 =
-      last100Count === 0 ? 0 : Math.round((last100Wins / last100Count) * 100);
+      last100Count === 0
+        ? "0"
+        : Number(((last100Wins / last100Count) * 100).toFixed(2)).toString();
 
     const wins = ended.filter((g) => g.status === "won");
     const allTimeCount = ended.length;
     const allTimeWins = wins.length;
     const winRateAllTime =
-      allTimeCount === 0 ? 0 : Math.round((allTimeWins / allTimeCount) * 100);
+      allTimeCount === 0
+        ? "0"
+        : Number(((allTimeWins / allTimeCount) * 100).toFixed(2)).toString();
 
     const fastest = wins
       .filter((g) => typeof g.timeElapsedMs === "number")
