@@ -4,7 +4,7 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
-import { Button, PasswordInput } from "@vcell/ui";
+import { Button, Panel, PasswordInput } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 
 function ResetPasswordInner() {
@@ -35,7 +35,9 @@ function ResetPasswordInner() {
       try {
         if (mode !== "resetPassword") {
           if (!cancelled) {
-            setSentinelError("This link is not a password reset link.");
+            setSentinelError(
+              "The current URL is not a valid password reset link."
+            );
             setVerifying(false);
           }
           return;
@@ -118,16 +120,19 @@ function ResetPasswordInner() {
   };
 
   return (
-    <main>
+    <Panel
+      padding="lg"
+      aria-label="Forgot password form"
+      style={{
+        maxWidth: 480,
+        margin: "2rem auto"
+      }}
+    >
       <header style={{ marginBottom: 16 }}>
         <h1 style={{ marginBottom: 8 }}>Set a new password</h1>
-        {email ? (
+        {email && (
           <p style={{ opacity: 0.85, marginBottom: 0 }}>
             Resetting password for <strong>{email}</strong>
-          </p>
-        ) : (
-          <p style={{ opacity: 0.85, marginBottom: 0 }}>
-            Choose a new password for your account.
           </p>
         )}
       </header>
@@ -196,7 +201,7 @@ function ResetPasswordInner() {
           </div>
         </form>
       )}
-    </main>
+    </Panel>
   );
 }
 
