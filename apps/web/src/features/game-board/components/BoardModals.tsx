@@ -194,7 +194,8 @@ export default function BoardModals() {
     const lastN = ended.slice(0, n);
     const wins = lastN.filter((g) => g.status === "won").length;
     const count = lastN.length;
-    const winRate = count === 0 ? 0 : Math.round((wins / count) * 100);
+    const winRate =
+      count === 0 ? "0" : Number(((wins / count) * 100).toFixed(2)).toString();
 
     return { count, wins, winRate };
   }
@@ -217,12 +218,13 @@ export default function BoardModals() {
     const displayMoveCount = currentCompletedGame?.moveCount ?? moveCount;
     const displayTimeElapsedMs =
       currentCompletedGame?.timeElapsedMs ?? timeElapsedMs;
+    const { wins, count, winRate } = deriveWinRateLastN(completedGames);
 
     let bodyText = `Moves: ${displayMoveCount} • Time: ${formatElapsed(displayTimeElapsedMs)}`;
 
     if (!isUser) return bodyText; // only show win rate and records to signed-in users since it's based on persisted history
 
-    bodyText += `\nYou have won ${deriveWinRateLastN(completedGames).wins} out of your last ${deriveWinRateLastN(completedGames).count} games (${deriveWinRateLastN(completedGames).winRate}% win rate)`;
+    bodyText += `\nYou have won ${wins} out of your last ${count} games (${winRate}% win rate)`;
 
     if (isNewBestTime) {
       bodyText += "\n🎉 New record for fastest game!";
