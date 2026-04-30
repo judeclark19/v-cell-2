@@ -10,7 +10,7 @@ import { AuthStatusModal } from "@/state/ui/AuthStatusModal";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "V-Cell (alpha)",
+  title: "V-Cell",
   applicationName: "V-Cell",
   description: "A solitaire game with a twist on freecell",
   manifest: "/manifest.webmanifest",
