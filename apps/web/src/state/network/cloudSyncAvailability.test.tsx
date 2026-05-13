@@ -103,6 +103,28 @@ describe("cloudSyncAvailability", () => {
     expect(result.current.lastSuccessAtMs).toBe(20);
   });
 
+  it("resets persisted degraded state for guest mode", async () => {
+    writePersistedAvailability({
+      lastError: "stale emulator failure",
+      lastFailureAtMs: 50,
+      lastSuccessAtMs: 0
+    });
+
+    const cloudSyncAvailability = await loadCloudSyncAvailabilityModule();
+    const { result } = renderHook(() => cloudSyncAvailability.useCloudSyncAvailability());
+
+    expect(result.current.cloudUnavailable).toBe(true);
+
+    act(() => {
+      cloudSyncAvailability.resetCloudSyncAvailability();
+    });
+
+    expect(result.current.cloudUnavailable).toBe(false);
+    expect(result.current.lastError).toBeNull();
+    expect(result.current.lastFailureAtMs).toBe(0);
+    expect(result.current.lastSuccessAtMs).toBe(0);
+  });
+
   it("clears persisted degraded state only after a real success writer runs", async () => {
     writePersistedAvailability({
       lastError: "timeout",

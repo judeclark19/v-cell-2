@@ -30,6 +30,7 @@ import {
   setAuthState
 } from "@/state/auth/authSlice";
 import { LOGIN_PROMPT_DISMISS_KEY } from "@/ui/LoginPrompt";
+import { resetCloudSyncAvailability } from "@/state/network/cloudSyncAvailability";
 
 export type RequireUserResult =
   | { ok: true }
@@ -82,6 +83,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        resetCloudSyncAvailability();
+      }
+
       dispatch(
         setAuthState({
           authReady: true,
