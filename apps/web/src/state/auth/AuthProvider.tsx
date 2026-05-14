@@ -170,7 +170,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const derivedDisplayName = uid
       ? authDisplayName ||
-        (profileState.uid === uid ? profileState.displayName ?? "" : "")
+        (profileState.uid === uid ? (profileState.displayName ?? "") : "")
       : "";
 
     const derivedProfileReady = uid
@@ -190,7 +190,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         profileState.uid === uid ? profileState.needsHowToPlay : false,
       displayName: derivedDisplayName
     };
-  }, [uid, authReady, profileState]);
+  }, [uid, authReady, profileState, dispatch]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
