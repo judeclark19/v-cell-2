@@ -7,6 +7,7 @@ import { ServiceWorkerRegistration } from "@/ui/ServiceWorkerRegistration";
 import { InstallPrompt } from "@/ui/InstallPrompt";
 import { LoginPrompt } from "@/ui/LoginPrompt";
 import { AuthStatusModal } from "@/state/ui/AuthStatusModal";
+import { RouteTransitionBoundary } from "@/ui/RouteTransition";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -110,7 +111,9 @@ export default function RootLayout({
             <InstallPrompt />
             <LoginPrompt />
             <main className="app-main">
-              <div className="max-width-container">{children}</div>
+              <div className="max-width-container">
+                <RouteTransitionBoundary>{children}</RouteTransitionBoundary>
+              </div>
             </main>
             <AuthStatusModal />
             <footer>

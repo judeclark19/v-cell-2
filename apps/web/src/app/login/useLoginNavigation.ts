@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "@/state/auth/AuthProvider";
+import { useRouteTransitionRouter } from "@/ui/RouteTransition";
 
 export type LoginNavigationState = {
   nextPath: string;
@@ -10,7 +11,7 @@ export type LoginNavigationState = {
 };
 
 export function useLoginNavigation(): LoginNavigationState {
-  const router = useRouter();
+  const router = useRouteTransitionRouter();
   const searchParams = useSearchParams();
   const { isUser, hydrated } = useSession();
 

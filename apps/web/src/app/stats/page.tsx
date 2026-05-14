@@ -5,10 +5,10 @@ import { useMemo } from "react";
 import { Button, Panel } from "@vcell/ui";
 import { useSession } from "@/state/auth/AuthProvider";
 import { selectCompletedGames } from "@/state/records/recordsSlice";
-import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
 import { selectDisplayName, selectEmail } from "@/state/auth/authSlice";
 import { formatDate } from "@/ui/utils";
+import StatsTabs from "./StatsTabs";
 
 export default function StatsPage() {
   const { isUser, hydrated } = useSession();
@@ -145,7 +145,7 @@ export default function StatsPage() {
           )}
         </Panel>
 
-        {!hydrated ? null : <UserStatsTables derived={derived} />}
+        {!hydrated ? null : <StatsTabs derived={derived} />}
       </main>
     </>
   );

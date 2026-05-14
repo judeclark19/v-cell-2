@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   NavBar as NavBarRow,
   NavBrand,
@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
 import { openAuthStatusModal } from "@/state/ui/uiSlice";
 import type { AppDispatch } from "@/state/reduxStore";
+import { useRouteTransitionRouter } from "@/ui/RouteTransition";
 
 const NAV_LINKS = [
   { href: "/game", label: "Game" },
@@ -42,7 +43,7 @@ export function NavBar() {
   const { logout, hydrated } = useSession();
   const { theme, setTheme } = useTheme();
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const router = useRouteTransitionRouter();
   const pathname = usePathname();
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");

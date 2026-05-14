@@ -30,6 +30,8 @@ import {
   setAuthState
 } from "@/state/auth/authSlice";
 import { LOGIN_PROMPT_DISMISS_KEY } from "@/ui/LoginPrompt";
+import { resetCloudSyncAvailability } from "@/state/network/cloudSyncAvailability";
+import { clearCompletedGames as clearCompletedGamesState } from "@/state/records/recordsSlice";
 
 export type RequireUserResult =
   | { ok: true }
@@ -82,6 +84,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        resetCloudSyncAvailability();
+      }
+
       dispatch(
         setAuthState({
           authReady: true,
@@ -147,6 +153,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         // Clear local persistence so guest mode starts fresh.
         await deleteInProgressGameForDevice(deviceId);
         await clearCompletedGames();
+        dispatch(clearCompletedGamesState());
       } finally {
         // Always attempt sign-out even if local cleanup fails.
         await signOut(auth);
@@ -163,7 +170,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const derivedDisplayName = uid
       ? authDisplayName ||
-        (profileState.uid === uid ? profileState.displayName ?? "" : "")
+        (profileState.uid === uid ? (profileState.displayName ?? "") : "")
       : "";
 
     const derivedProfileReady = uid
@@ -183,7 +190,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         profileState.uid === uid ? profileState.needsHowToPlay : false,
       displayName: derivedDisplayName
     };
-  }, [uid, authReady, profileState]);
+  }, [uid, authReady, profileState, dispatch]);
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

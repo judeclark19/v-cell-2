@@ -231,6 +231,16 @@ export function markCloudSyncUnavailable(err: unknown) {
   });
 }
 
+export function resetCloudSyncAvailability() {
+  ensureClientStateHydrated();
+  updateState({
+    browserOffline: getBrowserOfflineSnapshot(),
+    lastError: null,
+    lastFailureAtMs: 0,
+    lastSuccessAtMs: 0
+  });
+}
+
 export function useCloudSyncAvailability(): CloudSyncAvailabilitySnapshot {
   const snapshot = useSyncExternalStore(
     subscribe,
