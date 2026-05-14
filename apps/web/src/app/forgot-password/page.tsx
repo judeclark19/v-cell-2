@@ -61,7 +61,9 @@ function ForgotPasswordInner() {
       aria-label="Forgot password form"
       style={{
         maxWidth: 480,
-        margin: "2rem auto"
+        marginTop: "2rem",
+        marginLeft: "auto",
+        marginRight: "auto"
       }}
     >
       <header style={{ marginBottom: 16 }}>

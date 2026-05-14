@@ -22,6 +22,7 @@ import {
   SettingsPanel,
   SettingsPanels
 } from "./page.styles";
+import { SettingsRouteLoading } from "./skeleton";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -31,6 +32,8 @@ export default function SettingsPage() {
   const motionPreference = useSelector(selectMotionPreference);
   const dispatch = useDispatch<AppDispatch>();
   const isOffline = useIsOffline();
+
+  return <SettingsRouteLoading />;
 
   return (
     <main>

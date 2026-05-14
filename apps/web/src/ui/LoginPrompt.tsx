@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Banner,
   BannerActions,
@@ -12,11 +12,16 @@ import {
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
 import { useIsOffline } from "@/state/network/useIsOffline";
+import {
+  useRouteTransition,
+  useRouteTransitionRouter
+} from "@/ui/RouteTransition";
 
 export const LOGIN_PROMPT_DISMISS_KEY = "vcell:loginPrompt:dismissed";
 
 export function LoginPrompt() {
-  const router = useRouter();
+  const router = useRouteTransitionRouter();
+  const { pendingPath } = useRouteTransition();
   const pathname = usePathname();
   const uid = useSelector(selectUid);
   const isOffline = useIsOffline();
@@ -40,7 +45,7 @@ export function LoginPrompt() {
     window.localStorage.setItem(LOGIN_PROMPT_DISMISS_KEY, "true");
   };
 
-  if (!shouldShow) return null;
+  if (pendingPath || !shouldShow) return null;
 
   return (
     <Banner role="status" aria-live="polite" sticky>

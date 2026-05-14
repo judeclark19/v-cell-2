@@ -7,7 +7,6 @@ import {
   selectTimeElapsedMs,
   setPaused
 } from "@/state/session/sessionSlice";
-import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { selectMoveCount, selectRules } from "@/state/game/gameSlice";
 import {
@@ -27,6 +26,7 @@ import { formatElapsed, parseFaceDownCount, parseUndoLimit } from "@/ui/utils";
 import { newDealThunk } from "@/state/session/thunks/newDeal";
 import { areRulesEqual } from "@/state/game/utils";
 import type { Rules } from "@vcell/engine";
+import { useRouteTransitionRouter } from "@/ui/RouteTransition";
 
 export type ConfirmRequest = {
   title: string;
@@ -158,7 +158,7 @@ function GameSettingsModal({
 }
 
 export default function BoardModals() {
-  const router = useRouter();
+  const router = useRouteTransitionRouter();
 
   const dispatch = useDispatch<AppDispatch>();
   // Auth state

@@ -16,6 +16,7 @@ import {
 import { requestConfirmation } from "@/state/ui/requestConfirmation";
 import { useBoardControlSystem } from "../board-control/useBoardControlSystem";
 import { toggleSettingsModal } from "@/state/ui/uiSlice";
+import { useRouteTransitionRouter } from "@/ui/RouteTransition";
 
 import { Shuffle, Settings, Sprout, CircleQuestionMark } from "lucide-react";
 import SeedButton from "@/ui/SeedButton";
@@ -26,6 +27,7 @@ export default function BoardControls({
   boardController: ReturnType<typeof useBoardControlSystem>;
 }) {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouteTransitionRouter();
   const seedControlRef = useRef<HTMLDivElement | null>(null);
   const seedButtonRef = useRef<HTMLButtonElement | null>(null);
   const [seedInput, setSeedInput] = useState("");
@@ -194,7 +196,7 @@ export default function BoardControls({
         disabled={!isSessionReady}
         onClick={() => {
           if (!isSessionReady) return;
-          window.location.href = "/how-to-play";
+          router.push("/how-to-play");
         }}
         title="How to play"
       >

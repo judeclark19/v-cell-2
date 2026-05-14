@@ -9,8 +9,11 @@ import UserStatsTables from "@/ui/UserStatsTables";
 import { useSelector } from "react-redux";
 import { selectDisplayName, selectEmail } from "@/state/auth/authSlice";
 import { formatDate } from "@/ui/utils";
+import { StatsRouteLoading } from "./skeleton";
 
 export default function StatsPage() {
+  // return <StatsRouteLoading />;
+
   const { isUser, hydrated } = useSession();
   // auth slice
   const displayName = useSelector(selectDisplayName);

@@ -2,13 +2,14 @@
 
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { Button, Panel, PasswordInput } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
+import { useRouteTransitionRouter } from "@/ui/RouteTransition";
 
 function ResetPasswordInner() {
-  const router = useRouter();
+  const router = useRouteTransitionRouter();
   const searchParams = useSearchParams();
 
   const rawNext = searchParams.get("next");
@@ -125,7 +126,9 @@ function ResetPasswordInner() {
       aria-label="Forgot password form"
       style={{
         maxWidth: 480,
-        margin: "2rem auto"
+        marginTop: "2rem",
+        marginLeft: "auto",
+        marginRight: "auto"
       }}
     >
       <header style={{ marginBottom: 16 }}>
