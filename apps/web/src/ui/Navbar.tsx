@@ -53,6 +53,11 @@ export function NavBar() {
 
   const uid = useSelector(selectUid);
 
+  const handleNavigate = (href: string) => {
+    closeMenu();
+    router.push(href);
+  };
+
   const handleLogout = async () => {
     await logout();
     closeMenu();
@@ -72,7 +77,10 @@ export function NavBar() {
   ) : (
     <Link
       href="/login"
-      onClick={closeMenu}
+      onClick={(event) => {
+        event.preventDefault();
+        handleNavigate("/login");
+      }}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <NavLink as="span" $active={isActive("/login")}>
@@ -114,7 +122,10 @@ export function NavBar() {
         <NavBarRow>
           <Link
             href="/game"
-            onClick={closeMenu}
+            onClick={(event) => {
+              event.preventDefault();
+              handleNavigate("/game");
+            }}
             style={{ textDecoration: "none", color: "inherit" }}
           >
             <NavBrand as="span">
@@ -148,7 +159,10 @@ export function NavBar() {
                 <Link
                   key={href}
                   href={href}
-                  onClick={closeMenu}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleNavigate(href);
+                  }}
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
                   <NavLink as="span" $active={isActive(href)}>
