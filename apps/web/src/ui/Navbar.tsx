@@ -70,14 +70,15 @@ export function NavBar() {
       Log out
     </NavButton>
   ) : (
-    <NavLink
-      as={Link}
-      $active={isActive("/login")}
+    <Link
       href="/login"
       onClick={closeMenu}
+      style={{ textDecoration: "none", color: "inherit" }}
     >
-      Log in
-    </NavLink>
+      <NavLink as="span" $active={isActive("/login")}>
+        Log in
+      </NavLink>
+    </Link>
   );
 
   const ThemeControl = (
@@ -86,7 +87,10 @@ export function NavBar() {
         id="navbar-theme"
         value={theme}
         onChange={(e) => setTheme(e.target.value as Theme)}
-        style={{ backgroundColor: "transparent", borderColor: "var(--nav-button-border)" }}
+        style={{
+          backgroundColor: "transparent",
+          borderColor: "var(--nav-button-border)"
+        }}
       >
         {THEME_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -99,18 +103,31 @@ export function NavBar() {
 
   return (
     <NavRoot aria-label="Primary">
-      <div className="max-width-container">
+      <div
+        className="max-width-container"
+        style={{
+          height: "100%",
+          boxSizing: "border-box",
+          display: "grid"
+        }}
+      >
         <NavBarRow>
-          <NavBrand as={Link} href="/game" onClick={closeMenu}>
-            <Image
-              src="/images/vcell-logo.webp"
-              alt="V-Cell"
-              width={120}
-              height={30}
-              loading="eager"
-              unoptimized
-            />
-          </NavBrand>
+          <Link
+            href="/game"
+            onClick={closeMenu}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <NavBrand as="span">
+              <Image
+                src="/images/vcell-logo.webp"
+                alt="V-Cell"
+                width={120}
+                height={30}
+                loading="eager"
+                unoptimized
+              />
+            </NavBrand>
+          </Link>
 
           <NavBurger
             $open={menuOpen}
@@ -128,15 +145,16 @@ export function NavBar() {
           <NavPanel id="navbar-panel" $open={menuOpen}>
             <NavLinks>
               {NAV_LINKS.map(({ href, label }) => (
-                <NavLink
+                <Link
                   key={href}
-                  as={Link}
-                  $active={isActive(href)}
                   href={href}
                   onClick={closeMenu}
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
-                  {label}
-                </NavLink>
+                  <NavLink as="span" $active={isActive(href)}>
+                    {label}
+                  </NavLink>
+                </Link>
               ))}
             </NavLinks>
 
