@@ -17,10 +17,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <RouteTransitionProvider>
           <SettingsDriver />
           <SessionProvider>
-            <AuthGate>
-              <GameLifecycle />
-              {children}
-            </AuthGate>
+            <GameLifecycle />
+            {children}
           </SessionProvider>
         </RouteTransitionProvider>
       </ThemeProvider>

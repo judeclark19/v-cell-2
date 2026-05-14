@@ -9,6 +9,7 @@ import { LoginPrompt } from "@/ui/LoginPrompt";
 import { AuthStatusModal } from "@/state/ui/AuthStatusModal";
 import { RouteTransitionBoundary } from "@/ui/RouteTransition";
 import Link from "next/link";
+import { AuthGate } from "@/state/auth/AuthGate";
 
 export const metadata: Metadata = {
   title: "V-Cell",
@@ -112,7 +113,9 @@ export default function RootLayout({
             <LoginPrompt />
             <main className="app-main">
               <div className="max-width-container">
-                <RouteTransitionBoundary>{children}</RouteTransitionBoundary>
+                <AuthGate>
+                  <RouteTransitionBoundary>{children}</RouteTransitionBoundary>
+                </AuthGate>
               </div>
             </main>
             <AuthStatusModal />
