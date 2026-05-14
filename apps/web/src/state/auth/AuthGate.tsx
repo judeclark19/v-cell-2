@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "@/state/auth/AuthProvider";
 import { useSelector } from "react-redux";
 import { selectUid } from "@/state/auth/authSlice";
+import { RouteLoading } from "@/ui/RouteLoading";
 
 type Props = {
   children: React.ReactNode;
@@ -40,11 +41,11 @@ export function AuthGate({ children, howToPlayPath = "/how-to-play" }: Props) {
   ]);
 
   if (!authReady || shouldWaitForProfile) {
-    return null;
+    return <RouteLoading pathname={pathname} />;
   }
 
   if (shouldRedirectToHowToPlay) {
-    return null;
+    return <RouteLoading pathname={howToPlayPath} />;
   }
 
   return <>{children}</>;

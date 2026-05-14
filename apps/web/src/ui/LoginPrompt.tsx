@@ -10,7 +10,7 @@ import {
   Button
 } from "@vcell/ui";
 import { useSelector } from "react-redux";
-import { selectUid } from "@/state/auth/authSlice";
+import { selectAuthReady, selectUid } from "@/state/auth/authSlice";
 import { useIsOffline } from "@/state/network/useIsOffline";
 import {
   useRouteTransition,
@@ -23,6 +23,7 @@ export function LoginPrompt() {
   const router = useRouteTransitionRouter();
   const { pendingPath } = useRouteTransition();
   const pathname = usePathname();
+  const authReady = useSelector(selectAuthReady);
   const uid = useSelector(selectUid);
   const isOffline = useIsOffline();
 
@@ -33,12 +34,13 @@ export function LoginPrompt() {
 
   const shouldShow = useMemo(() => {
     if (typeof window === "undefined") return false;
+    if (!authReady) return false;
     if (dismissed) return false;
     if (uid) return false;
     if (isOffline) return false;
     if (pathname !== "/game") return false;
     return true;
-  }, [dismissed, uid, isOffline, pathname]);
+  }, [authReady, dismissed, uid, isOffline, pathname]);
 
   const dismiss = () => {
     setDismissed(true);
