@@ -29,16 +29,49 @@ const SummaryGrid = styled.div`
 `;
 
 const StatsPanelStack = styled.div`
-  display: grid;
-  gap: 1.5rem;
+  min-width: 0;
 `;
 
 const StatsPanel = styled(Panel).attrs({
   as: "section",
-  padding: "lg"
+  padding: "none"
 })``;
 
 const StatsPanelContent = styled.div`
+  display: grid;
+  gap: 1rem;
+`;
+
+const TabsListSkeleton = styled.div`
+  display: flex;
+  border-bottom: 1px solid var(--tabs-border);
+`;
+
+const TabSkeleton = styled.div`
+  flex: 1;
+  min-height: 50px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--tabs-border);
+
+  &:first-child {
+    border-bottom-color: var(--tabs-active-border);
+  }
+`;
+
+const TabPanelSkeleton = styled.div`
+  display: grid;
+  gap: 1.5rem;
+  padding: 40px;
+
+  @media (max-width: 640px) {
+    padding: 16px;
+  }
+`;
+
+const TableSectionSkeleton = styled.section`
   display: grid;
   gap: 1rem;
 `;
@@ -63,17 +96,30 @@ export function StatsRouteLoading() {
         </SummaryPanel>
 
         <StatsPanelStack>
-          {["Fastest wins", "Fewest moves", "Recent games"].map((title) => (
-            <StatsPanel key={title}>
-              <StatsPanelContent>
-                <SkeletonBlock $height={28} $width="36%" />
-                <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                <SkeletonBlock $height={44} $width="92%" $radius="14px" />
-              </StatsPanelContent>
-            </StatsPanel>
-          ))}
+          <StatsPanel>
+            <TabsListSkeleton aria-hidden="true">
+              <TabSkeleton>
+                <SkeletonBlock $height={34} $width={128} $radius="999px" />
+              </TabSkeleton>
+              <TabSkeleton>
+                <SkeletonBlock $height={34} $width={98} $radius="999px" />
+              </TabSkeleton>
+            </TabsListSkeleton>
+
+            <TabPanelSkeleton>
+              {["Fastest wins", "Fewest moves", "Recent games"].map((title) => (
+                <TableSectionSkeleton key={title}>
+                  <SkeletonBlock $height={28} $width="36%" />
+                  <StatsPanelContent>
+                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
+                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
+                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
+                    <SkeletonBlock $height={44} $width="92%" $radius="14px" />
+                  </StatsPanelContent>
+                </TableSectionSkeleton>
+              ))}
+            </TabPanelSkeleton>
+          </StatsPanel>
         </StatsPanelStack>
       </StatsMain>
     </>

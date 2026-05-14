@@ -7,7 +7,6 @@ function LoginPageSkeleton() {
 }
 
 export default function LoginPage() {
-  return <LoginPageSkeleton />;
   return (
     <Suspense fallback={<LoginPageSkeleton />}>
       <LoginClient />

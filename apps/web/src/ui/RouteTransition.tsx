@@ -17,6 +17,11 @@ type RouteTransitionContextValue = {
   startRouteTransition: (href: string) => void;
 };
 
+type PendingTransition = {
+  fromPath: string;
+  toPath: string;
+};
+
 const RouteTransitionContext =
   createContext<RouteTransitionContextValue | null>(null);
 
@@ -45,22 +50,20 @@ function shouldIgnoreClick(event: MouseEvent, anchor: HTMLAnchorElement) {
 
 export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const [pendingTransition, setPendingTransition] =
+    useState<PendingTransition | null>(null);
 
   const startRouteTransition = useCallback(
     (href: string) => {
       const nextPath = normalizeInternalPath(href);
       if (!nextPath || nextPath === pathname) return;
-      setPendingPath(nextPath);
+      setPendingTransition({
+        fromPath: pathname,
+        toPath: nextPath
+      });
     },
     [pathname]
   );
-
-  useEffect(() => {
-    if (pendingPath && pathname === pendingPath) {
-      setPendingPath(null);
-    }
-  }, [pathname, pendingPath]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -79,6 +82,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("click", handleClick, true);
     };
   }, [startRouteTransition]);
+
+  const pendingPath =
+    pendingTransition && pendingTransition.fromPath === pathname
+      ? pendingTransition.toPath
+      : null;
 
   const value = useMemo(
     () => ({ pendingPath, startRouteTransition }),
