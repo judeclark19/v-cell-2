@@ -149,6 +149,7 @@ export const NavLinks = styled.div`
   @media (max-width: 675px) {
     flex-direction: column;
     align-items: flex-end;
+    gap: 24px;
   }
 `;
 
