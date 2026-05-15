@@ -1,6 +1,5 @@
 "use client";
 
-import { Panel, Tabs } from "@vcell/ui";
 import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useReducedMotionEnabled } from "@/state/ui/motionPreference";
@@ -8,6 +7,7 @@ import { selectMotionPreference } from "@/state/ui/uiSlice";
 import { SignupTabContent } from "./SignupTabContent";
 import { LoginTabContent } from "./LoginTabContent";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
+import { AuthTabsShell, AuthTabTitle } from "./AuthTabsShell";
 
 const TABS = [
   { id: "login", label: "Login" },
@@ -128,14 +128,9 @@ export function AuthTabs({
     {
       id: "login",
       label: (
-        <h1
-          style={{
-            fontSize: 24,
-            marginBottom: 0
-          }}
-        >
+        <AuthTabTitle>
           Login
-        </h1>
+        </AuthTabTitle>
       ),
       content: (
         <LoginTabContent
@@ -148,38 +143,25 @@ export function AuthTabs({
     {
       id: "signup",
       label: (
-        <h1
-          style={{
-            fontSize: 24,
-            marginBottom: 0
-          }}
-        >
+        <AuthTabTitle>
           Sign up
-        </h1>
+        </AuthTabTitle>
       ),
       content: <SignupTabContent isOffline={isOffline} authFlows={authFlows} />
     }
   ];
 
   return (
-    <Panel
-      className="auth-card"
-      maxWidth={500}
-      style={{ marginLeft: "auto", marginRight: "auto" }}
-    >
-      <Tabs
-        activeId={activeTab}
-        animated={isHeightReady && !shouldReduceMotion}
-        ariaLabel="Authentication options"
-        baseId={baseId}
-        items={items}
-        onChange={(id) => setActiveTab(id as TabId)}
-        onKeyDown={onKeyDown}
-        panelHeight={panelHeight}
-        panelPadding="lg"
-        panelRefs={panelRefs}
-        tabRefs={tabRefs}
-      />
-    </Panel>
+    <AuthTabsShell
+      activeId={activeTab}
+      animated={isHeightReady && !shouldReduceMotion}
+      baseId={baseId}
+      items={items}
+      onChange={(id) => setActiveTab(id as TabId)}
+      onKeyDown={onKeyDown}
+      panelHeight={panelHeight}
+      panelRefs={panelRefs}
+      tabRefs={tabRefs}
+    />
   );
 }

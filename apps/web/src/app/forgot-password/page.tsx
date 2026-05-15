@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { Button, Input, Panel } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
+import { ForgotPasswordRouteLoading } from "./skeleton";
 
 function ForgotPasswordInner() {
   const searchParams = useSearchParams();
@@ -129,7 +130,7 @@ function ForgotPasswordInner() {
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={<main />}>
+    <Suspense fallback={<ForgotPasswordRouteLoading />}>
       <ForgotPasswordInner />
     </Suspense>
   );

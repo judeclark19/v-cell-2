@@ -7,6 +7,7 @@ import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { Button, Panel, PasswordInput } from "@vcell/ui";
 import { auth } from "@/lib/firebaseClient";
 import { useRouteTransitionRouter } from "@/ui/RouteTransition";
+import { ResetPasswordRouteLoading } from "./skeleton";
 
 function ResetPasswordInner() {
   const router = useRouteTransitionRouter();
@@ -210,13 +211,7 @@ function ResetPasswordInner() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <main>
-          <p>Loading…</p>
-        </main>
-      }
-    >
+    <Suspense fallback={<ResetPasswordRouteLoading />}>
       <ResetPasswordInner />
     </Suspense>
   );

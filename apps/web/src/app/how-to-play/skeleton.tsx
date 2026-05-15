@@ -1,9 +1,11 @@
 import { Panel } from "@vcell/ui";
 import styled from "styled-components";
 import {
-  LoadingStyles,
   RouteTitleSkeleton,
-  SkeletonBlock
+  SkeletonHeadingBlock,
+  SkeletonListLines,
+  SkeletonSubheadingBlock,
+  SkeletonTextLines
 } from "@/ui/RouteLoading.shared";
 
 const HowToPlayMain = styled.main`
@@ -23,82 +25,83 @@ const Sections = styled.div`
   gap: 2rem;
 `;
 
-const SectionBlock = styled.section`
-  display: grid;
-  gap: 0.75rem;
-`;
+const InstructionSection = styled.section`
+  > :first-child {
+    margin-top: 0;
+  }
 
-const ListBlock = styled.div`
-  display: grid;
-  gap: 0.5rem;
-  padding-left: 1.5rem;
+  > :last-child {
+    margin-bottom: 0;
+  }
 `;
 
 export function HowToPlayRouteLoading() {
   return (
     <>
-      <LoadingStyles />
-      <RouteTitleSkeleton label="How to Play" width={280} />
       <HowToPlayMain
         role="status"
         aria-live="polite"
         aria-label="Loading how to play"
       >
+        <RouteTitleSkeleton label="How to Play" width={280} />
+
         <HowToPlayPanel aria-label="How to play instructions">
           <Sections>
-            <SectionBlock>
-              <SkeletonBlock $height={28} $width="18%" />
-              <SkeletonBlock $height={18} $width="44%" />
-              <SkeletonBlock $height={18} $width="68%" />
-            </SectionBlock>
+            <InstructionSection>
+              <h2>
+                <SkeletonHeadingBlock $width="18%" />
+              </h2>
+              <SkeletonTextLines widths={["44%"]} />
+              <SkeletonTextLines widths={["68%", "42%"]} />
+            </InstructionSection>
 
-            <SectionBlock>
-              <SkeletonBlock $height={28} $width="24%" />
-              <ListBlock>
-                <SkeletonBlock $height={18} $width="82%" />
-                <SkeletonBlock $height={18} $width="76%" />
-                <SkeletonBlock $height={18} $width="88%" />
-              </ListBlock>
-            </SectionBlock>
+            <InstructionSection>
+              <h2>
+                <SkeletonHeadingBlock $width="24%" />
+              </h2>
+              <SkeletonListLines widths={["82%", "76%", "88%"]} />
+            </InstructionSection>
 
-            <SectionBlock>
-              <SkeletonBlock $height={28} $width="18%" />
-              <SkeletonBlock $height={18} $width="86%" />
-              <ListBlock>
-                <SkeletonBlock $height={18} $width="92%" />
-                <SkeletonBlock $height={18} $width="78%" />
-                <SkeletonBlock $height={18} $width="80%" />
-                <SkeletonBlock $height={18} $width="86%" />
-              </ListBlock>
-              <SkeletonBlock $height={22} $width="36%" />
-              <SkeletonBlock $height={18} $width="90%" />
-              <SkeletonBlock $height={18} $width="72%" />
-            </SectionBlock>
+            <InstructionSection>
+              <h2>
+                <SkeletonHeadingBlock $width="18%" />
+              </h2>
+              <SkeletonTextLines widths={["86%", "54%"]} />
+              <SkeletonListLines widths={["92%", "78%", "80%", "86%"]} />
+              <br />
+              <h3>
+                <SkeletonSubheadingBlock $width="36%" />
+              </h3>
+              <SkeletonTextLines widths={["90%", "82%", "72%"]} />
+            </InstructionSection>
 
-            <SectionBlock>
-              <SkeletonBlock $height={28} $width="34%" />
-              <SkeletonBlock $height={18} $width="80%" />
-              <ListBlock>
-                {["88%", "84%", "76%", "62%", "58%", "64%", "56%", "52%", "60%"].map(
-                  (width, index) => (
-                    <SkeletonBlock
-                      key={`keyboard-line-${index}`}
-                      $height={18}
-                      $width={width}
-                    />
-                  )
-                )}
-              </ListBlock>
-            </SectionBlock>
+            <InstructionSection>
+              <h2>
+                <SkeletonHeadingBlock $width="34%" />
+              </h2>
+              <SkeletonTextLines widths={["80%", "70%"]} />
+              <SkeletonListLines
+                widths={[
+                  "88%",
+                  "84%",
+                  "76%",
+                  "62%",
+                  "58%",
+                  "64%",
+                  "56%",
+                  "52%",
+                  "60%",
+                  "44%"
+                ]}
+              />
+            </InstructionSection>
 
-            <SectionBlock>
-              <SkeletonBlock $height={28} $width="16%" />
-              <ListBlock>
-                <SkeletonBlock $height={18} $width="86%" />
-                <SkeletonBlock $height={18} $width="72%" />
-                <SkeletonBlock $height={18} $width="84%" />
-              </ListBlock>
-            </SectionBlock>
+            <InstructionSection>
+              <h2>
+                <SkeletonHeadingBlock $width="16%" />
+              </h2>
+              <SkeletonListLines widths={["86%", "72%", "84%"]} />
+            </InstructionSection>
           </Sections>
         </HowToPlayPanel>
       </HowToPlayMain>

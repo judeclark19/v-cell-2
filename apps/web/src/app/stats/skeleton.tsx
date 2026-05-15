@@ -1,10 +1,24 @@
+"use client";
+
 import {
-  LoadingStyles,
-  RouteTitleSkeleton,
-  SkeletonBlock
+  SkeletonBlock,
+  SkeletonHeadingBlock,
+  SkeletonStatsTable,
+  SkeletonTabTitle,
+  SkeletonTextLines,
+  SkeletonTitleText
 } from "@/ui/RouteLoading.shared";
-import { Panel } from "@vcell/ui";
+import {
+  Panel,
+  Tabs,
+  UserStatsTableHeading,
+  UserStatsTablesRoot
+} from "@vcell/ui";
 import styled from "styled-components";
+
+const StatsHeader = styled.header`
+  text-align: center;
+`;
 
 const StatsMain = styled.main`
   display: grid;
@@ -23,104 +37,93 @@ const SummaryPanel = styled(Panel).attrs({
   height: fit-content;
 `;
 
-const SummaryGrid = styled.div`
-  display: grid;
-  gap: 1rem;
+const SummaryDivider = styled.hr`
+  margin: 1.5rem 0;
 `;
 
-const StatsPanelStack = styled.div`
-  min-width: 0;
-`;
+const SummaryMetric = styled.section`
+  margin-bottom: 2rem;
 
-const StatsPanel = styled(Panel).attrs({
-  as: "section",
-  padding: "none"
-})``;
-
-const StatsPanelContent = styled.div`
-  display: grid;
-  gap: 1rem;
-`;
-
-const TabsListSkeleton = styled.div`
-  display: flex;
-  border-bottom: 1px solid var(--tabs-border);
-`;
-
-const TabSkeleton = styled.div`
-  flex: 1;
-  min-height: 50px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid var(--tabs-border);
-
-  &:first-child {
-    border-bottom-color: var(--tabs-active-border);
+  &:last-child {
+    margin-bottom: 0;
   }
 `;
 
-const TabPanelSkeleton = styled.div`
-  display: grid;
-  gap: 1.5rem;
-  padding: 40px;
+function SummaryMetricSkeleton({ width }: { width: number | string }) {
+  return (
+    <SummaryMetric>
+      <h3 style={{ marginBottom: 8 }}>
+        <SkeletonBlock $height={20} $radius="999px" $width={width} />
+      </h3>
+      <SkeletonTextLines widths={["82%", "64%"]} />
+    </SummaryMetric>
+  );
+}
 
-  @media (max-width: 640px) {
-    padding: 16px;
-  }
-`;
-
-const TableSectionSkeleton = styled.section`
-  display: grid;
-  gap: 1rem;
-`;
+function HighlightsSkeleton() {
+  return (
+    <UserStatsTablesRoot>
+      {[
+        "Fastest wins",
+        "Fewest moves (wins)",
+        "Most recent completed games"
+      ].map((title) => (
+        <section key={title}>
+          <UserStatsTableHeading>
+            <SkeletonHeadingBlock $width="36%" />
+          </UserStatsTableHeading>
+          <SkeletonStatsTable rows={4} />
+        </section>
+      ))}
+    </UserStatsTablesRoot>
+  );
+}
 
 export function StatsRouteLoading() {
   return (
     <>
-      <LoadingStyles />
-      <RouteTitleSkeleton label="Stats" />
+      <StatsHeader>
+        <h1>
+          <SkeletonTitleText label="Stats" />
+        </h1>
+      </StatsHeader>
+
       <StatsMain role="status" aria-live="polite" aria-label="Loading stats">
         <SummaryPanel>
-          <SummaryGrid>
-            <SkeletonBlock $height={32} $width="55%" />
-            <SkeletonBlock $height={20} $width="35%" />
-            <SkeletonBlock $height={1} $width="100%" $radius="0" />
-            <SkeletonBlock $height={20} $width="72%" />
-            <SkeletonBlock $height={20} $width="82%" />
-            <SkeletonBlock $height={44} $width="68%" />
-            <SkeletonBlock $height={20} $width="58%" />
-            <SkeletonBlock $height={20} $width="78%" />
-          </SummaryGrid>
+          <h2 style={{ marginBottom: "0.5rem" }}>
+            <SkeletonHeadingBlock $width="55%" />
+          </h2>
+          <SkeletonTextLines widths={["35%"]} />
+          <br />
+          <SummaryDivider />
+          <br />
+
+          <SummaryMetricSkeleton width="72%" />
+          <SummaryMetricSkeleton width="58%" />
+          <SummaryMetricSkeleton width="68%" />
         </SummaryPanel>
 
-        <StatsPanelStack>
-          <StatsPanel>
-            <TabsListSkeleton aria-hidden="true">
-              <TabSkeleton>
-                <SkeletonBlock $height={34} $width={128} $radius="999px" />
-              </TabSkeleton>
-              <TabSkeleton>
-                <SkeletonBlock $height={34} $width={98} $radius="999px" />
-              </TabSkeleton>
-            </TabsListSkeleton>
-
-            <TabPanelSkeleton>
-              {["Fastest wins", "Fewest moves", "Recent games"].map((title) => (
-                <TableSectionSkeleton key={title}>
-                  <SkeletonBlock $height={28} $width="36%" />
-                  <StatsPanelContent>
-                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                    <SkeletonBlock $height={44} $width="100%" $radius="14px" />
-                    <SkeletonBlock $height={44} $width="92%" $radius="14px" />
-                  </StatsPanelContent>
-                </TableSectionSkeleton>
-              ))}
-            </TabPanelSkeleton>
-          </StatsPanel>
-        </StatsPanelStack>
+        <Panel aria-label="Stats">
+          <Tabs
+            activeId="highlights"
+            ariaLabel="Stats views"
+            baseId="stats-loading"
+            items={[
+              {
+                id: "highlights",
+                label: <SkeletonTabTitle width={128} />,
+                content: <HighlightsSkeleton />
+              },
+              {
+                id: "history",
+                label: <SkeletonTabTitle width={98} />,
+                content: null
+              }
+            ]}
+            onChange={() => undefined}
+            panelPadding="lg"
+          />
+        </Panel>
       </StatsMain>
     </>
   );
