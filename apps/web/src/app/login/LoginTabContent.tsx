@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Button, Input, PasswordInput } from "@vcell/ui";
+import { Button } from "@vcell/ui";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
-import Or from "@/ui/Or";
+import { AuthField, LoginTabLayout } from "./LoginTabLayout";
 
 type LoginTabContentProps = {
   nextPath: string;
@@ -30,44 +30,23 @@ export function LoginTabContent({
   const onLoginEmailChange = setLoginEmail;
   const onSubmit = loginWithEmail;
   return (
-    <section>
-      <p style={{ marginBottom: 36 }}>
-        Existing user? Sign in to unlock your stats, leaderboard, and sync
-        across devices.
-      </p>
-      <GSIMaterialButton inOrUp="in" onClick={loginAndContinue} />
-      <Or />
-      <form onSubmit={onSubmit}>
-        <label style={{ display: "block", marginBottom: 10 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-          <Input
-            value={loginEmail}
-            onChange={(e) => onLoginEmailChange(e.target.value)}
-            autoComplete="email"
-            placeholder="you@example.com"
-            type="email"
-            disabled={isOffline}
-            name="email"
-            fullWidth
-          />
-        </label>
-        <label style={{ display: "block", marginBottom: 14 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <PasswordInput
-            value={loginPassword}
-            onChange={(e) => onLoginPasswordChange(e.target.value)}
-            autoComplete="current-password"
-            placeholder="Your password"
-            disabled={isOffline}
-            name="password"
-            fullWidth
-          />
-        </label>
-        {loginError && (
+    <LoginTabLayout
+      intro={
+        <p style={{ marginBottom: 36 }}>
+          Existing user? Sign in to unlock your stats, leaderboard, and sync
+          across devices.
+        </p>
+      }
+      googleButton={<GSIMaterialButton inOrUp="in" onClick={loginAndContinue} />}
+      onSubmit={onSubmit}
+      error={
+        loginError ? (
           <p role="alert" style={{ marginBottom: 12 }}>
             {loginError}
           </p>
-        )}
+        ) : null
+      }
+      submit={
         <Button
           type="submit"
           fullWidth
@@ -75,13 +54,8 @@ export function LoginTabContent({
         >
           {loginLoading ? "Logging in…" : "Log in"}
         </Button>
-      </form>
-      <div
-        style={{
-          marginTop: 10,
-          textAlign: "center"
-        }}
-      >
+      }
+      footer={
         <Link
           href={`/forgot-password?next=${encodeURIComponent(nextPath)}`}
           style={{
@@ -91,7 +65,30 @@ export function LoginTabContent({
         >
           Forgot password?
         </Link>
-      </div>
-    </section>
+      }
+    >
+      <AuthField
+        label="Email"
+        value={loginEmail}
+        onChange={(e) => onLoginEmailChange(e.target.value)}
+        autoComplete="email"
+        placeholder="you@example.com"
+        type="email"
+        disabled={isOffline}
+        name="email"
+      />
+
+      <AuthField
+        label="Password"
+        marginBottom={14}
+        password
+        value={loginPassword}
+        onChange={(e) => onLoginPasswordChange(e.target.value)}
+        autoComplete="current-password"
+        placeholder="Your password"
+        disabled={isOffline}
+        name="password"
+      />
+    </LoginTabLayout>
   );
 }

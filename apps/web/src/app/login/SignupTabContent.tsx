@@ -1,7 +1,7 @@
-import { Button, Input, PasswordInput } from "@vcell/ui";
-import Or from "@/ui/Or";
+import { Button } from "@vcell/ui";
 import GSIMaterialButton from "./GSIMaterialButton";
 import { useLoginAuthFlows } from "./useLoginAuthFlows";
+import { AuthField, LoginTabLayout } from "./LoginTabLayout";
 
 type SignupTabContentProps = {
   isOffline: boolean;
@@ -32,64 +32,24 @@ export function SignupTabContent({
   const onSubmit = signupWithEmail;
 
   return (
-    <section>
-      <p style={{ marginBottom: 36 }}>
-        Create an account to unlock your stats, leaderboard, and sync across
-        devices.
-      </p>
-      <GSIMaterialButton inOrUp="up" onClick={loginAndContinue} />
-      <Or />
-
-      <form onSubmit={onSubmit} style={{ maxWidth: 520 }}>
-        <label style={{ display: "block", marginBottom: 10 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>
-            Display name
-          </span>
-          <Input
-            value={signupDisplayName}
-            onChange={(e) => onSignupDisplayNameChange(e.target.value)}
-            autoComplete="nickname"
-            placeholder="e.g., Jude"
-            type="text"
-            disabled={isOffline}
-            name="displayName"
-            fullWidth
-          />
-        </label>
-
-        <label style={{ display: "block", marginBottom: 10 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>Email</span>
-          <Input
-            value={signupEmail}
-            onChange={(e) => onSignupEmailChange(e.target.value)}
-            autoComplete="email"
-            placeholder="you@example.com"
-            type="email"
-            disabled={isOffline}
-            name="email"
-            fullWidth
-          />
-        </label>
-
-        <label style={{ display: "block", marginBottom: 14 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>Password</span>
-          <PasswordInput
-            value={signupPassword}
-            onChange={(e) => onSignupPasswordChange(e.target.value)}
-            autoComplete="new-password"
-            placeholder="6+ characters"
-            disabled={isOffline}
-            name="password"
-            fullWidth
-          />
-        </label>
-
-        {signupError && (
+    <LoginTabLayout
+      intro={
+        <p style={{ marginBottom: 36 }}>
+          Create an account to unlock your stats, leaderboard, and sync across
+          devices.
+        </p>
+      }
+      googleButton={<GSIMaterialButton inOrUp="up" onClick={loginAndContinue} />}
+      maxFormWidth={520}
+      onSubmit={onSubmit}
+      error={
+        signupError ? (
           <p role="alert" style={{ marginBottom: 12 }}>
             {signupError}
           </p>
-        )}
-
+        ) : null
+      }
+      submit={
         <Button
           type="submit"
           fullWidth
@@ -97,7 +57,41 @@ export function SignupTabContent({
         >
           {signupLoading ? "Creating account…" : "Create account"}
         </Button>
-      </form>
-    </section>
+      }
+    >
+      <AuthField
+        label="Display name"
+        value={signupDisplayName}
+        onChange={(e) => onSignupDisplayNameChange(e.target.value)}
+        autoComplete="nickname"
+        placeholder="e.g., Jude"
+        type="text"
+        disabled={isOffline}
+        name="displayName"
+      />
+
+      <AuthField
+        label="Email"
+        value={signupEmail}
+        onChange={(e) => onSignupEmailChange(e.target.value)}
+        autoComplete="email"
+        placeholder="you@example.com"
+        type="email"
+        disabled={isOffline}
+        name="email"
+      />
+
+      <AuthField
+        label="Password"
+        marginBottom={14}
+        password
+        value={signupPassword}
+        onChange={(e) => onSignupPasswordChange(e.target.value)}
+        autoComplete="new-password"
+        placeholder="6+ characters"
+        disabled={isOffline}
+        name="password"
+      />
+    </LoginTabLayout>
   );
 }

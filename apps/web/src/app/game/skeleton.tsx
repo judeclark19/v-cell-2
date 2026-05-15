@@ -1,150 +1,176 @@
+import { shimmer } from "@/ui/RouteLoading.shared";
 import {
-  LoadingStyles,
-  SkeletonBlock,
-  shimmer
-} from "@/ui/RouteLoading.shared";
+  BoardBottom,
+  BoardBorder,
+  BoardControlsStyle,
+  BoardSurface,
+  BoardTimerCell,
+  BoardTimerText,
+  BoardTop,
+  Button,
+  CardSlotRoot,
+  PileCell,
+  PileRow,
+  PileSpacer,
+  SeedControlRoot,
+  TableauColumn,
+  TableauEmptySlot,
+  TableauGrid,
+  TableauScroll
+} from "@vcell/ui";
+import type React from "react";
 import styled from "styled-components";
 
 const GameMain = styled.main`
   display: block;
 `;
 
-const BoardFrame = styled.div`
-  position: relative;
-  background-color: var(--board-border-color);
-  background-image: var(--board-border-image);
-  background-size: cover;
-  border-radius: var(--radius);
-  box-sizing: border-box;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 4px;
-  width: min(
-    100%,
-    900px,
-    calc(min(max(450px, calc(100vh - 200px)), 1440px) * 3 / 4)
+function SkeletonCardSlotBase({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <CardSlotRoot
+      {...props}
+      $dropTarget={false}
+      aria-hidden="true"
+      data-card-slot="true"
+      tabIndex={-1}
+    >
+      {children}
+    </CardSlotRoot>
   );
+}
+
+const SkeletonCardSlot = styled(SkeletonCardSlotBase)`
+  ${shimmer}
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  opacity: 1;
 `;
 
-const BoardSurface = styled.div`
-  aspect-ratio: 3 / 4;
-  background-color: var(--board-bg);
-  border-radius: var(--radius);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: var(--card-gap, 10px);
-  padding: 8px;
+const TimerSkeletonText = styled(BoardTimerText).attrs({
+  "aria-hidden": "true",
+  muted: true
+})`
+  ${shimmer}
+  border-radius: 999px;
+  height: 24px;
+  width: min(8rem, 72%);
+`;
+
+function SkeletonButtonBase({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <Button {...props} disabled tabIndex={-1}>
+      {children}
+    </Button>
+  );
+}
+
+const SkeletonButton = styled(SkeletonButtonBase)`
+  ${shimmer}
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color: transparent;
+`;
+
+const TimerSkeletonButton = styled(SkeletonButton)`
+  min-height: 40px;
+  width: 50%;
+`;
+
+const SpacerButtonSkeleton = styled(SkeletonButton)`
+  flex: 1 1 0;
+  min-height: var(--pile-spacer-button-min-height, 40px);
+  padding: 0;
   width: 100%;
 `;
 
-const TopRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--card-gap, 10px);
+const ControlButtonSkeleton = styled(SkeletonButton)`
+  height: 42px;
+  padding: 0;
+  width: 42px;
 `;
 
-const BottomRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--card-gap, 10px);
-`;
-
-const EmptyCell = styled.div``;
-
-const TableauGrid = styled.div`
-  background-color: var(--tableau-bg);
-  border-radius: var(--radius);
-  display: grid;
-  flex: 1 1 auto;
-  gap: var(--card-gap, 10px);
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  min-height: 0;
-  overflow: hidden;
-  padding: 8px;
-`;
-
-const TableauColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  min-height: 0;
-`;
-
-const CardSlotSkeleton = styled.div<{
-  $stacked?: boolean;
-}>`
-  ${shimmer}
-  aspect-ratio: 5 / 7;
-  border-radius: var(--card-radius, 8px);
-  margin-top: ${({ $stacked = false }) => ($stacked ? "-85%" : "0")};
-  position: relative;
-`;
-
-const ControlsRow = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
-  gap: 1rem;
-`;
+function SkeletonPileCell() {
+  return (
+    <PileCell aria-hidden="true">
+      <SkeletonCardSlot />
+    </PileCell>
+  );
+}
 
 export function GameRouteLoading() {
   return (
     <>
-      <LoadingStyles />
       <GameMain role="status" aria-live="polite" aria-label="Loading game">
-        <BoardFrame>
-          <BoardSurface>
-            <TopRow>
-              <EmptyCell aria-hidden="true" />
-              <EmptyCell aria-hidden="true" />
-              <EmptyCell aria-hidden="true" />
-              {Array.from({ length: 4 }).map((_, index) => (
-                <CardSlotSkeleton
-                  key={`foundation-${index}`}
-                  aria-hidden="true"
-                />
-              ))}
-            </TopRow>
+        <BoardBorder keyboardCarrying={false}>
+          <BoardSurface aria-label="Game board">
+            <BoardTop aria-label="Foundations">
+              <PileRow aria-label="Foundations">
+                <BoardTimerCell>
+                  <TimerSkeletonText />
+                  <TimerSkeletonButton />
+                </BoardTimerCell>
 
-            <TableauGrid>
-              {Array.from({ length: 7 }).map((_, columnIndex) => (
-                <TableauColumn key={`column-${columnIndex}`}>
-                  {Array.from({ length: 7 }).map((_, cardIndex) => (
-                    <CardSlotSkeleton
-                      key={`column-${columnIndex}-card-${cardIndex}`}
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <SkeletonPileCell key={`foundation-${index}`} />
+                ))}
+              </PileRow>
+            </BoardTop>
+
+            <TableauScroll aria-label="Tableau">
+              <TableauGrid aria-label="Tableau grid">
+                {Array.from({ length: 7 }).map((_, columnIndex) => (
+                  <TableauColumn
+                    key={`column-${columnIndex}`}
+                    data-tableau-column="true"
+                    aria-label={`Tableau column ${columnIndex + 1}`}
+                  >
+                    <TableauEmptySlot
+                      data-tableau-empty-slot="true"
                       aria-hidden="true"
-                      $stacked={cardIndex > 0}
-                    />
-                  ))}
-                </TableauColumn>
-              ))}
-            </TableauGrid>
+                    >
+                      <SkeletonCardSlot />
+                    </TableauEmptySlot>
 
-            <BottomRow>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <CardSlotSkeleton
-                  key={`freecell-${index}`}
-                  aria-hidden="true"
-                />
-              ))}
-              <EmptyCell aria-hidden="true" />
-              <EmptyCell aria-hidden="true" />
-            </BottomRow>
+                    {Array.from({ length: 7 }).map((_, cardIndex) => (
+                      <SkeletonCardSlot
+                        key={`column-${columnIndex}-card-${cardIndex}`}
+                      />
+                    ))}
+                  </TableauColumn>
+                ))}
+              </TableauGrid>
+            </TableauScroll>
+
+            <BoardBottom aria-label="Free cells">
+              <PileRow aria-label="Free cells">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <SkeletonPileCell key={`freecell-${index}`} />
+                ))}
+
+                <PileSpacer aria-hidden="true" />
+                <PileSpacer aria-hidden="true">
+                  <SpacerButtonSkeleton />
+                  <SpacerButtonSkeleton />
+                </PileSpacer>
+              </PileRow>
+            </BoardBottom>
           </BoardSurface>
-        </BoardFrame>
+        </BoardBorder>
 
-        <ControlsRow aria-hidden="true">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <SkeletonBlock
-              key={`control-${index}`}
-              $height={48}
-              $width={48}
-              $radius="var(--btn-radius, 10px)"
-            />
-          ))}
-        </ControlsRow>
+        <BoardControlsStyle aria-hidden="true">
+          <ControlButtonSkeleton />
+          <SeedControlRoot>
+            <ControlButtonSkeleton />
+          </SeedControlRoot>
+          <ControlButtonSkeleton />
+          <ControlButtonSkeleton />
+        </BoardControlsStyle>
       </GameMain>
     </>
   );
