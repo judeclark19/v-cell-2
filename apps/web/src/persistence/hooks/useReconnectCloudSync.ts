@@ -20,6 +20,7 @@ import {
   syncGameToCloud
 } from "../cloudSync";
 import { shouldIgnoreCloudInProgress } from "../reconciliation";
+import { getNewestCloudInProgressForDevice } from "../cloudInProgress";
 
 export function useReconnectCloudSync(
   uid: string | null,
@@ -114,6 +115,26 @@ export function useReconnectCloudSync(
         }
 
         if (!needsCloudSync(inProgress, uid)) return;
+
+        const cloudInProgress = await getNewestCloudInProgressForDevice({
+          uid,
+          deviceId,
+          pruneStale: true,
+          source: "server"
+        }).catch((err) => {
+          console.warn(
+            "[cloud sync] failed to check existing cloud in-progress game",
+            err
+          );
+          return null;
+        });
+
+        if (
+          cloudInProgress &&
+          cloudInProgress.sessionId !== inProgress.sessionId
+        ) {
+          return;
+        }
 
         await syncGameToCloud({
           uid,
