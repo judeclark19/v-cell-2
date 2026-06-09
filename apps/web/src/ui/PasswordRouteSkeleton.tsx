@@ -2,6 +2,7 @@ import {
   SkeletonBlock,
   SkeletonButtonBlock,
   SkeletonInputField,
+  SkeletonTextLine,
   SkeletonTextLines
 } from "@/ui/RouteLoading.shared";
 import { Panel } from "@vcell/ui";
@@ -31,7 +32,7 @@ export function PasswordRouteSkeleton({
     >
       <header style={{ marginBottom: 16 }}>
         <h1 style={{ marginBottom: 8 }}>
-          <SkeletonBlock $height={38} $width={titleWidth} />
+          <SkeletonTextLine $height={38} $width={titleWidth} />
         </h1>
         <SkeletonTextLines widths={["88%", "64%"]} />
       </header>

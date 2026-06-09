@@ -13,7 +13,7 @@ const HowToPlayMain = styled.main`
 `;
 
 const HowToPlayPanel = styled(Panel).attrs({
-  as: "section",
+  forwardedAs: "section",
   padding: "lg"
 })`
   flex: 0 auto 2rem;

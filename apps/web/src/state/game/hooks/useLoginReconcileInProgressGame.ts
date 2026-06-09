@@ -16,9 +16,7 @@ import {
   markCloudSyncAvailable,
   markCloudSyncUnavailable
 } from "@/state/network/cloudSyncAvailability";
-import {
-  getCompletedGameBySessionId,
-} from "@/persistence/completedGamesStore";
+import { getCompletedGameBySessionId } from "@/persistence/completedGamesStore";
 import {
   getInProgressGameForDevice,
   upsertInProgressGame
@@ -106,7 +104,8 @@ export function useLoginReconcileInProgressGame() {
         const raw = cloudDocInProgressGame.data() as PersistedGame;
         const cloudSessionId =
           (raw.sessionId as string | undefined) ?? cloudDocInProgressGame.id;
-        const localCompleted = await getCompletedGameBySessionId(cloudSessionId);
+        const localCompleted =
+          await getCompletedGameBySessionId(cloudSessionId);
 
         if (
           shouldIgnoreCloudInProgress({
@@ -130,9 +129,6 @@ export function useLoginReconcileInProgressGame() {
         if (cancelled) return;
 
         const sessionKey = `${payload.seed}:${payload.sessionId}`;
-
-        console.debug("current", currentSeed, currentSessionId);
-        console.debug("cloud", payload.seed, payload.sessionId);
 
         if (
           payload.seed === currentSeed &&

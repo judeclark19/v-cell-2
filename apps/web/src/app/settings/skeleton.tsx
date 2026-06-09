@@ -1,7 +1,7 @@
 import {
-  SkeletonBlock,
   SkeletonHeadingBlock,
   SkeletonSelectField,
+  SkeletonTextLine,
   SkeletonTitleText
 } from "@/ui/RouteLoading.shared";
 import {
@@ -34,8 +34,8 @@ export function SettingsRouteLoading() {
           </h2>
 
           <AccountHintSkeleton>
-            <SkeletonBlock $height={18} $width="88%" />
-            <SkeletonBlock $height={18} $width="72%" />
+            <SkeletonTextLine $height={18} $width="88%" />
+            <SkeletonTextLine $height={18} $width="72%" />
           </AccountHintSkeleton>
         </SettingsPanel>
 

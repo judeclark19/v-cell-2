@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  SkeletonBlock,
   SkeletonHeadingBlock,
   SkeletonStatsTable,
   SkeletonTabTitle,
+  SkeletonTextLine,
   SkeletonTextLines,
   SkeletonTitleText
 } from "@/ui/RouteLoading.shared";
@@ -22,8 +22,12 @@ const StatsHeader = styled.header`
 
 const StatsMain = styled.main`
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   gap: 2rem;
+
+  > * {
+    min-width: 0;
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -31,10 +35,14 @@ const StatsMain = styled.main`
 `;
 
 const SummaryPanel = styled(Panel).attrs({
-  as: "section",
+  forwardedAs: "section",
   padding: "lg"
 })`
   height: fit-content;
+`;
+
+const StatsPanel = styled(Panel)`
+  min-width: 0;
 `;
 
 const SummaryDivider = styled.hr`
@@ -53,7 +61,7 @@ function SummaryMetricSkeleton({ width }: { width: number | string }) {
   return (
     <SummaryMetric>
       <h3 style={{ marginBottom: 8 }}>
-        <SkeletonBlock $height={20} $radius="999px" $width={width} />
+        <SkeletonTextLine $height={20} $radius="999px" $width={width} />
       </h3>
       <SkeletonTextLines widths={["82%", "64%"]} />
     </SummaryMetric>
@@ -103,7 +111,7 @@ export function StatsRouteLoading() {
           <SummaryMetricSkeleton width="68%" />
         </SummaryPanel>
 
-        <Panel aria-label="Stats">
+        <StatsPanel aria-label="Stats">
           <Tabs
             activeId="highlights"
             ariaLabel="Stats views"
@@ -123,7 +131,7 @@ export function StatsRouteLoading() {
             onChange={() => undefined}
             panelPadding="lg"
           />
-        </Panel>
+        </StatsPanel>
       </StatsMain>
     </>
   );
