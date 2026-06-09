@@ -11,6 +11,7 @@ import {
   SkeletonButtonBlock,
   SkeletonInputField,
   SkeletonTabTitle,
+  SkeletonTextLine,
   SkeletonTextLines
 } from "@/ui/RouteLoading.shared";
 import { AuthTabsShell } from "./AuthTabsShell";
@@ -69,7 +70,7 @@ export function LoginRouteLoading() {
       <GuestNoticeSkeleton aria-label="Guest play option">
         <NoticeCopySkeleton>
           <strong>
-            <SkeletonBlock $height={22} $width="36%" $radius="999px" />
+            <SkeletonTextLine $height={22} $width="36%" $radius="999px" />
           </strong>
           <SkeletonTextLines widths={["82%", "70%"]} />
         </NoticeCopySkeleton>

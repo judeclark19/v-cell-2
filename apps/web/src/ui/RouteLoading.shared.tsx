@@ -46,6 +46,20 @@ export const SkeletonBlock = styled.div<{
   border-radius: ${({ $radius = "12px" }) => $radius};
 `;
 
+export const SkeletonTextLine = styled.span<{
+  $height: number | string;
+  $radius?: string;
+  $width?: number | string;
+}>`
+  ${shimmer}
+  display: block;
+  height: ${({ $height }) =>
+    typeof $height === "number" ? `${$height}px` : $height};
+  width: ${({ $width = "100%" }) =>
+    typeof $width === "number" ? `${$width}px` : $width};
+  border-radius: ${({ $radius = "12px" }) => $radius};
+`;
+
 const HiddenLabel = styled.span`
   position: absolute;
   width: 1px;
@@ -107,13 +121,13 @@ export function RouteTitleSkeleton({
   );
 }
 
-export const SkeletonHeadingBlock = styled(SkeletonBlock).attrs({
+export const SkeletonHeadingBlock = styled(SkeletonTextLine).attrs({
   $height: 28
 })`
   margin: 0.83em 0;
 `;
 
-export const SkeletonSubheadingBlock = styled(SkeletonBlock).attrs({
+export const SkeletonSubheadingBlock = styled(SkeletonTextLine).attrs({
   $height: 22
 })`
   margin: 1em 0;
@@ -142,7 +156,7 @@ export function SkeletonTextLines({
   return (
     <SkeletonParagraph>
       {widths.map((width, index) => (
-        <SkeletonBlock
+        <SkeletonTextLine
           key={`paragraph-line-${index}`}
           $height={18}
           $width={width}
@@ -191,7 +205,7 @@ const SkeletonTabTitleRoot = styled.h2`
   margin-bottom: 0;
 `;
 
-const SkeletonTabTitleBlock = styled(SkeletonBlock).attrs({
+const SkeletonTabTitleBlock = styled(SkeletonTextLine).attrs({
   $height: 29,
   $radius: "999px"
 })`
@@ -221,7 +235,7 @@ const SkeletonFormLabel = styled.label`
   }
 `;
 
-const SkeletonFormLabelText = styled(SkeletonBlock).attrs({
+const SkeletonFormLabelText = styled(SkeletonTextLine).attrs({
   $height: 16,
   $radius: "999px"
 })`
@@ -244,12 +258,12 @@ export function SkeletonInputField({
   );
 }
 
-const SkeletonFieldLabel = styled(SkeletonBlock).attrs({
+const SkeletonFieldLabel = styled(SkeletonTextLine).attrs({
   $height: 20,
   $radius: "999px"
 })``;
 
-const SkeletonFieldHint = styled(SkeletonBlock).attrs({
+const SkeletonFieldHint = styled(SkeletonTextLine).attrs({
   $height: 16
 })``;
 

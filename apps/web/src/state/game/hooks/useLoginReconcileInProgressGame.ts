@@ -2,23 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import type { PersistedGame } from "@/persistence/types";
-import { db } from "@/lib/firebaseClient";
-import {
-  collection,
-  getDocs,
-  getDocsFromServer,
-  limit,
-  orderBy,
-  query,
-  where
-} from "firebase/firestore";
 import {
   markCloudSyncAvailable,
   markCloudSyncUnavailable
 } from "@/state/network/cloudSyncAvailability";
-import {
-  getCompletedGameBySessionId,
-} from "@/persistence/completedGamesStore";
+import { getCompletedGameBySessionId } from "@/persistence/completedGamesStore";
 import {
   getInProgressGameForDevice,
   upsertInProgressGame
@@ -40,6 +28,7 @@ import {
   syncGameToCloud,
   withPersistedGameSyncVersion
 } from "@/persistence/cloudSync";
+import { getNewestCloudInProgressForDevice } from "@/persistence/cloudInProgress";
 
 export function useLoginReconcileInProgressGame() {
   const didReconcileOnLoginRef = useRef<string | null>(null);
@@ -73,19 +62,15 @@ export function useLoginReconcileInProgressGame() {
       const deviceId = getOrCreateDeviceId();
 
       // 1) Check cloud for an in-progress game for THIS device.
-      const gamesCol = collection(db, "users", uid, "games");
-      const q = query(
-        gamesCol,
-        where("status", "==", "in_progress"),
-        where("deviceId", "==", deviceId),
-        orderBy("updatedAtMs", "desc"),
-        limit(1)
-      );
-
-      let snap;
+      let cloudDocInProgressGame;
       try {
         // IMPORTANT: avoid Firestore's local cache here; we want server truth for login reconciliation.
-        snap = await getDocsFromServer(q);
+        cloudDocInProgressGame = await getNewestCloudInProgressForDevice({
+          uid,
+          deviceId,
+          pruneStale: true,
+          source: "server"
+        });
         markCloudSyncAvailable();
       } catch (err) {
         // If offline / blocked, fall back to the default behavior.
@@ -94,19 +79,22 @@ export function useLoginReconcileInProgressGame() {
           "[login reconcile] getDocsFromServer failed; falling back to getDocs",
           err
         );
-        snap = await getDocs(q);
+        cloudDocInProgressGame = await getNewestCloudInProgressForDevice({
+          uid,
+          deviceId,
+          pruneStale: false,
+          source: "default"
+        });
       }
 
       if (cancelled) return;
 
-      const cloudDocInProgressGame = snap.docs[0];
-
       if (cloudDocInProgressGame) {
         // Cloud wins: hydrate local, then switch the running session to it.
-        const raw = cloudDocInProgressGame.data() as PersistedGame;
-        const cloudSessionId =
-          (raw.sessionId as string | undefined) ?? cloudDocInProgressGame.id;
-        const localCompleted = await getCompletedGameBySessionId(cloudSessionId);
+        const raw = cloudDocInProgressGame.doc.data() as PersistedGame;
+        const cloudSessionId = cloudDocInProgressGame.sessionId;
+        const localCompleted =
+          await getCompletedGameBySessionId(cloudSessionId);
 
         if (
           shouldIgnoreCloudInProgress({
@@ -130,9 +118,6 @@ export function useLoginReconcileInProgressGame() {
         if (cancelled) return;
 
         const sessionKey = `${payload.seed}:${payload.sessionId}`;
-
-        console.debug("current", currentSeed, currentSessionId);
-        console.debug("cloud", payload.seed, payload.sessionId);
 
         if (
           payload.seed === currentSeed &&
